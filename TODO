@@ -1,0 +1,10 @@
+- Create the dayplanner-daemon
+	- A notification daemon with its own small datafile that contains the events
+	of the last 4-5 days
+- Add doubleclick support for the eventlist
+- Add support for three different types of events:
+	- events.dpd (normal day-to-day events)
+	- birthdays.dpd (Birthdays)
+	- special.dpd (Support for: repeat every ... days, ... months, and also support for
+			repeat until ...)
+	The most important to get implemented is birthdays

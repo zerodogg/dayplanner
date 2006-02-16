@@ -1,0 +1,849 @@
+#!/usr/bin/perl
+# Day planner
+# A graphical day planner written in perl that uses Gtk2
+# Copyright (C) Eskild Hustvedt 2006
+# $Id: dayplanner 17 2006-02-15 18:43:14Z zerodogg $
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;			# Force strict coding
+use warnings;			# Tell perl to warn about things
+use Locale::gettext;		# Allow the program to be translated
+use POSIX;			# Needed for setlocale();
+use Gtk2 '-init';		# Use Gtk2 :)
+use Data::Dumper;		# Our save format is that of Data::Dumper
+use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
+use Gtk2::Gdk::Keysyms;		# Easier keybindings
+use Getopt::Long;		# Commandline options
+setlocale(LC_MESSAGES, "");
+
+# Scalars
+my $Version = "0.1 Beta 1";
+my $RCSRev = '$Id: dayplanner 17 2006-02-15 18:43:14Z zerodogg $';
+my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
+my $MainEventsFile = "events.dpd";			# The filename to save the events to
+my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
+my $SpecialEventsFile = "events_special.dpd";		# The filename to save events with special settings
+my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
+
+# Arrays
+my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
+	$ENV{HOME}, "$ENV{HOME}/Desktop", "/tmp", "/var/tmp", "/usr/tmp", "$ENV{HOME}/tmp"
+);
+
+# Hashes
+my %CalendarContents;		# The contents of the main calendar
+my %BirthdayContents;		# The contents of the birthday file
+my %SpecialEvents;		# The contents of the special events file
+my %MonthNames = (
+	1 => gettext('January'),
+	2 => gettext('February'),
+	3 => gettext('March'),
+	4 => gettext('April'),
+	5 => gettext('May'),
+	6 => gettext('June'),
+	7 => gettext('July'),
+	8 => gettext('August'),
+	9 => gettext('September'),
+	10 => gettext('October'),
+	11 => gettext('November'),
+	12 => gettext('December')
+);				# Localized number => month name hash
+
+# Gtk2 objects
+my (
+	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
+	$EventlistWin,		$MainWindow
+);	# Gtk objects
+
+# Global date variables
+my (
+	$currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst
+);
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Core helper functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
+# Usage: CreateSaveDir();
+sub CreateSaveDir () {
+	unless (-e $SaveToDir) {
+		mkdir($SaveToDir) or do {
+						DPError(gettext(sprintf("Couldn't create the directory %s: %s\nYou should create this directory manually before closing this dialog", $SaveToDir, $!)));
+					}
+		}
+}
+
+# Purpose: Save the datafile
+# Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
+sub SaveDatafile ($$$$) {
+	# Create the progress window
+	my $ProgressWin = Gtk2::Window->new('toplevel');
+	$ProgressWin->set_modal(1);
+	$ProgressWin->set_title(gettext("Saving..."));
+	$ProgressWin->set_resizable(0);
+	# Create the progress bar
+	my $ProgressBar = Gtk2::ProgressBar->new();
+	$ProgressBar->{activity_mode} = 0;
+	$ProgressBar->set_fraction(0.0);
+	# Add the bar to the window and show them
+	$ProgressWin->add($ProgressBar);
+	$ProgressBar->show();
+	$ProgressWin->show();
+	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
+	$Data::Dumper::Purity = 1;
+	# Sort the keys
+	$Data::Dumper::Sortkeys = 1;
+	# 
+#	$Data::Dumper::Varname = "*HASH";
+	# Pulse once
+	$ProgressBar->pulse();
+	# Create the save directory
+	CreateSaveDir();
+	# Pulse once
+	$ProgressBar->pulse();
+	# Open the savefile ($_[0]/$_[1]) for writing
+	open(SAVEFILE, ">$_[0]/$_[1]") or do {
+		# EMERGENCY FALLBACK
+		
+		# Okay, we couldn't open it. This is bad.
+		# Now we try to detect a directory to fall back to.
+		my $FallbackDirectory;
+		my $Error = $!;
+		my $FallbackFailed = 1;
+		# Try to find a directory we can use
+		foreach my $Fallback (@SaveFallbackDirs) {
+			$ProgressBar->pulse();
+			if (-e $Fallback and -w $Fallback) {
+				if (-e "$Fallback/$_[1]" and ! -w "$Fallback/$_[1]") {
+					next;
+				}
+				$FallbackDirectory = $Fallback;
+				last;
+			}
+		}
+		# Hide the progress window
+		$ProgressWin->hide();
+		# If $FallbackDirectory is true then display the error and try to open the fallback
+		if ($FallbackDirectory) {
+			DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting it to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
+			$FallbackFailed = 0;
+			open(SAVEFILE, ">$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
+		} 
+		# If FallbackDirectory failed or we didn't find one - output to STDOUT
+		if ($FallbackFailed) {
+			if ($FallbackDirectory) {	# If $FallbackDirectory was attempted but failed then display this
+				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting it to %s instead"), "$FallbackDirectory/$_[1]", $Error, "STDOUT"));
+			} else {			# If $FallbackDirectory wasn't possible, display this
+				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting it to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
+			}
+			print STDOUT Dumper(\%CalendarContents);
+			# By returning 0 we tell the caller that something went very wrong and that we
+			# might not want to quit if that's what we're doing.
+			return(0);
+		}
+		# Show the progress window again
+		$ProgressWin->show();
+	};
+	# Print this
+	print SAVEFILE "# Day Planner data file for day planner version $Version\n";
+	print SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
+	print SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
+	# Pulse once
+	$ProgressBar->pulse();
+	# Dump the data
+	print SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
+	# Pulse once
+	$ProgressBar->pulse();
+	close(SAVEFILE);
+	# Destroy the progress bar window
+	$ProgressWin->destroy();
+	# We successfully saved the data
+	return(1);
+}
+
+# Purpose: Save the main data files
+# Usage: SaveMainData();
+sub SaveMainData () {
+	my $Return = 1;
+	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
+		$Return	= 0;
+	}
+	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents")) {
+		$Return = 0;
+	}
+	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents")) {
+		$Return = 0;
+	}
+	return($Return);
+}
+
+# Purpose: Save the data file and redraw the needed windows
+# Usage: UpdatedData();
+sub UpdatedData () {
+	# Save the data
+	SaveMainData();
+	# Redraw the event list
+	DrawEventlist();
+	# Redraw the calendar
+	CalendarChange();
+}
+
+# Purpose: Prints out a todo message to STDOUT
+# Usage: TODO(CALLER_SUBROUTINE_NAME, MESSAGE);
+sub TODO ($$) {
+	print "TODO: ($_[0]) $_[1]\n";
+}
+
+# Purpose: Print a warning to STDERR with proper output
+# Usage: DPIntWarn("Warning");
+sub DPIntWarn ($) {
+	warn "*** (Day Planner $Version) Warning: $_[0]\n";
+}
+
+# Purpose: Load the calendar contents
+# Usage: LoadCalendar();
+sub LoadCalendar () {
+	if(DataLoadTest("$SaveToDir/$MainEventsFile")) {
+		%CalendarContents = do("$SaveToDir/$MainEventsFile");
+	}
+	if(DataLoadTest("$SaveToDir/$BirthdayFile")) {
+		%BirthdayContents = do("$SaveToDir/$BirthdayFile");
+	}
+	if(DataLoadTest("$SaveToDir/$SpecialEventsFile")) {
+		%SpecialEvents = do("$SaveToDir/$SpecialEventsFile");
+	}
+	return(1);
+}
+
+# Purpose: Test if a load can be successfully performed of the supplied file
+# Usage: DataLoadTest("/path/to/file");
+sub DataLoadTest () {
+	# If the calendar savefile exists
+	if (-e "$_[0]") {
+		# If it isn't readable then we warn and return
+		unless (-r "$_[0]") {
+			DPIntWarn("Unable to read the calendar at $_[0]: It isn't readable by me");
+			return(0);
+		}
+		# If it isn't writeable then we just warn (the file can still be loaded)
+		unless (-w "$_[0]") {
+			DPIntWarn("Unable to write the calendar at $_[0]: It isn't writeable by me. Expect trouble!");
+		}
+		return(1);
+	} else {
+		# If the file doesn't exist then we just assume that it isn't created yet,
+		# so we return false, but do it silently.
+		return(0);
+	}
+}
+
+# Purpose: Delete keys from %CalendarContents, recusively if needed
+# Usage: CalendarDelete(year,month,day,time);
+sub CalendarDelete ($$$$) {
+	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
+	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
+		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
+			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
+				unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}})) {
+					delete($CalendarContents{$EventYear}{$EventMonth});
+						unless(keys(%{$CalendarContents{$EventYear}})) {
+							delete($CalendarContents{$EventYear});
+						}
+			}
+	}
+}
+
+# Purpose: Print formatted --help output
+# Usage: PrintHelp("-shortoption", "--longoption", "description");
+sub PrintHelp($$$) {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# GUI helper functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Add an event
+# Usage: AddEvent();
+#  (calls the EventEditor with the correct parameters)
+sub AddEvent () {
+	EventEditor('new',undef);
+}
+
+# Purpose: Edit the event currently selected in the eventlist
+# Usage: EditEvent();
+#  (calls the EventEditor with the correct parameters)
+sub EditEvent () {
+	my $Selected;
+	# FIXME: This is just plain weird
+	foreach ($EventlistWidget->get_selected_indices) {
+		$Selected = $_;
+	}
+	if(defined($Selected)) {
+		my $Time = $EventlistWidget->{data}[$Selected][0];
+		if (defined($Time)) {
+			EventEditor('old',$Time);
+		}
+	}
+}
+
+# Purpose: Close a window when the escape key is pressed
+# Usage: $WIDGET->signal_connect("key_release_event" => \&EscapeKeyHandler);
+sub EscapeKeyHandler () {
+	my ($widget, $event) = @_;
+	if ($event->keyval == $Gtk2::Gdk::Keysyms{Escape}) {
+		$widget->destroy();
+	}
+}
+
+# Purpose: Display an error dialog
+# Usage: DPError("Error message");
+sub DPError ($) {
+	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'error', 'ok', "$_[0]");
+	$Dialog->run();
+	$Dialog->destroy();
+}
+
+# Purpose: Display a question dialog
+# Usage: DPQuestion("Question");
+# 	Returns true on yes, false on no/close/destroy
+sub DPQuestion ($) {
+	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', $_[0]);
+	my $Reply = $Dialog->run();
+	$Dialog->destroy();
+	if ($Reply eq 'yes') {
+		return(1);
+	} else {
+		return(0);
+	}
+}
+
+# Purpose: Call save functions on exit
+# Usage: QuitSub();
+sub QuitSub () {
+	$MainWindow->hide();
+	unless(SaveMainData) {
+		unless(DPQuestion(gettext("Some files could not be saved correctly. Are you sure you want to quit?"))) {
+			$MainWindow->show();
+			return(1);
+		}
+	}
+	Gtk2->main_quit;
+	exit(0);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# GUI calendar functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Sets the active calendar items in the $CalendarWidget
+# Usage: SetActiveCalItems(YEAR, NUMERICAL_MONTH[1-12]);
+sub SetActiveCalItems ($$) {
+	$CalendarWidget->clear_marks;			# Clear the current marks
+	if (defined($CalendarContents{$_[0]}) and defined($CalendarContents{$_[0]}{$_[1]})) {
+		foreach my $Day (keys %{$CalendarContents{$_[0]}{$_[1]}}) {
+			$CalendarWidget->mark_day($Day);	# Mark this day
+		}
+	}
+}
+
+# Purpose: Sets the date/time variables to the current date/time
+# Usage: GetDate();
+sub GetDate () {
+	($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	$curryear += 1900;						# Fix the year format
+	$currmonth++;							# Fix the month format
+}
+
+# Purpose: Calls SetActiveCalItems on the current year/month displayed in the $CalendarWidget
+# Usage: CalendarChange();
+sub CalendarChange () {
+	my $Month = $CalendarWidget->month;
+	$Month++;
+	SetActiveCalItems($CalendarWidget->year, $Month);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# GUI functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# USER DIALOGS
+
+# Purpose: Display the about dialog
+# Usage: AboutBox();
+sub AboutBox () {
+	$MainWindow->set_sensitive(0);
+	my $AboutDialog = Gtk2::AboutDialog->new;
+	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
+	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
+	$AboutDialog->set_name(gettext("Day planner beta"));
+	unless (gettext("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
+		$AboutDialog->set_translators(gettext("THE NAMES OF THE TRANSLATORS"));
+	}
+	$AboutDialog->run;
+	$MainWindow->set_sensitive(1);
+}
+
+# Purpose: Display a graphical event editor
+# Usage: EventEditor(type, time);
+#  type is new or old (new if you're adding, old if you're editing an existing one)
+#  time is the time you're editing or undef
+sub EventEditor ($$) {
+	# TODO: Error out if theres two events with the same time
+	# ==================================================================
+	# INITIALIZE
+	# ==================================================================
+	my ($EventType, $EventTime) = @_;
+	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my ($EventSummary, $EventFulltext);
+	my ($Title, $CheckboxTitle, $DateLabel);
+	
+	$MainWindow->set_sensitive(0);
+	
+	# Make sure the first parameter is valid (either new or old)
+	unless ($EventType eq 'new' or $EventType eq 'old') {
+		warn "FATAL: EventEditor called with invalid type: $_[0]\n";
+		return(0);
+	}
+
+	# Set type specific 
+	if ($EventType eq 'new') {
+		$Title = gettext("Add a task");
+		$CheckboxTitle = gettext("Add extra information");
+		$EventTime = "00:00";
+	} else {
+		$Title = gettext("Edit a task");
+		$CheckboxTitle = gettext("Edit extra information");
+		# We play stupid and just take it for granted that the summary is already created
+		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
+		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
+	}
+	my $AddEventBox = Gtk2::Window->new('toplevel');
+	
+	# ==================================================================
+	# BUILD THE WINDOW
+	# ==================================================================
+	$AddEventBox->set_modal(1);
+	$AddEventBox->set_title("$Title");
+	$AddEventBox->set_resizable(0);
+	$AddEventBox->set_border_width(5);
+
+	# Handle closing
+	$AddEventBox->signal_connect("destroy" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
+	$AddEventBox->signal_connect("delete-event" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
+	
+	# Primary vbox
+	my $ADPrimVBox = Gtk2::VBox->new();
+	$AddEventBox->add($ADPrimVBox);
+	$ADPrimVBox->show();
+	
+	# Add the label with the name
+	if ($EventType eq 'new') {
+		$DateLabel = Gtk2::Label->new(sprintf(gettext('Adding an event on the %s. %s %s'),$EventDay, $MonthNames{$EventMonth},$EventYear));
+	} else {
+		$DateLabel = Gtk2::Label->new(sprintf(gettext('Editing an event on the %s. %s %s'),$EventDay, $MonthNames{$EventMonth},$EventYear));
+	}
+	$DateLabel->show();
+	$ADPrimVBox->pack_start($DateLabel,1,0,0);
+	
+	# The HBox for the frame
+	my $FrameHBox = Gtk2::HBox->new();
+	$FrameHBox->show();
+	$ADPrimVBox->pack_start($FrameHBox,1,1,0);
+	
+	# Create the frame
+	my $TBFrame = Gtk2::Frame->new();
+	$TBFrame->set_label(gettext("Event"));
+	$FrameHBox->pack_start($TBFrame,1,1,0);
+	$TBFrame->show();
+	
+	# TODO: Need a config setting to show/hide the verbose entry by default
+	# TODO: Add a pop-up where you can select the date (DatePopup())
+	
+	# Create the vbox for use in the frame
+	my $TBVBox = Gtk2::VBox->new();
+	$TBFrame->add($TBVBox);
+	$TBVBox->show();
+
+	# Create the table inside the frame
+	my $ContentTable = Gtk2::Table->new(2,2);
+	$ContentTable->show();
+	$TBVBox->pack_start($ContentTable,1,1,0);
+	
+	# ==================================================================
+	# ADD THE TIME/SUMMARY BOXES
+	# ==================================================================
+	
+	# Create the time label
+	my $TimeLabel = Gtk2::Label->new(gettext('Time:'));
+	$TimeLabel->show();
+	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
+	
+	# Create the time entry box
+	my $TimeEntry = Gtk2::Entry->new();
+	$TimeEntry->set_text($EventTime);
+	$TimeEntry->show();
+	$ContentTable->attach_defaults($TimeEntry, 1,2,0,1);
+	
+	# Create the summary label
+	my $SummaryLabel = Gtk2::Label->new(gettext('Summary:'));
+	$SummaryLabel->show();
+	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
+
+	# Create the summary entry box
+	my $SummaryEntry = Gtk2::Entry->new();
+	if ($EventType eq 'old') {
+		$SummaryEntry->set_text($EventSummary);
+	}
+	$SummaryEntry->show();
+	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	
+	# ==================================================================
+	# ADD THE EXTENDED ENTRY
+	# ==================================================================
+	my $FulltextWindow;
+	
+	# Add the checkbox to display/not display it
+	my $FulltextCheckbox = Gtk2::CheckButton->new_with_label($CheckboxTitle);
+	$FulltextCheckbox->show();
+	$TBVBox->pack_start($FulltextCheckbox,0,0,0);
+	$FulltextCheckbox->signal_connect("toggled" => sub {
+			if ($FulltextCheckbox->get_active) {
+				$FulltextWindow->show();
+			} else {
+				$FulltextWindow->hide();
+			}});
+	
+	# Add the extended entry box
+	my $FulltextEntry = Gtk2::TextView->new();
+	$FulltextEntry->set_editable(1);
+	$FulltextEntry->set_wrap_mode("word-char");
+	$FulltextEntry->show();
+	# Add text to it if needed
+	if (defined($EventFulltext)) {
+		my $AddEventBuffer = Gtk2::TextBuffer->new();
+		$AddEventBuffer->set_text($EventFulltext);
+		$FulltextEntry->set_buffer($AddEventBuffer);
+	}
+
+	$FulltextWindow = Gtk2::ScrolledWindow->new;
+	$FulltextWindow->set_policy('automatic', 'automatic');
+	$FulltextWindow->add($FulltextEntry);
+	$TBVBox->pack_start($FulltextWindow,0,0,0);
+	
+	# Create the hbox for the buttons
+	my $TB_ButtonHBox = Gtk2::HBox->new();
+	$TB_ButtonHBox->show();
+	$ADPrimVBox->pack_end($TB_ButtonHBox,0,0,0);
+	
+	# ==================================================================
+	# ADD THE BUTTONS AND FINALIZE THE WINDOW
+	# ==================================================================
+	# Cancel button
+	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
+	$CancelButton->signal_connect("clicked" => sub { $AddEventBox->destroy;
+		$MainWindow->set_sensitive(1);});
+	$CancelButton->show();
+	$TB_ButtonHBox->pack_end($CancelButton,0,0,0);
+	
+	# Ok button
+	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
+	$OKButton->show();
+	$TB_ButtonHBox->pack_start($OKButton,0,0,0);
+	$OKButton->signal_connect('clicked' => sub {
+			# Get the contents
+			my $Time = $TimeEntry->get_text;
+			my $Summary = $SummaryEntry->get_text;
+			my $FulltextBuff = $FulltextEntry->get_buffer;
+			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
+			# Add them to the hash
+			$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
+			$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
+			# Call UpdatedData to tell Day planner to save the data and redraw widgets
+			UpdatedData();
+			# Destroy our window, it will get the signal and do anything it needs to
+			$AddEventBox->destroy;
+		});
+
+	# Delete button (only in edit mode)
+	if ($EventType eq 'old') {
+		my $DeleteButton = Gtk2::Button->new_from_stock('gtk-delete');
+		$DeleteButton->show();
+		$TB_ButtonHBox->pack_end($DeleteButton,0,0,2);
+		$DeleteButton->signal_connect("clicked" => sub {
+				# Delete it
+				CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+				# Call UpdatedData to tell Day planner to save the data and redraw widgets
+				UpdatedData();
+				# Destroy our window, it will get the signal and do anything it needs to
+				$AddEventBox->destroy;
+			});
+	}
+	
+	# Handle the esc button
+	$AddEventBox->signal_connect("key_release_event" => \&EscapeKeyHandler);
+
+	# Show it all
+	$AddEventBox->show();
+}
+
+# CORE
+
+# Purpose: Draw the configuration window and allow the user to set different
+#  configuration options
+# Usage: DrawConfigWindow();
+sub DrawConfigWindow () {
+	my $ConfigWindow = Gtk2::Window->new();
+	$ConfigWindow->set_modal(1);
+	$ConfigWindow->set_title(gettext("Day planner preferences"));
+	$ConfigWindow->set_resizable(0);
+	$ConfigWindow->set_border_width(5);
+
+	# Handle closing
+	$ConfigWindow->signal_connect("destroy" => sub { $ConfigWindow->destroy });
+	$ConfigWindow->signal_connect("delete-event" => sub { $ConfigWindow->destroy });
+
+	# Create the primary vbox
+	my $PrimaryVBox = Gtk2::VBox->new();
+	$PrimaryVBox->show();
+	$ConfigWindow->add($PrimaryVBox);
+	
+	# Create the frame
+	my $ConfigFrame = Gtk2::Frame->new(gettext("Preferences"));
+	$PrimaryVBox->pack_start($ConfigFrame,0,0,0);
+	$ConfigFrame->show();
+	
+	# Create the config vbox
+	my $ConfigVBox = Gtk2::VBox->new();
+	$ConfigFrame->add($ConfigVBox);
+	$ConfigVBox->show();
+	
+	# ==================================================================
+	# CONFIGURATION OPTIONS
+	# ==================================================================
+	my $Placeholder = Gtk2::Label->new("This is a placeholder,\nthere are no config options yet");
+	$ConfigVBox->pack_start($Placeholder,0,0,0);
+	$Placeholder->show();
+
+	# ==================================================================
+	# BUTTONS
+	# ==================================================================
+	# Add the buttons
+	my $ButtonHBox = Gtk2::HBox->new();
+	$ButtonHBox->show();
+	$PrimaryVBox->pack_end($ButtonHBox,0,0,0);
+	
+	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
+	$OKButton->show();
+	$OKButton->signal_connect("clicked" => sub { $ConfigWindow->destroy});
+	$ButtonHBox->pack_start($OKButton,0,0,0);
+
+	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
+	$CancelButton->signal_connect("clicked" => sub { $ConfigWindow->destroy});
+	$CancelButton->show();
+	$ButtonHBox->pack_end($CancelButton,0,0,0);
+	
+	# Show the config window
+	$ConfigWindow->show();
+}
+
+# Purpose: Draw the tasklist on the currently selected date in the calendar
+# Usage: DrawEventlist();
+sub DrawEventlist() {
+	my $Year = $CalendarWidget->year;
+	my $Month = $CalendarWidget->month;$Month++;
+	my $Day = $CalendarWidget->selected_day;
+	unless ($EventlistWidget) {
+		$EventlistWidget = Gtk2::SimpleList->new (
+			gettext("Time") => 'text',
+			gettext("Event") => 'text',
+		);
+		$EventlistWin->add($EventlistWidget);
+	} else {
+		@{$EventlistWidget->{data}} = ();
+	}
+	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
+		foreach my $Time (sort keys %{$CalendarContents{$Year}{$Month}{$Day}}) {
+			unless (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"})) {
+				DPIntWarn("Found no summary for entry: $Time");
+			} else {
+				push (@{$EventlistWidget->{data}}, [$Time, $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
+			}
+		}
+	}
+	# Register doubleclick (FIXME)
+#	$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
+	$EventlistWidget->show();
+}
+
+# Purpose: Draw the main window
+# Usage: DrawMainWindow();
+sub DrawMainWindow () {
+	# ==================================================================
+	# BUILD THE MAIN WINDOW
+	# ==================================================================
+	# Create the main window widget
+	$MainWindow = Gtk2::Window->new('toplevel');
+	$MainWindow->set_title(gettext("Day planner") . " $Version");
+	$MainWindow->set_border_width(5);
+	$MainWindow->set_default_size (600,300);
+
+	# Make it handle closing
+	$MainWindow->signal_connect("destroy" => \&QuitSub);
+	$MainWindow->signal_connect("delete-event" => \&QuitSub);
+
+	# Create the primary VBox for use inside it
+	my $PrimaryWindowVBox = Gtk2::VBox->new();
+	$PrimaryWindowVBox->show();
+	$MainWindow->add($PrimaryWindowVBox);
+
+	# ==================================================================
+	# TOOLBAR
+	# ==================================================================
+	my $Toolbar = Gtk2::Toolbar->new();
+	$Toolbar->show();
+	$PrimaryWindowVBox->pack_start($Toolbar,0,0,0);
+	$Toolbar->set_style('both');
+	
+	# About button
+	my $AboutButton = Gtk2::ToolButton->new_from_stock('gtk-about');
+	$AboutButton->signal_connect('clicked' => \&AboutBox);
+	$Toolbar->insert($AboutButton,0);
+	$AboutButton->show();
+
+	# Preferences button
+	my $PrefsButton = Gtk2::ToolButton->new_from_stock('gtk-preferences');
+	$PrefsButton->signal_connect('clicked' => \&DrawConfigWindow);
+	$Toolbar->insert($PrefsButton,0);
+	$PrefsButton->show();
+
+	# Edit button
+	my $EditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
+	$EditButton->signal_connect('clicked' => \&EditEvent);
+	$Toolbar->insert($EditButton,0);
+	$EditButton->show();
+	
+	# Add button
+	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
+	$AddButton->signal_connect("clicked" => \&AddEvent);
+	$Toolbar->insert($AddButton,0);
+	$AddButton->show();
+
+	# Quit button
+	my $BQuitButton = Gtk2::ToolButton->new_from_stock('gtk-quit');
+	$BQuitButton->signal_connect("clicked" => \&QuitSub);
+	$Toolbar->insert($BQuitButton,0);
+	$BQuitButton->show();
+
+	# ==================================================================
+	# WORKING AREA
+	# ==================================================================
+	# Create the hbox which will contain the rest of the program
+	$WorkingAreaHBox = Gtk2::HBox->new();
+	$WorkingAreaHBox->show();
+	# Add it to the primary VBox
+	$PrimaryWindowVBox->pack_start($WorkingAreaHBox,1,1,0);
+	
+	# ==================================================================
+	# THE RIGHT HAND AREA
+	# ==================================================================
+	
+	# Create the vbox for use in it
+	my $RightHandVBox = Gtk2::VBox->new();
+	$WorkingAreaHBox->pack_end($RightHandVBox,0,0,0);
+	$RightHandVBox->show();
+
+	# CALENDAR
+	# Create the calendar
+	$CalendarWidget = Gtk2::Calendar->new;
+	GetDate();
+	SetActiveCalItems($curryear, $currmonth);
+	$CalendarWidget->show();
+	$CalendarWidget->display_options(['show-week-numbers', 'show-day-names','show-heading']);
+	$RightHandVBox->pack_start($CalendarWidget,0,0,0);
+
+	$CalendarWidget->signal_connect('prev-month' => \&CalendarChange);
+	$CalendarWidget->signal_connect('next-month' => \&CalendarChange);
+	$CalendarWidget->signal_connect('prev-year' => \&CalendarChange);
+	$CalendarWidget->signal_connect('next-year' => \&CalendarChange);
+	$CalendarWidget->signal_connect('day-selected' => \&DrawEventlist);
+
+	# UPCOMING EVENTS
+	# Create the (placeholder for the) upcoming events widget
+#	my $UpcomingEventsWidget = Gtk2::Label->new(gettext("Upcoming events..."));
+#	$UpcomingEventsWidget->show();
+#	$RightHandVBox->pack_end($UpcomingEventsWidget,0,0,0);
+	
+	# ==================================================================
+	# TASK LIST
+	# ==================================================================
+	
+	# Add a window for use for it
+	$EventlistWin = Gtk2::ScrolledWindow->new;
+	$EventlistWin->set_policy('automatic', 'automatic');
+	$WorkingAreaHBox->pack_start($EventlistWin,1,1,0);
+	$EventlistWin->show();
+	
+	# Draw the initial tasklist
+	DrawEventlist();
+	
+	# ==================================================================
+	# FINALIZE AND DISPLAY
+	# ==================================================================
+
+	# Finally, show the window and rest in the main Gtk2 loop
+	$MainWindow->show();
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Core functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Get commandline options
+GetOptions (
+	'help|h' => sub {
+		print "Day planner verison $Version\n\n";
+		PrintHelp("-h","--help","Display this help screen and exit");
+		PrintHelp("-v","--version", "Display version information and exit");
+		PrintHelp("-t","--test","Use $SaveToDir/debug instead of $SaveToDir");
+		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
+		exit(0);
+	},
+	'version|v' => sub {
+		print "Day planner verison $Version\n";
+		print "RCS revision: $RCSRev\n";
+		exit(0);
+	},
+	'debuginfo' => sub {
+		print "Day planner verison $Version\n";
+		print "RCS revision: $RCSRev\n";
+		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
+		printf "Perl version %vd\n", $^V;
+		exit(0);
+	},
+	'test|t' => sub {
+		print "*** (Day Planner $Version) Running in test mode\n";
+		$SaveToDir = "$SaveToDir/debug";
+	},
+) or die "Run $0 --help for more information\n";
+
+# Load the calendar
+LoadCalendar();
+# Draw the main window
+DrawMainWindow();
+# Rest in the Gtk2 main loop
+Gtk2->main;

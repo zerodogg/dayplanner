@@ -1,0 +1,11 @@
+#!/bin/sh
+echo -n "Building po/dayplanner.pot..."
+# Get our current year
+YEAR="`date +%Y`"
+# Create the pot-file
+xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'http://somewhere.dayplanner' -o ./po/dayplanner.pot -k=Gettext -d dayplanner --language perl dayplanner
+# Fix the headers using perl
+perl -pi -e "s%^# SOME DESCRIPTIVE TITLE.%# PO file for Day Planner%g;
+s%^# This file is distributed under the same license as the PACKAGE package.%# This file is distributed under the GNU General Public License\\n# as published by the Free Software Foundation; either version 2 of the license\\n# or (at your option) any later version (the same license as Day Planner)\\n#%g;
+s%^(#.+) YEAR %\$1 $YEAR %g" ./po/dayplanner.pot
+echo "done"
