@@ -5,7 +5,7 @@ follows:
 %CalendarContents = (
 	'YEAR' => {
 			'MONTH_NUMBER(1-12)' => {
-							'DAY(1-31' => {
+							'DAY(1-31)' => {
 								'TIME' => {
 										'summary' => 'SUMMARY',
 										'fulltext' => 'Full text'
