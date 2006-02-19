@@ -607,7 +607,7 @@ sub EventEditor ($$) {
 	$TBVBox->pack_start($FT_Expander,0,0,0);
 	$FT_Expander->show();
 	if ($EditorVerboseDefault) {
-		$FT_Expander->set_expanded(0);
+		$FT_Expander->set_expanded(1);
 	}
 	
 	# Add the extended entry box
@@ -698,7 +698,7 @@ sub EventEditor ($$) {
 #  configuration options
 # Usage: ConfigWindow();
 sub ConfigWindow () {
-	my ($NewToolbarStyle,	$NewEditorVerboseDefault);
+	my ($NewToolbarStyle);
 	my $ConfigWindow = Gtk2::Window->new();
 	$ConfigWindow->set_modal(1);
 	$ConfigWindow->set_title(gettext("Day planner preferences"));
@@ -706,7 +706,9 @@ sub ConfigWindow () {
 	$ConfigWindow->set_border_width(5);
 
 	# Handle closing
-	$ConfigWindow->signal_connect("destroy" => sub { $ConfigWindow->destroy });
+	$ConfigWindow->signal_connect("destroy" => sub { 
+			$Toolbar->set_style($ToolbarStyle);
+			$ConfigWindow->destroy });
 	
 	# Create the primary vbox
 	my $PrimaryVBox = Gtk2::VBox->new();
@@ -775,7 +777,6 @@ sub ConfigWindow () {
 			}});
 
 	# EDITOR VERBOSE DEFAULT
-	# TODO
 	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(gettext(sprintf("Expand \"%s\" by default", gettext("Add extra information"))));
 	$ConfigVBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
@@ -793,8 +794,12 @@ sub ConfigWindow () {
 	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
 	$OKButton->show();
 	$OKButton->signal_connect("clicked" => sub { 
-			$EditorVerboseDefault = $NewEditorVerboseDefault if defined($NewEditorVerboseDefault);
 			$ToolbarStyle = $NewToolbarStyle if defined($NewToolbarStyle);
+			if ($EDVDefaultCheckbox->get_mode) {
+				$EditorVerboseDefault = 1;
+			} else {
+				$EditorVerboseDefault = 0;
+			}
 			SaveDefaultConfig(); 
 			$ConfigWindow->destroy});
 	$ButtonHBox->pack_start($OKButton,0,0,0);
