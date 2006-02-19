@@ -625,6 +625,7 @@ sub EventEditor ($$) {
 	$FulltextWindow = Gtk2::ScrolledWindow->new;
 	$FulltextWindow->set_policy('automatic', 'automatic');
 	$FulltextWindow->add($FulltextEntry);
+	$FulltextWindow->show();
 	#$TBVBox->pack_start($FulltextWindow,0,0,0);
 	$FT_Expander->add($FulltextWindow);
 	
