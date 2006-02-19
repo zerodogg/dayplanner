@@ -21,13 +21,13 @@
 use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
-use POSIX;			# Needed for setlocale();
+#use POSIX(qw/LC_ALL LC_CTYPE/);	# Needed for setlocale();
 use Gtk2 '-init';		# Use Gtk2 :)
 use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use Getopt::Long;		# Commandline options
-setlocale(LC_MESSAGES, "");
+# setlocale(LC_MESSAGES, "");
 
 # Scalars
 my $Version = "0.1 Beta 1";
@@ -36,6 +36,7 @@ my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist dir
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
 my $SpecialEventsFile = "events_special.dpd";		# The filename to save events with special settings
+my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration to
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 
 # Arrays
@@ -65,7 +66,7 @@ my %MonthNames = (
 # Gtk2 objects
 my (
 	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
-	$EventlistWin,		$MainWindow
+	$EventlistWin,		$MainWindow,		$Toolbar
 );	# Gtk objects
 
 # Global date variables
@@ -73,9 +74,93 @@ my (
 	$currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst
 );
 
+# Configuration options
+my (
+	$EditorVerboseDefault,	$ToolbarStyle
+);
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Write the configuration file
+# Usage: WriteConfig(DIRECTORY, FILENAME);
+sub WriteConfig ($$) {
+	# The parameters
+	my $Dir = $_[0];
+	my $File = $_[1];
+	# Open the config
+	open(CONFIG, ">$Dir/$File") or do {
+		# If we can't then we error out, no need for failsafe stuff - it's just the config file
+		DPError(gettext(sprintf("Unable to write the configuration settings to %s: %s", "$Dir/$File", $!)));
+		return(0);
+	};
+	# Verify the options first
+	unless(defined($ToolbarStyle)) {
+		$ToolbarStyle = 'both';
+	}
+	unless(defined($EditorVerboseDefault)) {
+		$EditorVerboseDefault = 0;
+	}
+	# Print the config
+	print CONFIG "# Day planner version $Version configuration file\n\n";
+	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n# both = both icons and text\n# text = only text\n# icons = only icons\n";
+	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
+	print CONFIG "# If the EventEditor should expand the \"add extra information\" by default\n# 1 = expand\n# 0 = don't expand\n";
+	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
+	# Close the config file
+	close(CONFIG);
+}
+
+# Purpose: Load the configuration file
+# Usage: LoadConfig(DIRECTORY, FILENAME);
+sub LoadConfig ($$) {
+	# The parameters
+	my $Dir = $_[0];
+	my $File = $_[1];
+	# If it doesn't exist then we just let WriteConfig handle it
+	unless (-e "$Dir/$File") {
+		WriteConfig($Dir, $File);
+		return(1);
+	}
+	
+	# Open the config
+	open(CONFIG, "<$Dir/$File") or do {
+		DPError(gettext(sprintf("Unable to read the configuration settings from %s: %s", "$Dir/$File", $!)));
+		return(0);
+	};
+	
+	# Load the config
+	foreach(<CONFIG>) {
+		next if m/^\s*#/;
+		next unless m/=/;
+		chomp;
+		my $Option = $_;
+		my $Value = $_;
+		$Option =~ s/^\s*(.*)\s*=.*/$1/;
+		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		if ($Option eq 'ToolbarStyle') {
+			$ToolbarStyle = $Value;
+		} elsif ($Option eq 'EditorVerboseDefault') {
+			$EditorVerboseDefault = $Value;
+		} else {
+			DPIntWarn("Unrecognized configuration setting \"$Option\", ignoring");
+		}
+	}
+}
+
+# Purpose: Load the default configuration file
+# Usage: LoadDefaultConfig();
+sub LoadDefaultConfig () {
+	CreateSaveDir();
+	return(LoadConfig($SaveToDir, $ConfigFile));
+}
+
+# Purpose: Save the default configuration file
+# Usage: SaveDefaultConfig();
+sub SaveDefaultConfig () {
+	return(WriteConfig($SaveToDir, $ConfigFile));
+}
 
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
 # Usage: CreateSaveDir();
@@ -202,12 +287,6 @@ sub UpdatedData () {
 	CalendarChange();
 }
 
-# Purpose: Prints out a todo message to STDOUT
-# Usage: TODO(CALLER_SUBROUTINE_NAME, MESSAGE);
-sub TODO ($$) {
-	print "TODO: ($_[0]) $_[1]\n";
-}
-
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
 sub DPIntWarn ($) {
@@ -318,9 +397,17 @@ sub DPError ($) {
 	$Dialog->destroy();
 }
 
+# Purpose: Display an information dialog
+# Usage: DPInfo("Information message");
+sub DPInfo ($) {
+	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "$_[0]");
+	$Dialog->run();
+	$Dialog->destroy();
+}
+
 # Purpose: Display a question dialog
 # Usage: DPQuestion("Question");
-# 	Returns true on yes, false on no/close/destroy
+# 	Returns true on yes, false on anything 
 sub DPQuestion ($) {
 	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', $_[0]);
 	my $Reply = $Dialog->run();
@@ -403,14 +490,13 @@ sub AboutBox () {
 #  type is new or old (new if you're adding, old if you're editing an existing one)
 #  time is the time you're editing or undef
 sub EventEditor ($$) {
-	# TODO: Error out if theres two events with the same time
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
 	my ($EventType, $EventTime) = @_;
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext);
-	my ($Title, $CheckboxTitle, $DateLabel);
+	my ($Title, $ExpanderTitle, $DateLabel);
 	
 	$MainWindow->set_sensitive(0);
 	
@@ -423,12 +509,12 @@ sub EventEditor ($$) {
 	# Set type specific 
 	if ($EventType eq 'new') {
 		$Title = gettext("Add a task");
-		$CheckboxTitle = gettext("Add extra information");
+		$ExpanderTitle = gettext("Add extra information");
 		$EventTime = "00:00";
 	} else {
 		$Title = gettext("Edit a task");
-		$CheckboxTitle = gettext("Edit extra information");
-		# We play stupid and just take it for granted that the summary is already created
+		$ExpanderTitle = gettext("Edit extra information");
+		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
 	}
@@ -517,16 +603,12 @@ sub EventEditor ($$) {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	# Add the checkbox to display/not display it
-	my $FulltextCheckbox = Gtk2::CheckButton->new_with_label($CheckboxTitle);
-	$FulltextCheckbox->show();
-	$TBVBox->pack_start($FulltextCheckbox,0,0,0);
-	$FulltextCheckbox->signal_connect("toggled" => sub {
-			if ($FulltextCheckbox->get_active) {
-				$FulltextWindow->show();
-			} else {
-				$FulltextWindow->hide();
-			}});
+	my $FT_Expander = Gtk2::Expander->new($ExpanderTitle);
+	$TBVBox->pack_start($FT_Expander,0,0,0);
+	$FT_Expander->show();
+	if ($EditorVerboseDefault) {
+		$FT_Expander->set_expanded(0);
+	}
 	
 	# Add the extended entry box
 	my $FulltextEntry = Gtk2::TextView->new();
@@ -543,7 +625,8 @@ sub EventEditor ($$) {
 	$FulltextWindow = Gtk2::ScrolledWindow->new;
 	$FulltextWindow->set_policy('automatic', 'automatic');
 	$FulltextWindow->add($FulltextEntry);
-	$TBVBox->pack_start($FulltextWindow,0,0,0);
+	#$TBVBox->pack_start($FulltextWindow,0,0,0);
+	$FT_Expander->add($FulltextWindow);
 	
 	# Create the hbox for the buttons
 	my $TB_ButtonHBox = Gtk2::HBox->new();
@@ -565,18 +648,27 @@ sub EventEditor ($$) {
 	$OKButton->show();
 	$TB_ButtonHBox->pack_start($OKButton,0,0,0);
 	$OKButton->signal_connect('clicked' => sub {
+			my $Error = 0;
 			# Get the contents
 			my $Time = $TimeEntry->get_text;
 			my $Summary = $SummaryEntry->get_text;
 			my $FulltextBuff = $FulltextEntry->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
-			# Add them to the hash
-			$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
-			$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
-			# Call UpdatedData to tell Day planner to save the data and redraw widgets
-			UpdatedData();
-			# Destroy our window, it will get the signal and do anything it needs to
-			$AddEventBox->destroy;
+			if ($EventType eq 'new') {
+				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+					DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+						$Error = 1;
+					}
+			}
+			unless ($Error) {
+				# Add them to the hash
+				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
+				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
+				# Call UpdatedData to tell Day planner to save the data and redraw widgets
+				UpdatedData();
+				# Destroy our window, it will get the signal and do anything it needs to
+				$AddEventBox->destroy;
+			}
 		});
 
 	# Delete button (only in edit mode)
@@ -601,12 +693,11 @@ sub EventEditor ($$) {
 	$AddEventBox->show();
 }
 
-# CORE
-
 # Purpose: Draw the configuration window and allow the user to set different
 #  configuration options
-# Usage: DrawConfigWindow();
-sub DrawConfigWindow () {
+# Usage: ConfigWindow();
+sub ConfigWindow () {
+	my ($NewToolbarStyle,	$NewEditorVerboseDefault);
 	my $ConfigWindow = Gtk2::Window->new();
 	$ConfigWindow->set_modal(1);
 	$ConfigWindow->set_title(gettext("Day planner preferences"));
@@ -615,8 +706,7 @@ sub DrawConfigWindow () {
 
 	# Handle closing
 	$ConfigWindow->signal_connect("destroy" => sub { $ConfigWindow->destroy });
-	$ConfigWindow->signal_connect("delete-event" => sub { $ConfigWindow->destroy });
-
+	
 	# Create the primary vbox
 	my $PrimaryVBox = Gtk2::VBox->new();
 	$PrimaryVBox->show();
@@ -635,10 +725,62 @@ sub DrawConfigWindow () {
 	# ==================================================================
 	# CONFIGURATION OPTIONS
 	# ==================================================================
-	my $Placeholder = Gtk2::Label->new("This is a placeholder,\nthere are no config options yet");
-	$ConfigVBox->pack_start($Placeholder,0,0,0);
-	$Placeholder->show();
 
+	# TOOLBAR STYLE
+	my $TBStyle_HBox = Gtk2::HBox->new();
+	$TBStyle_HBox->show();
+	$ConfigVBox->pack_start($TBStyle_HBox,0,0,0);
+
+	my $TBStyle_Label = Gtk2::Label->new(gettext("Toolbar icon style"));
+	$TBStyle_Label->show();
+	$TBStyle_HBox->pack_start($TBStyle_Label,0,0,0);
+	
+	# The combo options
+	# both, icons, text
+	my $TBStyle_icons = gettext("Icons only");
+	my $TBStyle_text = gettext("Text only");
+	my $TBStyle_both = gettext("Both text and icons");
+	
+	my $TBStyle_Combo = Gtk2::ComboBox->new_text;
+	$TBStyle_Combo->insert_text(0, $TBStyle_icons);
+	$TBStyle_Combo->insert_text(1, $TBStyle_text);
+	$TBStyle_Combo->insert_text(2, $TBStyle_both);
+	$TBStyle_Combo->show();
+	$TBStyle_HBox->pack_start($TBStyle_Combo,0,0,0);
+
+	# Set the active style in the combo box
+	if (defined($ToolbarStyle)) {
+		if ($ToolbarStyle eq 'icons') {
+			$TBStyle_Combo->set_active(0);
+		} elsif ($ToolbarStyle eq 'text') {
+			$TBStyle_Combo->set_active(1);
+		} else {
+			$TBStyle_Combo->set_active(2);
+		}
+	}
+
+	# Change the style of the toolbar and setting in $ToolbarStyle when the user changes it
+	$TBStyle_Combo->signal_connect('changed' => sub {
+			my $ActiveIndex = $TBStyle_Combo->get_active;
+			if ($ActiveIndex == 0) {
+				$Toolbar->set_style('icons');
+				$NewToolbarStyle = 'icons';
+			} elsif ($ActiveIndex == 1) {
+				$Toolbar->set_style('text');
+				$NewToolbarStyle = 'text';
+			} else {
+				$Toolbar->set_style('both');
+				$NewToolbarStyle = 'both';
+			}});
+
+	# EDITOR VERBOSE DEFAULT
+	# TODO
+	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(gettext(sprintf("Expand \"%s\" by default", gettext("Add extra information"))));
+	$ConfigVBox->pack_start($EDVDefaultCheckbox,0,0,0);
+	$EDVDefaultCheckbox->show();
+	if ($EditorVerboseDefault) {
+		$EDVDefaultCheckbox->set_active(1);
+	}
 	# ==================================================================
 	# BUTTONS
 	# ==================================================================
@@ -649,17 +791,26 @@ sub DrawConfigWindow () {
 	
 	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
 	$OKButton->show();
-	$OKButton->signal_connect("clicked" => sub { $ConfigWindow->destroy});
+	$OKButton->signal_connect("clicked" => sub { 
+			$EditorVerboseDefault = $NewEditorVerboseDefault if defined($NewEditorVerboseDefault);
+			$ToolbarStyle = $NewToolbarStyle if defined($NewToolbarStyle);
+			SaveDefaultConfig(); 
+			$ConfigWindow->destroy});
 	$ButtonHBox->pack_start($OKButton,0,0,0);
 
 	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
-	$CancelButton->signal_connect("clicked" => sub { $ConfigWindow->destroy});
+	$CancelButton->signal_connect("clicked" => sub { 
+			$Toolbar->set_style($ToolbarStyle);
+			$ConfigWindow->destroy}
+	);
 	$CancelButton->show();
 	$ButtonHBox->pack_end($CancelButton,0,0,0);
 	
 	# Show the config window
 	$ConfigWindow->show();
 }
+
+# MAIN WINDOW
 
 # Purpose: Draw the tasklist on the currently selected date in the calendar
 # Usage: DrawEventlist();
@@ -714,10 +865,19 @@ sub DrawMainWindow () {
 	# ==================================================================
 	# TOOLBAR
 	# ==================================================================
-	my $Toolbar = Gtk2::Toolbar->new();
+	$Toolbar = Gtk2::Toolbar->new();
 	$Toolbar->show();
 	$PrimaryWindowVBox->pack_start($Toolbar,0,0,0);
-	$Toolbar->set_style('both');
+	if (defined($ToolbarStyle) and $ToolbarStyle =~ /^(both|icons|text)$/) {
+		$Toolbar->set_style($ToolbarStyle);
+	} else {
+		if (defined($ToolbarStyle)) {
+			DPIntWarn("Config option ToolbarStyle is set to \"$ToolbarStyle\". This is invalid. Valid settings: both, icons, text. Assuming ToolbarStyle=both");
+		} else {
+			DPIntWarn("Config option ToolbarStyle isn't set. Assuming ToolbarStyle=both");
+		}
+		$Toolbar->set_style('both');
+	}
 	
 	# About button
 	my $AboutButton = Gtk2::ToolButton->new_from_stock('gtk-about');
@@ -727,7 +887,7 @@ sub DrawMainWindow () {
 
 	# Preferences button
 	my $PrefsButton = Gtk2::ToolButton->new_from_stock('gtk-preferences');
-	$PrefsButton->signal_connect('clicked' => \&DrawConfigWindow);
+	$PrefsButton->signal_connect('clicked' => \&ConfigWindow);
 	$Toolbar->insert($PrefsButton,0);
 	$PrefsButton->show();
 
@@ -841,6 +1001,15 @@ GetOptions (
 	},
 ) or die "Run $0 --help for more information\n";
 
+# Display a message the first time day planner is started.
+# This should probably be changed to have a test of which day planner was last started
+# in later versions (=> 0.2 Beta)
+unless (-e $SaveToDir) {
+	DPInfo(gettext(sprintf("This is a beta version of Day planner. It should not be considered feature complete or production ready. Report bugs to %s", 'http://gna.org/projects/dayplanner/')));
+}
+
+# Load the configuration file
+LoadDefaultConfig();
 # Load the calendar
 LoadCalendar();
 # Draw the main window
