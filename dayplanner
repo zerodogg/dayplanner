@@ -39,6 +39,15 @@ my $SpecialEventsFile = "events_special.dpd";		# The filename to save events wit
 my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration to
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 
+# If for some obscure reason HOME isn't set we can't continue
+unless(defined($ENV{HOME}) and $ENV{HOME}) {
+	die gettext(sprintf("The environment variable %s isn't set! Unable to continue\n", "HOME"));
+}
+# The same goes for if HOME doesn't exist or isn't a directory
+unless(-e $ENV{HOME} and -d $ENV{HOME}) {
+	die gettext(sprintf("Your home directory (%s) doesn't exist! Please verify the setting in the environment variable %s. Unable to continue\n", $ENV{HOME}, "HOME"));
+}
+
 # Arrays
 my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
 	$ENV{HOME}, "$ENV{HOME}/Desktop", "/tmp", "/var/tmp", "/usr/tmp", "$ENV{HOME}/tmp"
@@ -66,7 +75,8 @@ my %MonthNames = (
 # Gtk2 objects
 my (
 	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
-	$EventlistWin,		$MainWindow,		$Toolbar
+	$EventlistWin,		$MainWindow,		$Toolbar,
+	$ToolbarEditButton
 );	# Gtk objects
 
 # Global date variables
@@ -477,6 +487,7 @@ sub AboutBox () {
 	my $AboutDialog = Gtk2::AboutDialog->new;
 	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
+	$AboutDialog->set_website("http://gna.org/projects/dayplanner");
 	$AboutDialog->set_name(gettext("Day planner beta"));
 	unless (gettext("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
 		$AboutDialog->set_translators(gettext("THE NAMES OF THE TRANSLATORS"));
@@ -508,11 +519,11 @@ sub EventEditor ($$) {
 
 	# Set type specific 
 	if ($EventType eq 'new') {
-		$Title = gettext("Add a task");
+		$Title = gettext("Add an event");
 		$ExpanderTitle = gettext("Add extra information");
 		$EventTime = "00:00";
 	} else {
-		$Title = gettext("Edit a task");
+		$Title = gettext("Edit an event");
 		$ExpanderTitle = gettext("Edit extra information");
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
@@ -557,7 +568,6 @@ sub EventEditor ($$) {
 	$FrameHBox->pack_start($TBFrame,1,1,0);
 	$TBFrame->show();
 	
-	# TODO: Need a config setting to show/hide the verbose entry by default
 	# TODO: Add a pop-up where you can select the date (DatePopup())
 	
 	# Create the vbox for use in the frame
@@ -795,7 +805,7 @@ sub ConfigWindow () {
 	$OKButton->show();
 	$OKButton->signal_connect("clicked" => sub { 
 			$ToolbarStyle = $NewToolbarStyle if defined($NewToolbarStyle);
-			if ($EDVDefaultCheckbox->get_mode) {
+			if ($EDVDefaultCheckbox->get_active) {
 				$EditorVerboseDefault = 1;
 			} else {
 				$EditorVerboseDefault = 0;
@@ -818,7 +828,7 @@ sub ConfigWindow () {
 
 # MAIN WINDOW
 
-# Purpose: Draw the tasklist on the currently selected date in the calendar
+# Purpose: Draw the eventlist on the currently selected date in the calendar
 # Usage: DrawEventlist();
 sub DrawEventlist() {
 	my $Year = $CalendarWidget->year;
@@ -844,6 +854,11 @@ sub DrawEventlist() {
 	}
 	# Register doubleclick (FIXME)
 #	$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
+#	FIXME: We need this to work
+#	$EventlistWidget->get_model->signal_connect('changed' => sub {
+#			$ToolbarEditButton->set_sensitive(1);
+#		});
+#	$ToolbarEditButton->set_sensitive(0);
 	$EventlistWidget->show();
 }
 
@@ -898,10 +913,12 @@ sub DrawMainWindow () {
 	$PrefsButton->show();
 
 	# Edit button
-	my $EditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
-	$EditButton->signal_connect('clicked' => \&EditEvent);
-	$Toolbar->insert($EditButton,0);
-	$EditButton->show();
+	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
+	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
+	$Toolbar->insert($ToolbarEditButton,0);
+	# TODO: This should be uncommented again one the signal is ready
+	#$ToolbarEditButton->set_sensitive(0);
+	$ToolbarEditButton->show();
 	
 	# Add button
 	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
@@ -964,7 +981,7 @@ sub DrawMainWindow () {
 	$WorkingAreaHBox->pack_start($EventlistWin,1,1,0);
 	$EventlistWin->show();
 	
-	# Draw the initial tasklist
+	# Draw the initial eventlist
 	DrawEventlist();
 	
 	# ==================================================================
