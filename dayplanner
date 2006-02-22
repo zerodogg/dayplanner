@@ -550,7 +550,7 @@ sub EventEditor ($$) {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
-		$OkButtonType = 'gtk-save';
+		$OkButtonType = 'gtk-close';
 	}
 	my $AddEventBox = Gtk2::Window->new('toplevel');
 	
@@ -924,7 +924,7 @@ sub DrawMainWindow () {
 		[ "/" . gettext("_Calendar") . "/sep2",					undef,			undef,			6,	"<Separator>"],
 		[ "/" . gettext("_Calendar") . "/" . gettext("_Quit"),			"<control>Q",		\&QuitSub,		0],
 		# Help menu
-		[ "/" . gettext("_Help"),						undef,			undef,			0,	"<LastBranch>" ],
+		[ "/" . gettext("_Help"),						undef,			undef,			0,	"<Branch>" ],
 		[ "/" . gettext("_Help") . "/" . gettext("_About"),			undef,			\&AboutBox,		0],
 	);
 	# The accelgroup to use for the menuitems
