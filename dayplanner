@@ -550,7 +550,7 @@ sub EventEditor ($$) {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
-		$OkButtonType = 'gtk-close';
+		$OkButtonType = 'gtk-ok';
 	}
 	my $AddEventBox = Gtk2::Window->new('toplevel');
 	
