@@ -755,11 +755,13 @@ sub ConfigWindow () {
 	my $TBStyle_icons = gettext("Icons only");
 	my $TBStyle_text = gettext("Text only");
 	my $TBStyle_both = gettext("Both text and icons");
+	my $TBStyle_hidden = gettext("Hidden");
 	
 	my $TBStyle_Combo = Gtk2::ComboBox->new_text;
 	$TBStyle_Combo->insert_text(0, $TBStyle_icons);
 	$TBStyle_Combo->insert_text(1, $TBStyle_text);
 	$TBStyle_Combo->insert_text(2, $TBStyle_both);
+	$TBStyle_Combo->insert_text(3, $TBStyle_hidden);
 	$TBStyle_Combo->show();
 	$TBStyle_HBox->pack_start($TBStyle_Combo,0,0,0);
 
@@ -769,8 +771,10 @@ sub ConfigWindow () {
 			$TBStyle_Combo->set_active(0);
 		} elsif ($ToolbarStyle eq 'text') {
 			$TBStyle_Combo->set_active(1);
-		} else {
+		} elsif ($ToolbarStyle eq 'both') {
 			$TBStyle_Combo->set_active(2);
+		} elsif ($ToolbarStyle eq 'hidden') {
+			$TBStyle_Combo->set_active(3);
 		}
 	}
 
@@ -779,13 +783,19 @@ sub ConfigWindow () {
 			my $ActiveIndex = $TBStyle_Combo->get_active;
 			if ($ActiveIndex == 0) {
 				$Toolbar->set_style('icons');
+				$Toolbar->show();
 				$ToolbarStyle = 'icons';
 			} elsif ($ActiveIndex == 1) {
 				$Toolbar->set_style('text');
+				$Toolbar->show();
 				$ToolbarStyle = 'text';
-			} else {
+			} elsif ($ActiveIndex == 2) {
 				$Toolbar->set_style('both');
 				$ToolbarStyle = 'both';
+				$Toolbar->show();
+			} elsif ($ActiveIndex == 3) {
+				$Toolbar->hide();
+				$ToolbarStyle = 'hidden';
 			}});
 
 	# EDITOR VERBOSE DEFAULT
@@ -879,33 +889,54 @@ sub DrawMainWindow () {
 	$MainWindow->add($PrimaryWindowVBox);
 
 	# ==================================================================
+	# MENUBAR
+	# ==================================================================
+	# The menu items
+	my @MenuItems = (
+		# File menu
+		[ "/" . gettext("_File"),				undef,			undef,			0,	"<Branch>"],
+		[ "/" . gettext("_File") . "/" . gettext("_Quit"),	"<control>Q",		\&QuitSub,		0],
+		# Edit menu
+		[ "/" . gettext("_Edit"),				undef,			undef,			0,	"<Branch>" ],
+		[ "/" . gettext("_Edit") . "/" . "Preferences",		undef,			\&ConfigWindow,		0 ],
+		# Tools menu
+		[ "/" . gettext("_Tools"),				undef,			undef,			0,	"<Branch>"],
+		[ "/" . gettext("_Tools") . "/tearoff",			undef,			undef,			0,	"<Tearoff>"],
+		[ "/" . gettext("_Tools") . "/" . "_Add an event",	undef,			\&AddEvent,		1 ],
+		[ "/" . gettext("_Tools") . "/" . "_Edit this event",	undef,			\&EditEvent,		2 ],
+		[ "/" . gettext("_Tools") . "/" . "_Delete this event",	undef,	sub { print "FIXME!\n" },		3 ],
+		# Help menu
+		[ "/" . gettext("_Help"),				undef,			undef,			0,	"<LastBranch>" ],
+		[ "/" . gettext("_Help") . "/" . gettext("_About"),	undef,			\&AboutBox,		0],
+	);
+	# The accelgroup to use for the menuitems
+	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
+	$MainWindow->add_accel_group($Menu_AccelGroup);
+	# The item factory (menubar) itself
+	my $Menu_ItemFactory = Gtk2::ItemFactory->new('Gtk2::MenuBar', '<main>', $Menu_AccelGroup);
+	# Tell the item factory to use the items defined in @MenuItems
+	$Menu_ItemFactory->create_items (undef, @MenuItems);
+	# Pack it onto the vbox
+	$PrimaryWindowVBox->pack_start($Menu_ItemFactory->get_widget("<main>"), 0, 0, 0);
+	# Show it
+	$Menu_ItemFactory->get_widget("<main>")->show();
+	
+	# ==================================================================
 	# TOOLBAR
 	# ==================================================================
 	$Toolbar = Gtk2::Toolbar->new();
-	$Toolbar->show();
 	$PrimaryWindowVBox->pack_start($Toolbar,0,0,0);
-	if (defined($ToolbarStyle) and $ToolbarStyle =~ /^(both|icons|text)$/) {
-		$Toolbar->set_style($ToolbarStyle);
+	if (defined($ToolbarStyle) and $ToolbarStyle =~ /^(both|icons|text|hidden)$/) {
+		$Toolbar->set_style($ToolbarStyle) unless $ToolbarStyle eq "hidden";
 	} else {
 		if (defined($ToolbarStyle)) {
-			DPIntWarn("Config option ToolbarStyle is set to \"$ToolbarStyle\". This is invalid. Valid settings: both, icons, text. Assuming ToolbarStyle=both");
+			DPIntWarn("Config option ToolbarStyle is set to \"$ToolbarStyle\". This is invalid. Valid settings: both, icons, text, hidden. Assuming ToolbarStyle=both");
 		} else {
 			DPIntWarn("Config option ToolbarStyle isn't set. Assuming ToolbarStyle=both");
 		}
 		$Toolbar->set_style('both');
 	}
-	
-	# About button
-	my $AboutButton = Gtk2::ToolButton->new_from_stock('gtk-about');
-	$AboutButton->signal_connect('clicked' => \&AboutBox);
-	$Toolbar->insert($AboutButton,0);
-	$AboutButton->show();
-
-	# Preferences button
-	my $PrefsButton = Gtk2::ToolButton->new_from_stock('gtk-preferences');
-	$PrefsButton->signal_connect('clicked' => \&ConfigWindow);
-	$Toolbar->insert($PrefsButton,0);
-	$PrefsButton->show();
+	$Toolbar->show() unless $ToolbarStyle eq "hidden";
 
 	# Edit button
 	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
@@ -920,12 +951,6 @@ sub DrawMainWindow () {
 	$AddButton->signal_connect("clicked" => \&AddEvent);
 	$Toolbar->insert($AddButton,0);
 	$AddButton->show();
-
-	# Quit button
-	my $BQuitButton = Gtk2::ToolButton->new_from_stock('gtk-quit');
-	$BQuitButton->signal_connect("clicked" => \&QuitSub);
-	$Toolbar->insert($BQuitButton,0);
-	$BQuitButton->show();
 
 	# ==================================================================
 	# WORKING AREA
