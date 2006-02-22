@@ -116,7 +116,7 @@ sub WriteConfig ($$) {
 	print CONFIG "# Day planner version $Version configuration file\n\n";
 	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n# both = both icons and text\n# text = only text\n# icons = only icons\n";
 	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
-	print CONFIG "# If the EventEditor should expand the \"add extra information\" by default\n# 1 = expand\n# 0 = don't expand\n";
+	print CONFIG "# If the EventEditor should expand the \"details\" by default\n# 1 = expand\n# 0 = don't expand\n";
 	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
 	# Close the config file
 	close(CONFIG);
@@ -541,12 +541,12 @@ sub EventEditor ($$) {
 	# Set type specific 
 	if ($EventType eq 'new') {
 		$Title = gettext("Add an event");
-		$ExpanderTitle = gettext("Add extra information");
+		$ExpanderTitle = gettext("Details");
 		$EventTime = "00:00";
 		$OkButtonType = 'gtk-add';
 	} else {
 		$Title = gettext("Edit an event");
-		$ExpanderTitle = gettext("Edit extra information");
+		$ExpanderTitle = gettext("Details");
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
@@ -819,7 +819,7 @@ sub ConfigWindow () {
 			}});
 
 	# EDITOR VERBOSE DEFAULT
-	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(gettext(sprintf("Expand \"%s\" by default", gettext("Add extra information"))));
+	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(gettext(sprintf("Expand \"%s\" by default", gettext("Details"))));
 	$ConfigVBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
 	if ($EditorVerboseDefault) {
