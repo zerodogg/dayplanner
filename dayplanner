@@ -528,7 +528,7 @@ sub EventEditor ($$) {
 	my ($EventType, $EventTime) = @_;
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext);
-	my ($Title, $ExpanderTitle, $DateLabel);
+	my ($Title, $ExpanderTitle, $DateLabel, $OkButtonType);
 	
 	$MainWindow->set_sensitive(0);
 	
@@ -543,12 +543,14 @@ sub EventEditor ($$) {
 		$Title = gettext("Add an event");
 		$ExpanderTitle = gettext("Add extra information");
 		$EventTime = "00:00";
+		$OkButtonType = 'gtk-add';
 	} else {
 		$Title = gettext("Edit an event");
 		$ExpanderTitle = gettext("Edit extra information");
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
+		$OkButtonType = 'gtk-save';
 	}
 	my $AddEventBox = Gtk2::Window->new('toplevel');
 	
@@ -668,17 +670,10 @@ sub EventEditor ($$) {
 	# ==================================================================
 	# ADD THE BUTTONS AND FINALIZE THE WINDOW
 	# ==================================================================
-	# Cancel button
-	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
-	$CancelButton->signal_connect("clicked" => sub { $AddEventBox->destroy;
-		$MainWindow->set_sensitive(1);});
-	$CancelButton->show();
-	$TB_ButtonHBox->pack_end($CancelButton,0,0,0);
-	
 	# Ok button
-	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
+	my $OKButton = Gtk2::Button->new_from_stock($OkButtonType);
 	$OKButton->show();
-	$TB_ButtonHBox->pack_start($OKButton,0,0,0);
+	$TB_ButtonHBox->pack_end($OKButton,0,0,0);
 	$OKButton->signal_connect('clicked' => sub {
 			my $Error = 0;
 			# Get the contents
@@ -702,7 +697,7 @@ sub EventEditor ($$) {
 				$AddEventBox->destroy;
 			}
 		});
-
+	
 	# Delete button (only in edit mode)
 	if ($EventType eq 'old') {
 		my $DeleteButton = Gtk2::Button->new_from_stock('gtk-delete');
@@ -718,6 +713,13 @@ sub EventEditor ($$) {
 			});
 	}
 	
+	# Cancel button
+	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
+	$CancelButton->signal_connect("clicked" => sub { $AddEventBox->destroy;
+		$MainWindow->set_sensitive(1);});
+	$CancelButton->show();
+	$TB_ButtonHBox->pack_end($CancelButton,0,0,0);
+
 	# Handle the esc button
 	$AddEventBox->signal_connect("key_release_event" => \&EscapeKeyHandler);
 
