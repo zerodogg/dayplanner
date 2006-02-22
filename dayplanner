@@ -390,6 +390,24 @@ sub EditEvent () {
 	}
 }
 
+# Purpose: Delete the event currently selected in the eventlist
+# Usage: DeleteEvent();
+#  (calls CalendarDelete with the correct parameters)
+sub DeleteEvent () {
+	my $Selected;
+	# FIXME: This is just plain weird
+	foreach ($EventlistWidget->get_selected_indices) {
+		$Selected = $_;
+	}
+	if(defined($Selected)) {
+		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+		my $EventTime = $EventlistWidget->{data}[$Selected][0];
+		if (defined($EventTime)) {
+			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+		}
+	}
+}
+
 # Purpose: Close a window when the escape key is pressed
 # Usage: $WIDGET->signal_connect("key_release_event" => \&EscapeKeyHandler);
 sub EscapeKeyHandler () {
@@ -897,14 +915,14 @@ sub DrawMainWindow () {
 		[ "/" . gettext("_File"),				undef,			undef,			0,	"<Branch>"],
 		[ "/" . gettext("_File") . "/" . gettext("_Quit"),	"<control>Q",		\&QuitSub,		0],
 		# Edit menu
-		[ "/" . gettext("_Edit"),				undef,			undef,			0,	"<Branch>" ],
-		[ "/" . gettext("_Edit") . "/" . "Preferences",		undef,			\&ConfigWindow,		0 ],
+#		[ "/" . gettext("_Edit"),				undef,			undef,			0,	"<Branch>" ],
 		# Tools menu
 		[ "/" . gettext("_Tools"),				undef,			undef,			0,	"<Branch>"],
 		[ "/" . gettext("_Tools") . "/tearoff",			undef,			undef,			0,	"<Tearoff>"],
-		[ "/" . gettext("_Tools") . "/" . "_Add an event",	undef,			\&AddEvent,		1 ],
-		[ "/" . gettext("_Tools") . "/" . "_Edit this event",	undef,			\&EditEvent,		2 ],
-		[ "/" . gettext("_Tools") . "/" . "_Delete this event",	undef,	sub { print "FIXME!\n" },		3 ],
+		[ "/" . gettext("_Tools") . "/" . "_Add an event",	"<control>A",		\&AddEvent,		1 ],
+		[ "/" . gettext("_Tools") . "/" . "_Edit this event",	"<control>E",		\&EditEvent,		2 ],
+		[ "/" . gettext("_Tools") . "/" . "_Delete this event",	"<control>D",		\&DeleteEvent,		3 ],
+		[ "/" . gettext("_Tools") . "/" . "Preferences",		undef,			\&ConfigWindow,		0 ],
 		# Help menu
 		[ "/" . gettext("_Help"),				undef,			undef,			0,	"<LastBranch>" ],
 		[ "/" . gettext("_Help") . "/" . gettext("_About"),	undef,			\&AboutBox,		0],
