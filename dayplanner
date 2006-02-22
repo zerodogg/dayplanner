@@ -767,13 +767,10 @@ sub ConfigWindow () {
 	if (defined($ToolbarStyle)) {
 		if ($ToolbarStyle eq 'icons') {
 			$TBStyle_Combo->set_active(0);
-			$ToolbarStyle = 0;
 		} elsif ($ToolbarStyle eq 'text') {
 			$TBStyle_Combo->set_active(1);
-			$ToolbarStyle = 1;
 		} else {
 			$TBStyle_Combo->set_active(2);
-			$ToolbarStyle = 2;
 		}
 	}
 
