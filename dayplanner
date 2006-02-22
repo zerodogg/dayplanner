@@ -489,6 +489,9 @@ sub AboutBox () {
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
 	$AboutDialog->set_website("http://gna.org/projects/dayplanner");
 	$AboutDialog->set_name(gettext("Day planner beta"));
+	# GPL summary, should never be marked as translateable
+	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with day planner; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
+	$AboutDialog->set_wrap_license(1);
 	unless (gettext("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
 		$AboutDialog->set_translators(gettext("THE NAMES OF THE TRANSLATORS"));
 	}
@@ -708,7 +711,6 @@ sub EventEditor ($$) {
 #  configuration options
 # Usage: ConfigWindow();
 sub ConfigWindow () {
-	my ($NewToolbarStyle);
 	my $ConfigWindow = Gtk2::Window->new();
 	$ConfigWindow->set_modal(1);
 	$ConfigWindow->set_title(gettext("Day planner preferences"));
@@ -717,8 +719,8 @@ sub ConfigWindow () {
 
 	# Handle closing
 	$ConfigWindow->signal_connect("destroy" => sub { 
-			$Toolbar->set_style($ToolbarStyle);
-			$ConfigWindow->destroy });
+			SaveDefaultConfig();
+			});
 	
 	# Create the primary vbox
 	my $PrimaryVBox = Gtk2::VBox->new();
@@ -765,10 +767,13 @@ sub ConfigWindow () {
 	if (defined($ToolbarStyle)) {
 		if ($ToolbarStyle eq 'icons') {
 			$TBStyle_Combo->set_active(0);
+			$ToolbarStyle = 0;
 		} elsif ($ToolbarStyle eq 'text') {
 			$TBStyle_Combo->set_active(1);
+			$ToolbarStyle = 1;
 		} else {
 			$TBStyle_Combo->set_active(2);
+			$ToolbarStyle = 2;
 		}
 	}
 
@@ -777,13 +782,13 @@ sub ConfigWindow () {
 			my $ActiveIndex = $TBStyle_Combo->get_active;
 			if ($ActiveIndex == 0) {
 				$Toolbar->set_style('icons');
-				$NewToolbarStyle = 'icons';
+				$ToolbarStyle = 'icons';
 			} elsif ($ActiveIndex == 1) {
 				$Toolbar->set_style('text');
-				$NewToolbarStyle = 'text';
+				$ToolbarStyle = 'text';
 			} else {
 				$Toolbar->set_style('both');
-				$NewToolbarStyle = 'both';
+				$ToolbarStyle = 'both';
 			}});
 
 	# EDITOR VERBOSE DEFAULT
@@ -793,6 +798,13 @@ sub ConfigWindow () {
 	if ($EditorVerboseDefault) {
 		$EDVDefaultCheckbox->set_active(1);
 	}
+	$EDVDefaultCheckbox->signal_connect( "toggled" => sub {
+			if ($EDVDefaultCheckbox->get_active) {
+				$EditorVerboseDefault = 1;
+			} else {
+				$EditorVerboseDefault = 0;
+			}
+		});
 	# ==================================================================
 	# BUTTONS
 	# ==================================================================
@@ -800,27 +812,13 @@ sub ConfigWindow () {
 	my $ButtonHBox = Gtk2::HBox->new();
 	$ButtonHBox->show();
 	$PrimaryVBox->pack_end($ButtonHBox,0,0,0);
-	
-	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
-	$OKButton->show();
-	$OKButton->signal_connect("clicked" => sub { 
-			$ToolbarStyle = $NewToolbarStyle if defined($NewToolbarStyle);
-			if ($EDVDefaultCheckbox->get_active) {
-				$EditorVerboseDefault = 1;
-			} else {
-				$EditorVerboseDefault = 0;
-			}
-			SaveDefaultConfig(); 
-			$ConfigWindow->destroy});
-	$ButtonHBox->pack_start($OKButton,0,0,0);
 
-	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
-	$CancelButton->signal_connect("clicked" => sub { 
-			$Toolbar->set_style($ToolbarStyle);
-			$ConfigWindow->destroy}
-	);
-	$CancelButton->show();
-	$ButtonHBox->pack_end($CancelButton,0,0,0);
+	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
+	$CloseButton->signal_connect("clicked" => sub { 
+			$ConfigWindow->destroy;
+		});
+	$CloseButton->show();
+	$ButtonHBox->pack_end($CloseButton,0,0,0);
 	
 	# Show the config window
 	$ConfigWindow->show();
