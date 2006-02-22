@@ -1,10 +1,25 @@
+- Create a feature to choose *how* long a event lasts
+	- Rewrite the entry box as something else
 - Create the dayplanner-daemon
 	- A notification daemon with its own small datafile that contains the events
-	of the last 4-5 days
+	  of the last 4-5 days
+	- Pop up a notification dialog if DISPLAY is set or run system("wall ...");
+	  or, if even that isn't possible then just print it to STDOUT and print a
+	  error to STDERR.
+	- *IF* dayplanner is running AND it isn't possible to notify NOR wall, then
+	  have some way to notify dayplanner and make it pop up a dialog
+	- Dayplanner starts it if it isn't running when starting UNLESS
+	  a configuration setting is set. This setting should be either not displayed
+	  or hidden away in some advanced configuration dialog
+- Add a lockfile (IMPORTANT)
 - Add doubleclick support for the eventlist
+- Add default button in dialogs
 - Add support for three different types of events:
 	- events.dpd (normal day-to-day events)
 	- birthdays.dpd (Birthdays)
 	- special.dpd (Support for: repeat every ... days, ... months, and also support for
 			repeat until ...)
 	The most important to get implemented is birthdays
+
+0.2 version
+- Add right click on events
