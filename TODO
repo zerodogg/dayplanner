@@ -20,6 +20,9 @@
 	- special.dpd (Support for: repeat every ... days, ... months, and also support for
 			repeat until ...)
 	The most important to get implemented is birthdays
+- 20:32:14 < reinouts> the Help menu should be next to Calendar, not on the far right
+- 20:32:41 < reinouts>  Can't locate object method "set_wrap_license" via package "Gtk2::AboutDialog" at ./dayplanner line 512.
+        20:33:37 < reinouts> Gtk2 version 2.8.0
 
 0.2 version
 - Add right click on events
