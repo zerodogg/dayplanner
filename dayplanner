@@ -911,21 +911,19 @@ sub DrawMainWindow () {
 	# ==================================================================
 	# The menu items
 	my @MenuItems = (
-		# File menu
-		[ "/" . gettext("_File"),				undef,			undef,			0,	"<Branch>"],
-		[ "/" . gettext("_File") . "/" . gettext("_Quit"),	"<control>Q",		\&QuitSub,		0],
-		# Edit menu
-#		[ "/" . gettext("_Edit"),				undef,			undef,			0,	"<Branch>" ],
-		# Tools menu
-		[ "/" . gettext("_Tools"),				undef,			undef,			0,	"<Branch>"],
-		[ "/" . gettext("_Tools") . "/tearoff",			undef,			undef,			0,	"<Tearoff>"],
-		[ "/" . gettext("_Tools") . "/" . "_Add an event",	"<control>A",		\&AddEvent,		1 ],
-		[ "/" . gettext("_Tools") . "/" . "_Edit this event",	"<control>E",		\&EditEvent,		2 ],
-		[ "/" . gettext("_Tools") . "/" . "_Delete this event",	"<control>D",		\&DeleteEvent,		3 ],
-		[ "/" . gettext("_Tools") . "/" . "Preferences",		undef,			\&ConfigWindow,		0 ],
+		# Calendar menu
+		[ "/" . gettext("_Calendar"),						undef,			undef,			0,	"<Branch>"],
+		[ "/" . gettext("_Calendar") . "/tearoff",				undef,			undef,			0,	"<Tearoff>"],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Add an event"),		"<control>A",		\&AddEvent,		1 ],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2 ],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3 ],
+		[ "/" . gettext("_Calendar") . "/sep1",					undef,			undef,			4,	"<Separator>"],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Preferences"),		undef,			\&ConfigWindow,		5 ],
+		[ "/" . gettext("_Calendar") . "/sep2",					undef,			undef,			6,	"<Separator>"],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Quit"),			"<control>Q",		\&QuitSub,		0],
 		# Help menu
-		[ "/" . gettext("_Help"),				undef,			undef,			0,	"<LastBranch>" ],
-		[ "/" . gettext("_Help") . "/" . gettext("_About"),	undef,			\&AboutBox,		0],
+		[ "/" . gettext("_Help"),						undef,			undef,			0,	"<LastBranch>" ],
+		[ "/" . gettext("_Help") . "/" . gettext("_About"),			undef,			\&AboutBox,		0],
 	);
 	# The accelgroup to use for the menuitems
 	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
