@@ -22,6 +22,7 @@ use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
 #use POSIX(qw/LC_ALL LC_CTYPE/);	# Needed for setlocale();
+#use Glib;
 use Gtk2 '-init';		# Use Gtk2 :)
 use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
@@ -86,7 +87,7 @@ my (
 
 # Configuration options
 my (
-	$EditorVerboseDefault,	$ToolbarStyle
+	$EditorVerboseDefault,	$ToolbarStyle,	$DDIndent
 );
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,12 +113,18 @@ sub WriteConfig ($$) {
 	unless(defined($EditorVerboseDefault)) {
 		$EditorVerboseDefault = 0;
 	}
+	unless(defined($DDIndent)) {
+		$DDIndent = 1;
+	}
 	# Print the config
 	print CONFIG "# Day planner version $Version configuration file\n\n";
 	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n# both = both icons and text\n# text = only text\n# icons = only icons\n";
 	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
 	print CONFIG "# If the EventEditor should expand the \"details\" by default\n# 1 = expand\n# 0 = don't expand\n";
-	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
+	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n\n";
+	# This documentation is taken directly (with some changes) from the Data::Dumper perldoc page
+	print CONFIG "# Which style the data files should be written in:\n# It can be set to 0, 1 or 2.\n# Style 0 spews output without any newlines, indentation, or spaces between items\n# Style 1 (default) outputs a readable form with newlines but no indentation\n# Style 2 outputs a very readable form with newlines, indentation and spaces between items\n";
+	print CONFIG "DDIndent=$DDIndent\n";
 	# Close the config file
 	close(CONFIG);
 }
@@ -149,10 +156,17 @@ sub LoadConfig ($$) {
 		my $Value = $_;
 		$Option =~ s/^\s*(.*)\s*=.*/$1/;
 		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		# TODO: Perhaps these should be verified here?
 		if ($Option eq 'ToolbarStyle') {
 			$ToolbarStyle = $Value;
 		} elsif ($Option eq 'EditorVerboseDefault') {
 			$EditorVerboseDefault = $Value;
+		} elsif ($Option eq 'DDIndent') {
+			if ($Value =~ /^(0|1|2|3)$/) {
+				$DDIndent = $Value;
+			} else {
+				DPIntWarn("Invalid DDIndent value: $Value. Valid values are 0, 1 and 2");
+			}
 		} else {
 			DPIntWarn("Unrecognized configuration setting \"$Option\", ignoring");
 		}
@@ -184,6 +198,7 @@ sub CreateSaveDir () {
 
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
+# 	FIXME: This usage is a bit invalid, it dosn't care about the HashRef option, and the "name of the hash" option is useless
 sub SaveDatafile ($$$$) {
 	# Create the progress window
 	my $ProgressWin = Gtk2::Window->new('toplevel');
@@ -202,8 +217,9 @@ sub SaveDatafile ($$$$) {
 	$Data::Dumper::Purity = 1;
 	# Sort the keys
 	$Data::Dumper::Sortkeys = 1;
-	# 
-#	$Data::Dumper::Varname = "*HASH";
+	# Set the indentation
+	# FIXME: Drop $DDIndent and just use 1 as a sane, unchangeable default?
+	$Data::Dumper::Indent = $DDIndent;
 	# Pulse once
 	$ProgressBar->pulse();
 	# Create the save directory
@@ -343,7 +359,7 @@ sub DataLoadTest () {
 # Purpose: Delete keys from %CalendarContents, recusively if needed
 # Usage: CalendarDelete(year,month,day,time);
 sub CalendarDelete ($$$$) {
-	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
+	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
 	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
 		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
 			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
@@ -404,6 +420,8 @@ sub DeleteEvent () {
 		my $EventTime = $EventlistWidget->{data}[$Selected][0];
 		if (defined($EventTime)) {
 			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+			DrawEventlist();
+			SaveMainData();
 		}
 	}
 }
@@ -435,7 +453,7 @@ sub DPInfo ($) {
 
 # Purpose: Display a question dialog
 # Usage: DPQuestion("Question");
-# 	Returns true on yes, false on anything 
+# 	Returns true on yes, false on anything else
 sub DPQuestion ($) {
 	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', $_[0]);
 	my $Reply = $Dialog->run();
@@ -509,7 +527,12 @@ sub AboutBox () {
 	$AboutDialog->set_name(gettext("Day planner beta"));
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with day planner; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
-	$AboutDialog->set_wrap_license(1);
+	# set_wrap_license is only available in GTK =< 2.8.11 (probably some earlier too, but we don't know which yet)
+	# dayplanner will crash if set_wrap_license is called in a earlier version
+	if (Gtk2->CHECK_VERSION (2,8,11)) {
+		$AboutDialog->set_wrap_license(1);
+	}
+	# Translator credits
 	unless (gettext("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
 		$AboutDialog->set_translators(gettext("THE NAMES OF THE TRANSLATORS"));
 	}
@@ -534,7 +557,7 @@ sub EventEditor ($$) {
 	
 	# Make sure the first parameter is valid (either new or old)
 	unless ($EventType eq 'new' or $EventType eq 'old') {
-		warn "FATAL: EventEditor called with invalid type: $_[0]\n";
+		DPIntWarn("FATAL: EventEditor called with invalid type: $_[0]");
 		return(0);
 	}
 
@@ -663,7 +686,7 @@ sub EventEditor ($$) {
 	$FT_Expander->add($FulltextWindow);
 	
 	# Create the hbox for the buttons
-	my $TB_ButtonHBox = Gtk2::HBox->new();
+	my $TB_ButtonHBox = Gtk2::HBox->new(0,6);
 	$TB_ButtonHBox->show();
 	$ADPrimVBox->pack_end($TB_ButtonHBox,0,0,0);
 	
@@ -735,7 +758,9 @@ sub ConfigWindow () {
 	$ConfigWindow->set_modal(1);
 	$ConfigWindow->set_title(gettext("Day planner preferences"));
 	$ConfigWindow->set_resizable(0);
-	$ConfigWindow->set_border_width(5);
+	$ConfigWindow->set_border_width(12);
+	$ConfigWindow->set_skip_taskbar_hint(1);
+	$ConfigWindow->set_skip_pager_hint(1);
 
 	# Handle closing
 	$ConfigWindow->signal_connect("destroy" => sub { 
@@ -753,7 +778,7 @@ sub ConfigWindow () {
 	$ConfigFrame->show();
 	
 	# Create the config vbox
-	my $ConfigVBox = Gtk2::VBox->new();
+	my $ConfigVBox = Gtk2::VBox->new(0,6);
 	$ConfigFrame->add($ConfigVBox);
 	$ConfigVBox->show();
 	
@@ -911,21 +936,25 @@ sub DrawMainWindow () {
 	# ==================================================================
 	# MENUBAR
 	# ==================================================================
+#	my %MenuItemStock = (
+#		'quit' => Gtk2::Stock->lookup('qtk-quit')->'label',
+#	);
+#	my $QuitItem = Gtk2::Stock->lookup('qtk-quit');
 	# The menu items
 	my @MenuItems = (
 		# Calendar menu
 		[ "/" . gettext("_Calendar"),						undef,			undef,			0,	"<Branch>"],
 		[ "/" . gettext("_Calendar") . "/tearoff",				undef,			undef,			0,	"<Tearoff>"],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Add an event"),		"<control>A",		\&AddEvent,		1 ],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2 ],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3 ],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Add an event"),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/" . gettext("_Calendar") . "/sep1",					undef,			undef,			4,	"<Separator>"],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Preferences"),		undef,			\&ConfigWindow,		5 ],
-		[ "/" . gettext("_Calendar") . "/sep2",					undef,			undef,			6,	"<Separator>"],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Quit"),			"<control>Q",		\&QuitSub,		0],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Preferences"),		undef,			\&ConfigWindow,		5, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/" . gettext("_Calendar") . "/sep2",					undef,			undef,			6,	'<Separator>'],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Quit"),		"<control>Q",		\&QuitSub,		0,	"<StockItem>",	'gtk-quit'],
 		# Help menu
 		[ "/" . gettext("_Help"),						undef,			undef,			0,	"<Branch>" ],
-		[ "/" . gettext("_Help") . "/" . gettext("_About"),			undef,			\&AboutBox,		0],
+		[ "/" . gettext("_Help") . "/" . gettext("_About"),			undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
 	);
 	# The accelgroup to use for the menuitems
 	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
@@ -944,7 +973,7 @@ sub DrawMainWindow () {
 	# ==================================================================
 	$Toolbar = Gtk2::Toolbar->new();
 	$PrimaryWindowVBox->pack_start($Toolbar,0,0,0);
-	if (defined($ToolbarStyle) and $ToolbarStyle =~ /^(both|icons|text|hidden)$/) {
+	if (defined($ToolbarStyle) and $ToolbarStyle =~ /^(both|icons|text|hidden|both-horiz)$/) {
 		$Toolbar->set_style($ToolbarStyle) unless $ToolbarStyle eq "hidden";
 	} else {
 		if (defined($ToolbarStyle)) {
