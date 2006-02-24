@@ -1,5 +1,4 @@
-- Create a feature to choose *how* long a event lasts
-	- Rewrite the entry box as something else
+* Version 0.1
 - Create the dayplanner-daemon
 	- A notification daemon with its own small datafile that contains the events
 	  of the last 4-5 days
@@ -8,21 +7,30 @@
 	  error to STDERR.
 	- *IF* dayplanner is running AND it isn't possible to notify NOR wall, then
 	  have some way to notify dayplanner and make it pop up a dialog
-	- Dayplanner starts it if it isn't running when starting UNLESS
-	  a configuration setting is set. This setting should be either not displayed
-	  or hidden away in some advanced configuration dialog
-- Add a lockfile (IMPORTANT)
-- Add doubleclick support for the eventlist
+	- Find a nontechnical name for it for the few places the user will need
+	  to know about it
+	- Lock connections in the daemon, max one at any time, which in practice means
+	only one dayplanner running at any one time (to avoid data loss)
 - Add default button in dialogs
-- Add support for three different types of events:
-	- events.dpd (normal day-to-day events)
-	- birthdays.dpd (Birthdays)
-	- special.dpd (Support for: repeat every ... days, ... months, and also support for
-			repeat until ...)
-	The most important to get implemented is birthdays
-- 20:32:14 < reinouts> the Help menu should be next to Calendar, not on the far right
-- 20:32:41 < reinouts>  Can't locate object method "set_wrap_license" via package "Gtk2::AboutDialog" at ./dayplanner line 512.
-        20:33:37 < reinouts> Gtk2 version 2.8.0
+- Add support for birthdays.dpd
+- Have a third party look over all strings (in the pot-file) and try to
+	simplify those too technical
+- Rewrite the time box as something else
+- Look over TODOs and FIXMEs from the code
 
-0.2 version
+* Version 0.2
 - Add right click on events
+- Add doubleclick support for the eventlist
+- Create a feature to choose *how* long a event lasts
+- Have a third party look over all strings (in the pot-file) and try to
+	simplify those too technical
+
+* Version 0.3
+- Add a "upcoming events" widget below the calendar widget in the main window
+- Add special.dpd (Support for: repeat every ... days, ... months, and also support for
+			repeat until ...)
+- Have a third party look over all strings (in the pot-file) and try to
+	simplify those too technical
+
+* Version 0.4
+- Try to get a formal HIG-review
