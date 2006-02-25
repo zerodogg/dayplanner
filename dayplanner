@@ -28,6 +28,8 @@ use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use Getopt::Long;		# Commandline options
+use Cwd;                        # We need Cwd::Realpath to find out which directory we live in
+use File::Basename;             # We meed dorname to help Cwd::Realpath finding the directory
 # setlocale(LC_MESSAGES, "");
 
 # Scalars
@@ -382,6 +384,21 @@ sub PrintHelp($$$) {
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Detect the path to the image file(s) supplied. Returns the path to the
+# 		first one found or undef
+# Usage: $Image = DetectImage(image1, image2);
+sub DetectImage {
+	my $I_Am_At = dirname(Cwd::realpath($0));
+	foreach my $Image (@_) {
+		foreach my $Dir ("$I_Am_At/art", $I_Am_At, "/usr/share/dayplanner", "/usr/local/dayplanner", "/usr/local/share/dayplanner", "/usr/share/dayplanner/art", "/usr/local/dayplanner/art", "/usr/local/share/dayplanner/art", "/usr/share/icons/large", "/usr/share/icons", "/usr/share/icons/mini") {
+			if (-e "$Dir/$Image") {
+				return("$Dir/$Image");
+			}
+		}
+	}
+	return(undef);
+}
+
 # Purpose: Add an event
 # Usage: AddEvent();
 #  (calls the EventEditor with the correct parameters)
@@ -522,6 +539,7 @@ sub AboutBox () {
 	$MainWindow->set_sensitive(0);
 	my $AboutDialog = Gtk2::AboutDialog->new;
 	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
+	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
 	$AboutDialog->set_website("http://gna.org/projects/dayplanner");
 	$AboutDialog->set_name(gettext("Day planner beta"));
@@ -923,6 +941,12 @@ sub DrawMainWindow () {
 	$MainWindow->set_title(gettext("Day planner") . " $Version");
 	$MainWindow->set_border_width(5);
 	$MainWindow->set_default_size (600,300);
+
+	# Set the icon
+	my $MainWindowIcon = DetectImage("dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
+	if ($MainWindowIcon) {
+		$MainWindow->set_default_icon_from_file($MainWindowIcon);
+	}
 
 	# Make it handle closing
 	$MainWindow->signal_connect("destroy" => \&QuitSub);
