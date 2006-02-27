@@ -1,0 +1,365 @@
+#!/usr/bin/perl
+# Dayplanner daemon
+# The notification daemon for day planner
+# Copyright (C) Eskild Hustvedt 2006
+# $Id$
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;			# Force strict coding
+use warnings;			# Tell perl to print warnings
+use IO::Socket;			# We use IO::Socket for communication with dayplanner
+use IO::Select;			# We use IO::Select to wait for connections and at the same
+				#  time wait for a timeout
+use Locale::gettext;		# Allow translation, might not be needed
+
+# Scalars
+my $Version = '0.1 Beta1';
+my $RCSRev = '$Id';
+my $MainEventsFile = "events.dpd";		# The filename to read events from
+my $BirthdayFile = "birthdays.dpd";		# The filename to read birthdays from
+my $SpecialEventsFile = "events_special.dpd";	# The filename to read special events from
+my $DaemonFile = 'daemondata.dpd';		# The filename to save and read daemon data from
+my $ConfigFile = "dayplanner.conf";		# The dayplanner config - TODO: drop?
+my $SocketName = "dayplannerd";			# The name of the socket to use
+my (
+	$NoFork,	$DayplannerDir,		$DaemonSocket,
+	$Server,	$ConnectionSelect,	$DebuggingOutput,
+	$OutputVerbose,	$OutputVeryVerbose,	$Shutdown,
+	$Handle
+);						# Global scalars
+# TODO - drop $Handle ?
+
+# Hashes
+my %CalendarContents;		# Contents of the main calendar
+my %BirthdayContents;		# Contents of the birthday calendar
+my %SpecialEvents;		# Contents of the speical events calendar
+
+my %AccessStatus = (
+	Connected => 0,
+	ClientList => {
+	},
+);				# Hash containing current connection status
+
+# TODO: Dummy defaults, should be replaced by commandline arguments at this point
+$DayplannerDir = "$ENV{HOME}/.dayplanner";
+$NoFork = 1;
+$DaemonSocket = "$DayplannerDir/$SocketName";
+$DebuggingOutput = 1;
+$OutputVerbose = 1;
+$OutputVeryVerbose = 1;
+
+# Fork unless NoFork is true
+unless ($NoFork) {
+	my $PID = fork;
+	exit if $PID;
+	die "Couldn't fork: $!" unless defined($PID);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# CORE CALENDAR FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Load the calendar contents
+# Usage: LoadCalendar();
+sub LoadCalendar () {
+	if(DataLoadTest("$DayplannerDir/$MainEventsFile")) {
+		%CalendarContents = do("$DayplannerDir/$MainEventsFile");
+	}
+	if(DataLoadTest("$DayplannerDir/$BirthdayFile")) {
+		%BirthdayContents = do("$DayplannerDir/$BirthdayFile");
+	}
+	if(DataLoadTest("$DayplannerDir/$SpecialEventsFile")) {
+		%SpecialEvents = do("$DayplannerDir/$SpecialEventsFile");
+	}
+	return(1);
+}
+
+# Purpose: Test if a load can be successfully performed of the supplied file
+# Usage: DataLoadTest("/path/to/file");
+sub DataLoadTest () {
+	# If the calendar savefile exists
+	if (-e "$_[0]") {
+		# If it isn't readable then we warn and return
+		unless (-r "$_[0]") {
+			DPIntWarn("Unable to read the calendar at $_[0]: It isn't readable by me");
+			return(0);
+		}
+		# If it isn't writeable then we just warn (the file can still be loaded)
+		unless (-w "$_[0]") {
+			DPIntWarn("Unable to write the calendar at $_[0]: It isn't writeable by me. Expect trouble!");
+		}
+		return(1);
+	} else {
+		# If the file doesn't exist then we just assume that it isn't created yet,
+		# so we return false, but do it silently.
+		return(0);
+	}
+}
+
+# Purpose: Find out how many seconds we should sleep before performing some action
+# Usage: $SleepTime = FindSleepDuartion();
+sub FindSleepDuration () {
+	# Get the current time/date
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	$curryear += 1900; $currmonth++;
+
+	my @Keys;	# An array containing all the keys in a random order
+	
+	# First we find out which hashes has something for us
+	# TODO: At some point we need to add the special and birthday hashes here too
+	if (defined($CalendarContents{$curryear}{$currmonth}{$currmday})) {
+			foreach (keys(%{$CalendarContents{$curryear}{$currmonth}{$currmday}})) {
+					push(@Keys, $_);
+			}
+		}
+	my ($hours, $minutes);
+	# If keys is true then...
+	if (@Keys) {
+		@Keys = sort(@Keys);
+		# Okay, now $Keys[0] is the first upcoming time
+		($hours, $minutes) = split(/:/, $Keys[0]);
+		# TODO: This needs a more robust algorithm that checks minutes and hours
+		if ($hours lt $currhour) {
+			$hours = 24;
+			$minutes = 0;
+		}
+	}
+	# If keys isn't then we need to return the amount of seconds until midnight
+	else {
+		$hours = 24;
+		$minutes = 0;
+	}
+	# Convert hours to seconds
+	$hours = $hours * 60 * 60;
+	# Minutes to seconds
+	$minutes = $minutes * 60;
+	# Hours to seconds
+	$currhour = $currhour * 60 * 60;
+	# Minutes to seconds
+	$currmin = $currmin * 60;
+	# Find the correct currsec value
+	$currsec = 60 - $currsec;
+	# Calculate the total
+	my $total = ($hours + $minutes) - ($currhour + ($currmin - $currsec));
+	# Return the total to caller
+	return($total);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# CORE HELPER FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Output a debugging stuff if needed
+# Usage: IntDebug(MESSAGE);
+sub IntDebug ($) {
+	if ($DebuggingOutput) {
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		print "[$currhour:$currmin:$currsec] DEBUG: $_[0]\n";
+	}
+}
+
+# Purpose: Output a message when in very verbose mode
+# IntVeryVerbose(MESSAGE);
+sub IntVeryVerbose ($) {
+	if ($OutputVeryVerbose) {
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		print "[$currhour:$currmin:$currsec] $_[0]\n";
+	}
+}
+
+# Purpose: Output a message when in verbose mode
+# Usage: IntVerbose(MESSAGE);
+sub IntVerbose ($) {
+	if ($OutputVerbose) {
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		print "[$currhour:$currmin:$currsec] $_[0]\n";
+	}
+}
+
+# Purpose: Print a warning to STDERR with proper output
+# Usage: DPIntWarn("Warning");
+sub IntWarn ($) {
+	warn "Warning: $_[0]\n";
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# CORE DAEMON FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Handle commands
+# Usage: CommandHandler(COMMAND);
+sub CommandHandler ($) {
+	$_ = $_[0];
+	my $PID = $_[0];
+	$PID =~ s/^(\d+)\s+(.*)/$1/;
+	unless ($PID) {
+		IntDebug("Malformed request: $_");
+		return("ERR MALFORMED_REQUEST");
+	}
+	s/^(\d+)\s+//;
+	# HI is the first command clients should run to identify themselves
+	if (/^HI\s+(\w+)/) {
+		my $TYPE = $1;
+		IntDebug("New connection ($TYPE), $PID says HI");
+		if ($TYPE =~ /client/) {
+			# We already have a client, refuse
+			if ($AccessStatus{Connected}) {
+				IntVeryVerbose("Refusing connection from $PID");
+				$AccessStatus{ClientList}{$PID} = 0;
+				return("REFUSED");
+			}
+			$AccessStatus{Connected} = $PID;
+		} elsif ($TYPE =~ /commander/) {
+			IntDebug("New commander ($PID)");
+		} else {
+			IntDebug("Invalid type from $PID ($TYPE) - refusing");
+			return("REFUSED");
+		}
+		$AccessStatus{ClientList}{$PID} = 1;
+		return("HI")
+	}
+	
+	# Okay it isn't HI, check if we allow connections from it
+	unless($AccessStatus{ClientList}{$PID}) {
+		IntDebug("Disallowed client $PID wanted to run command $_ but was refused");
+		return("REFUSED");
+	}
+	
+	if (/^BYE/) {	# BYE is the last command clients should run, 
+			# removes them from the internal access lists and unlocks if needed
+		IntDebug("Closed connection, $PID says BYE");
+		delete($AccessStatus{ClientList}{$PID});
+		$AccessStatus{Connected} = 0;
+		return("BYE");
+	} elsif (/^RELOAD_DATA/) {	# Command to force the daemon to reload the data files
+		IntDebug("Data reload requested by $PID");
+		LoadCalendar();
+		IntDebug("Done reloading data");
+		return("done");
+	} elsif (/^SHUTDOWN/) {		# Command to force daemon shutdown
+		IntDebug("Shutdown request");
+		$Shutdown = "Daemon shut down by client ($PID) request";
+		return("okay");
+	} elsif (/^PING/) {		# Simple ping implementation
+		IntDebug("Ping request from $PID");
+		return("PONG");
+	}
+	else {				# Handler for invalid requests
+		IntDebug("Invalid command: $_ from $PID");
+		return("ERR INVALID_COMMAND");
+	}
+}
+
+# Purpose: Handle SIGPIPE gently
+# Usage: $SIG{PIPE} = \&SigpipeHandler;
+sub SigpipeHandler {
+	IntDebug("Sigpipe");
+}
+
+# Purpose: Open our main communication socket
+# Usage: OpenSocket();
+sub OpenSocket () {
+	if (-e $DaemonSocket) {
+		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $DaemonSocket,
+							Type	=> SOCK_STREAM
+							Timeout => 2);
+		if ($TestSocket) {
+			# We could connect
+			#
+			# Now this isn't a nice way to do it, but we do it anyway
+			print $TestSocket "PING\n";
+			if (<$TestSocket> eq "PONG\n") {
+				# It's still responding. If the user did this then perhaps he/she wanted
+				# to reload the data. Send the reload command
+				print $TestSocket "RELOAD_DATA\n";
+				die "A dayplanner daemon is already running and still responding. I told it to reload its data files.\n";
+			}
+		}
+		unlink($DaemonSocket);
+				
+	}
+	$Server = IO::Socket::UNIX->new(
+					Local	=> $DaemonSocket,
+					Type	=> SOCK_STREAM,
+					Listen	=> 5,
+			) or die $@;	# TODO: Needs a much more sensible die error
+	# Trap SIGPIPE
+	$SIG{PIPE} = \&SigpipeHandler;
+	# Create a new select handle for reading
+	$ConnectionSelect = IO::Select->new();
+	# Add the main server
+	$ConnectionSelect->add($Server);
+}
+
+# Purpose: Start the main loop
+# Usage: MainLoop();
+# Requires: OpenSocket(); already performed
+sub MainLoop () {
+	# Loop for eternity
+	while (1) {
+		my $SleepTime = FindSleepDuration();
+		# Block until one handle is available or it times out
+		my @Ready_Handles = $ConnectionSelect->can_read($SleepTime);
+		# Timeout is true if no handle was processed
+		my $Timeout = 1;
+		# For each handle...
+		foreach $Handle (@Ready_Handles) {
+			# We didn't timeout
+			$Timeout = 0;
+			# If the handle is $server then it's a new connection
+			if ($Handle eq $Server) {
+				IntDebug("New connection");
+				my $NewClient = $Server->accept();
+				$ConnectionSelect->add($NewClient);
+			} 
+			# Handle isn't $server, it's an existing connection trying to tlel us something
+			else {
+				# What is it trying to tell?
+				my $Command = <$Handle>;
+				# If it is defined then it's a command
+				if ($Command) {
+					chomp($Command);
+					#			print "COMMAND: $Command\n";
+					#print $Handle "okay\n";
+					my ($Reply) = CommandHandler($Command);
+					#print $Handle CommandHandler($Command),"\n";
+					print $Handle "$Reply\n";
+				} 
+				# If it isn't, then it closed the connection
+				else {
+					IntDebug("Connection closed");
+					$ConnectionSelect->remove($Handle);
+					# TODO: Is this needed?
+					close($Handle);
+				}
+			}
+		}
+		if ($Timeout) {
+			IntDebug("ALARM !!!");
+		}
+		if ($Shutdown) {
+			IntVerbose($Shutdown);
+			exit(0);
+		}
+	}
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# SECONDARY INITIALIZATION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+OpenSocket();
+LoadCalendar();
+MainLoop();
