@@ -24,6 +24,9 @@ use IO::Socket;			# We use IO::Socket for communication with dayplanner
 use IO::Select;			# We use IO::Select to wait for connections and at the same
 				#  time wait for a timeout
 use Locale::gettext;		# Allow translation, might not be needed
+use Getopt::Long;		# Commandline options
+
+Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
 # Scalars
 my $Version = '0.1 Beta1';
@@ -53,19 +56,14 @@ my %AccessStatus = (
 	},
 );				# Hash containing current connection status
 
-# TODO: Dummy defaults, should be replaced by commandline arguments at this point
-$DayplannerDir = "$ENV{HOME}/.dayplanner";
-$NoFork = 1;
-$DaemonSocket = "$DayplannerDir/$SocketName";
-$DebuggingOutput = 1;
-$OutputVerbose = 1;
-$OutputVeryVerbose = 1;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# HELPER FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Fork unless NoFork is true
-unless ($NoFork) {
-	my $PID = fork;
-	exit if $PID;
-	die "Couldn't fork: $!" unless defined($PID);
+# Purpose: Print formatted --help output
+# Usage: PrintHelp("-shortoption", "--longoption", "description");
+sub PrintHelp($$$) {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,7 +226,7 @@ sub CommandHandler ($) {
 			IntDebug("Invalid type from $PID ($TYPE) - refusing");
 			return("REFUSED");
 		}
-		$AccessStatus{ClientList}{$PID} = 1;
+		$AccessStatus{ClientList}{$PID} = $TYPE;
 		return("HI")
 	}
 	
@@ -241,8 +239,10 @@ sub CommandHandler ($) {
 	if (/^BYE/) {	# BYE is the last command clients should run, 
 			# removes them from the internal access lists and unlocks if needed
 		IntDebug("Closed connection, $PID says BYE");
+		if($AccessStatus{ClientList}{$PID} eq 'client') {
+			$AccessStatus{Connected} = 0;
+		}
 		delete($AccessStatus{ClientList}{$PID});
-		$AccessStatus{Connected} = 0;
 		return("BYE");
 	} elsif (/^RELOAD_DATA/) {	# Command to force the daemon to reload the data files
 		IntDebug("Data reload requested by $PID");
@@ -352,14 +352,62 @@ sub MainLoop () {
 		}
 		if ($Shutdown) {
 			IntVerbose($Shutdown);
+			unlink($DaemonSocket);
 			exit(0);
 		}
 	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# SECONDARY INITIALIZATION
+# INITIALIZATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# TODO: Dummy defaults, should be replaced by commandline arguments at this point
+
+GetOptions (
+	'help|h' => sub {
+		print "Day planner daemon version $Version\n\n";
+		PrintHelp("", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
+		PrintHelp("-h,", "--help", "Display this help screen");
+		PrintHelp("-n,", "--nofork", "Don't go into the background");
+		PrintHelp("-v,", "--verbose", "Be verbose");
+		PrintHelp("-V,", "--veryverbose", "Be very verbose");
+		PrintHelp("-d,", "--debug", "Output debugging information");
+		exit(0);
+	},
+	'debug|d' => sub {
+		$DebuggingOutput = 1;
+		$OutputVerbose = 1;
+		$OutputVeryVerbose = 1;
+	},
+	'verbose|v' => \$OutputVerbose,
+	'veryverbose|V' => sub {
+		$OutputVerbose = 1;
+		$OutputVeryVerbose = 1;
+	},
+	'n|nofork' => \$NoFork,
+	'dayplannerdir=s' => sub {
+		unless (-e $_[1]) {
+			die "$_[1] does not exist\n";
+		}
+		unless (-w $_[1]) {
+			die "I can't write to $_[1]\n";
+		}
+		$DayplannerDir = $_[1];
+	},
+) or die "See $0 --help for more information\n";
+
+# Set some settings according to commandline arguments
+$DayplannerDir = "$ENV{HOME}/.dayplanner" unless defined($DayplannerDir);
+$DaemonSocket = "$DayplannerDir/$SocketName";
+
+# Fork unless NoFork is true
+unless ($NoFork) {
+	my $PID = fork;
+	exit if $PID;
+	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
+}
+
 OpenSocket();
 LoadCalendar();
 MainLoop();
