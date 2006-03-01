@@ -9,6 +9,4 @@ TODO list for the interface of Day Planner (particulary for GNOME HIG conformanc
 01:03:27 <      uws> the columns are not sortable on click
 01:03:33 <      uws> the about box crashes the app
 01:03:41 <      uws> there's no window icon
-01:03:59 <      uws> preferences could use ctrl-p
-01:04:06 <      uws> (and a stock icon)
 - Get a statusbar where the saving progressbar will be ?

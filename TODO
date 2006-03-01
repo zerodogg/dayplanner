@@ -1,16 +1,9 @@
 * Version 0.1
-- Create the dayplanner-daemon
-	- A notification daemon with its own small datafile that contains the events
-	  of the last 4-5 days
-	- Pop up a notification dialog if DISPLAY is set or run system("wall ...");
-	  or, if even that isn't possible then just print it to STDOUT and print a
-	  error to STDERR.
+- Make some changes to the daemon
 	- *IF* dayplanner is running AND it isn't possible to notify NOR wall, then
 	  have some way to notify dayplanner and make it pop up a dialog
 	- Find a nontechnical name for it for the few places the user will need
 	  to know about it
-	- Lock connections in the daemon, max one at any time, which in practice means
-	only one dayplanner running at any one time (to avoid data loss)
 - Add default button in dialogs
 - Add support for birthdays.dpd
 - Have a third party look over all strings (in the pot-file) and try to
