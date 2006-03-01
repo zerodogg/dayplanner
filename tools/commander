@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+# Dayplanner commander
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+use IO::Socket;
+use strict;
+
+$SIG{PIPE} = sub { print "I recieved SIGPIPE - daemon shut down?\n"; };
+
+my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";
+
+if($ARGV[0]) {
+	$SocketName = $ARGV[0];
+}
+
+unless (-e $SocketName) {
+	die "$SocketName doesn't exist\n";
+}
+
+unless (-S $SocketName) {
+	die "$SocketName is not a socket\n";
+}
+
+my $socket = IO::Socket::UNIX->new(Peer  => $SocketName,
+                                Type     => SOCK_STREAM,
+				Timeout => 10 )
+    or die "Couldn't connect to $SocketName: $@\nPerhaps the daemon isn't running?\n";
+
+print $socket "$$ HI commander\n";
+my $HI_REPLY = <$socket>;
+
+print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
+print "Welcome to the dayplanner daemon commander\n";
+print "Type !QUIT to quit, !HELP to view known daemon commands\n";
+print "Daemon says $HI_REPLY\n";
+
+sub CommandPrint ($$) {
+	printf "%-18s %s\n", $_[0], $_[1];
+}
+
+while (1) {
+	print "Command: ";
+	my $COMMAND = <STDIN>;
+	chomp($COMMAND);
+	if ($COMMAND =~ /^!QUIT/) {
+		print $socket "$$ BYE\n";
+	} elsif ($COMMAND =~ /^!HELP/) {
+		print "\nList of known daemon commands:\n";
+		CommandPrint("HI [client type]", "Initiate a new connection of type 'client type'");
+		CommandPrint("", "client type can be \"commander\" (is always allowed)");
+		CommandPrint("", "or \"client\" (the type dayplanner clients use");
+		CommandPrint("", "only one client can be connected at any time");
+		CommandPrint("PING", "Send a simple PING request to see if the daemon is alive");
+		CommandPrint("SHUTDOWN", "Tell the daemon to shut down");
+		CommandPrint("RELOAD_DATA", "Tell the daemon to reload the calendar data");
+		CommandPrint("BYE", "Tell the daemon to remove the client from its access lists");
+	} else {
+		print $socket "$$ $COMMAND\n";
+	}
+	unless($COMMAND =~ /^!HELP/) {
+		my $REPLY = <$socket>;
+		chomp($REPLY);
+		print " Daemon replied: $REPLY\n";
+		if ($COMMAND =~ /^!QUIT/) {
+			exit(0);
+		}
+	}
+}
+
+# and terminate the connection when we're done
+close($socket);
