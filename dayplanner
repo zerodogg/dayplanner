@@ -29,7 +29,8 @@ use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use Getopt::Long;		# Commandline options
 use Cwd;                        # We need Cwd::Realpath to find out which directory we live in
-use File::Basename;             # We meed dorname to help Cwd::Realpath finding the directory
+use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
+use IO::Socket;			# Network layer to communicate with the daemon
 # setlocale(LC_MESSAGES, "");
 
 # Scalars
@@ -41,6 +42,10 @@ my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
 my $SpecialEventsFile = "events_special.dpd";		# The filename to save events with special settings
 my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration to
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
+my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
+my $DaemonOnline = 0;					# Is the daemon online?
+my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
+my $DaemonSocket;					# The variable to connect to
 
 # If for some obscure reason HOME isn't set we can't continue
 unless(defined($ENV{HOME}) and $ENV{HOME}) {
@@ -91,6 +96,85 @@ my (
 my (
 	$EditorVerboseDefault,	$ToolbarStyle,	$DDIndent
 );
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Networking functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Initialize and connect to the daemon
+# Usage: DaemonInit();
+sub DaemonInit () {
+	if (-e "$SaveToDir/$DaemonSocketName") {
+		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
+		if ($ConnectionAttempt eq 'NOHI') {
+			die("Unable to connect to daemon - it refused my HI!\nTODO: FIXME! I should display a error dialog here\n");
+			# TODO: Display ERROR
+		} elsif ($ConnectionAttempt eq '1') {
+			$DaemonOnline = 1;
+			return(0);
+		}
+	}
+	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, Cwd::realpath(dirname($0))))) {
+		if (-x "$_/$DaemonName") {
+			if(system("$_/$DaemonName --dayplannerdir $SaveToDir")) {
+				warn "Unable to start the daemon!\n";
+			} else {
+				if(ConnectToDaemon("$SaveToDir/$DaemonSocketName")) {
+					$DaemonOnline = 1;
+				}
+			}
+		}
+	}
+}
+
+# Purpose: Connect to the daemon
+# Usage: ConnectToDaemon(/path/to/socket);
+sub ConnectToDaemon ($) {
+	$DaemonSocket = IO::Socket::UNIX->new(
+		Peer	=> $_[0],
+		Type	=> SOCK_STREAM,
+		Timeout	=> 5)
+		or return("NOCONNECT");
+	if(Daemon_DataSegment("HI client") eq "HI\n") {
+		return(1);
+	} else {
+		close($DaemonSocket);
+		return("NOHI");
+	}
+}
+
+# Purpose: Send some data to the daemon
+# Usage: Daemon_SendData(DATA);
+sub Daemon_SendData ($) {
+	print $DaemonSocket "$$ $_[0]","\n" or warn "Problem sending data to the daemon: $!\n" and return(0);
+}
+
+# Purpose: Get some data from the daemon
+# Usage: $Data = Daemon_GetData();
+sub Daemon_GetData {
+	my $Data = <$DaemonSocket>;
+	unless(defined($Data)) {
+		return("ERR UNABLE_TO_GET_DATA");
+	}
+	return($Data);
+}
+
+# Purpose: Send something to the daemon and then return the daemons reply
+# Usage: $Reply = Daemon_DataSegment(DATA);
+sub Daemon_DataSegment ($) {
+	Daemon_SendData($_[0]);
+	return(Daemon_GetData());
+}
+
+# Purpose: Close the connection to the daemon
+# Usage: CloseDaemon();
+sub CloseDaemon () {
+	if ($DaemonOnline) {
+		my $GetDaemon = Daemon_DataSegment('BYE');
+		close($DaemonSocket);
+	}
+}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
@@ -279,9 +363,12 @@ sub SaveDatafile ($$$$) {
 	$ProgressBar->pulse();
 	# Dump the data
 	print SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
-	# Pulse once
+	# Pulse once and close
 	$ProgressBar->pulse();
 	close(SAVEFILE);
+	# Pulse once and tell the daemon to save
+	$ProgressBar->pulse();
+	Daemon_DataSegment("RELOAD_DATA");
 	# Destroy the progress bar window
 	$ProgressWin->destroy();
 	# We successfully saved the data
@@ -493,6 +580,7 @@ sub QuitSub () {
 		}
 	}
 	Gtk2->main_quit;
+	CloseDaemon();
 	exit(0);
 }
 
@@ -700,6 +788,7 @@ sub EventEditor ($$) {
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
+		$FT_Expander->set_expanded(1);
 	}
 
 	$FulltextWindow = Gtk2::ScrolledWindow->new;
@@ -945,7 +1034,6 @@ sub DrawMainWindow () {
 	# Create the main window widget
 	$MainWindow = Gtk2::Window->new('toplevel');
 	$MainWindow->set_title(gettext("Day planner") . " $Version");
-	$MainWindow->set_border_width(5);
 	$MainWindow->set_default_size (600,300);
 
 	# Set the icon
@@ -1134,5 +1222,7 @@ LoadDefaultConfig();
 LoadCalendar();
 # Draw the main window
 DrawMainWindow();
+# Initialize the daemon (start it and connect to it)
+DaemonInit();
 # Rest in the Gtk2 main loop
 Gtk2->main;

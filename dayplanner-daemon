@@ -215,9 +215,13 @@ sub CommandHandler ($) {
 		if ($TYPE =~ /client/) {
 			# We already have a client, refuse
 			if ($AccessStatus{Connected}) {
-				IntVeryVerbose("Refusing connection from $PID");
-				$AccessStatus{ClientList}{$PID} = 0;
-				return("REFUSED");
+				if ($_ =~ /FORCE/ ) {
+					IntVeryVerbose("$PID is forcing a connection");
+				} else {
+					IntVeryVerbose("Refusing connection from $PID");
+					$AccessStatus{ClientList}{$PID} = 0;
+					return("REFUSED");
+				}
 			}
 			$AccessStatus{Connected} = $PID;
 		} elsif ($TYPE =~ /commander/) {
