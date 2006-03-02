@@ -1,9 +1,6 @@
 * Version 0.1
-- Make some changes to the daemon
-	- *IF* dayplanner is running AND it isn't possible to notify NOR wall, then
-	  have some way to notify dayplanner and make it pop up a dialog
-	- Find a nontechnical name for it for the few places the user will need
-	  to know about it
+- Find a nontechnical name for the daemon for the few places the user will need
+  to know about it
 - Add default button in dialogs
 - Add support for birthdays.dpd
 - Have a third party look over all strings (in the pot-file) and try to
