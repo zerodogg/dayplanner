@@ -280,16 +280,21 @@ sub OpenSocket () {
 		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $DaemonSocket,
 							Type	=> SOCK_STREAM
 							Timeout => 2);
-		if ($TestSocket) {
+		if (defined($TestSocket)) {
 			# We could connect
 			#
 			# Now this isn't a nice way to do it, but we do it anyway
-			print $TestSocket "PING\n";
-			if (<$TestSocket> eq "PONG\n") {
+			print $TestSocket "$$ HI commander\n";
+			my $CommanderReply = <$TestSocket>;
+			print $TestSocket "$$ PING\n";
+			my $REPLY = <$TestSocket>;
+			chomp($REPLY);
+			if ($REPLY eq "PONG") {
 				# It's still responding. If the user did this then perhaps he/she wanted
 				# to reload the data. Send the reload command
-				print $TestSocket "RELOAD_DATA\n";
-				die "A dayplanner daemon is already running and still responding. I told it to reload its data files.\n";
+				print $TestSocket "$$ RELOAD_DATA\n";
+				print $TestSocket "$$ BYE\n";
+				die "Error: A dayplanner daemon is already running and still responding. I told it to reload its data files.\n";
 			}
 		}
 		unlink($DaemonSocket);
@@ -299,7 +304,7 @@ sub OpenSocket () {
 					Local	=> $DaemonSocket,
 					Type	=> SOCK_STREAM,
 					Listen	=> 5,
-			) or die $@;	# TODO: Needs a much more sensible die error
+			) or die "Unable to create a new socket: $@\n";
 	# Trap SIGPIPE
 	$SIG{PIPE} = \&SigpipeHandler;
 	# Create a new select handle for reading
