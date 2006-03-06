@@ -41,7 +41,7 @@ my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$DebuggingOutput,
 	$OutputVerbose,	$OutputVeryVerbose,	$Shutdown,
-	$Handle,	$LastAlarm
+	$Handle,	$LastAlarm,		$ForceFork
 );						# Global scalars
 # TODO - drop $Handle ?
 
@@ -443,6 +443,7 @@ GetOptions (
 		$OutputVeryVerbose = 1;
 	},
 	'n|nofork' => \$NoFork,
+	'f|force-fork' => \$ForceFork,
 	'dayplannerdir=s' => sub {
 		unless (-e $_[1]) {
 			die "$_[1] does not exist\n";
@@ -459,7 +460,7 @@ $DayplannerDir = "$ENV{HOME}/.dayplanner" unless defined($DayplannerDir);
 $DaemonSocket = "$DayplannerDir/$SocketName";
 
 # Fork unless NoFork is true
-unless ($NoFork) {
+if (not $NoFork or $ForceFork) {
 	my $PID = fork;
 	exit if $PID;
 	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
