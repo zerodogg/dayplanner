@@ -1,0 +1,184 @@
+#!/usr/bin/perl
+# dayplanner-notifier
+# Sends a notification to the user
+# Copyright (C) Eskild Hustvedt 2006
+# $Id$
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;			# Force strict coding
+use warnings;			# Tell perl to display warnings
+use Gtk2;			# Use Gtk2
+use Getopt::Long;		# Commandline options
+use IO::Socket;			# Network layer to communicate with the daemon
+use Locale::gettext;		# Translation layer
+
+my $Version = "0.1 Beta 1";
+my $RCSRev = '$Id$';
+
+my $SocketName;			# The socket to connect to
+my $Socket;			# The IO::Socket object
+my $Message;			# The message
+my $Time;			# The time
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# DAEMON COMMUNICATION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Connect to the daemon
+# Usage: DaemonConnect();
+sub DaemonConnect () {
+	$Socket = IO::Socket::UNIX->new(Peer => $SocketName,
+					Type => SOCK_STREAM,
+					Timeout => 10 )
+					or warn "WARNING: Unable to connect to $SocketName: $@!\n" and return(0);
+	if(Daemon_DataSegment("HI servant") eq "HI") {
+		return(1);
+	} else {
+		warn "WARNING: Unable to connect to $SocketName: The daemon refused my connection\n";
+		close($Socket);
+		return("NOHI");
+	}
+
+}
+
+# Purpose: Send some data to the daemon
+# Usage: Daemon_SendData(DATA);
+sub Daemon_SendData ($) {
+	print $Socket "$$ $_[0]","\n" or warn "Problem sending data to the daemon: $!\n" and return(0);
+}
+
+# Purpose: Get some data from the daemon
+# Usage: $Data = Daemon_GetData();
+sub Daemon_GetData () {
+	my $Data = <$Socket>;
+	unless(defined($Data)) {
+		return("ERR UNABLE_TO_GET_DATA");
+	}
+	return($Data);
+}
+
+# Purpose: Send something to the daemon and then return the daemons reply
+# Usage: $Reply = Daemon_DataSegment(DATA);
+sub Daemon_DataSegment ($) {
+	Daemon_SendData($_[0]);
+	return(Daemon_GetData());
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN NOTIFICATION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Find out how to notify the user and do it
+# Usage: NotifyUser();
+sub NotifyUser () {
+	# TODO: This needs a better test, DISPLAY may be set and we still may not be able to
+	# connect to the X display
+	if(defined($ENV{DISPLAY}) and length($ENV{DISPLAY})) {
+		# We have DISPLAY, use GTK
+		GtkNotifier();
+	} else {
+		NonGUINotifier();
+	}
+}
+
+# Purpose: Notify the user using a graphical (gtk2) dialog
+# Usage: GtkNotifier();
+sub GtkNotifier () {
+	Gtk2->init;
+	print "TODO\n";
+}
+
+# Purpose: Notify the user using a nongraphical system
+# Usage: NonGUINotifier();
+sub NonGUINotifier () {
+	# TODO: Discussion follows
+	#
+	# This routine can use system(wall "MESSAGE"); the possible issue with that is that
+	# all users listening for wall's can see the message, allowing other local users
+	# to view the messages. This could be an option, but a normal user wouldn't understand
+	# it if it was from the GUI - so this isn't a liveable alternative. Usually however
+	# the user will be able to use the GtkNotifier. Perhaps we could simulate wall by using
+	# write on all terminals returned by who -wu. This would in theory be safer.
+	#
+	# To further up the ability of the daemon to use the GtkNotifier, perhaps the dayplanner
+	# process could use a new HI format: HI client $ENV{DISPLAY} so that the daemon can set
+	# its own DISPLAY variable more properly - that is, set it to the DISPLAY variable of
+	# the last client started. Maybe rather add a command "ADD_DISPLAY" to the daemon.
+	# Perhaps also a dayplanner-daemon --add-display command, which
+	# adds the current DISPLAY or the display supplied to the display pool
+	#
+	# We might also want to guess a bit more about displays available, this can also be
+	# done with who -wu, or better, perhaps with some standard perl module or other hack.
+	#
+	# We need to get a viable method to make sure that users get to know about their
+	# appointments.
+	#
+	# Another viable alternative is mailing the notification to the user, and this is
+	# a truly viable alternative. First of all by using the local mail delivery system,
+	# secondly by mailing a user selectable addy. This could be chosen by having a config
+	# option that could be: Always mail, only mail when nothing else can be done, never mail.
+	# And then have the user select E-mail address - this address could be attempted to be
+	# retrieved from gnome if the gnome stuff is available (use Mail::Send; if it is standard
+	# 	module)
+	#
+	# Bottom line is this:
+	# - We should do all we can to make sure the user can use the GtkNotifier
+	# - We should do all we possibly can to make sure the user GETS their notifications
+	# - When the GtkNotifier just can't be used we should do what we can to try to
+	#   get the notification to him/her anyway.
+	print "TODO\n";
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# INITIALIZATION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+sub PrintHelp ($$$) {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+}
+
+GetOptions (
+	'help|h' => sub {
+		print "Day planner notifier version $Version\n";
+		print "This program is for use by the dayplanner daemon, you can try running\n";
+		print "it manually - but it won't do you much good :)\n\n";
+		# TODO help
+		PrintHelp("-h","--help","Display this help screen");
+		PrintHelp("-s","--socket","Select the socket");
+		PrintHelp("-m", "--message", "Set the message");
+		PrintHelp("-t", "--time", "Set the time (HH:MM)");
+		exit(0);
+	},
+	'socket|s=s' => \$SocketName,
+	'message|m=s' => \$Message,
+	'time|t=s' => \$Time,
+) or die "See $0 --help for more information\n";
+
+# Verify various things
+die "I need a --time\n" unless defined($Time) and length($Time);
+die "I need a --message\n" unless defined($Message) and length($Message);
+
+die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
+die "$SocketName does not exist\n" unless -e $SocketName;
+die "$SocketName is not a socket\n" unless -S $SocketName;
+
+# Okay, we're here now, fork
+my $PID = fork;
+exit if $PID;
+die "I was unable to fork: $!\n" unless defined($PID);
+
+DaemonConnect();
+NotifyUser();
