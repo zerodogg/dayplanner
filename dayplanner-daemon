@@ -188,7 +188,7 @@ sub IntDebug ($) {
 # IntVeryVerbose(MESSAGE);
 sub IntVeryVerbose ($) {
 	if ($OutputVeryVerbose) {
-		IntOutputMSG($_[0]);
+		IntOutputMSG("$_[0]\n");
 	}
 }
 
@@ -196,7 +196,7 @@ sub IntVeryVerbose ($) {
 # Usage: IntVerbose(MESSAGE);
 sub IntVerbose ($) {
 	if ($OutputVerbose) {
-		IntOutputMSG($_[0]);
+		IntOutputMSG("$_[0]\n");
 	}
 }
 
