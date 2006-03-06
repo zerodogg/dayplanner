@@ -108,11 +108,11 @@ sub DaemonInit () {
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
 		if ($ConnectionAttempt eq 'NOHI') {
-			die("Unable to connect to daemon - it refused my HI!\nTODO: FIXME! I should display a error dialog here\n");
-			# TODO: Display ERROR
+			DaemonConnectionErrorHandler();
+			return(0);
 		} elsif ($ConnectionAttempt eq '1') {
 			$DaemonOnline = 1;
-			return(0);
+			return(1);
 		}
 	}
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, Cwd::realpath(dirname($0))))) {
@@ -122,6 +122,7 @@ sub DaemonInit () {
 			} else {
 				if(ConnectToDaemon("$SaveToDir/$DaemonSocketName")) {
 					$DaemonOnline = 1;
+					return(1);
 				}
 			}
 		}
@@ -174,6 +175,20 @@ sub CloseDaemon () {
 		my $GetDaemon = Daemon_DataSegment('BYE');
 		close($DaemonSocket);
 	}
+}
+
+# Purpose: Display an error dialog about the inability to connect to the daemon
+# Usage: DaemonConnectionErrorHandler();
+sub DaemonConnectionErrorHandler () {
+#	my $ErrorDialog = Gtk2::MessageDialog->new(undef, "modal", 'error', 'ok', gettext("There seems to be another day planner already running. You should close the other instance of day planner before you start a new one. If you are sure that you want to start a new one, press force"));
+	my $Button = Gtk2::Button->new_with_label("CANCEL?");
+	$Button->show();
+	my $ErrorDialog = Gtk2::Dialog->new('Title', undef, 'modal',
+		'gtk-cancel'	=> 'cancel'
+	);
+	$ErrorDialog->run;
+	$ErrorDialog->destroy;
+	exit(0)
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -635,9 +650,11 @@ sub AboutBox () {
 	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with day planner; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
 	# set_wrap_license is only available in GTK =< 2.8.11 (probably some earlier too, but we don't know which yet)
 	# dayplanner will crash if set_wrap_license is called in a earlier version
-	if (Gtk2->CHECK_VERSION (2,8,11)) {
-		$AboutDialog->set_wrap_license(1);
-	}
+#	if (Gtk2->CHECK_VERSION (2,8,11)) {
+#		$AboutDialog->set_wrap_license(1);
+#	}
+	# set_wrap_license isn't available in all versions, don't know which versions
+	$AboutDialog->set_wrap_license(1) if grep { $_->{name} eq 'wrap-license' }  $AboutDialog->list_properties;
 	# Logo
 	my $LogoImage = DetectImage("dayplanner-about.png","dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
 	if ($LogoImage) {
@@ -1220,9 +1237,10 @@ unless (-e $SaveToDir) {
 LoadDefaultConfig();
 # Load the calendar
 LoadCalendar();
-# Draw the main window
-DrawMainWindow();
-# Initialize the daemon (start it and connect to it)
-DaemonInit();
+# Initialize the daemon, and if it works draw the main window
+if(DaemonInit()) {
+	# Draw the main window
+	DrawMainWindow();
+}
 # Rest in the Gtk2 main loop
 Gtk2->main;
