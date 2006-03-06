@@ -30,7 +30,7 @@ Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
 # Scalars
 my $Version = '0.1 Beta1';
-my $RCSRev = '$Id';
+my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";		# The filename to read events from
 my $BirthdayFile = "birthdays.dpd";		# The filename to read birthdays from
 my $SpecialEventsFile = "events_special.dpd";	# The filename to read special events from
@@ -41,7 +41,7 @@ my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$DebuggingOutput,
 	$OutputVerbose,	$OutputVeryVerbose,	$Shutdown,
-	$Handle
+	$Handle,	$LastAlarm
 );						# Global scalars
 # TODO - drop $Handle ?
 
@@ -127,16 +127,32 @@ sub FindSleepDuration () {
 	# If keys is true then...
 	if (@Keys) {
 		@Keys = sort(@Keys);
-		# Okay, now $Keys[0] is the first upcoming time
-		($hours, $minutes) = split(/:/, $Keys[0]);
-		# TODO: This needs a more robust algorithm that checks minutes and hours
-		if ($hours lt $currhour) {
-			$hours = 24;
-			$minutes = 0;
+		foreach(@Keys) {
+			my ($testhours, $testminutes) = split(/:/, $_);
+			# Uh, FIXME?
+			$testhours =~ s/^0(.*)/$1/;
+			$testminutes =~ s/^0(.*)/$1/;
+			# TODO: This might need to become a bit more robust
+			if($testhours lt $currhour) {
+				next;
+			}
+			if($testhours eq $currhour and $testminutes lt $currmin) {
+				next;
+			}
+			if(defined($LastAlarm) and $LastAlarm eq "$testhours:$testminutes") {
+				next;
+			}
+			$hours = $testhours;
+			$minutes = $testminutes;
 		}
+		# TODO: This needs a more robust algorithm that checks minutes and hours
+#		if ($hours lt $currhour) {
+#			$hours = 24;
+#			$minutes = 0;
+#		}
 	}
-	# If keys isn't then we need to return the amount of seconds until midnight
-	else {
+	# If keys isn't then we need to return the amount of seconds until midnight (FIXME, old comment)
+	unless(defined($hours) and defined($minutes)) {
 		$hours = 24;
 		$minutes = 0;
 	}
@@ -164,8 +180,7 @@ sub FindSleepDuration () {
 # Usage: IntDebug(MESSAGE);
 sub IntDebug ($) {
 	if ($DebuggingOutput) {
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		print "[$currhour:$currmin:$currsec] DEBUG: $_[0]\n";
+		IntOutputMSG("DEBUG: $_[0]\n");
 	}
 }
 
@@ -173,8 +188,7 @@ sub IntDebug ($) {
 # IntVeryVerbose(MESSAGE);
 sub IntVeryVerbose ($) {
 	if ($OutputVeryVerbose) {
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		print "[$currhour:$currmin:$currsec] $_[0]\n";
+		IntOutputMSG($_[0]);
 	}
 }
 
@@ -182,9 +196,18 @@ sub IntVeryVerbose ($) {
 # Usage: IntVerbose(MESSAGE);
 sub IntVerbose ($) {
 	if ($OutputVerbose) {
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		print "[$currhour:$currmin:$currsec] $_[0]\n";
+		IntOutputMSG($_[0]);
 	}
+}
+
+# Purpose: Output a properly formatted internal message
+# Usage: IntOutputMSG(MESSAGE);
+sub IntOutputMSG ($) {
+	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
+	$lhour = "0$lhour" unless $lhour >= 10;
+	$lmin = "0$lmin" unless $lmin >= 10;
+	$lsec = "0$lsec" unless $lsec >= 10;
+	print "[$lhour:$lmin:$lsec] $_[0]";
 }
 
 # Purpose: Print a warning to STDERR with proper output
@@ -260,6 +283,30 @@ sub CommandHandler ($) {
 	} elsif (/^PING/) {		# Simple ping implementation
 		IntDebug("Ping request from $PID");
 		return("PONG");
+	} 
+	elsif (s/^DEBUG\s*//) {
+		if (/^DUMP_VARIOUS/) {
+			IntDebug("Recieved debugging info request from $PID");
+			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose");
+		} elsif (/^DUMP_CLIENTLIST/) {
+			IntDebug("Client list request from $PID");
+			my $ClientList;
+			foreach (reverse sort keys(%{$AccessStatus{ClientList}})) {
+				# There must be some better way to do this?
+				if ($ClientList) {
+					$ClientList = "$_ $ClientList";
+				} else {
+					$ClientList = $_;
+				}
+			}
+			return($ClientList);
+		} elsif (/^DUMP_SLEEPTIME/) {
+			IntDebug("Sleep time request from $PID");
+			return(FindSleepDuration());
+		} else {
+			IntDebug("Invalid debug command: \"$_\" from $PID");
+			return("ERR INVALID_COMMAND");
+		}
 	}
 	else {				# Handler for invalid requests
 		IntDebug("Invalid command: $_ from $PID");
@@ -357,6 +404,9 @@ sub MainLoop () {
 			}
 		}
 		if ($Timeout) {
+			# Get the current time/date
+			my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+			$LastAlarm = "$currhour:$currmin";
 			IntDebug("ALARM !!!");
 		}
 		if ($Shutdown) {
@@ -370,8 +420,6 @@ sub MainLoop () {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # INITIALIZATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# TODO: Dummy defaults, should be replaced by commandline arguments at this point
 
 GetOptions (
 	'help|h' => sub {
