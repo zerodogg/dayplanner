@@ -1,0 +1,14 @@
+Thanks to the authors of the following perl modules, of which without them,
+dayplanner would not exist (or would be alot harder to write) :)
+- Eskild
+
+The Gtk2 perl bindings
+Data::Dumper
+Getopt::Long
+Cwd
+File::Basename
+IO::Socket
+IO::Select
+Locale::gettext
+
+$Id$
