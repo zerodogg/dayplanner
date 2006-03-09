@@ -8,6 +8,9 @@
 - Rewrite the time box as something else
 - Look over TODOs and FIXMEs from the code
 
+Known issues:
+- Details appears to always be opened in the edit dialog
+
 * Version 0.2
 - Add right click on events
 - Add doubleclick support for the eventlist
