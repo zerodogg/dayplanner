@@ -115,11 +115,12 @@ sub DaemonInit () {
 			return(1);
 		}
 	}
-	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, Cwd::realpath(dirname($0))))) {
+	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
+		print "$_\n";
 		if (-x "$_/$DaemonName") {
-			if(system("$_/$DaemonName --dayplannerdir $SaveToDir")) {
-				warn "Unable to start the daemon!\n";
-			} else {
+			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
+			# and 1-255 on FALSE, so it's the other way around from perl
+			unless(system("$_/$DaemonName --nofork --dayplannerdir $SaveToDir")) {
 				if(ConnectToDaemon("$SaveToDir/$DaemonSocketName")) {
 					$DaemonOnline = 1;
 					return(1);
@@ -127,6 +128,8 @@ sub DaemonInit () {
 			}
 		}
 	}
+	warn "Unable to start daemon!\n";
+	return(1);
 }
 
 # Purpose: Connect to the daemon
@@ -137,9 +140,11 @@ sub ConnectToDaemon ($) {
 		Type	=> SOCK_STREAM,
 		Timeout	=> 5)
 		or return("NOCONNECT");
+	$DaemonOnline = 1;
 	if(Daemon_DataSegment("HI client") eq "HI\n") {
 		return(1);
 	} else {
+		$DaemonOnline = 0;
 		close($DaemonSocket);
 		return("NOHI");
 	}
@@ -148,24 +153,36 @@ sub ConnectToDaemon ($) {
 # Purpose: Send some data to the daemon
 # Usage: Daemon_SendData(DATA);
 sub Daemon_SendData ($) {
-	print $DaemonSocket "$$ $_[0]","\n" or warn "Problem sending data to the daemon: $!\n" and return(0);
+	if($DaemonOnline) {
+		print $DaemonSocket "$$ $_[0]","\n" or warn "Problem sending data to the daemon: $!\n" and return(0);
+	} else {
+		return(0);
+	}
 }
 
 # Purpose: Get some data from the daemon
 # Usage: $Data = Daemon_GetData();
 sub Daemon_GetData {
-	my $Data = <$DaemonSocket>;
-	unless(defined($Data)) {
-		return("ERR UNABLE_TO_GET_DATA");
+	if($DaemonOnline) {
+		my $Data = <$DaemonSocket>;
+		unless(defined($Data)) {
+			return("ERR UNABLE_TO_GET_DATA");
+		}
+		return($Data);
+	} else {
+		return("ERR NOT_ONLINE");
 	}
-	return($Data);
 }
 
 # Purpose: Send something to the daemon and then return the daemons reply
 # Usage: $Reply = Daemon_DataSegment(DATA);
 sub Daemon_DataSegment ($) {
-	Daemon_SendData($_[0]);
-	return(Daemon_GetData());
+	if($DaemonOnline) {
+		Daemon_SendData($_[0]);
+		return(Daemon_GetData());
+	} else {
+		return("ERR NOT_ONLINE");
+	}
 }
 
 # Purpose: Close the connection to the daemon
@@ -299,7 +316,6 @@ sub CreateSaveDir () {
 
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
-# 	FIXME: This usage is a bit invalid, it dosn't care about the HashRef option, and the "name of the hash" option is useless
 sub SaveDatafile ($$$$) {
 	# Create the progress window
 	my $ProgressWin = Gtk2::Window->new('toplevel');
@@ -648,12 +664,8 @@ sub AboutBox () {
 	$AboutDialog->set_name(gettext("Day planner beta"));
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with day planner; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
-	# set_wrap_license is only available in GTK =< 2.8.11 (probably some earlier too, but we don't know which yet)
-	# dayplanner will crash if set_wrap_license is called in a earlier version
-#	if (Gtk2->CHECK_VERSION (2,8,11)) {
-#		$AboutDialog->set_wrap_license(1);
-#	}
 	# set_wrap_license isn't available in all versions, don't know which versions
+	# dayplanner will crash if set_wrap_license is called in a earlier version
 	$AboutDialog->set_wrap_license(1) if grep { $_->{name} eq 'wrap-license' }  $AboutDialog->list_properties;
 	# Logo
 	my $LogoImage = DetectImage("dayplanner-about.png","dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
@@ -681,7 +693,7 @@ sub EventEditor ($$) {
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext);
 	my ($Title, $ExpanderTitle, $DateLabel, $OkButtonType);
-	
+	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	$MainWindow->set_sensitive(0);
 	
 	# Make sure the first parameter is valid (either new or old)
@@ -696,13 +708,14 @@ sub EventEditor ($$) {
 		$ExpanderTitle = gettext("Details");
 		$EventTime = "00:00";
 		$OkButtonType = 'gtk-add';
-	} else {
+	} elsif ($EventType eq 'old') {
 		$Title = gettext("Edit an event");
 		$ExpanderTitle = gettext("Details");
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
 		$OkButtonType = 'gtk-ok';
+		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 	}
 	my $AddEventBox = Gtk2::Window->new('toplevel');
 	
@@ -801,7 +814,7 @@ sub EventEditor ($$) {
 	$FulltextEntry->set_wrap_mode("word-char");
 	$FulltextEntry->show();
 	# Add text to it if needed
-	if (defined($EventFulltext)) {
+	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
@@ -812,7 +825,6 @@ sub EventEditor ($$) {
 	$FulltextWindow->set_policy('automatic', 'automatic');
 	$FulltextWindow->add($FulltextEntry);
 	$FulltextWindow->show();
-	#$TBVBox->pack_start($FulltextWindow,0,0,0);
 	$FT_Expander->add($FulltextWindow);
 	
 	# Create the hbox for the buttons
@@ -834,16 +846,29 @@ sub EventEditor ($$) {
 			my $Summary = $SummaryEntry->get_text;
 			my $FulltextBuff = $FulltextEntry->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
+			# Make sure it's not a dupe (that would end up overwriting data)
 			if ($EventType eq 'new') {
 				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
 					DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
 						$Error = 1;
 					}
+			} elsif ($EventType eq 'old') {
+				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+					unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
+						DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+						$Error = 1;
+					}
+				}
 			}
+			# We don't do this if an error occurred
 			unless ($Error) {
 				# Add them to the hash
 				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
 				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
+				# Delete old hash if needed
+				if($EventType eq 'old') {
+					CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
+				}
 				# Call UpdatedData to tell Day planner to save the data and redraw widgets
 				UpdatedData();
 				# Destroy our window, it will get the signal and do anything it needs to
