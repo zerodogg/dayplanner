@@ -39,11 +39,14 @@ my $ConfigFile = "dayplanner.conf";		# The dayplanner config - TODO: drop?
 my $SocketName = "dayplannerd";			# The name of the socket to use
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
-	$Server,	$ConnectionSelect,	$DebuggingOutput,
-	$OutputVerbose,	$OutputVeryVerbose,	$Shutdown,
-	$Handle,	$LastAlarm,		$ForceFork
+	$Server,	$ConnectionSelect,	$ForceFork,
+	$Shutdown,	$Handle,		$LastAlarm,
 );						# Global scalars
 # TODO - drop $Handle ?
+
+my (
+	$DebuggingOutput,	$OutputVerbose,	$OutputVeryVerbose,
+) = (0,0,0);
 
 # Hashes
 my %CalendarContents;		# Contents of the main calendar
