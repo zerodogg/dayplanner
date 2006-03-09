@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+# plan-migration
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use Data::Dumper;
+use File::Basename;
+
+my %PlanConvertHash;
+my %CalendarContents;
+
+
+# Purpose: Purge the current %PlanConvertHash buffer and put it into %CalendarContents
+# Usage: PurgeBuffer();
+sub PurgeBuffer () {
+	if(defined($PlanConvertHash{Day})) {
+		if (defined($PlanConvertHash{Summary})) {
+			$CalendarContents{$PlanConvertHash{Year}}{$PlanConvertHash{Month}}{$PlanConvertHash{Day}}{$PlanConvertHash{Time}}{summary} = $PlanConvertHash{Summary};
+			delete($PlanConvertHash{Summary});
+		}
+		if (defined($PlanConvertHash{Fulltext})) {
+			$CalendarContents{$PlanConvertHash{Year}}{$PlanConvertHash{Month}}{$PlanConvertHash{Day}}{$PlanConvertHash{Time}}{fulltext} = $PlanConvertHash{Fulltext};
+			delete($PlanConvertHash{Fulltext});
+		}
+		delete($PlanConvertHash{Day});
+		delete($PlanConvertHash{Month});
+		delete($PlanConvertHash{Year});
+		delete($PlanConvertHash{Time});
+	}
+}
+
+# Purpose: Convert the file supplied
+# Usage: ProcessFile(/path/to/file);
+sub ProcessFile ($) {
+	open(PLAN_FILE,$_[0]) or do {
+		warn("Unable to open $_: $!\n");
+		return(0);
+	};
+	my $LineNo = 0;
+	foreach(<PLAN_FILE>) {
+		$LineNo++;
+		next if /^\s*(O|o|t|e|l|a|y|P|p|m|L|u)/;	# These are Plan specific stuff, just ignore them
+		chomp;
+		if (/^\s*(N)/) {		# Entry equalent to the dayplanner summary
+			my $Summary = $_;
+			$Summary =~ s#^\s*N\s+(.*)#$1#;
+			$PlanConvertHash{Summary} = $Summary;
+		} elsif (/^\s*(M)/) {		# Entry equalent to the dayplanner fulltext
+			my $Fulltext = $_;
+			$Fulltext =~ s#^\s*M\s+(.*)#$1#;
+			if(defined($PlanConvertHash{Fulltext})) {
+				$PlanConvertHash{Fulltext} = "$PlanConvertHash{Fulltext} $Fulltext";
+			} else {
+				$PlanConvertHash{Fulltext} = $Fulltext;
+			}
+		} elsif (/\s*(R|E)/) {		# These we just skip but might parse at some point
+			# TODO: Basic support for R 0 0 0 1 (%BirthdayContents)
+			next;
+		} elsif (/^\s*\d/) {		# Okay, it starts with a digit, it's a new date
+			PurgeBuffer();
+			my ($Day,$Month,$Year,$Time) = ($_,$_,$_,$_);
+			# Get the day
+			$Day =~ s#^\s*\d+/(\d+)/.*#$1#;
+			# Get the month
+			$Month =~ s#^\s*(\d+)/\d+/.*#$1#;
+			# Get the year
+			$Year =~ s#^\s*\d+/\d+/(\d+)\s+.*#$1#;
+			# Get the time
+			$Time =~ s#\s*\d+/\d+/\d+\s+(\d+:\d+):\d+\s+.*#$1#;
+			$Time = "00:00" if $Time eq '99:99';
+			# Set the variables in the hash
+			$PlanConvertHash{Day} = $Day;
+			$PlanConvertHash{Month} = $Month;
+			$PlanConvertHash{Year} = $Year;
+			$PlanConvertHash{Time} = $Time;
+		} else {
+			print "WARNING: Unrecognized line: $_[0]:$LineNo: $_\n";
+			print "Please report this\n\n";
+			next;
+		}
+	}
+}	
+
+foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
+	if (-d $Dir) {
+		foreach my $File (<$Dir/*>) {
+			next if basename($File) =~ /^(lock\.pland|pland|holiday)$/;
+			ProcessFile($File);
+			PurgeBuffer();
+		}
+	}
+}
+
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Purity = 1;
+$Data::Dumper::Sortkeys = 1;
+print Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
