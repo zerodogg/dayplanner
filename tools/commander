@@ -15,70 +15,110 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-use IO::Socket;
-use strict;
 
+use strict;			# Make my coding strict
+use warnings;			# Enable perl warnings
+use IO::Socket;			# Daemon communication
+use Term::ReadLine;		# A more advanced way to get input than <STDIN>
+
+my $socket;			# The socket
+
+# Set up the signal handling
 $SIG{PIPE} = sub { print "I recieved SIGPIPE - daemon shut down?\n"; };
+$SIG{INT} = sub {
+	if (defined($socket)) {
+		print $socket "$$ BYE";
+	}
+	print("\n");exit(0);};
 
+# The default socket
 my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";
 
-if($ARGV[0]) {
+# If $ARGV[0] is set then we want to connect to another socket
+if(defined($ARGV[0]) and length($ARGV[0])) {
 	$SocketName = $ARGV[0];
 }
 
+# Verify socket existance
 unless (-e $SocketName) {
 	die "$SocketName doesn't exist\n";
 }
 
+# Verify that it actually IS a socket
 unless (-S $SocketName) {
 	die "$SocketName is not a socket\n";
 }
 
-my $socket = IO::Socket::UNIX->new(Peer  => $SocketName,
-                                Type     => SOCK_STREAM,
-				Timeout => 10 )
+# Open up the connection to the socket or die trying
+$socket = IO::Socket::UNIX->new(Peer	=> $SocketName,
+                                Type	=> SOCK_STREAM,
+				Timeout	=> 10 )
     or die "Couldn't connect to $SocketName: $@\nPerhaps the daemon isn't running?\n";
 
+# Say HI to the daemon and get the reply
 print $socket "$$ HI commander\n";
 my $HI_REPLY = <$socket>;
 
+# Print initial warning and welcomming message
 print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
 print "Welcome to the dayplanner daemon commander\n";
 print "Type !QUIT to quit, !HELP to view known daemon commands\n";
 print "Daemon says $HI_REPLY\n";
 
+# Purpose: Print a nicely formatted help output for commands available
+# Usage: CommandPrint(COMMAND, Description);
 sub CommandPrint ($$) {
 	printf "%-18s %s\n", $_[0], $_[1];
 }
 
+# Create our Term::ReadLine object
+my $term = Term::ReadLine->new('Day Planner daemon commander');
+# Get the attribs and set up autocompleteion
+my $attribs = $term->Attribs;
+$attribs->{completion_entry_function} = $attribs->{list_completion_function};
+$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME !QUIT !HELP)];
+
+# An "eternal" loop getting input and parsing it
 while (1) {
-	print "Command: ";
-	my $COMMAND = <STDIN>;
-	chomp($COMMAND);
-	if ($COMMAND =~ /^!QUIT/) {
-		print $socket "$$ BYE\n";
-	} elsif ($COMMAND =~ /^!HELP/) {
-		print "\nList of known daemon commands:\n";
-		CommandPrint("HI [client type]", "Initiate a new connection of type 'client type'");
-		CommandPrint("", "client type can be \"commander\" (is always allowed)");
-		CommandPrint("", "or \"client\" (the type dayplanner clients use");
-		CommandPrint("", "only one client can be connected at any time");
-		CommandPrint("PING", "Send a simple PING request to see if the daemon is alive");
-		CommandPrint("SHUTDOWN", "Tell the daemon to shut down");
-		CommandPrint("RELOAD_DATA", "Tell the daemon to reload the calendar data");
-		CommandPrint("BYE", "Tell the daemon to remove the client from its access lists");
-	} else {
-		print $socket "$$ $COMMAND\n";
-	}
-	unless($COMMAND =~ /^!HELP/) {
-		my $REPLY = <$socket>;
-		chomp($REPLY);
-		print " Daemon replied: $REPLY\n";
-		if ($COMMAND =~ /^!QUIT/) {
-			exit(0);
+	# Get the input
+	my $COMMAND = $term->readline('Command: ');
+	# Make sure we got something other than emptyness or whitespace
+	if(defined($COMMAND) and $COMMAND =~ /\S/) {
+		chomp($COMMAND);			# Strip newlines
+		if ($COMMAND =~ /^!QUIT/) {		# If it's !QUIT then tell the socket BYE and quit
+			print $socket "$$ BYE\n";
+		} elsif ($COMMAND =~ /^!HELP/) {	# If it's !HELP then we display the help
+			print "\nList of known daemon commands:\n";
+			CommandPrint("HI [client type]", "Initiate a new connection of type 'client type'");
+			CommandPrint("", "client type can be \"commander\" (is always allowed)");
+			CommandPrint("", "or \"client\" (the type dayplanner clients use");
+			CommandPrint("", "only one client can be connected at any time)");
+			CommandPrint("PING", "Send a simple PING request to see if the daemon is alive");
+			CommandPrint("SHUTDOWN", "Tell the daemon to shut down");
+			CommandPrint("RELOAD_DATA", "Tell the daemon to reload the calendar data");
+			CommandPrint("BYE", "Tell the daemon to remove the client from its access lists");
+			CommandPrint("DEBUG [COMMAND]", "Run the debugging command [COMMAND]");
+			print "\nList of debugging commands:\n";
+			CommandPrint("DUMP_VARIOUS", "Dump various useful information about the running daemon");
+			CommandPrint("DUMP_CLIENTLIST", "Dump the list of connected PIDs");
+			CommandPrint("DUMP_SLEEPTIME", "Dump approximately how long the daemon would sleep after");
+			CommandPrint("", "this request has been processed (unless a new request is recieved).");
+			CommandPrint("", "Returns the value in seconds as returned by the FindSleepDuration() function");
+		} else {				# Everything else we send unmodified to the daemon
+			print $socket "$$ $COMMAND\n";
+		}
+		unless($COMMAND =~ /^!HELP/) {	# If the command isn't !HELP then get and display the daemon reply
+			my $REPLY = <$socket>;
+			chomp($REPLY);
+			print " Daemon replied: $REPLY\n";
+			# Handle quitting the program
+			if ($COMMAND =~ /^!QUIT/) {
+				close($socket);
+				exit(0);
+			}
 		}
 	}
 }
 
-# and terminate the connection when we're done
+# Terminate the connection if we get this far, should never happen though
 close($socket);
