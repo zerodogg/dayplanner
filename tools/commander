@@ -109,8 +109,12 @@ while (1) {
 		}
 		unless($COMMAND =~ /^!HELP/) {	# If the command isn't !HELP then get and display the daemon reply
 			my $REPLY = <$socket>;
-			chomp($REPLY);
-			print " Daemon replied: $REPLY\n";
+			if (defined($REPLY)) {
+				chomp($REPLY);
+				print " Daemon replied: $REPLY\n";
+			} else {
+				print " Daemon didn't reply\n";
+			}
 			# Handle quitting the program
 			if ($COMMAND =~ /^!QUIT/) {
 				close($socket);
