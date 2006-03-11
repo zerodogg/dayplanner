@@ -252,6 +252,8 @@ sub CommandHandler ($) {
 			$AccessStatus{Connected} = $PID;
 		} elsif ($TYPE =~ /commander/) {
 			IntDebug("New commander ($PID)");
+		} elsif ($TYPE =~ /servant/) {
+			IntDebug("New servant ($PID)");
 		} else {
 			IntDebug("Invalid type from $PID ($TYPE) - refusing");
 			return("REFUSED");
@@ -281,8 +283,12 @@ sub CommandHandler ($) {
 		return("done");
 	} elsif (/^SHUTDOWN/) {		# Command to force daemon shutdown
 		IntDebug("Shutdown request");
-		$Shutdown = "Daemon shut down by client ($PID) request";
-		return("okay");
+		#	if($TYPE =~ /servant/) {
+			#	return("ERR PERMISSION_DENIED");
+			#} else {
+			$Shutdown = "Daemon shut down by client ($PID) request";
+			return("okay");
+			#}
 	} elsif (/^PING/) {		# Simple ping implementation
 		IntDebug("Ping request from $PID");
 		return("PONG");
