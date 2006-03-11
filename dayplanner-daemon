@@ -37,6 +37,7 @@ my $SpecialEventsFile = "events_special.dpd";	# The filename to read special eve
 my $DaemonFile = 'daemondata.dpd';		# The filename to save and read daemon data from
 my $ConfigFile = "dayplanner.conf";		# The dayplanner config - TODO: drop?
 my $SocketName = "dayplannerd";			# The name of the socket to use
+my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
@@ -148,13 +149,8 @@ sub FindSleepDuration () {
 			$hours = $testhours;
 			$minutes = $testminutes;
 		}
-		# TODO: This needs a more robust algorithm that checks minutes and hours
-#		if ($hours lt $currhour) {
-#			$hours = 24;
-#			$minutes = 0;
-#		}
 	}
-	# If keys isn't then we need to return the amount of seconds until midnight (FIXME, old comment)
+	# If keys is NOT set then we return the amount of seconds until midnight instead
 	unless(defined($hours) and defined($minutes)) {
 		$hours = 24;
 		$minutes = 0;
@@ -222,6 +218,43 @@ sub IntWarn ($) {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE DAEMON FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Purpose: Start the notifier and display the alarm
+# Usage: DayplannerAlarm();
+sub DayplannerAlarm () {
+	IntDebug("Alarm");
+	# Get the current time/date
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	$LastAlarm = "$currhour:$currmin";
+	$currhour = "0$currhour" unless $currhour >= 10;
+	$currmin = "0$currmin" unless $currmin >= 10;
+	$currsec = "0$currsec" unless $currsec >= 10;
+	if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"})) {
+			RunNotifier($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{summary},
+				$CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{fulltext},
+				'today',
+				"$currhour:$currmin");
+	} else {
+		IntDebug("Undefined CalendarContent!");
+	}
+}
+
+# Purpose: Run the notifier itself with the correct parameters
+# Usage: RunNotifier(SUMMARY, FULLTEXT, DATE, TIME);
+sub RunNotifier ($$$$) {
+	# Notifier
+	my ($Summary, $Fulltext, $Date, $Time) = @_;
+	IntDebug("Alarm! Task: $Summary at $Time on $Date");
+	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
+		if ( -x "$_/$NotifierName") {
+			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
+			# and 1-255 on FALSE, so it's the other way around from perl
+			unless(system("$_/$NotifierName --socket \"$DaemonSocket\" --message \"$Summary\" --fulltext \"$Fulltext\" --time \"$Time\" --date \"$Date\"")) {
+				return(1);
+			}
+		}
+	}
+	IntWarn("Unable to start the notifier! Task: $Summary at $Time on $Date");
+}
 
 # Purpose: Handle commands
 # Usage: CommandHandler(COMMAND);
@@ -413,10 +446,7 @@ sub MainLoop () {
 			}
 		}
 		if ($Timeout) {
-			# Get the current time/date
-			my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-			$LastAlarm = "$currhour:$currmin";
-			IntDebug("ALARM !!!");
+			DayplannerAlarm();
 		}
 		if ($Shutdown) {
 			IntVerbose($Shutdown);
