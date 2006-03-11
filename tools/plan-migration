@@ -82,7 +82,14 @@ sub ProcessFile ($) {
 			$Year =~ s#^\s*\d+/\d+/(\d+)\s+.*#$1#;
 			# Get the time
 			$Time =~ s#\s*\d+/\d+/\d+\s+(\d+:\d+):\d+\s+.*#$1#;
+			# Convert the time to a more dayplannerish format
 			$Time = "00:00" if $Time eq '99:99';
+			if ($Time =~ /^\d+:\d$/) {
+				$Time = $Time . 0;
+			}
+			if ($Time =~ /^\d:\d*$/) {
+				$Time = 0 . $Time;
+			}
 			# Set the variables in the hash
 			$PlanConvertHash{Day} = $Day;
 			$PlanConvertHash{Month} = $Month;
