@@ -100,41 +100,46 @@ sub NotifyUser () {
 # Usage: GtkNotifier();
 sub GtkNotifier () {
 	Gtk2->init;
-	my $MainText = "At $Time on $Date:\n$Message";
-	my $NotifyDialog = Gtk2::MessageDialog->new (undef,
-						'destroy-with-parent',
-						'info',
-						'none',
-						$MainText);
-	# This is important, so set the urgency hint and keep it above all other windows
-	$NotifyDialog->set_keep_above(1);
-	$NotifyDialog->set_urgency_hint(1);
-	$NotifyDialog->stick;
-	# TODO: Fix the label - add the icon
-	$NotifyDialog->set_title("Day Planner event");
+	while (1) {
+		my $MainText = "At $Time on $Date:\n$Message";
+		my $NotifyDialog = Gtk2::MessageDialog->new (undef,
+#							'destroy-with-parent',
+							'no-separator',
+							'info',
+							'none',
+							$MainText);
+		# This is important, so set the urgency hint and keep it above all other windows
+		$NotifyDialog->set_keep_above(1);
+		$NotifyDialog->set_urgency_hint(1);
+		$NotifyDialog->stick;
+		# TODO: Fix the label - add the icon
+		$NotifyDialog->set_title("Day Planner event");
+		
+		my $PostponeButton = Gtk2::Button->new_with_label('Postpone');
+		$NotifyDialog->add_action_widget($PostponeButton, 'reject');
+		$PostponeButton->show();
 	
-	my $PostponeButton = Gtk2::Button->new_with_label('Postpone');
-	$NotifyDialog->add_action_widget($PostponeButton, 'reject');
-	$PostponeButton->show();
-
-	my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
-	$NotifyDialog->add_action_widget($OkayButton, 'accept');
-	$OkayButton->show();
-	
-	# If the $Fulltext is defined and set then allow the user to be shown it
-	if(defined($Fulltext) and $Fulltext =~ /\S/) {
-		my $FT_Expander = Gtk2::Expander->new("Details");
-		$FT_Expander->show();
-		$NotifyDialog->vbox->add($FT_Expander);
-		my $FulltextLabel = Gtk2::Label->new($Fulltext);
-		$FulltextLabel->set_line_wrap(1);
-		$FT_Expander->add($FulltextLabel);
-		$FulltextLabel->show();
+		my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
+		$NotifyDialog->add_action_widget($OkayButton, 'accept');
+		$OkayButton->show();
+		
+		# If the $Fulltext is defined and set then allow the user to be shown it
+		if(defined($Fulltext) and $Fulltext =~ /\S/) {
+			my $FT_Expander = Gtk2::Expander->new("Details");
+			$FT_Expander->show();
+			$NotifyDialog->vbox->add($FT_Expander);
+			my $FulltextLabel = Gtk2::Label->new($Fulltext);
+			$FulltextLabel->set_line_wrap(1);
+			$FT_Expander->add($FulltextLabel);
+			$FulltextLabel->show();
+		}
+		my $GtkReply = $NotifyDialog->run;
+		if($GtkReply eq 'reject') {
+			sleep(60*10);
+		} else {
+			return(1);
+		}
 	}
-	
-	$NotifyDialog->run;
-	$NotifyDialog->destroy();
-	print "TODO\n";
 }
 
 # Purpose: Notify the user using a nongraphical system
