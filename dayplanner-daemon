@@ -25,6 +25,8 @@ use IO::Select;			# We use IO::Select to wait for connections and at the same
 				#  time wait for a timeout
 use Locale::gettext;		# Allow translation, might not be needed
 use Getopt::Long;		# Commandline options
+use Cwd;			# We need Cwd::realpath to find the notifier
+use File::Basename;		# Ditto
 
 Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
@@ -163,10 +165,13 @@ sub FindSleepDuration () {
 	$currhour = $currhour * 60 * 60;
 	# Minutes to seconds
 	$currmin = $currmin * 60;
-	# Find the correct currsec value
-	$currsec = 60 - $currsec;
+	# Only do it if $currsec is > 0
+#	if($currsec) {
+#		# Find the correct currsec value
+#		$currsec = 59 - $currsec;
+#	}
 	# Calculate the total
-	my $total = ($hours + $minutes) - ($currhour + ($currmin - $currsec));
+	my $total = ($hours + $minutes) - ($currhour + ($currmin + $currsec));
 	# Return the total to caller
 	return($total);
 }
@@ -225,16 +230,19 @@ sub DayplannerAlarm () {
 	# Get the current time/date
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	$LastAlarm = "$currhour:$currmin";
+	# Fix the format
 	$currhour = "0$currhour" unless $currhour >= 10;
 	$currmin = "0$currmin" unless $currmin >= 10;
 	$currsec = "0$currsec" unless $currsec >= 10;
+	$curryear += 1900;
+	$currmonth++;
 	if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"})) {
-			RunNotifier($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{summary},
+			RunNotifier($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}}{summary},
 				$CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{fulltext},
 				'today',
 				"$currhour:$currmin");
 	} else {
-		IntDebug("Undefined CalendarContent!");
+		IntDebug("Undefined CalendarContent - BUG! \$CalendarContents{$curryear}{$currmonth}{$currmday}{$currhour:$currmin}");
 	}
 }
 
