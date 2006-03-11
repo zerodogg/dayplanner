@@ -134,6 +134,7 @@ sub GtkNotifier () {
 			$FulltextLabel->show();
 		}
 		my $GtkReply = $NotifyDialog->run;
+		$NotifyDialog->destroy();
 		if($GtkReply eq 'reject') {
 			sleep(60*10);
 		} else {
