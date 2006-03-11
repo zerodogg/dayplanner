@@ -31,7 +31,9 @@ my $RCSRev = '$Id$';
 my $SocketName;			# The socket to connect to
 my $Socket;			# The IO::Socket object
 my $Message;			# The message
+my $Fulltext;			# The fulltext (details)
 my $Time;			# The time
+my $Date;			# The date
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # DAEMON COMMUNICATION
@@ -98,6 +100,40 @@ sub NotifyUser () {
 # Usage: GtkNotifier();
 sub GtkNotifier () {
 	Gtk2->init;
+	my $MainText = "At $Time on $Date:\n$Message";
+	my $NotifyDialog = Gtk2::MessageDialog->new (undef,
+						'destroy-with-parent',
+						'info',
+						'none',
+						$MainText);
+	# This is important, so set the urgency hint and keep it above all other windows
+	$NotifyDialog->set_keep_above(1);
+	$NotifyDialog->set_urgency_hint(1);
+	$NotifyDialog->stick;
+	# TODO: Fix the label - add the icon
+	$NotifyDialog->set_title("Day Planner event");
+	
+	my $PostponeButton = Gtk2::Button->new_with_label('Postpone');
+	$NotifyDialog->add_action_widget($PostponeButton, 'reject');
+	$PostponeButton->show();
+
+	my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
+	$NotifyDialog->add_action_widget($OkayButton, 'accept');
+	$OkayButton->show();
+	
+	# If the $Fulltext is defined and set then allow the user to be shown it
+	if(defined($Fulltext) and $Fulltext =~ /\S/) {
+		my $FT_Expander = Gtk2::Expander->new("Details");
+		$FT_Expander->show();
+		$NotifyDialog->vbox->add($FT_Expander);
+		my $FulltextLabel = Gtk2::Label->new($Fulltext);
+		$FulltextLabel->set_line_wrap(1);
+		$FT_Expander->add($FulltextLabel);
+		$FulltextLabel->show();
+	}
+	
+	$NotifyDialog->run;
+	$NotifyDialog->destroy();
 	print "TODO\n";
 }
 
@@ -159,17 +195,21 @@ GetOptions (
 		PrintHelp("-h","--help","Display this help screen");
 		PrintHelp("-s","--socket","Select the socket");
 		PrintHelp("-m", "--message", "Set the message");
+		PrintHelp("-f", "--fulltext", "Set the \"fulltext\" entry (details)");
 		PrintHelp("-t", "--time", "Set the time (HH:MM)");
 		exit(0);
 	},
 	'socket|s=s' => \$SocketName,
 	'message|m=s' => \$Message,
 	'time|t=s' => \$Time,
+	'fulltext|f=s' => \$Fulltext,
+	'date|d=s' => \$Date,
 ) or die "See $0 --help for more information\n";
 
 # Verify various things
 die "I need a --time\n" unless defined($Time) and length($Time);
 die "I need a --message\n" unless defined($Message) and length($Message);
+die "I need a --date\n" unless defined($Date) and length($Date);
 
 die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
 die "$SocketName does not exist\n" unless -e $SocketName;
