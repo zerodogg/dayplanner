@@ -237,7 +237,7 @@ sub DayplannerAlarm () {
 	$curryear += 1900;
 	$currmonth++;
 	if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"})) {
-			RunNotifier($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}}{summary},
+			RunNotifier($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{summary},
 				$CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{fulltext},
 				'today',
 				"$currhour:$currmin");
