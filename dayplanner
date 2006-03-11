@@ -662,10 +662,7 @@ sub AboutBox () {
 	$AboutDialog->set_website("http://gna.org/projects/dayplanner");
 	$AboutDialog->set_name(gettext("Day planner beta"));
 	# GPL summary, should never be marked as translateable
-	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with day planner; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
-	# set_wrap_license isn't available in all versions, don't know which versions
-	# dayplanner will crash if set_wrap_license is called in a earlier version
-	$AboutDialog->set_wrap_license(1) if grep { $_->{name} eq 'wrap-license' }  $AboutDialog->list_properties;
+	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with day planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
 	# Logo
 	my $LogoImage = DetectImage("dayplanner-about.png","dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
 	if ($LogoImage) {
