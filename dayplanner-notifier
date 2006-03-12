@@ -46,7 +46,8 @@ sub DaemonConnect () {
 					Type => SOCK_STREAM,
 					Timeout => 10 )
 					or warn "WARNING: Unable to connect to $SocketName: $@!\n" and return(0);
-	if(Daemon_DataSegment("HI servant") eq "HI") {
+#	print Daemon_DataSegment("HI servant"),"\n";
+	if(Daemon_DataSegment("HI servant") eq "HI\n") {
 		return(1);
 	} else {
 		warn "WARNING: Unable to connect to $SocketName: The daemon refused my connection\n";
@@ -79,6 +80,13 @@ sub Daemon_DataSegment ($) {
 	return(Daemon_GetData());
 }
 
+# Purpose: Disconnect from the daemon
+# Usage: DaemonDisconnect();
+sub DaemonDisconnect () {
+	Daemon_DataSegment("BYE");
+	close($Socket);
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN NOTIFICATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -101,14 +109,19 @@ sub NotifyUser () {
 sub GtkNotifier () {
 	Gtk2->init;
 	while (1) {
-		my $MainText = "At $Time on $Date:\n$Message";
+		my $MainText;
+		if($Date eq 'today') {
+			$MainText = sprintf("Today at %s:\n%s",$Time,$Message);
+		} else {
+			$MainText = sprintf("At %s on %s:\n%s",$Time,$Date,$Message);
+		}
 		my $NotifyDialog = Gtk2::MessageDialog->new (undef,
-#							'destroy-with-parent',
-							'no-separator',
+							'destroy-with-parent',
 							'info',
 							'none',
 							$MainText);
 		# This is important, so set the urgency hint and keep it above all other windows
+		# and on all desktops
 		$NotifyDialog->set_keep_above(1);
 		$NotifyDialog->set_urgency_hint(1);
 		$NotifyDialog->stick;
@@ -125,16 +138,32 @@ sub GtkNotifier () {
 		
 		# If the $Fulltext is defined and set then allow the user to be shown it
 		if(defined($Fulltext) and $Fulltext =~ /\S/) {
+			# The expander
 			my $FT_Expander = Gtk2::Expander->new("Details");
 			$FT_Expander->show();
 			$NotifyDialog->vbox->add($FT_Expander);
-			my $FulltextLabel = Gtk2::Label->new($Fulltext);
-			$FulltextLabel->set_line_wrap(1);
-			$FT_Expander->add($FulltextLabel);
-			$FulltextLabel->show();
+			# The textview field
+			my $FulltextView = Gtk2::TextView->new();
+			$FulltextView->set_editable(0);
+			$FulltextView->set_wrap_mode("word-char");
+			$FulltextView->show();
+			# Add the text to it
+			my $FulltextBuffer = Gtk2::TextBuffer->new();
+			$FulltextBuffer->set_text($Fulltext);
+			$FulltextView->set_buffer($FulltextBuffer);
+			# Create a scrollable window to use
+			my $FulltextWindow = Gtk2::ScrolledWindow->new;
+			$FulltextWindow->set_policy('automatic', 'automatic');
+			$FulltextWindow->add($FulltextView);
+			$FulltextWindow->show();
+			# Add it to the expander
+			$FT_Expander->add($FulltextWindow);
 		}
+		# Display, get the reply and destroy (this sounds a bit violent - I assure you no widgets will be hurt)
 		my $GtkReply = $NotifyDialog->run;
 		$NotifyDialog->destroy();
+		# Flush the display before sleeping
+		Gtk2->main_iteration while Gtk2->events_pending;
 		if($GtkReply eq 'reject') {
 			sleep(60*10);
 		} else {
@@ -228,3 +257,4 @@ die "I was unable to fork: $!\n" unless defined($PID);
 
 DaemonConnect();
 NotifyUser();
+DaemonDisconnect();
