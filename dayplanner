@@ -153,10 +153,13 @@ sub ConnectToDaemon ($) {
 # Usage: Daemon_SendData(DATA);
 sub Daemon_SendData ($) {
 	if($DaemonOnline) {
-		print $DaemonSocket "$$ $_[0]","\n" or warn "Problem sending data to the daemon: $!\n" and return(0);
-	} else {
-		return(0);
-	}
+		if(print $DaemonSocket "$$ $_[0]","\n") {
+			       return(1);
+		       } else {
+				warn "Problem sending data to the daemon: $!\n";
+		}
+	} 
+	return(0);
 }
 
 # Purpose: Get some data from the daemon
