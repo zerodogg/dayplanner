@@ -105,6 +105,9 @@ my (
 # Purpose: Initialize and connect to the daemon
 # Usage: DaemonInit();
 sub DaemonInit () {
+	# Handle SIGPIPE
+	$SIG{PIPE} = \&DaemonSIGPIPEHandler;
+
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
 		if ($ConnectionAttempt eq 'NOHI') {
@@ -129,6 +132,13 @@ sub DaemonInit () {
 	}
 	warn "Unable to start daemon!\n";
 	return(1);
+}
+
+# Purpose: Handle SIGPIPE gracefully
+# Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
+sub DaemonSIGPIPEHandler() {
+	warn("I recieved a SIGPIPE, the daemon is probably offline\n");
+	# TODO: Restart daemon?
 }
 
 # Purpose: Connect to the daemon
