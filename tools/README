@@ -6,3 +6,4 @@ buildpot		Build the Day Planner POT file
 
 commander		The day planner daemon commander. Send raw commands
 			to a day planner daemon. Useful for testing
+plan-migration		See README.plan-migration
