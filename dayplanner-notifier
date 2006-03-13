@@ -125,13 +125,10 @@ sub GtkNotifier () {
 		$NotifyDialog->set_keep_above(1);
 		$NotifyDialog->set_urgency_hint(1);
 		$NotifyDialog->stick;
-		# TODO: Fix the label - add the icon
 		$NotifyDialog->set_title("Day Planner event");
 		
 		my $PostponeButton = Gtk2::Button->new_with_label('Postpone');
-#		my $PostponeButton = Gtk2::Button->new_from_stock('gtk-go-forward');
 		my $PostponeImage = Gtk2::Image->new_from_stock('gtk-go-forward','button');
-		#	$PostponeButton->set_label('Postpone');
 		$PostponeButton->set_image($PostponeImage);
 		$NotifyDialog->add_action_widget($PostponeButton, 'reject');
 		$PostponeButton->show();
