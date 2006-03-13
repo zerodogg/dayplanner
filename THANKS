@@ -10,5 +10,6 @@ File::Basename
 IO::Socket
 IO::Select
 Locale::gettext
+...and ofcourse gtk2 and perl itself
 
 $Id$
