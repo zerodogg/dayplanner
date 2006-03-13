@@ -513,6 +513,10 @@ if (not $NoFork or $ForceFork) {
 	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
 }
 
+# Verify the dir
+die "$DayplannerDir doesn't exist!\n" unless -e $DayplannerDir;
+
+# Main
 OpenSocket();
 LoadCalendar();
 MainLoop();
