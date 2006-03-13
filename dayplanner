@@ -715,7 +715,7 @@ sub EventEditor ($$) {
 	if ($EventType eq 'new') {
 		$Title = gettext("Add an event");
 		$ExpanderTitle = gettext("Details");
-		$EventTime = "00:00";
+		$EventTime = "0:00";
 		$OkButtonType = 'gtk-add';
 	} elsif ($EventType eq 'old') {
 		$Title = gettext("Edit an event");
@@ -786,11 +786,31 @@ sub EventEditor ($$) {
 	$TimeLabel->show();
 	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
 	
-	# Create the time entry box
-	my $TimeEntry = Gtk2::Entry->new();
-	$TimeEntry->set_text($EventTime);
-	$TimeEntry->show();
-	$ContentTable->attach_defaults($TimeEntry, 1,2,0,1);
+	# Time entry box
+	
+	# Create a hbox to put the spinners into
+	my $TimeSpinnerHBox = Gtk2::HBox->new(0,0);
+	$ContentTable->attach_defaults($TimeSpinnerHBox, 1,2,0,1);
+	$TimeSpinnerHBox->show();
+	# The hour adjustment
+	my $HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
+	# The minute adjustment
+	my $MinuteAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 59.0, 1.0, 5.0, 0.0);
+	# Create the spinners
+	my $HourSpinner = Gtk2::SpinButton->new($HourAdjustment, 0, 0);
+	my $MinuteSpinner = Gtk2::SpinButton->new($MinuteAdjustment, 0, 0);
+	# Show them and pack them onto the hbox
+	$HourSpinner->show();
+	$MinuteSpinner->show();
+	$TimeSpinnerHBox->pack_start($HourSpinner,0,0,0);
+	$TimeSpinnerHBox->pack_start($MinuteSpinner,0,0,0);
+	# Set the value	
+	my $HSTime = $EventTime;	# Hour
+	my $MSTime = $EventTime;	# Minute
+	$HSTime =~ s/^(\d+):\d+$/$1/;
+	$MSTime =~ s/^\d+:(\d+)$/$1/;
+	$HourSpinner->set_value($HSTime);
+	$MinuteSpinner->set_value($MSTime);
 	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new(gettext('Summary:'));
@@ -851,7 +871,9 @@ sub EventEditor ($$) {
 	$OKButton->signal_connect('clicked' => sub {
 			my $Error = 0;
 			# Get the contents
-			my $Time = $TimeEntry->get_text;
+			my $Hour = $HourSpinner->get_value_as_int();
+			my $Minute = $MinuteSpinner->get_value_as_int();
+			my $Time = "$Hour:$Minute";
 			my $Summary = $SummaryEntry->get_text;
 			my $FulltextBuff = $FulltextEntry->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
@@ -868,6 +890,10 @@ sub EventEditor ($$) {
 						$Error = 1;
 					}
 				}
+			}
+			unless ($Summary) {
+				DPError(gettext("You need to enter a summary first"));
+				$Error = 1;
 			}
 			# We don't do this if an error occurred
 			unless ($Error) {
