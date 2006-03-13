@@ -735,6 +735,8 @@ sub EventEditor ($$) {
 	$AddEventBox->set_title("$Title");
 	$AddEventBox->set_resizable(0);
 	$AddEventBox->set_border_width(5);
+	$AddEventBox->set_skip_taskbar_hint(1);
+	$AddEventBox->set_skip_pager_hint(1);
 
 	# Handle closing
 	$AddEventBox->signal_connect("destroy" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
@@ -799,10 +801,14 @@ sub EventEditor ($$) {
 	# Create the spinners
 	my $HourSpinner = Gtk2::SpinButton->new($HourAdjustment, 0, 0);
 	my $MinuteSpinner = Gtk2::SpinButton->new($MinuteAdjustment, 0, 0);
+	# Create a simple label
+	my $TimeSeperatorLabel = Gtk2::Label->new(' : ');
+	$TimeSeperatorLabel->show();
 	# Show them and pack them onto the hbox
 	$HourSpinner->show();
 	$MinuteSpinner->show();
 	$TimeSpinnerHBox->pack_start($HourSpinner,0,0,0);
+	$TimeSpinnerHBox->pack_start($TimeSeperatorLabel,0,0,0);
 	$TimeSpinnerHBox->pack_start($MinuteSpinner,0,0,0);
 	# Set the value	
 	my $HSTime = $EventTime;	# Hour
