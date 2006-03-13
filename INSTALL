@@ -1,0 +1,27 @@
+* LOCAL INSTALL - SINGLE USER *
+Just run ./dayplanner from this directory, it isn't harder.
+
+* GLOBAL INSTALL - MULTI USER and PACKAGERS *
+This is a bit trickier, these files should go into $PATH somewhere, such as in /usr/local/bin or
+/usr/bin/ and be +x:
+- dayplanner
+- dayplanner-notifier
+- dayplanner-daemon
+
+These files should go into the systems standard icons directory OR either /usr/share/dayplanner/
+or /usr/local/dayplanner/:
+- art/dayplanner_16.png
+- art/dayplanner_24.png
+- art/dayplanner_48.png
+- art/dayplanner_HC16.png
+- art/dayplanner_HC24.png
+- art/dayplanner_HC48.png
+(The HC icons are high-contrast versions of the other ones)
+
+These files should go into either /usr/share/dayplanner/ or /usr/local/dayplanner/:
+- art/dayplanner-about.png
+
+If you place the executeables int he same dir as the *png's then the png's can be anywhere
+in the filesystem.
+
+$Id$
