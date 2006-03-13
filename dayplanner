@@ -65,6 +65,7 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
+# TODO: Use POSIX::strftime
 my %MonthNames = (
 	1 => gettext('January'),
 	2 => gettext('February'),
