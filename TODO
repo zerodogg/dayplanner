@@ -5,7 +5,6 @@
 - Add support for birthdays.dpd
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
-- Rewrite the time box as something else
 - Look over TODOs and FIXMEs from the code
 
 Known issues:
