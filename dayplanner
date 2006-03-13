@@ -871,13 +871,13 @@ sub EventEditor ($$) {
 			}
 			# We don't do this if an error occurred
 			unless ($Error) {
-				# Add them to the hash
-				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
-				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
 				# Delete old hash if needed
 				if($EventType eq 'old') {
 					CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
 				}
+				# Add them to the hash
+				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
+				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
 				# Call UpdatedData to tell Day planner to save the data and redraw widgets
 				UpdatedData();
 				# Destroy our window, it will get the signal and do anything it needs to
