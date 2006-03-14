@@ -7,23 +7,26 @@
 	simplify those too technical
 - Look over TODOs and FIXMEs from the code
 
-Known issues:
-- Details appears to always be opened in the edit dialog
-
-* Version 0.2
-- Add right click on events
+Version 0.2
 - Add doubleclick support for the eventlist
+- Add a week overview
+- Add support for am/pm
+- Have a third party look over all strings (in the pot-file) and try to
+	simplify those too technical
+
+* Version 0.3
+- Add right click on events
 - Create a feature to choose *how* long a event lasts
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 - Add support for migrating a plan install if found on first startup
 
-* Version 0.3
+* Version 0.4
 - Add a "upcoming events" widget below the calendar widget in the main window
 - Add special.dpd (Support for: repeat every ... days, ... months, and also support for
 			repeat until ...)
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
-* Version 0.4
+* Version 0.5
 - Try to get a formal HIG-review
