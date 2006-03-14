@@ -21,6 +21,7 @@
 use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
+use POSIX;			# We need strftime
 #use POSIX(qw/LC_ALL LC_CTYPE/);	# Needed for setlocale();
 #use Glib;
 use Gtk2 '-init';		# Use Gtk2 :)
@@ -65,20 +66,31 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
-# TODO: Use POSIX::strftime
 my %MonthNames = (
-	1 => gettext('January'),
-	2 => gettext('February'),
-	3 => gettext('March'),
-	4 => gettext('April'),
-	5 => gettext('May'),
-	6 => gettext('June'),
-	7 => gettext('July'),
-	8 => gettext('August'),
-	9 => gettext('September'),
-	10 => gettext('October'),
-	11 => gettext('November'),
-	12 => gettext('December')
+	#1 => gettext('January'),
+	#2 => gettext('February'),
+	#3 => gettext('March'),
+	#4 => gettext('April'),
+	#5 => gettext('May'),
+	#6 => gettext('June'),
+	#7 => gettext('July'),
+	#8 => gettext('August'),
+	#9 => gettext('September'),
+	#10 => gettext('October'),
+	#11 => gettext('November'),
+	#12 => gettext('December'),
+	1 => strftime("%B", 0, 0, 0, 1, 0, 0, 0 ),
+	2 => strftime("%B", 0, 0, 0, 1, 1, 0, 0 ),
+	3 => strftime("%B", 0, 0, 0, 1, 2, 0, 0 ),
+	4 => strftime("%B", 0, 0, 0, 1, 3, 0, 0 ),
+	5 => strftime("%B", 0, 0, 0, 1, 4, 0, 0 ),
+	6 => strftime("%B", 0, 0, 0, 1, 5, 0, 0 ),
+	7 => strftime("%B", 0, 0, 0, 1, 6, 0, 0 ),
+	8 => strftime("%B", 0, 0, 0, 1, 7, 0, 0 ),
+	9 => strftime("%B", 0, 0, 0, 1, 8, 0, 0 ),
+	10 => strftime("%B", 0, 0, 0, 1, 9, 0, 0 ),
+	11 => strftime("%B", 0, 0, 0, 1, 10, 0, 0 ),
+	12 => strftime("%B", 0, 0, 0, 1, 11, 0, 0 ),
 );				# Localized number => month name hash
 
 # Gtk2 objects
@@ -95,7 +107,8 @@ my (
 
 # Configuration options
 my (
-	$EditorVerboseDefault,	$ToolbarStyle,	$DDIndent
+	$EditorVerboseDefault,	$ToolbarStyle,
+	$Events_NotifyPre,	$Events_NotifyDay
 );
 
 
@@ -244,8 +257,8 @@ sub WriteConfig ($$) {
 	unless(defined($EditorVerboseDefault)) {
 		$EditorVerboseDefault = 0;
 	}
-	unless(defined($DDIndent)) {
-		$DDIndent = 1;
+	unless(defined($Events_NotifyPre)) {
+		$Events_NotifyPre = '30min';
 	}
 	# Print the config
 	print CONFIG "# Day planner version $Version configuration file\n\n";
@@ -253,9 +266,16 @@ sub WriteConfig ($$) {
 	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
 	print CONFIG "# If the EventEditor should expand the \"details\" by default\n# 1 = expand\n# 0 = don't expand\n";
 	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n\n";
-	# This documentation is taken directly (with some changes) from the Data::Dumper perldoc page
-	print CONFIG "# Which style the data files should be written in:\n# It can be set to 0, 1 or 2.\n# Style 0 spews output without any newlines, indentation, or spaces between items\n# Style 1 (default) outputs a readable form with newlines but no indentation\n# Style 2 outputs a very readable form with newlines, indentation and spaces between items\n";
-	print CONFIG "DDIndent=$DDIndent\n";
+	print CONFIG "# If day planner should notify about an event ahead of time.\n# 0 = Don't notify\n";
+	print CONFIG "# 10min = Notify 10 minutes ahead of time\n";
+	print CONFIG "# 20min = Notify 20 minutes ahead of time\n";
+	print CONFIG "# 30min = Notify 30 minutes ahead of time\n";
+	print CONFIG "# 45min = Notify 45 minutes ahead of time\n";
+	print CONFIG "# 1hr = Notify 1 hour ahead of time\n";
+	print CONFIG "# 2hr = Notify 2 hours ahead of time\n";
+	print CONFIG "# 4hr = Notify 4 hours ahead of time\n";
+	print CONFIG "# 6hr = Notify 6 hours ahead of time\n";
+	print CONFIG "Events_NotifyPre=$Events_NotifyPre\n";
 	# Close the config file
 	close(CONFIG);
 }
@@ -292,11 +312,12 @@ sub LoadConfig ($$) {
 			$ToolbarStyle = $Value;
 		} elsif ($Option eq 'EditorVerboseDefault') {
 			$EditorVerboseDefault = $Value;
-		} elsif ($Option eq 'DDIndent') {
-			if ($Value =~ /^(0|1|2|3)$/) {
-				$DDIndent = $Value;
+		} elsif ($Option eq 'Events_NotifyPre') {
+			unless($Value =~ /^(10min|20min|30min|45min|1hr|2hr|4hr|6hr)$/) {
+				DPIntWarn("Invalid Events_NotifyPre setting: \"$Value\", setting to default 30min");
+				$Events_NotifyPre = '30min';
 			} else {
-				DPIntWarn("Invalid DDIndent value: $Value. Valid values are 0, 1 and 2");
+				$Events_NotifyPre = $Value;
 			}
 		} else {
 			DPIntWarn("Unrecognized configuration setting \"$Option\", ignoring");
@@ -322,9 +343,9 @@ sub SaveDefaultConfig () {
 sub CreateSaveDir () {
 	unless (-e $SaveToDir) {
 		mkdir($SaveToDir) or do {
-						DPError(gettext(sprintf("Couldn't create the directory %s: %s\nYou should create this directory manually before closing this dialog", $SaveToDir, $!)));
-					}
-		}
+				DPError(gettext(sprintf("Couldn't create the directory %s: %s\nYou should create this directory manually before closing this dialog", $SaveToDir, $!)));
+			}
+	}
 }
 
 # Purpose: Save the datafile
@@ -348,8 +369,7 @@ sub SaveDatafile ($$$$) {
 	# Sort the keys
 	$Data::Dumper::Sortkeys = 1;
 	# Set the indentation
-	# FIXME: Drop $DDIndent and just use 1 as a sane, unchangeable default?
-	$Data::Dumper::Indent = $DDIndent;
+	$Data::Dumper::Indent = 1;
 	# Pulse once
 	$ProgressBar->pulse();
 	# Create the save directory
@@ -964,29 +984,29 @@ sub ConfigWindow () {
 			SaveDefaultConfig();
 			});
 	
+	# Creat the vbox
+	my $Config_VBox = Gtk2::VBox->new();
+	$Config_VBox->show();
+	$ConfigWindow->add($Config_VBox);
+	
+	# Create the Gtk2::Notebook
+	my $ConfigNotebook = Gtk2::Notebook->new();
+	$ConfigNotebook->show();
+	$Config_VBox->pack_start($ConfigNotebook,0,0,0);
+		
+	# ==================================================================
+	# GENERAL TAB
+	# ==================================================================
+	
 	# Create the primary vbox
-	my $PrimaryVBox = Gtk2::VBox->new();
-	$PrimaryVBox->show();
-	$ConfigWindow->add($PrimaryVBox);
-	
-	# Create the frame
-	my $ConfigFrame = Gtk2::Frame->new(gettext("Preferences"));
-	$PrimaryVBox->pack_start($ConfigFrame,0,0,0);
-	$ConfigFrame->show();
-	
-	# Create the config vbox
-	my $ConfigVBox = Gtk2::VBox->new(0,6);
-	$ConfigFrame->add($ConfigVBox);
-	$ConfigVBox->show();
-	
-	# ==================================================================
-	# CONFIGURATION OPTIONS
-	# ==================================================================
+	my $General_VBox = Gtk2::VBox->new();
+	$General_VBox->show();
+	$ConfigNotebook->append_page($General_VBox, gettext("General"));
 
 	# TOOLBAR STYLE
 	my $TBStyle_HBox = Gtk2::HBox->new();
 	$TBStyle_HBox->show();
-	$ConfigVBox->pack_start($TBStyle_HBox,0,0,0);
+	$General_VBox->pack_start($TBStyle_HBox,0,0,0);
 
 	my $TBStyle_Label = Gtk2::Label->new(gettext("Toolbar icon style"));
 	$TBStyle_Label->show();
@@ -1042,7 +1062,7 @@ sub ConfigWindow () {
 
 	# EDITOR VERBOSE DEFAULT
 	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(gettext(sprintf("Expand \"%s\" by default", gettext("Details"))));
-	$ConfigVBox->pack_start($EDVDefaultCheckbox,0,0,0);
+	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
 	if ($EditorVerboseDefault) {
 		$EDVDefaultCheckbox->set_active(1);
@@ -1054,13 +1074,35 @@ sub ConfigWindow () {
 				$EditorVerboseDefault = 0;
 			}
 		});
+	
 	# ==================================================================
-	# BUTTONS
+	# GENERAL TAB
+	# ==================================================================
+	
+	# Create the vbox
+	my $Events_VBox = Gtk2::VBox->new();
+	$Events_VBox->show();
+	$ConfigNotebook->append_page($Events_VBox, gettext("Events"));
+	
+	# The main checkbox that enables/disables the entire page
+	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(gettext("Pop up a window to notify me about events"));
+	$Events_EnabledCheckbox->show();
+	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
+	
+	# This needs to be at the bottom so that we can sensitiveize or not the rest of the dialog
+	if($Events_NotifyPre) {
+		$Events_EnabledCheckbox->set_active(1);
+	} else {
+		$Events_EnabledCheckbox->set_active(0);
+	}
+	
+	# ==================================================================
+	# FINALIZE WINDOW
 	# ==================================================================
 	# Add the buttons
 	my $ButtonHBox = Gtk2::HBox->new();
 	$ButtonHBox->show();
-	$PrimaryVBox->pack_end($ButtonHBox,0,0,0);
+	$Config_VBox->pack_start($ButtonHBox,0,0,0);
 
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
 	$CloseButton->signal_connect("clicked" => sub { 
@@ -1068,7 +1110,7 @@ sub ConfigWindow () {
 		});
 	$CloseButton->show();
 	$ButtonHBox->pack_end($CloseButton,0,0,0);
-	
+
 	# Show the config window
 	$ConfigWindow->show();
 }
@@ -1191,7 +1233,7 @@ sub DrawMainWindow () {
 	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
-	# TODO: This should be uncommented again one the signal is ready
+	# TODO: This should be uncommented again once the signal is ready
 	#$ToolbarEditButton->set_sensitive(0);
 	$ToolbarEditButton->show();
 	
