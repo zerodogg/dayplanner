@@ -132,16 +132,16 @@ sub FindSleepDuration () {
 	# If keys is true then...
 	if (@Keys) {
 		@Keys = sort(@Keys);
-		foreach(@Keys) {
+		foreach (@Keys) {
 			my ($testhours, $testminutes) = split(/:/, $_);
 			# Uh, FIXME?
 			$testhours =~ s/^0(.*)/$1/;
 			$testminutes =~ s/^0(.*)/$1/;
 			# TODO: This might need to become a bit more robust
-			if($testhours lt $currhour) {
+			if($testhours < $currhour) {
 				next;
 			}
-			if($testhours eq $currhour and $testminutes lt $currmin) {
+			if($testhours == $currhour and $testminutes < $currmin) {
 				next;
 			}
 			if(defined($LastAlarm) and $LastAlarm eq "$testhours:$testminutes") {
