@@ -43,9 +43,8 @@ my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
-	$Shutdown,	$Handle,		$LastAlarm,
+	$Shutdown,	$LastAlarm,
 );						# Global scalars
-# TODO - drop $Handle ?
 
 my (
 	$DebuggingOutput,	$OutputVerbose,	$OutputVeryVerbose,
@@ -422,7 +421,7 @@ sub MainLoop () {
 		# Timeout is true if no handle was processed
 		my $Timeout = 1;
 		# For each handle...
-		foreach $Handle (@Ready_Handles) {
+		foreach my $Handle (@Ready_Handles) {
 			# We didn't timeout
 			$Timeout = 0;
 			# If the handle is $server then it's a new connection
