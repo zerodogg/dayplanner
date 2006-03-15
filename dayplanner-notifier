@@ -46,7 +46,6 @@ sub DaemonConnect () {
 					Type => SOCK_STREAM,
 					Timeout => 10 )
 					or warn "WARNING: Unable to connect to $SocketName: $@!\n" and return(0);
-#	print Daemon_DataSegment("HI servant"),"\n";
 	if(Daemon_DataSegment("HI servant") eq "HI\n") {
 		return(1);
 	} else {
@@ -88,15 +87,38 @@ sub DaemonDisconnect () {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# HELPER FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Print nicely formatted help output
+# Usage: PrintHelp("-shortoption","--longoption","Description");
+sub PrintHelp ($$$) {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+}
+
+# Purpose: Test if X is available
+# Usage: if(X_Available()) { Available } else { Not available }
+sub X_Available () {
+	# This might look a bit weird, but remember that for commandline programs 0 is true
+	# and anything else is false.
+	#
+	# The reason we use a seperate perl instance is becuase Gtk2 dies at *C level*
+	# (below perl) so we can't trap it with eval.
+	if(system("perl -e 'use Gtk2; open(STDERR, \">/dev/null\"); Gtk2->init;'")) {
+		return(0);
+	} else {
+		return(1);
+	}
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN NOTIFICATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Find out how to notify the user and do it
 # Usage: NotifyUser();
 sub NotifyUser () {
-	# TODO: This needs a better test, DISPLAY may be set and we still may not be able to
-	# connect to the X display
-	if(defined($ENV{DISPLAY}) and length($ENV{DISPLAY})) {
+	if(defined($ENV{DISPLAY}) and length($ENV{DISPLAY}) and X_Available()) {
 		# We have DISPLAY, use GTK
 		GtkNotifier();
 	} else {
@@ -217,11 +239,6 @@ sub NonGUINotifier () {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # INITIALIZATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-sub PrintHelp ($$$) {
-	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
-}
-
 GetOptions (
 	'help|h' => sub {
 		print "Day planner notifier version $Version\n";
@@ -233,6 +250,7 @@ GetOptions (
 		PrintHelp("-m", "--message", "Set the message");
 		PrintHelp("-f", "--fulltext", "Set the \"fulltext\" entry (details)");
 		PrintHelp("-t", "--time", "Set the time (HH:MM)");
+		PrintHelp("-d", "--date", "Set the date");
 		exit(0);
 	},
 	'socket|s=s' => \$SocketName,
