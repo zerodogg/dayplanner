@@ -22,7 +22,6 @@ use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
 use POSIX;			# We need strftime
-#use POSIX(qw/LC_ALL LC_CTYPE/);	# Needed for setlocale();
 #use Glib;
 use Gtk2 '-init';		# Use Gtk2 :)
 use Data::Dumper;		# Our save format is that of Data::Dumper
@@ -67,18 +66,6 @@ my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
 my %MonthNames = (
-	#1 => gettext('January'),
-	#2 => gettext('February'),
-	#3 => gettext('March'),
-	#4 => gettext('April'),
-	#5 => gettext('May'),
-	#6 => gettext('June'),
-	#7 => gettext('July'),
-	#8 => gettext('August'),
-	#9 => gettext('September'),
-	#10 => gettext('October'),
-	#11 => gettext('November'),
-	#12 => gettext('December'),
 	1 => strftime("%B", 0, 0, 0, 1, 0, 0, 0 ),
 	2 => strftime("%B", 0, 0, 0, 1, 1, 0, 0 ),
 	3 => strftime("%B", 0, 0, 0, 1, 2, 0, 0 ),
@@ -944,12 +931,14 @@ sub EventEditor ($$) {
 		$DeleteButton->show();
 		$TB_ButtonHBox->pack_end($DeleteButton,0,0,2);
 		$DeleteButton->signal_connect("clicked" => sub {
-				# Delete it
-				CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-				# Call UpdatedData to tell Day planner to save the data and redraw widgets
-				UpdatedData();
-				# Destroy our window, it will get the signal and do anything it needs to
-				$AddEventBox->destroy;
+				if(DPQuestion(gettext("Are you sure you want to delete this event?"))) {
+					# Delete it
+					CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+					# Call UpdatedData to tell Day planner to save the data and redraw widgets
+					UpdatedData();
+					# Destroy our window, it will get the signal and do anything it needs to
+					$AddEventBox->destroy;
+				}
 			});
 	}
 	
@@ -1079,6 +1068,8 @@ sub ConfigWindow () {
 	# GENERAL TAB
 	# ==================================================================
 	
+	# TODO: Settings set here are not taken into account (not saved)
+	
 	# Create the vbox
 	my $Events_VBox = Gtk2::VBox->new();
 	$Events_VBox->show();
@@ -1088,8 +1079,49 @@ sub ConfigWindow () {
 	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(gettext("Pop up a window to notify me about events"));
 	$Events_EnabledCheckbox->show();
 	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
+
+	
+	# Notification time selector (TODO: horrible comment)
+	# The HBox
+	my $TimeSel_HBox = Gtk2::HBox->new();
+	$Events_VBox->pack_start($TimeSel_HBox,0,0,0);
+	$TimeSel_HBox->show();
+	# The label
+	my $TimeSel_Label = Gtk2::Label->new(gettext('How long before the event do you want to be notified?'));
+	$TimeSel_Label->show();
+	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
+	# The combo box
+	my $TimeSel_Combo = Gtk2::ComboBox->new_text();
+	$TimeSel_Combo->insert_text(0, gettext(sprintf("%s minutes","10")));
+	$TimeSel_Combo->insert_text(1, gettext(sprintf("%s minutes","20")));
+	$TimeSel_Combo->insert_text(2, gettext(sprintf("%s minutes","30")));
+	$TimeSel_Combo->insert_text(3, gettext(sprintf("%s minutes","45")));
+	$TimeSel_Combo->insert_text(4, gettext(sprintf("%s hour","1")));
+	$TimeSel_Combo->insert_text(5, gettext(sprintf("%s hours","2")));
+	$TimeSel_Combo->insert_text(6, gettext(sprintf("%s hours","4")));
+	$TimeSel_Combo->insert_text(7, gettext(sprintf("%s hours","6")));
+	# TODO: This needs to be done properly by reading the config option
+	$TimeSel_Combo->set_active(2);
+	$TimeSel_Combo->show();
+	$TimeSel_HBox->pack_start($TimeSel_Combo,0,0,0);
+	
+	# If the user wants to be notified in advance
+	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label(gettext("Warn me one day in advance"));
+	$NotifyAdvance_CheckBox->show();
+	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
 	
 	# This needs to be at the bottom so that we can sensitiveize or not the rest of the dialog
+	$Events_EnabledCheckbox->signal_connect('toggled' => sub {
+			if($Events_EnabledCheckbox->get_active) {
+				$TimeSel_Combo->set_sensitive(1);
+				$TimeSel_Label->set_sensitive(1);
+				$NotifyAdvance_CheckBox->set_sensitive(1);
+			} else {
+				$TimeSel_Combo->set_sensitive(0);
+				$TimeSel_Label->set_sensitive(0);
+				$NotifyAdvance_CheckBox->set_sensitive(0);
+			}
+		});
 	if($Events_NotifyPre) {
 		$Events_EnabledCheckbox->set_active(1);
 	} else {
