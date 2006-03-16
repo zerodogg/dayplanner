@@ -210,12 +210,21 @@ sub CloseDaemon () {
 # Purpose: Display an error dialog about the inability to connect to the daemon
 # Usage: DaemonConnectionErrorHandler();
 sub DaemonConnectionErrorHandler () {
-#	my $ErrorDialog = Gtk2::MessageDialog->new(undef, "modal", 'error', 'ok', gettext("There seems to be another day planner already running. You should close the other instance of day planner before you start a new one. If you are sure that you want to start a new one, press force"));
-	my $Button = Gtk2::Button->new_with_label("CANCEL?");
-	$Button->show();
-	my $ErrorDialog = Gtk2::Dialog->new('Title', undef, 'modal',
-		'gtk-cancel'	=> 'cancel'
-	);
+	my $ErrorDialog = Gtk2::MessageDialog->new (undef,
+						'destroy-with-parent',
+						'error',
+						'none',
+						 gettext("There seems to be another day planner already running. You should close the other instance of day planner before you start a new one.\n\nIf you are sure that you want to start a new one, press force. Note however that this may lead to loss of data."));
+	my $ForceButton = Gtk2::Button->new(gettext('Force'));
+	$ErrorDialog->add_action_widget($ForceButton, 'reject');
+	$ForceButton->show();
+	
+	my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
+	$ErrorDialog->add_action_widget($OkayButton, 'accept');
+	$OkayButton->show();
+
+	$ErrorDialog->set_default($OkayButton);
+	
 	$ErrorDialog->run;
 	$ErrorDialog->destroy;
 	exit(0)
