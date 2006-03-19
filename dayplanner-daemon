@@ -286,6 +286,7 @@ sub CommandHandler ($) {
 				} else {
 					IntVeryVerbose("Refusing connection from $PID");
 					$AccessStatus{ClientList}{$PID} = 0;
+					delete($AccessStatus{ClientList}{$PID});
 					return("REFUSED");
 				}
 			}
