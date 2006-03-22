@@ -559,28 +559,6 @@ sub DetectImage {
 	return(undef);
 }
 
-# Purpose: Edit the event currently selected in the eventlist
-# Usage: EditEvent();
-#  (calls the EventEditor with the correct parameters)
-sub EditEvent () {
-	my $Selected;
-	# FIXME: This is just plain weird
-	foreach ($EventlistWidget->get_selected_indices) {
-		$Selected = $_;
-	}
-	if(defined($Selected)) {
-		my $Time = $EventlistWidget->{data}[$Selected][0];
-		my $Summary = $EventlistWidget->{data}[$Selected][1];
-		if (defined($Time) and length($Time)) {
-			EventEditor('old',$Time);
-		} elsif (defined($Summary) and length($Summary)) {
-			EventEditor('old',$Summary);
-		} else {
-			DPIntWarn("FATAL: EditEvent: Attempted to edit a nonexisting event");
-		}
-	}
-}
-
 # Purpose: Delete the event currently selected in the eventlist
 # Usage: DeleteEvent();
 #  (calls CalendarDelete with the correct parameters)
@@ -852,9 +830,78 @@ sub AddEvent () {
 	$Window->show();
 }
 
-# TODO: Remove
-sub EventEditor ($$) {
-	DPInfo("This is being rewritten and is currently only a stub. It is being worked on in the day planner SVN");
+# Purpose: Edit the event currently selected in the eventlist
+# Usage: EditEvent ();
+sub EditEvent () {
+	my $Selected;	# The selected entry
+	my $Type;	# The type of entry it is. Can be:
+			#
+			# normal = Standard day planner data (%CalendarContents)
+			# bday   = Birthday data (%BirthdayContents)
+	
+	# FIXME: This is just plain weird
+	foreach ($EventlistWidget->get_selected_indices) {
+		$Selected = $_;
+	}
+	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
+	unless(defined($Selected)) {
+		return(0);
+	}
+
+	# Initialize
+	my $Time = $EventlistWidget->{data}[$Selected][0];
+	my $Summary = $EventlistWidget->{data}[$Selected][1];
+        my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my %TimeHash = (
+		EventYear => $EventYear,
+		EventMonth => $EventMonth,
+		EventDay => $EventDay,
+	);
+		
+	# Create the main window with the appropriate OK/Cancel buttons and the event frame
+	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Add an event"), gettext('Adding an event on the %s. %s %s'), 'gtk-add');
+
+	# Detect the event type
+	if (defined($Time) and length($Time)) {
+		$Type = 'normal';
+	} elsif (defined($Summary) and length($Summary)) {
+		$Type = 'bday';
+	} else {
+		DPIntWarn("FATAL: EditEvent: Attempted to edit a nonexisting event");
+	}
+
+	if ($Type eq 'normal') {
+		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		# NORMAL EVENT
+		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		
+		if(CalendarDefined($EventYear,$EventMonth,$EventDay,$Time)) {
+			
+			# Create the widgets for the normal event selection
+			my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($Time, $OKButton, $VBox_HBoxContainer, $Window);
+	
+			$OKButton->signal_connect('clicked' => sub {
+					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 1);
+			});
+		
+			# Show the default widget (Normal event)
+			$NE_MainWidget->show();
+		} else {
+			DPIntWarn("BUG!: EditEvent: Unable to edit $Type event: $EventYear/$EventMonth/$EventDay/$Time. Please report this");
+			$MainWindow->set_sensitive(0);
+			return(0);
+		}
+	} elsif ($Type eq 'bday') {
+		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		# BIRTHDAY EVENT
+		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		print "BDAY\n";
+	} else {
+		DPIntWarn("BUG!: EditEvent: \$Type contained invalid value: $Type");
+	}
+
+	# Show the window
+	$Window->show();
 }
 
 # Purpose: Create the widgets for editing a normal(events.dpd) event (%CalendarContents)
@@ -864,7 +911,7 @@ sub EventEditor ($$) {
 # OK_BUTTON is the OK button widget to attach to
 # VBOX_WIDGET is the widget you want to pack our table into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
-sub NormalEventWindow ($$$) {
+sub NormalEventWindow ($$$$) {
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
