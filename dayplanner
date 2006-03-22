@@ -559,13 +559,6 @@ sub DetectImage {
 	return(undef);
 }
 
-# Purpose: Add an event
-# Usage: AddEvent();
-#  (calls the EventEditor with the correct parameters)
-sub AddEvent () {
-	EventEditor('new',undef);
-}
-
 # Purpose: Edit the event currently selected in the eventlist
 # Usage: EditEvent();
 #  (calls the EventEditor with the correct parameters)
@@ -835,7 +828,7 @@ sub CreateEventContainerWin ($$$) {
 
 # Purpose: Add a event. Creates the main window and calls the proper event functions
 # Usage: AddEvent();
-sub AddEvent_NEW () {
+sub AddEvent () {
 	$MainWindow->set_sensitive(0);
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my %TimeHash = (
@@ -861,8 +854,7 @@ sub AddEvent_NEW () {
 
 # TODO: Remove
 sub EventEditor ($$) {
-	warn "EventEditor: STUB\n";
-	AddEvent_NEW();
+	DPInfo("This is being rewritten and is currently only a stub. It is being worked on in the day planner SVN");
 }
 
 # Purpose: Create the widgets for editing a normal(events.dpd) event (%CalendarContents)
@@ -962,66 +954,6 @@ sub NormalEventWindow ($$$) {
 	$FulltextWindow->show();
 	$FT_Expander->add($FulltextWindow);
 	
-	# TODO: This should be moved to its own sub
-#	$OKButton->signal_connect('clicked' => sub {
-#			my $Error = 0;
-#			# Get the contents
-#			my $Hour = $HourSpinner->get_value_as_int();
-#			my $Minute = $MinuteSpinner->get_value_as_int();
-#			my $Time = "$Hour:$Minute";
-#			my $Summary = $SummaryEntry->get_text;
-##			my $FulltextBuff = $FulltextEntry->get_buffer;
-#			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
-#			# Make sure it's not a dupe (that would end up overwriting data)
-#			unless ($IsEditing) {
-#				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-#					DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
-#						$Error = 1;
-#					}
-#			} else {
-#				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-#					unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
-#						DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
-#						$Error = 1;
-#					}
-#				}
-#			}
-#			unless ($Summary) {
-#				DPError(gettext("You need to enter a summary first"));
-#				$Error = 1;
-#			}
-#			# We don't do this if an error occurred
-#			unless ($Error) {
-#				# Delete old hash if needed
-#				if($IsEditing) {
-#					CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
-#				}
-#				# Add them to the hash
-#				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
-#				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
-#				# Call UpdatedData to tell Day planner to save the data and redraw widgets
-#				UpdatedData();
-#				# Destroy our window, it will get the signal and do anything it needs to
-#				$MyWindow->destroy;
-#			}
-#		});
-	
-	# Delete button (only in edit mode)
-#	if ($EventType eq 'old') {
-#		my $DeleteButton = Gtk2::Button->new_from_stock('gtk-delete');
-#		$DeleteButton->show();
-#		$TB_ButtonHBox->pack_end($DeleteButton,0,0,2);
-#		$DeleteButton->signal_connect("clicked" => sub {
-#				if(DPQuestion(gettext("Are you sure you want to delete this event?"))) {
-#					# Delete it
-#					CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-#					# Call UpdatedData to tell Day planner to save the data and redraw widgets
-#					UpdatedData();
-#					# Destroy our window, it will get the signal and do anything it needs to
-#					$AddEventBox->destroy;
-#				}
-#			});
-#	}
 	return($MainVBox, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry);
 }
 
@@ -1052,18 +984,18 @@ sub NormalEvent_OK ($$$$$$$) {
 	my $OldEventTime = ${$TimeHash}{OldEventTime};
 	
 	# Make sure it's not a dupe (that would end up overwriting data)
-	unless ($IsEditing) {
-		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-			DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
-				$Error = 1;
-			}
-	} else {
+	if ($IsEditing) {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
 			unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
 				DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 		}
+	} else {
+		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+			DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+				$Error = 1;
+			}
 	}
 	unless ($Summary) {
 		DPError(gettext("You need to enter a summary first"));
