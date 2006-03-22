@@ -39,7 +39,7 @@ my $RCSRev = '$Id: dayplanner 17 2006-02-15 18:43:14Z zerodogg $';
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
-my $SpecialEventsFile = "events_special.dpd";		# The filename to save events with special settings
+my $SpecialEventsFile = "special_events.dpd";		# The filename to save events with special settings
 my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration to
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
@@ -215,23 +215,20 @@ sub DaemonConnectionErrorHandler () {
 						'error',
 						'none',
 						 gettext("There seems to be another day planner already running. You should close the other instance of day planner before you start a new one.\n\nIf you are sure that you want to start a new one, press force. Note however that this may lead to loss of data."));
-	my $ForceButton = Gtk2::Button->new(gettext('Force'));
-	$ErrorDialog->add_action_widget($ForceButton, 'reject');
-	$ForceButton->show();
-	
-	my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
-	$ErrorDialog->add_action_widget($OkayButton, 'accept');
-	$OkayButton->show();
 
-	$ErrorDialog->set_default($OkayButton);
+	$ErrorDialog->add_buttons(
+		'Force' => 'reject',
+		'gtk-ok' => 'accept',
+	);
 	
+	$ErrorDialog->set_default_response('accept');
 	$ErrorDialog->run;
 	$ErrorDialog->destroy;
 	exit(0)
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Core helper functions
+# Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Write the configuration file
@@ -462,12 +459,6 @@ sub UpdatedData () {
 	CalendarChange();
 }
 
-# Purpose: Print a warning to STDERR with proper output
-# Usage: DPIntWarn("Warning");
-sub DPIntWarn ($) {
-	warn "*** (Day Planner $Version) Warning: $_[0]\n";
-}
-
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
 sub LoadCalendar () {
@@ -505,6 +496,16 @@ sub DataLoadTest () {
 	}
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Core helper functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Print a warning to STDERR with proper output
+# Usage: DPIntWarn("Warning");
+sub DPIntWarn ($) {
+	warn "*** (Day Planner $Version) Warning: $_[0]\n";
+}
+
 # Purpose: Delete keys from %CalendarContents, recusively if needed
 # Usage: CalendarDelete(year,month,day,time);
 sub CalendarDelete ($$$$) {
@@ -525,6 +526,18 @@ sub CalendarDelete ($$$$) {
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
 sub PrintHelp($$$) {
 	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+}
+
+# Purpose: Recursively test for defined data in %CalendarContents
+# 		If a single test is run then invalid data might get inserted into %CalendarContents
+# 		this avoids that by doing a recursive test
+# Usage: CalendarDefined(year,month,day,time);
+sub CalendarDefined ($$$$) {
+	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
+	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
+			return(1)
+		}
+	return(0);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -564,8 +577,13 @@ sub EditEvent () {
 	}
 	if(defined($Selected)) {
 		my $Time = $EventlistWidget->{data}[$Selected][0];
-		if (defined($Time)) {
+		my $Summary = $EventlistWidget->{data}[$Selected][1];
+		if (defined($Time) and length($Time)) {
 			EventEditor('old',$Time);
+		} elsif (defined($Summary) and length($Summary)) {
+			EventEditor('old',$Summary);
+		} else {
+			DPIntWarn("FATAL: EditEvent: Attempted to edit a nonexisting event");
 		}
 	}
 }
@@ -652,8 +670,15 @@ sub QuitSub () {
 # Usage: SetActiveCalItems(YEAR, NUMERICAL_MONTH[1-12]);
 sub SetActiveCalItems ($$) {
 	$CalendarWidget->clear_marks;			# Clear the current marks
+	# Calendar contents
 	if (defined($CalendarContents{$_[0]}) and defined($CalendarContents{$_[0]}{$_[1]})) {
 		foreach my $Day (keys %{$CalendarContents{$_[0]}{$_[1]}}) {
+			$CalendarWidget->mark_day($Day);	# Mark this day
+		}
+	}
+	# Birthdays
+	if (defined($BirthdayContents{$_[1]})) {
+		foreach my $Day (keys %{$BirthdayContents{$_[1]}}) {
 			$CalendarWidget->mark_day($Day);	# Mark this day
 		}
 	}
@@ -673,6 +698,392 @@ sub CalendarChange () {
 	my $Month = $CalendarWidget->month;
 	$Month++;
 	SetActiveCalItems($CalendarWidget->year, $Month);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# GUI event adding functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Create the widgets for selecting the time
+# Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox) = TimeSelection("HH:MM");
+sub TimeSelection ($) {
+	my $Time = $_[0];
+	# The hour adjustment
+	my $HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
+	# The minute adjustment
+	my $MinuteAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 59.0, 1.0, 5.0, 0.0);
+	
+	# Create the spinners
+	my $HourSpinner = Gtk2::SpinButton->new($HourAdjustment, 0, 0);
+	my $MinuteSpinner = Gtk2::SpinButton->new($MinuteAdjustment, 0, 0);
+	# Show them
+	$HourSpinner->show();
+	$MinuteSpinner->show();
+	
+	# Create a simple seperating label
+	my $TimeSeperatorLabel = Gtk2::Label->new(' : ');
+	$TimeSeperatorLabel->show();
+	
+	# Make them activate the default action
+	$HourSpinner->set_activates_default(1);
+	$MinuteSpinner->set_activates_default(1);
+	
+	# Get the time
+	my $HSTime = $Time;		# Hour
+	my $MSTime = $Time;		# Minute
+	$HSTime =~ s/^(\d+):\d+$/$1/;
+	$MSTime =~ s/^\d+:(\d+)$/$1/;
+	# Set the initial value
+	$HourSpinner->set_value($HSTime);
+	$MinuteSpinner->set_value($MSTime);
+	
+	# Create a HBox and pack them onto it
+	my $TimeSpinnerHBox = Gtk2::HBox->new(0,0);
+	$TimeSpinnerHBox->pack_start($HourSpinner,0,0,0);
+	$TimeSpinnerHBox->pack_start($TimeSeperatorLabel,0,0,0);
+	$TimeSpinnerHBox->pack_start($MinuteSpinner,0,0,0);
+	$TimeSpinnerHBox->show();
+
+	# Return the widgets
+	return($HourSpinner, $MinuteSpinner, $TimeSpinnerHBox);
+}
+
+# Purpose: Create the window that will contain the event editor
+# Usage: my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE);
+#
+# TITLE is the title of the window, LABEL is the label to display on top of the window.
+# OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
+sub CreateEventContainerWin ($$$) {
+	# Get the options passed to the sub
+	my ($WindowTitle, $EventLabel, $OkButtonType) = @_;
+	
+	# Get the date
+	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+
+	# ==================================================================
+	# BUILD THE WINDOW
+	# ==================================================================
+	my $AddEventBox = Gtk2::Window->new('toplevel');
+	$AddEventBox->set_modal(1);
+	$AddEventBox->set_title($WindowTitle);
+	$AddEventBox->set_resizable(0);
+	$AddEventBox->set_border_width(5);
+	$AddEventBox->set_skip_taskbar_hint(1);
+	$AddEventBox->set_skip_pager_hint(1);
+
+	# Handle closing
+	$AddEventBox->signal_connect("destroy" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
+	$AddEventBox->signal_connect("delete-event" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
+	
+	# Primary vbox
+	my $ADPrimVBox = Gtk2::VBox->new();
+	$AddEventBox->add($ADPrimVBox);
+	$ADPrimVBox->show();
+	
+	# Add the label with the name
+	my $DateLabel = Gtk2::Label->new(sprintf($EventLabel,$EventDay, $MonthNames{$EventMonth},$EventYear));
+	$DateLabel->show();
+	$ADPrimVBox->pack_start($DateLabel,1,0,0);
+	
+	# The HBox for the frame
+	my $FrameHBox = Gtk2::HBox->new();
+	$FrameHBox->show();
+	$ADPrimVBox->pack_start($FrameHBox,1,1,0);
+	
+	# Create the frame
+	my $TBFrame = Gtk2::Frame->new();
+	$TBFrame->set_label(gettext("Event"));
+	$FrameHBox->pack_start($TBFrame,1,1,0);
+	$TBFrame->show();
+	
+	# TODO: Add a pop-up where you can select the date (DatePopup())
+	
+	# Create the vbox for use in the frame
+	my $TBVBox = Gtk2::VBox->new();
+	$TBFrame->add($TBVBox);
+	$TBVBox->show();
+	
+	# ==================================================================
+	# Call the functions that constructs the main window contents
+	# ==================================================================
+	
+	# Create the hbox for the buttons
+	my $TB_ButtonHBox = Gtk2::HBox->new(0,6);
+	$TB_ButtonHBox->show();
+	$ADPrimVBox->pack_end($TB_ButtonHBox,0,0,0);
+	
+	# Create the OK button
+	my $OKButton = Gtk2::Button->new_from_stock($OkButtonType);
+	$OKButton->show();
+	$TB_ButtonHBox->pack_end($OKButton,0,0,0);
+	$OKButton->can_default(1);
+
+	# Create the cancel button
+	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
+	$CancelButton->signal_connect("clicked" => sub { $AddEventBox->destroy;
+		});
+	$CancelButton->show();
+	$TB_ButtonHBox->pack_end($CancelButton,0,0,0);
+	
+	# Handle the esc button
+	$AddEventBox->signal_connect("key_release_event" => \&EscapeKeyHandler);
+	$AddEventBox->set_default($OKButton);
+
+	# Return the widgets
+	return($AddEventBox, $TBVBox, $OKButton);
+}
+
+# Purpose: Add a event. Creates the main window and calls the proper event functions
+# Usage: AddEvent();
+sub AddEvent_NEW () {
+	$MainWindow->set_sensitive(0);
+        my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my %TimeHash = (
+		EventYear => $EventYear,
+		EventMonth => $EventMonth,
+		EventDay => $EventDay,
+	);
+		
+	# Create the main window with the appropriate OK/Cancel buttons and the event frame
+	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Add an event"), gettext('Adding an event on the %s. %s %s'), 'gtk-add');
+	# Create the widgets for the normal event selection
+	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("00:00", $OKButton, $VBox_HBoxContainer, $Window);
+
+	$OKButton->signal_connect('clicked' => sub {
+			NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
+	});
+	
+	# Show the default widget (Normal event)
+	$NE_MainWidget->show();
+	# Show the window
+	$Window->show();
+}
+
+# TODO: Remove
+sub EventEditor ($$) {
+	warn "EventEditor: STUB\n";
+	AddEvent_NEW();
+}
+
+# Purpose: Create the widgets for editing a normal(events.dpd) event (%CalendarContents)
+# Usage: my ($NormalEventWidget, $HourSpinner, $MinuteSpinner, $SummaryWidget, $DetailsWidget) = NormalEventWindow(TIME, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET)
+#
+# TIME is the time you're editing or undef
+# OK_BUTTON is the OK button widget to attach to
+# VBOX_WIDGET is the widget you want to pack our table into
+# MAIN_WINDOW_WIDGET is the main window it will live inside
+sub NormalEventWindow ($$$) {
+	# ==================================================================
+	# INITIALIZE
+	# ==================================================================
+	my ($EventTime, $OKButton, $ParentVBox, $MyWindow) = @_;
+
+	my $IsEditing = 0;
+	
+	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my ($EventSummary, $EventFulltext);
+	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
+	
+	# Check if the event is already defined, if it is then we assume that we're editing
+	if(CalendarDefined($EventYear,$EventMonth,$EventDay,$EventTime)) {
+		# We assume these two aren't empty. This will need to change if another part becomes obligatory
+		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
+		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
+		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
+		$IsEditing = 1;
+	}
+	
+	# Create our main vbox
+	my $MainVBox = Gtk2::VBox->new();
+	$ParentVBox->pack_start($MainVBox,0,0,0);
+	$MainVBox->show();
+	
+	# Create the table inside the frame
+	my $ContentTable = Gtk2::Table->new(2,2);
+	$ContentTable->show();
+	$MainVBox->pack_start($ContentTable,1,1,0);
+	
+	# ==================================================================
+	# ADD THE TIME/SUMMARY BOXES
+	# ==================================================================
+	
+	# Create the time label
+	my $TimeLabel = Gtk2::Label->new(gettext('Time:'));
+	$TimeLabel->show();
+	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
+	
+	# Time entry box
+	my ($HourSpinner, $MinuteSpinner, $TimeHBox) = TimeSelection($EventTime);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
+	
+	# Create the summary label
+	my $SummaryLabel = Gtk2::Label->new(gettext('Summary:'));
+	$SummaryLabel->show();
+	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
+
+	# Create the summary entry box
+	my $SummaryEntry = Gtk2::Entry->new();
+	if (defined($EventSummary) and length($EventSummary)) {
+		$SummaryEntry->set_text($EventSummary);
+	}
+	$SummaryEntry->set_activates_default(1);
+	$SummaryEntry->show();
+	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	
+	# ==================================================================
+	# ADD THE EXTENDED ENTRY
+	# ==================================================================
+	my $FulltextWindow;
+	
+	my $FT_Expander = Gtk2::Expander->new(gettext("Details"));
+	$MainVBox->pack_start($FT_Expander,0,0,0);
+	$FT_Expander->show();
+	if ($EditorVerboseDefault) {
+		$FT_Expander->set_expanded(1);
+	}
+	
+	# Add the extended entry box
+	my $FulltextEntry = Gtk2::TextView->new();
+	$FulltextEntry->set_editable(1);
+	$FulltextEntry->set_wrap_mode("word-char");
+	$FulltextEntry->show();
+	# Add text to it if needed
+	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
+		my $AddEventBuffer = Gtk2::TextBuffer->new();
+		$AddEventBuffer->set_text($EventFulltext);
+		$FulltextEntry->set_buffer($AddEventBuffer);
+		$FT_Expander->set_expanded(1);
+	}
+
+	$FulltextWindow = Gtk2::ScrolledWindow->new;
+	$FulltextWindow->set_policy('automatic', 'automatic');
+	$FulltextWindow->add($FulltextEntry);
+	$FulltextWindow->show();
+	$FT_Expander->add($FulltextWindow);
+	
+	# TODO: This should be moved to its own sub
+#	$OKButton->signal_connect('clicked' => sub {
+#			my $Error = 0;
+#			# Get the contents
+#			my $Hour = $HourSpinner->get_value_as_int();
+#			my $Minute = $MinuteSpinner->get_value_as_int();
+#			my $Time = "$Hour:$Minute";
+#			my $Summary = $SummaryEntry->get_text;
+##			my $FulltextBuff = $FulltextEntry->get_buffer;
+#			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
+#			# Make sure it's not a dupe (that would end up overwriting data)
+#			unless ($IsEditing) {
+#				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+#					DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+#						$Error = 1;
+#					}
+#			} else {
+#				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+#					unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
+#						DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+#						$Error = 1;
+#					}
+#				}
+#			}
+#			unless ($Summary) {
+#				DPError(gettext("You need to enter a summary first"));
+#				$Error = 1;
+#			}
+#			# We don't do this if an error occurred
+#			unless ($Error) {
+#				# Delete old hash if needed
+#				if($IsEditing) {
+#					CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
+#				}
+#				# Add them to the hash
+#				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
+#				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
+#				# Call UpdatedData to tell Day planner to save the data and redraw widgets
+#				UpdatedData();
+#				# Destroy our window, it will get the signal and do anything it needs to
+#				$MyWindow->destroy;
+#			}
+#		});
+	
+	# Delete button (only in edit mode)
+#	if ($EventType eq 'old') {
+#		my $DeleteButton = Gtk2::Button->new_from_stock('gtk-delete');
+#		$DeleteButton->show();
+#		$TB_ButtonHBox->pack_end($DeleteButton,0,0,2);
+#		$DeleteButton->signal_connect("clicked" => sub {
+#				if(DPQuestion(gettext("Are you sure you want to delete this event?"))) {
+#					# Delete it
+#					CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+#					# Call UpdatedData to tell Day planner to save the data and redraw widgets
+#					UpdatedData();
+#					# Destroy our window, it will get the signal and do anything it needs to
+#					$AddEventBox->destroy;
+#				}
+#			});
+#	}
+	return($MainVBox, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry);
+}
+
+# Purpose: Handle the OK button for the Normal event widget
+# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, \%TimeHash, IS_EDITING)});
+#
+# IS_EDITING is either true or false, false when it's a new one being added, true when it's an
+# old one being edited
+sub NormalEvent_OK ($$$$$$$) {
+	my ($MyWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing) = @_;
+	my $Error = 0;
+	
+	# Get the contents
+	my $Hour = $HourSpinner->get_value_as_int();
+	my $Minute = $MinuteSpinner->get_value_as_int();
+	my $Time = "$Hour:$Minute";
+	my $Summary = $SummaryEntry->get_text;
+	my $FulltextBuff = $FulltextEntry->get_buffer;
+	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
+
+	# Get variables from the TimeHash
+	my $EventYear = ${$TimeHash}{EventYear};
+	my $EventMonth = ${$TimeHash}{EventMonth};
+	my $EventDay = ${$TimeHash}{EventDay};
+	my $OldEventYear = ${$TimeHash}{OldEventYear};
+	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
+	my $OldEventDay = ${$TimeHash}{OldEventDay};
+	my $OldEventTime = ${$TimeHash}{OldEventTime};
+	
+	# Make sure it's not a dupe (that would end up overwriting data)
+	unless ($IsEditing) {
+		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+			DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+				$Error = 1;
+			}
+	} else {
+		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
+			unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
+				DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+				$Error = 1;
+			}
+		}
+	}
+	unless ($Summary) {
+		DPError(gettext("You need to enter a summary first"));
+		$Error = 1;
+	}
+	# We don't do this if an error occurred
+	unless ($Error) {
+		# Delete old hash if needed
+		if($IsEditing) {
+			CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
+		}
+		# Add them to the hash
+		$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
+		$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
+		# Call UpdatedData to tell Day planner to save the data and redraw widgets
+		UpdatedData();
+		# Destroy our window, it will get the signal and do anything it needs to
+		$MyWindow->destroy;
+		$MainWindow->set_sensitive(1);
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -705,264 +1116,6 @@ sub AboutBox () {
 	}
 	$AboutDialog->run;
 	$MainWindow->set_sensitive(1);
-}
-
-# Purpose: Display a graphical event editor
-# Usage: EventEditor(type, time);
-#  type is new or old (new if you're adding, old if you're editing an existing one)
-#  time is the time you're editing or undef
-sub EventEditor ($$) {
-	# ==================================================================
-	# INITIALIZE
-	# ==================================================================
-	my ($EventType, $EventTime) = @_;
-	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($EventSummary, $EventFulltext);
-	my ($Title, $ExpanderTitle, $DateLabel, $OkButtonType);
-	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
-	$MainWindow->set_sensitive(0);
-	
-	# Make sure the first parameter is valid (either new or old)
-	unless ($EventType eq 'new' or $EventType eq 'old') {
-		DPIntWarn("FATAL: EventEditor called with invalid type: $_[0]");
-		return(0);
-	}
-
-	# Set type specific 
-	if ($EventType eq 'new') {
-		$Title = gettext("Add an event");
-		$ExpanderTitle = gettext("Details");
-		$EventTime = "0:00";
-		$OkButtonType = 'gtk-add';
-	} elsif ($EventType eq 'old') {
-		$Title = gettext("Edit an event");
-		$ExpanderTitle = gettext("Details");
-		# We assume these two aren't empty. This will need to change if another part becomes obligatory
-		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
-		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
-		$OkButtonType = 'gtk-ok';
-		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
-	}
-	my $AddEventBox = Gtk2::Window->new('toplevel');
-	
-	# ==================================================================
-	# BUILD THE WINDOW
-	# ==================================================================
-	$AddEventBox->set_modal(1);
-	$AddEventBox->set_title("$Title");
-	$AddEventBox->set_resizable(0);
-	$AddEventBox->set_border_width(5);
-	$AddEventBox->set_skip_taskbar_hint(1);
-	$AddEventBox->set_skip_pager_hint(1);
-
-	# Handle closing
-	$AddEventBox->signal_connect("destroy" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
-	$AddEventBox->signal_connect("delete-event" => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
-	
-	# Primary vbox
-	my $ADPrimVBox = Gtk2::VBox->new();
-	$AddEventBox->add($ADPrimVBox);
-	$ADPrimVBox->show();
-	
-	# Add the label with the name
-	if ($EventType eq 'new') {
-		$DateLabel = Gtk2::Label->new(sprintf(gettext('Adding an event on the %s. %s %s'),$EventDay, $MonthNames{$EventMonth},$EventYear));
-	} else {
-		$DateLabel = Gtk2::Label->new(sprintf(gettext('Editing an event on the %s. %s %s'),$EventDay, $MonthNames{$EventMonth},$EventYear));
-	}
-	$DateLabel->show();
-	$ADPrimVBox->pack_start($DateLabel,1,0,0);
-	
-	# The HBox for the frame
-	my $FrameHBox = Gtk2::HBox->new();
-	$FrameHBox->show();
-	$ADPrimVBox->pack_start($FrameHBox,1,1,0);
-	
-	# Create the frame
-	my $TBFrame = Gtk2::Frame->new();
-	$TBFrame->set_label(gettext("Event"));
-	$FrameHBox->pack_start($TBFrame,1,1,0);
-	$TBFrame->show();
-	
-	# TODO: Add a pop-up where you can select the date (DatePopup())
-	
-	# Create the vbox for use in the frame
-	my $TBVBox = Gtk2::VBox->new();
-	$TBFrame->add($TBVBox);
-	$TBVBox->show();
-
-	# Create the table inside the frame
-	my $ContentTable = Gtk2::Table->new(2,2);
-	$ContentTable->show();
-	$TBVBox->pack_start($ContentTable,1,1,0);
-	
-	# ==================================================================
-	# ADD THE TIME/SUMMARY BOXES
-	# ==================================================================
-	
-	# Create the time label
-	my $TimeLabel = Gtk2::Label->new(gettext('Time:'));
-	$TimeLabel->show();
-	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
-	
-	# Time entry box
-	
-	# Create a hbox to put the spinners into
-	my $TimeSpinnerHBox = Gtk2::HBox->new(0,0);
-	$ContentTable->attach_defaults($TimeSpinnerHBox, 1,2,0,1);
-	$TimeSpinnerHBox->show();
-	# The hour adjustment
-	my $HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
-	# The minute adjustment
-	my $MinuteAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 59.0, 1.0, 5.0, 0.0);
-	# Create the spinners
-	my $HourSpinner = Gtk2::SpinButton->new($HourAdjustment, 0, 0);
-	my $MinuteSpinner = Gtk2::SpinButton->new($MinuteAdjustment, 0, 0);
-	# Create a simple label
-	my $TimeSeperatorLabel = Gtk2::Label->new(' : ');
-	$TimeSeperatorLabel->show();
-	# Show them and pack them onto the hbox
-	$HourSpinner->show();
-	$MinuteSpinner->show();
-	$TimeSpinnerHBox->pack_start($HourSpinner,0,0,0);
-	$TimeSpinnerHBox->pack_start($TimeSeperatorLabel,0,0,0);
-	$TimeSpinnerHBox->pack_start($MinuteSpinner,0,0,0);
-	# Set the value	
-	my $HSTime = $EventTime;	# Hour
-	my $MSTime = $EventTime;	# Minute
-	$HSTime =~ s/^(\d+):\d+$/$1/;
-	$MSTime =~ s/^\d+:(\d+)$/$1/;
-	$HourSpinner->set_value($HSTime);
-	$MinuteSpinner->set_value($MSTime);
-	
-	# Create the summary label
-	my $SummaryLabel = Gtk2::Label->new(gettext('Summary:'));
-	$SummaryLabel->show();
-	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
-
-	# Create the summary entry box
-	my $SummaryEntry = Gtk2::Entry->new();
-	if ($EventType eq 'old') {
-		$SummaryEntry->set_text($EventSummary);
-	}
-	$SummaryEntry->show();
-	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
-	
-	# ==================================================================
-	# ADD THE EXTENDED ENTRY
-	# ==================================================================
-	my $FulltextWindow;
-	
-	my $FT_Expander = Gtk2::Expander->new($ExpanderTitle);
-	$TBVBox->pack_start($FT_Expander,0,0,0);
-	$FT_Expander->show();
-	if ($EditorVerboseDefault) {
-		$FT_Expander->set_expanded(1);
-	}
-	
-	# Add the extended entry box
-	my $FulltextEntry = Gtk2::TextView->new();
-	$FulltextEntry->set_editable(1);
-	$FulltextEntry->set_wrap_mode("word-char");
-	$FulltextEntry->show();
-	# Add text to it if needed
-	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
-		my $AddEventBuffer = Gtk2::TextBuffer->new();
-		$AddEventBuffer->set_text($EventFulltext);
-		$FulltextEntry->set_buffer($AddEventBuffer);
-		$FT_Expander->set_expanded(1);
-	}
-
-	$FulltextWindow = Gtk2::ScrolledWindow->new;
-	$FulltextWindow->set_policy('automatic', 'automatic');
-	$FulltextWindow->add($FulltextEntry);
-	$FulltextWindow->show();
-	$FT_Expander->add($FulltextWindow);
-	
-	# Create the hbox for the buttons
-	my $TB_ButtonHBox = Gtk2::HBox->new(0,6);
-	$TB_ButtonHBox->show();
-	$ADPrimVBox->pack_end($TB_ButtonHBox,0,0,0);
-	
-	# ==================================================================
-	# ADD THE BUTTONS AND FINALIZE THE WINDOW
-	# ==================================================================
-	# Ok button
-	my $OKButton = Gtk2::Button->new_from_stock($OkButtonType);
-	$OKButton->show();
-	$TB_ButtonHBox->pack_end($OKButton,0,0,0);
-	$OKButton->signal_connect('clicked' => sub {
-			my $Error = 0;
-			# Get the contents
-			my $Hour = $HourSpinner->get_value_as_int();
-			my $Minute = $MinuteSpinner->get_value_as_int();
-			my $Time = "$Hour:$Minute";
-			my $Summary = $SummaryEntry->get_text;
-			my $FulltextBuff = $FulltextEntry->get_buffer;
-			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
-			# Make sure it's not a dupe (that would end up overwriting data)
-			if ($EventType eq 'new') {
-				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-					DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
-						$Error = 1;
-					}
-			} elsif ($EventType eq 'old') {
-				if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-					unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
-						DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
-						$Error = 1;
-					}
-				}
-			}
-			unless ($Summary) {
-				DPError(gettext("You need to enter a summary first"));
-				$Error = 1;
-			}
-			# We don't do this if an error occurred
-			unless ($Error) {
-				# Delete old hash if needed
-				if($EventType eq 'old') {
-					CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
-				}
-				# Add them to the hash
-				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
-				$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
-				# Call UpdatedData to tell Day planner to save the data and redraw widgets
-				UpdatedData();
-				# Destroy our window, it will get the signal and do anything it needs to
-				$AddEventBox->destroy;
-			}
-		});
-	
-	# Delete button (only in edit mode)
-	if ($EventType eq 'old') {
-		my $DeleteButton = Gtk2::Button->new_from_stock('gtk-delete');
-		$DeleteButton->show();
-		$TB_ButtonHBox->pack_end($DeleteButton,0,0,2);
-		$DeleteButton->signal_connect("clicked" => sub {
-				if(DPQuestion(gettext("Are you sure you want to delete this event?"))) {
-					# Delete it
-					CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-					# Call UpdatedData to tell Day planner to save the data and redraw widgets
-					UpdatedData();
-					# Destroy our window, it will get the signal and do anything it needs to
-					$AddEventBox->destroy;
-				}
-			});
-	}
-	
-	# Cancel button
-	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
-	$CancelButton->signal_connect("clicked" => sub { $AddEventBox->destroy;
-		$MainWindow->set_sensitive(1);});
-	$CancelButton->show();
-	$TB_ButtonHBox->pack_end($CancelButton,0,0,0);
-
-	# Handle the esc button
-	$AddEventBox->signal_connect("key_release_event" => \&EscapeKeyHandler);
-
-	# Show it all
-	$AddEventBox->show();
 }
 
 # Purpose: Draw the configuration window and allow the user to set different
@@ -1173,6 +1326,7 @@ sub DrawEventlist() {
 	} else {
 		@{$EventlistWidget->{data}} = ();
 	}
+	# Main calendar contents
 	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
 		foreach my $Time (sort keys %{$CalendarContents{$Year}{$Month}{$Day}}) {
 			unless (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"})) {
@@ -1180,6 +1334,11 @@ sub DrawEventlist() {
 			} else {
 				push (@{$EventlistWidget->{data}}, [$Time, $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
 			}
+		}
+	}
+	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
+		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
+			push (@{$EventlistWidget->{data}}, ["", sprintf(gettext("%s's brithday"), $Birthday)]);
 		}
 	}
 	# Register doubleclick (FIXME)
@@ -1351,7 +1510,7 @@ sub DrawMainWindow () {
 # Get commandline options
 GetOptions (
 	'help|h' => sub {
-		print "Day planner verison $Version\n\n";
+		print "Day planner version $Version\n\n";
 		PrintHelp("-h","--help","Display this help screen and exit");
 		PrintHelp("-v","--version", "Display version information and exit");
 		PrintHelp("-t","--test","Use $SaveToDir/debug instead of $SaveToDir");
@@ -1359,12 +1518,12 @@ GetOptions (
 		exit(0);
 	},
 	'version|v' => sub {
-		print "Day planner verison $Version\n";
+		print "Day planner version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
 	'debuginfo' => sub {
-		print "Day planner verison $Version\n";
+		print "Day planner version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		printf "Perl version %vd\n", $^V;
