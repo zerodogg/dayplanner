@@ -2,7 +2,7 @@
 # Day planner
 # A graphical day planner written in perl that uses Gtk2
 # Copyright (C) Eskild Hustvedt 2006
-# $Id: dayplanner 17 2006-02-15 18:43:14Z zerodogg $
+# $Id$
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 
 # Scalars
 my $Version = "0.1 Beta 1";
-my $RCSRev = '$Id: dayplanner 17 2006-02-15 18:43:14Z zerodogg $';
+my $RCSRev = '$Id$';
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
