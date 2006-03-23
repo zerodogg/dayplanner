@@ -895,18 +895,46 @@ sub AddEvent () {
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
 	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Add an event"), gettext('Adding an event on the %s. %s %s'), 'gtk-add');
+	# Create the OK button handler and event type selector
+	# HBox
+	my $SelectorHBox = Gtk2::HBox->new();
+	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
+	$SelectorHBox->show();
+	# Label
+	my $EventTypeLabel = Gtk2::Label->new(gettext("Event type:"));
+	$SelectorHBox->pack_start($EventTypeLabel,0,0,0);
+	$EventTypeLabel->show();
+	# Combo selector
+	my $EventType_Combo = Gtk2::ComboBox->new_text;
+	$EventType_Combo->insert_text(0, gettext("Normal"));
+	$EventType_Combo->insert_text(1, gettext("Birthday"));
+	$SelectorHBox->pack_start($EventType_Combo,0,0,0);
+	$EventType_Combo->show();
+
 	# Create the widgets for the normal event selection
 	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("00:00", $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
 	my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
+	# Handle changed values in the combo box
+	$EventType_Combo->signal_connect('changed' => sub {
+			my $ActiveIndex = $EventType_Combo->get_active;
+			if ($ActiveIndex == 0) {
+				$BE_MainWidget->hide();
+				$NE_MainWidget->show();
+				$OKButton->signal_connect('clicked' => sub {
+					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
+				});
+			} elsif ($ActiveIndex == 1) {
+				$NE_MainWidget->hide();
+				$BE_MainWidget->show();
+				$OKButton->signal_connect('clicked' => sub {
+					BirthdayEvent_OK($Window, $BE_NameWidget, \%TimeHash, 0)});
+			}
+		});
 
-	$OKButton->signal_connect('clicked' => sub {
-			NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
-	});
+	$EventType_Combo->set_active(0);
 	
-	# Show the default widget (Normal event)
-	$NE_MainWidget->show();
 	# Show the window
 	$Window->show();
 }
