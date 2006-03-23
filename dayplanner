@@ -887,6 +887,7 @@ sub CreateEventContainerWin ($$$) {
 sub AddEvent () {
 	$MainWindow->set_sensitive(0);
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my $OKSignal;
 	my %TimeHash = (
 		EventYear => $EventYear,
 		EventMonth => $EventMonth,
@@ -922,13 +923,15 @@ sub AddEvent () {
 			if ($ActiveIndex == 0) {
 				$BE_MainWidget->hide();
 				$NE_MainWidget->show();
-				$OKButton->signal_connect('clicked' => sub {
+				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
+				$OKSignal = $OKButton->signal_connect('clicked' => sub {
 					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
 				});
 			} elsif ($ActiveIndex == 1) {
 				$NE_MainWidget->hide();
 				$BE_MainWidget->show();
-				$OKButton->signal_connect('clicked' => sub {
+				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
+				$OKSignal = $OKButton->signal_connect('clicked' => sub {
 					BirthdayEvent_OK($Window, $BE_NameWidget, \%TimeHash, 0)});
 			}
 		});
