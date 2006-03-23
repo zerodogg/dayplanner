@@ -1,6 +1,7 @@
 * Version 0.1
 - Find a nontechnical name for the daemon for the few places the user will need
   to know about it
+- Tooltips
 - Add default button in dialogs
 - Add support for birthdays.dpd
 - Have a third party look over all strings (in the pot-file) and try to
