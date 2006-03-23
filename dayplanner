@@ -601,11 +601,32 @@ sub DeleteEvent () {
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my $EventTime = $EventlistWidget->{data}[$Selected][0];
 	my $EventSummary = $EventlistWidget->{data}[$Selected][1];
-	if (defined($EventTime)) {
-		CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-		DrawEventlist();
-		SaveMainData();
+
+	if($Type eq 'normal') {
+		if (defined($EventTime)) {
+			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+			DrawEventlist();
+			SaveMainData();
+		}
+	} elsif ($Type eq 'bday') {
+		if (defined($EventSummary)) {
+			BirthdayDelete($EventMonth, $EventDay, GetRealBirthdayName($EventSummary));
+			DrawEventlist();
+			SaveMainData();
+		}
+	} else {
+		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
 	}
+}
+
+# Purpose: Get the real name of the person whose birthday it is
+# Usage: my $Name = GetRealBirthdayName(NAME);
+sub GetRealBirthdayName ($) {
+	my $Name = $_[0];
+	my $BirthdayString = gettext("%s's brithday");
+	$BirthdayString =~ s/%s//;
+	$Name =~ s/$BirthdayString$//;
+	return($Name);
 }
 
 # Purpose: Detect which kind of event is selected in the eventlist
@@ -948,9 +969,7 @@ sub EditEvent () {
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		
-		my $BirthdayString = gettext("%s's brithday");
-		$BirthdayString =~ s/%s//;
-		$Summary =~ s/$BirthdayString$//;
+		$Summary = GetRealBirthdayName($Summary);
 		$TimeHash{OldEventSummary} = $Summary;
 		if(BirthdayDefined($EventMonth, $EventDay, $Summary)) {
 			# Create the widgets for the birthday event selection
