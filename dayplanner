@@ -593,14 +593,46 @@ sub DeleteEvent () {
 	foreach ($EventlistWidget->get_selected_indices) {
 		$Selected = $_;
 	}
-	if(defined($Selected)) {
-		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-		my $EventTime = $EventlistWidget->{data}[$Selected][0];
-		if (defined($EventTime)) {
-			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-			DrawEventlist();
-			SaveMainData();
-		}
+	# Unless $Selected is defined we don't have anything selected in the eventlist
+	unless(defined($Selected)) {
+		return(0);
+	}
+	my $Type = GetEventListType();
+	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my $EventTime = $EventlistWidget->{data}[$Selected][0];
+	my $EventSummary = $EventlistWidget->{data}[$Selected][1];
+	if (defined($EventTime)) {
+		CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+		DrawEventlist();
+		SaveMainData();
+	}
+}
+
+# Purpose: Detect which kind of event is selected in the eventlist
+# Usage: my $Type = GetEventListType();
+sub GetEventListType() {
+	my $Selected;
+	# FIXME: This is just plain weird
+	foreach ($EventlistWidget->get_selected_indices) {
+		$Selected = $_;
+	}
+	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
+	unless(defined($Selected)) {
+		return(0);
+	}
+	# Initialize
+	my $Time = $EventlistWidget->{data}[$Selected][0];
+	my $Summary = $EventlistWidget->{data}[$Selected][1];
+        my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+
+	# Detect the event type
+	if (defined($Time) and length($Time)) {
+		return('normal');
+	} elsif (defined($Summary) and length($Summary)) {
+		return('bday')
+	} else {
+		return(0);
+		DPIntWarn("FATAL: GetEventListType: Unable to get the type of the selected event ($EventYear-$EventMonth-$EventDay-$Time/$Summary");
 	}
 }
 
@@ -862,10 +894,6 @@ sub AddEvent () {
 # Usage: EditEvent ();
 sub EditEvent () {
 	my $Selected;	# The selected entry
-	my $Type;	# The type of entry it is. Can be:
-			#
-			# normal = Standard day planner data (%CalendarContents)
-			# bday   = Birthday data (%BirthdayContents)
 	
 	# FIXME: This is just plain weird
 	foreach ($EventlistWidget->get_selected_indices) {
@@ -892,14 +920,7 @@ sub EditEvent () {
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
 	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Add an event"), gettext('Adding an event on the %s. %s %s'), 'gtk-ok');
 
-	# Detect the event type
-	if (defined($Time) and length($Time)) {
-		$Type = 'normal';
-	} elsif (defined($Summary) and length($Summary)) {
-		$Type = 'bday';
-	} else {
-		DPIntWarn("FATAL: EditEvent: Attempted to edit a nonexisting event");
-	}
+	my $Type = GetEventListType();
 
 	if ($Type eq 'normal') {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
