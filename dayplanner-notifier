@@ -150,14 +150,18 @@ sub GtkNotifier () {
 		$NotifyDialog->set_title("Day Planner event");
 		
 		my $PostponeButton = Gtk2::Button->new_with_label('Postpone');
+		$PostponeButton->can_default(1);
 		my $PostponeImage = Gtk2::Image->new_from_stock('gtk-go-forward','button');
 		$PostponeButton->set_image($PostponeImage);
 		$NotifyDialog->add_action_widget($PostponeButton, 'reject');
 		$PostponeButton->show();
 	
 		my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
+		$OkayButton->can_default(1);
 		$NotifyDialog->add_action_widget($OkayButton, 'accept');
 		$OkayButton->show();
+
+		$NotifyDialog->set_default_response('accept');
 		
 		# If the $Fulltext is defined and set then allow the user to be shown it
 		if(defined($Fulltext) and $Fulltext =~ /\S/) {
