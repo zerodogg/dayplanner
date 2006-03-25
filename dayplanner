@@ -753,6 +753,24 @@ sub CalendarChange () {
 # GUI event adding functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Get a properly formatted event time from two widgets (min/hour)
+# Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner);
+sub GetTimeFromWidgets ($$) {
+	# In the future this sub will take a third argument, which is either an AM/PM
+	# selection box, or undef - so that seamless AM/PM support is needed.
+	
+	my ($HourSpinner, $MinuteSpinner) = @_;	
+	my $Hour = $HourSpinner->get_value_as_int();
+	my $Minute = $MinuteSpinner->get_value_as_int();
+	if ($Hour <= 9) {
+		$Hour = "0$Hour";
+	}
+	if ($Minute <= 9) {
+		$Minute = "0$Minute";
+	}
+	return("$Hour:$Minute");
+}
+
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox) = TimeSelection("HH:MM");
 sub TimeSelection ($) {
@@ -1183,9 +1201,9 @@ sub NormalEvent_OK ($$$$$$$) {
 	my $Error = 0;
 	
 	# Get the contents
-	my $Hour = $HourSpinner->get_value_as_int();
-	my $Minute = $MinuteSpinner->get_value_as_int();
-	my $Time = "$Hour:$Minute";
+#	my $Hour = $HourSpinner->get_value_as_int();
+#	my $Minute = $MinuteSpinner->get_value_as_int();
+	my $Time = GetTimeFromWidgets($HourSpinner,$MinuteSpinner);
 	my $Summary = $SummaryEntry->get_text;
 	my $FulltextBuff = $FulltextEntry->get_buffer;
 	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
