@@ -23,7 +23,7 @@ use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
 use POSIX;			# We need strftime
 #use Glib;
-use Gtk2 '-init';		# Use Gtk2 :)
+use Gtk2; 			# Use Gtk2 :)
 use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
@@ -164,6 +164,10 @@ sub ConnectToDaemon ($) {
 # Usage: Daemon_SendData(DATA);
 sub Daemon_SendData ($) {
 	if($DaemonOnline) {
+		unless(defined($DaemonSocket)) {
+			DPIntWarn("BUG!: \$DaemonSocket is undefined");
+			return(0);
+		}
 		if(print $DaemonSocket "$$ $_[0]","\n") {
 			       return(1);
 		       } else {
@@ -251,7 +255,7 @@ sub WriteConfig ($$) {
 		$EditorVerboseDefault = 0;
 	}
 	unless(defined($Events_NotifyPre)) {
-		$Events_NotifyPre = '30min';
+		$Events_NotifyPre = '3';
 	}
 	# Print the config
 	print CONFIG "# Day planner version $Version configuration file\n\n";
@@ -260,14 +264,14 @@ sub WriteConfig ($$) {
 	print CONFIG "# If the EventEditor should expand the \"details\" by default\n# 1 = expand\n# 0 = don't expand\n";
 	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n\n";
 	print CONFIG "# If day planner should notify about an event ahead of time.\n# 0 = Don't notify\n";
-	print CONFIG "# 10min = Notify 10 minutes ahead of time\n";
-	print CONFIG "# 20min = Notify 20 minutes ahead of time\n";
-	print CONFIG "# 30min = Notify 30 minutes ahead of time\n";
-	print CONFIG "# 45min = Notify 45 minutes ahead of time\n";
-	print CONFIG "# 1hr = Notify 1 hour ahead of time\n";
-	print CONFIG "# 2hr = Notify 2 hours ahead of time\n";
-	print CONFIG "# 4hr = Notify 4 hours ahead of time\n";
-	print CONFIG "# 6hr = Notify 6 hours ahead of time\n";
+	print CONFIG "# 1 = Notify 10 minutes ahead of time\n";
+	print CONFIG "# 2 = Notify 20 minutes ahead of time\n";
+	print CONFIG "# 3 = Notify 30 minutes ahead of time\n";
+	print CONFIG "# 4 = Notify 45 minutes ahead of time\n";
+	print CONFIG "# 5 = Notify 1 hour ahead of time\n";
+	print CONFIG "# 6 = Notify 2 hours ahead of time\n";
+	print CONFIG "# 7 = Notify 4 hours ahead of time\n";
+	print CONFIG "# 8 = Notify 6 hours ahead of time\n";
 	print CONFIG "Events_NotifyPre=$Events_NotifyPre\n";
 	# Close the config file
 	close(CONFIG);
@@ -306,9 +310,9 @@ sub LoadConfig ($$) {
 		} elsif ($Option eq 'EditorVerboseDefault') {
 			$EditorVerboseDefault = $Value;
 		} elsif ($Option eq 'Events_NotifyPre') {
-			unless($Value =~ /^(10min|20min|30min|45min|1hr|2hr|4hr|6hr)$/) {
-				DPIntWarn("Invalid Events_NotifyPre setting: \"$Value\", setting to default 30min");
-				$Events_NotifyPre = '30min';
+			unless($Value =~ /^(0|1|2|3|4|5|6|7|8|9)$/) {
+				DPIntWarn("Invalid Events_NotifyPre setting: \"$Value\", setting to default 3");
+				$Events_NotifyPre = '3';
 			} else {
 				$Events_NotifyPre = $Value;
 			}
@@ -509,7 +513,7 @@ sub DPIntWarn ($) {
 # Purpose: Delete keys from %CalendarContents, recusively if needed
 # Usage: CalendarDelete(year,month,day,time);
 sub CalendarDelete ($$$$) {
-	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
+	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
 	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
 		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
 			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
@@ -606,12 +610,14 @@ sub DeleteEvent () {
 		if (defined($EventTime)) {
 			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
 			DrawEventlist();
+			CalendarChange();
 			SaveMainData();
 		}
 	} elsif ($Type eq 'bday') {
 		if (defined($EventSummary)) {
 			BirthdayDelete($EventMonth, $EventDay, GetRealBirthdayName($EventSummary));
 			DrawEventlist();
+			CalendarChange();
 			SaveMainData();
 		}
 	} else {
@@ -930,8 +936,14 @@ sub AddEvent () {
 	$SelectorHBox->pack_start($EventType_Combo,0,0,0);
 	$EventType_Combo->show();
 
+	# Create the tooltips widget
+#	my $Tooltips = Gtk2::Tooltips->new();
+#	$Tooltips->enable();
+	# Set the tooltip
+#	$Tooltips->set_tip($EventType_Combo, gettext("The type of event you are adding. Normal is the standard event. It has entries for time, summary and details. Birthday simply has an entry for the name of the person whose birthday it is"));
+	
 	# Create the widgets for the normal event selection
-	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("00:00", $OKButton, $VBox_HBoxContainer, $Window);
+	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
 	my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
@@ -985,6 +997,7 @@ sub EditEvent () {
 		OldEventYear => $EventYear,
 		OldEventMonth => $EventMonth,
 		OldEventDay => $EventDay,
+		OldEventTime => $Time,
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
@@ -1066,6 +1079,14 @@ sub NormalEventWindow ($$$$) {
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
 	}
+
+	if ($EventTime eq 'NULL') {
+		$EventTime = "00:00";
+	}
+
+	# Create the tooltips widget
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
 	
 	# Create our main vbox
 	my $MainVBox = Gtk2::VBox->new();
@@ -1103,6 +1124,7 @@ sub NormalEventWindow ($$$$) {
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	$Tooltips->set_tip($SummaryEntry, gettext("Enter a summary of the event here"));
 	
 	# ==================================================================
 	# ADD THE EXTENDED ENTRY
@@ -1115,6 +1137,7 @@ sub NormalEventWindow ($$$$) {
 	if ($EditorVerboseDefault) {
 		$FT_Expander->set_expanded(1);
 	}
+	$Tooltips->set_tip($FT_Expander, gettext("Use this if you need to enter additional information about the event"));
 	
 	# Add the extended entry box
 	my $FulltextEntry = Gtk2::TextView->new();
@@ -1165,6 +1188,10 @@ sub BirthdayEventWindow ($$$) {
 	my $MainVBox = Gtk2::VBox->new();
 	$ParentVBox->pack_start($MainVBox,0,0,0);
 	
+	# Create the tooltips widget
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+	
 	# Create the table inside the frame
 	my $ContentTable = Gtk2::Table->new(2,2);
 	$ContentTable->show();
@@ -1187,6 +1214,7 @@ sub BirthdayEventWindow ($$$) {
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	$Tooltips->set_tip($SummaryEntry, gettext("Enter the name of the person whose birthday it is here"));
 	
 	return($MainVBox, $SummaryEntry);
 }
@@ -1201,8 +1229,6 @@ sub NormalEvent_OK ($$$$$$$) {
 	my $Error = 0;
 	
 	# Get the contents
-#	my $Hour = $HourSpinner->get_value_as_int();
-#	my $Minute = $MinuteSpinner->get_value_as_int();
 	my $Time = GetTimeFromWidgets($HourSpinner,$MinuteSpinner);
 	my $Summary = $SummaryEntry->get_text;
 	my $FulltextBuff = $FulltextEntry->get_buffer;
@@ -1320,7 +1346,8 @@ sub AboutBox () {
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
 	$AboutDialog->set_website("http://gna.org/projects/dayplanner");
-	$AboutDialog->set_name(gettext("Day planner beta"));
+	$AboutDialog->set_name(gettext("Day planner"));
+	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with day planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
 	# Logo
@@ -1473,16 +1500,16 @@ sub ConfigWindow () {
 	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
 	# The combo box
 	my $TimeSel_Combo = Gtk2::ComboBox->new_text();
-	$TimeSel_Combo->insert_text(0, gettext(sprintf("%s minutes","10")));
-	$TimeSel_Combo->insert_text(1, gettext(sprintf("%s minutes","20")));
-	$TimeSel_Combo->insert_text(2, gettext(sprintf("%s minutes","30")));
-	$TimeSel_Combo->insert_text(3, gettext(sprintf("%s minutes","45")));
-	$TimeSel_Combo->insert_text(4, gettext(sprintf("%s hour","1")));
-	$TimeSel_Combo->insert_text(5, gettext(sprintf("%s hours","2")));
-	$TimeSel_Combo->insert_text(6, gettext(sprintf("%s hours","4")));
-	$TimeSel_Combo->insert_text(7, gettext(sprintf("%s hours","6")));
+	$TimeSel_Combo->insert_text(1, gettext(sprintf("%s minutes","10")));
+	$TimeSel_Combo->insert_text(2, gettext(sprintf("%s minutes","20")));
+	$TimeSel_Combo->insert_text(3, gettext(sprintf("%s minutes","30")));
+	$TimeSel_Combo->insert_text(4, gettext(sprintf("%s minutes","45")));
+	$TimeSel_Combo->insert_text(5, gettext(sprintf("%s hour","1")));
+	$TimeSel_Combo->insert_text(6, gettext(sprintf("%s hours","2")));
+	$TimeSel_Combo->insert_text(7, gettext(sprintf("%s hours","4")));
+	$TimeSel_Combo->insert_text(8, gettext(sprintf("%s hours","6")));
 	# TODO: This needs to be done properly by reading the config option
-	$TimeSel_Combo->set_active(2);
+	$TimeSel_Combo->set_active(3);
 	$TimeSel_Combo->show();
 	$TimeSel_HBox->pack_start($TimeSel_Combo,0,0,0);
 	
@@ -1578,7 +1605,7 @@ sub DrawMainWindow () {
 	# ==================================================================
 	# Create the main window widget
 	$MainWindow = Gtk2::Window->new('toplevel');
-	$MainWindow->set_title(gettext("Day planner") . " $Version");
+	$MainWindow->set_title(gettext("Day planner"));
 	$MainWindow->set_default_size (600,300);
 
 	# Set the icon
@@ -1730,9 +1757,11 @@ sub DrawMainWindow () {
 GetOptions (
 	'help|h' => sub {
 		print "Day planner version $Version\n\n";
+		my $ShortSaveDir = $SaveToDir;
+		$ShortSaveDir =~ s/^$ENV{HOME}/~/;
 		PrintHelp("-h","--help","Display this help screen and exit");
 		PrintHelp("-v","--version", "Display version information and exit");
-		PrintHelp("-t","--test","Use $SaveToDir/debug instead of $SaveToDir");
+		PrintHelp("-t","--test","Use $ShortSaveDir/debug instead of $ShortSaveDir");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
@@ -1765,6 +1794,8 @@ unless (-e $SaveToDir) {
 LoadDefaultConfig();
 # Load the calendar
 LoadCalendar();
+# Initialize Gtk2
+Gtk2->init;
 # Initialize the daemon, and if it works draw the main window
 if(DaemonInit()) {
 	# Draw the main window
