@@ -337,7 +337,7 @@ sub CommandHandler ($) {
 	elsif (s/^DEBUG\s*//) {
 		if (/^DUMP_VARIOUS/) {
 			IntDebug("Recieved debugging info request from $PID");
-			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose");
+			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose");
 		} elsif (/^DUMP_CLIENTLIST/) {
 			IntDebug("Client list request from $PID");
 			my $ClientList;
@@ -477,6 +477,7 @@ GetOptions (
 		PrintHelp("-v,", "--verbose", "Be verbose");
 		PrintHelp("-V,", "--veryverbose", "Be very verbose");
 		PrintHelp("-d,", "--debug", "Output debugging information");
+		PrintHelp("-o,", "--output", "Output all messages to the file supplied instead of STDOUT/STDERR");
 		exit(0);
 	},
 	'debug|d' => sub {
@@ -491,6 +492,10 @@ GetOptions (
 	},
 	'n|nofork' => \$NoFork,
 	'f|force-fork' => \$ForceFork,
+	'o|output=s' => sub {
+		open(STDOUT, ">$_[1]") or die "Unable to open $_[1]: $!\n";
+		open(STDERR, ">$_[1]") or die "Unable to open $_[1]: $!\n";
+	},
 	'dayplannerdir=s' => sub {
 		unless (-e $_[1]) {
 			die "$_[1] does not exist\n";
