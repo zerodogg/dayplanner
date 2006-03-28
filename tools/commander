@@ -36,6 +36,16 @@ my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";
 
 # If $ARGV[0] is set then we want to connect to another socket
 if(defined($ARGV[0]) and length($ARGV[0])) {
+	if ($ARGV[0] =~ /^-(h|-help)/) {
+		print "Usage: $0\n";
+		print "   or: $0 /path/to/daemon/socket\n";
+		print "\nThis is a tool to communicate with a day planner daemon directly\n";
+		print "by sending raw commands to it and displaying the reply.\n";
+		print "It has a simple builtin help system and handles initial connection,\n";
+		print "authentication and adds the PID to the outgoing messages so that you don't\n";
+		print "need to worry about that. This tool is mostly useful for debugging\n";
+		exit(0);
+	}
 	$SocketName = $ARGV[0];
 }
 
@@ -61,7 +71,7 @@ my $HI_REPLY = <$socket>;
 
 # Print initial warning and welcomming message
 print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
-print "Welcome to the dayplanner daemon commander\n";
+print "Welcome to the day planner daemon commander\n";
 print "Type !QUIT to quit, !HELP to view known daemon commands\n";
 print "Daemon says $HI_REPLY\n";
 
