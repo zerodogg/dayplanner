@@ -629,7 +629,7 @@ sub DeleteEvent () {
 # Usage: my $Name = GetRealBirthdayName(NAME);
 sub GetRealBirthdayName ($) {
 	my $Name = $_[0];
-	my $BirthdayString = gettext("%s's brithday");
+	my $BirthdayString = gettext("%s's birthday");
 	$BirthdayString =~ s/%s//;
 	$Name =~ s/$BirthdayString$//;
 	return($Name);
@@ -1584,7 +1584,7 @@ sub DrawEventlist() {
 	}
 	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
 		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
-			push (@{$EventlistWidget->{data}}, ["", sprintf(gettext("%s's brithday"), $Birthday)]);
+			push (@{$EventlistWidget->{data}}, ["", sprintf(gettext("%s's birthday"), $Birthday)]);
 		}
 	}
 	# Register doubleclick (FIXME)
