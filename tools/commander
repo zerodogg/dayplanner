@@ -54,6 +54,12 @@ unless (-e $SocketName) {
 	die "$SocketName doesn't exist\n";
 }
 
+unless (-S $SocketName) {
+	       if (-d $SocketName and -e "$SocketName/dayplannerd") {
+			$SocketName = "$SocketName/dayplannerd";
+		}
+}
+
 # Verify that it actually IS a socket
 unless (-S $SocketName) {
 	die "$SocketName is not a socket\n";
