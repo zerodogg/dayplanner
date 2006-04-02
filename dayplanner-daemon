@@ -43,7 +43,7 @@ my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
-	$Shutdown,	$LastAlarm,
+	$Shutdown,	$LastAlarm,		$OutputRedirect
 );						# Global scalars
 
 my (
@@ -337,7 +337,11 @@ sub CommandHandler ($) {
 	elsif (s/^DEBUG\s*//) {
 		if (/^DUMP_VARIOUS/) {
 			IntDebug("Recieved debugging info request from $PID");
-			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose");
+			my $OutRedir = "None";
+			if (defined($OutputRedirect) and length($OutputRedirect)) {
+					$OutRedir = $OutputRedirect;
+			}
+			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose || Output redirection: $OutRedir");
 		} elsif (/^DUMP_CLIENTLIST/) {
 			IntDebug("Client list request from $PID");
 			my $ClientList;
@@ -493,6 +497,7 @@ GetOptions (
 	'n|nofork' => \$NoFork,
 	'f|force-fork' => \$ForceFork,
 	'o|output=s' => sub {
+		$OutputRedirect = $_[1];
 		open(STDOUT, ">$_[1]") or die "Unable to open $_[1]: $!\n";
 		open(STDERR, ">$_[1]") or die "Unable to open $_[1]: $!\n";
 	},
@@ -520,6 +525,7 @@ if (not $NoFork or $ForceFork) {
 
 # Verify the dir
 die "$DayplannerDir doesn't exist!\n" unless -e $DayplannerDir;
+die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
 
 # Main
 OpenSocket();
