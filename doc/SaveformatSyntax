@@ -14,3 +14,15 @@ follows:
 						}
 		}
 )
+
+-	-	-	-	-
+
+The same for the birthday saving:
+
+%BirthdayContents = (
+	'MONTH_NUMBER(1-12)' => {
+					'DAY(1-31)' => {
+								'NAME_OF_PERSON' => 1,
+							}
+				}
+}
