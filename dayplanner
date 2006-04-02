@@ -1762,6 +1762,8 @@ GetOptions (
 		PrintHelp("-h","--help","Display this help screen and exit");
 		PrintHelp("-v","--version", "Display version information and exit");
 		PrintHelp("-t","--test","Use $ShortSaveDir/debug instead of $ShortSaveDir");
+		PrintHelp("", "--confdir", "Use the directory supplies as configuration directory");
+		PrintHelp("", "", "instead of $ShortSaveDir");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
@@ -1780,6 +1782,18 @@ GetOptions (
 	'test|t' => sub {
 		print "*** (Day Planner $Version) Running in test mode\n";
 		$SaveToDir = "$SaveToDir/debug";
+	},
+	'confdir=s' => sub {
+		unless (-e $_[1]) {
+			die "$_[1] does not exist\n";
+		}
+		unless (-d $_[1]) {
+			die "$_[1] is not a directory\n";
+		}
+		unless (-w $_[1]) {
+			die "$_[1] is not writeable\n";
+		}
+		$SaveToDir = $_[1];
 	},
 ) or die "Run $0 --help for more information\n";
 
