@@ -21,7 +21,7 @@ or /usr/local/dayplanner/:
 These files should go into either /usr/share/dayplanner/ or /usr/local/dayplanner/:
 - art/dayplanner-about.png
 
-If you place the executeables int he same dir as the *png's then the png's can be anywhere
+If you place the executeables in the same dir as the *png's then the png's can be anywhere
 in the filesystem.
 
 $Id$
