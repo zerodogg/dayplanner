@@ -2,8 +2,6 @@
 - Find a nontechnical name for the daemon for the few places the user will need
   to know about it
 - Tooltips
-- Add default button in dialogs
-- Add support for birthdays.dpd
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 - Look over TODOs and FIXMEs from the code
@@ -12,6 +10,11 @@
 - Add doubleclick support for the eventlist
 - Add a week overview
 - Add support for am/pm
+	- This will be "emulated" in the sense that the internal clock and
+	data format will still use 24H time, but an internal function will translate
+	it from 24H to AM/PM before displaying it to the user. Should not
+	require too much extra work. Perhaps the use of AM/PM can be detected
+	using strftime?
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
