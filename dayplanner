@@ -113,11 +113,10 @@ sub DaemonInit () {
 		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
 		if ($ConnectionAttempt eq 'NOHI') {
 			DaemonConnectionErrorHandler();
-			return(0);
 		} elsif ($ConnectionAttempt eq '1') {
 			$DaemonOnline = 1;
-			return(1);
 		}
+		return(1);
 	}
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
 		if (-x "$_/$DaemonName") {
@@ -144,14 +143,18 @@ sub DaemonSIGPIPEHandler() {
 
 # Purpose: Connect to the daemon
 # Usage: ConnectToDaemon(/path/to/socket);
-sub ConnectToDaemon ($) {
+sub ConnectToDaemon ($$) {
+	my $HI = 'HI client';
+	if(defined($_[1]) and $_[1] eq 'FORCE') {
+		$HI = 'HI client FORCE';
+	}
 	$DaemonSocket = IO::Socket::UNIX->new(
 		Peer	=> $_[0],
 		Type	=> SOCK_STREAM,
 		Timeout	=> 5)
 		or return("NOCONNECT");
 	$DaemonOnline = 1;
-	if(Daemon_DataSegment("HI client") eq "HI\n") {
+	if(Daemon_DataSegment($HI) eq "HI\n") {
 		return(1);
 	} else {
 		$DaemonOnline = 0;
@@ -226,9 +229,16 @@ sub DaemonConnectionErrorHandler () {
 	);
 	
 	$ErrorDialog->set_default_response('accept');
-	$ErrorDialog->run;
-	$ErrorDialog->destroy;
-	exit(0)
+	if($ErrorDialog->run eq 'accept') {
+		$ErrorDialog->destroy;
+		exit(0)
+	} else {
+		$ErrorDialog->destroy;
+		unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
+				DPError(gettext("I was unable to force the start. This is due to a bug in the program, please contact the day planner developers."));
+				exit(1);
+			}
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -427,9 +437,6 @@ sub SaveDatafile ($$$$) {
 	# Pulse once and close
 	$ProgressBar->pulse();
 	close(SAVEFILE);
-	# Pulse once and tell the daemon to save
-	$ProgressBar->pulse();
-	Daemon_DataSegment("RELOAD_DATA");
 	# Destroy the progress bar window
 	$ProgressWin->destroy();
 	# We successfully saved the data
@@ -439,15 +446,23 @@ sub SaveDatafile ($$$$) {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData () {
-	my $Return = 1;
+	# TODO: Return SAVE_FAILED when saving fails and DAEMON_RELOAD_FAILURE when the daemon reload fails?
+	my $Return = 'OKAY';
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
-		$Return	= 0;
+		$Return	= 'SAVE_FAILED';
 	}
 	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents")) {
-		$Return = 0;
+		$Return = 'SAVE_FAILED';
 	}
 	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents")) {
-		$Return = 0;
+		$Return = 'SAVE_FAILED';
+	}
+	# This to avoid unneccesary overhead in the daemon reloading files needlessly
+	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
+		DPWarning(gettext("<b><big>I encountered an error while saving the day planner data files</big></b>.\n\nThere seems to be another day planner running. This may lead to data loss.\n\nAs long as you leave this day planner open your data is safe, however if you close this day planner before the other one is closed you will loose all your changes from this one."));
+		if ($Return eq 'OKAY') {
+			$Return = 'DAEMON_RELOAD_FAILURE';
+		}
 	}
 	return($Return);
 }
@@ -680,6 +695,14 @@ sub DPError ($) {
 	$Dialog->destroy();
 }
 
+# Purpose: Display a warning dialog
+# Usage: DPWarning("Warning");
+sub DPWarning ($) {
+	my $Dialog = Gtk2::MessageDialog->new_with_markup(undef, "modal", 'warning', 'ok', "$_[0]");
+	$Dialog->run();
+	$Dialog->destroy();
+}
+
 # Purpose: Display an information dialog
 # Usage: DPInfo("Information message");
 sub DPInfo ($) {
@@ -706,8 +729,14 @@ sub DPQuestion ($) {
 # Usage: QuitSub();
 sub QuitSub () {
 	$MainWindow->hide();
-	unless(SaveMainData) {
+	my $SaveData = SaveMainData();
+	if ($SaveData eq 'SAVE_FAILED') {
 		unless(DPQuestion(gettext("Some files could not be saved correctly. Are you sure you want to quit?"))) {
+			$MainWindow->show();
+			return(1);
+		}
+	} elsif ($SaveData eq 'DAEMON_RELOAD_FAILURE') {
+		unless(DPQuestion(gettext("Are you sure you still want to quit?"))) {
 			$MainWindow->show();
 			return(1);
 		}
@@ -1370,7 +1399,7 @@ sub AboutBox () {
 sub ConfigWindow () {
 	my $ConfigWindow = Gtk2::Window->new();
 	$ConfigWindow->set_modal(1);
-	$ConfigWindow->set_title(gettext("Day planner preferences"));
+	$ConfigWindow->set_title(gettext("Preferences"));
 	$ConfigWindow->set_resizable(0);
 	$ConfigWindow->set_border_width(12);
 	$ConfigWindow->set_skip_taskbar_hint(1);
@@ -1386,19 +1415,20 @@ sub ConfigWindow () {
 	$Config_VBox->show();
 	$ConfigWindow->add($Config_VBox);
 	
-	# Create the Gtk2::Notebook
-	my $ConfigNotebook = Gtk2::Notebook->new();
-	$ConfigNotebook->show();
-	$Config_VBox->pack_start($ConfigNotebook,0,0,0);
-		
 	# ==================================================================
-	# GENERAL TAB
+	# GENERAL
 	# ==================================================================
 	
 	# Create the primary vbox
 	my $General_VBox = Gtk2::VBox->new();
 	$General_VBox->show();
-	$ConfigNotebook->append_page($General_VBox, gettext("General"));
+	$Config_VBox->pack_start($General_VBox,0,0,0);
+	
+	my $UI_Label = Gtk2::Label->new("<b>" . gettext("Interface") . "</b>");
+	$UI_Label->set_use_markup(1);
+	$UI_Label->set_alignment(0,1);
+	$General_VBox->pack_start($UI_Label,0,0,0);
+	$UI_Label->show();
 
 	# TOOLBAR STYLE
 	my $TBStyle_HBox = Gtk2::HBox->new();
@@ -1473,7 +1503,7 @@ sub ConfigWindow () {
 		});
 	
 	# ==================================================================
-	# GENERAL TAB
+	# EVENTS
 	# ==================================================================
 	
 	# TODO: Settings set here are not taken into account (not saved)
@@ -1481,7 +1511,14 @@ sub ConfigWindow () {
 	# Create the vbox
 	my $Events_VBox = Gtk2::VBox->new();
 	$Events_VBox->show();
-	$ConfigNotebook->append_page($Events_VBox, gettext("Events"));
+	$Config_VBox->pack_start($Events_VBox,0,0,0);
+
+	# The label
+	my $Events_Label = Gtk2::Label->new("<b>" . gettext("General events") . "</b>");
+	$Events_Label->set_use_markup(1);
+	$Events_Label->set_alignment(0,1);
+	$Events_VBox->pack_start($Events_Label,0,0,0);
+	$Events_Label->show();
 	
 	# The main checkbox that enables/disables the entire page
 	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(gettext("Pop up a window to notify me about events"));
