@@ -323,16 +323,22 @@ sub CommandHandler ($) {
 		return("done");
 	} elsif (/^SHUTDOWN/) {		# Command to force daemon shutdown
 		IntDebug("Shutdown request");
-		#	if($TYPE =~ /servant/) {
-			#	return("ERR PERMISSION_DENIED");
-			#} else {
+		if($AccessStatus{ClientList}{$PID} =~ /servant/) {
+			return("ERR PERMISSION_DENIED");
+		} else {
 			$Shutdown = "Daemon shut down by client ($PID) request";
 			return("okay");
-			#}
+		}
 	} elsif (/^PING/) {		# Simple ping implementation
 		IntDebug("Ping request from $PID");
 		return("PONG");
-	} 
+	} elsif (/^VERSION/) {
+		IntDebug("VERSION request from $PID");
+		return($Version);
+	} elsif (/^GET_PATH/) {
+		IntDebug("GET_PATH request from $PID");
+		return($0);
+	}
 	elsif (s/^DEBUG\s*//) {
 		if (/^DUMP_VARIOUS/) {
 			IntDebug("Recieved debugging info request from $PID");
@@ -373,6 +379,7 @@ sub CommandHandler ($) {
 			$DebuggingOutput = 1;
 			$OutputVeryVerbose = 1;
 			$OutputVerbose = 1;
+			IntDebug("Enabled debugging logging as requested by $PID");
 			return("SUCCESS - writing debugging information to $PATH");
 		} else {
 			IntDebug("Invalid debug command: \"$_\" from $PID");
