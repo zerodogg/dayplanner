@@ -285,7 +285,6 @@ sub CommandHandler ($) {
 					IntVeryVerbose("$PID is forcing a connection");
 				} else {
 					IntVeryVerbose("Refusing connection from $PID");
-					$AccessStatus{ClientList}{$PID} = 0;
 					delete($AccessStatus{ClientList}{$PID});
 					return("REFUSED");
 				}
@@ -357,6 +356,24 @@ sub CommandHandler ($) {
 		} elsif (/^DUMP_SLEEPTIME/) {
 			IntDebug("Sleep time request from $PID");
 			return(FindSleepDuration());
+		} elsif (/^KICK\s+(\w+)/) {
+			my $CLIENT = $1;
+			IntDebug("Client KICK request from $PID");
+			if(defined($AccessStatus{ClientList}{$CLIENT})) {
+				delete($AccessStatus{ClientList}{$CLIENT});
+				return("CLIENT KICKED");
+			} else {
+				return("UNKNOWN CLIENT");
+			}
+		} elsif (/^ENABLE_DEBUGLOG/) {
+			my $PATH = "$DayplannerDir/daemon.log";
+			open(STDOUT, ">$PATH") or return("FAILED to open $PATH for writing: $!");
+			open(STDERR, ">$PATH") or return("FAILED to open $PATH for writing: $!");
+			$OutputRedirect = $PATH;
+			$DebuggingOutput = 1;
+			$OutputVeryVerbose = 1;
+			$OutputVerbose = 1;
+			return("SUCCESS - writing debugging information to $PATH");
 		} else {
 			IntDebug("Invalid debug command: \"$_\" from $PID");
 			return("ERR INVALID_COMMAND");

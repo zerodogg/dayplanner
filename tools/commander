@@ -92,7 +92,7 @@ my $term = Term::ReadLine->new('Day Planner daemon commander');
 # Get the attribs and set up autocompleteion
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
-$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME !QUIT !HELP)];
+$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK !QUIT !HELP)];
 
 # An "eternal" loop getting input and parsing it
 while (1) {
@@ -120,6 +120,11 @@ while (1) {
 			CommandPrint("DUMP_SLEEPTIME", "Dump approximately how long the daemon would sleep after");
 			CommandPrint("", "this request has been processed (unless a new request is recieved).");
 			CommandPrint("", "Returns the value in seconds as returned by the FindSleepDuration() function");
+			CommandPrint("KICK [PID]", "Kick the PID specified from the daemon - denies further access until");
+			CommandPrint("", "that PID reconnects (PID is removed from the access lists - its connection");
+			CommandPrint("", "to the daemon stays open");
+			CommandPrint("ENABLE_DEBUGLOG", "Enable logging of output to a file. The daemon will reply");
+			CommandPrint("", "the path to the file it will output to");
 		} else {				# Everything else we send unmodified to the daemon
 			print $socket "$$ $COMMAND\n";
 		}
