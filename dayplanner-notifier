@@ -161,7 +161,7 @@ sub GtkNotifier () {
 		$NotifyDialog->add_action_widget($OkayButton, 'accept');
 		$OkayButton->show();
 
-		$NotifyDialog->set_default_response('accept');
+		$NotifyDialog->set_default_response('reject');
 		
 		# If the $Fulltext is defined and set then allow the user to be shown it
 		if(defined($Fulltext) and $Fulltext =~ /\S/) {
