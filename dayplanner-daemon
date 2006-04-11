@@ -27,6 +27,7 @@ use Locale::gettext;		# Allow translation, might not be needed
 use Getopt::Long;		# Commandline options
 use Cwd;			# We need Cwd::realpath to find the notifier
 use File::Basename;		# Ditto
+use Data::Dumper;		# We need to be able to dump data
 
 Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
@@ -43,7 +44,8 @@ my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
-	$Shutdown,	$LastAlarm,		$OutputRedirect
+	$Shutdown,	$LastAlarm,		$OutputRedirect,
+	$LastCalculate,
 );						# Global scalars
 
 my (
@@ -54,6 +56,7 @@ my (
 my %CalendarContents;		# Contents of the main calendar
 my %BirthdayContents;		# Contents of the birthday calendar
 my %SpecialEvents;		# Contents of the speical events calendar
+my %NotificationHash;		# The internal hash data
 
 my %AccessStatus = (
 	Connected => 0,
@@ -87,6 +90,8 @@ sub LoadCalendar () {
 	if(DataLoadTest("$DayplannerDir/$SpecialEventsFile")) {
 		%SpecialEvents = do("$DayplannerDir/$SpecialEventsFile");
 	}
+	# Calculate the notification hash
+	CalculateNotificationHash();
 	return(1);
 }
 
@@ -121,13 +126,10 @@ sub FindSleepDuration () {
 
 	my @Keys;	# An array containing all the keys in a random order
 	
-	# First we find out which hashes has something for us
-	# TODO: At some point we need to add the special and birthday hashes here too
-	if (defined($CalendarContents{$curryear}{$currmonth}{$currmday})) {
-			foreach (keys(%{$CalendarContents{$curryear}{$currmonth}{$currmday}})) {
-					push(@Keys, $_);
-			}
-		}
+	# Push the keys onto the @Keys array
+	foreach(keys(%NotificationHash)) {
+		push(@Keys, $_);
+	}
 	my ($hours, $minutes);
 	# If keys is true then...
 	if (@Keys) {
@@ -219,6 +221,89 @@ sub IntWarn ($) {
 	warn "Warning: $_[0]\n";
 }
 
+# Purpose: Parse the configuration option set in Events_NotifyPre
+# Usage: my ($Hours, $Minutes) = ParseNotifyPre();
+sub ParseNotifyPre () {
+	my $Events_NotifyPre = '2hrs';
+	# First, verify that the configuration option is even valid
+	# NOTE: If this test is changed HERE it must be changed in dayplanner (client) aswell
+	unless ($Events_NotifyPre =~ /^(\d+(min|hrs?){1}|0){1}$/) {
+		IntWarn("The Events_NotifyPre configuration option is set to an invalid value ($Events_NotifyPre)");
+	}
+
+	my $Number = $Events_NotifyPre;
+	my $Type = $Events_NotifyPre;
+	$Number =~ s/^(\d+).*$/$1/;
+	unless($Number =~ /\d/) {
+		IntWarn("The Events_NotifyPre configuration option is invalid, I was unable to parse it. Pre-event notifications won't work!");
+		return(0,0);
+	}
+	$Type =~ s/^\d+//;
+	$Type =~ s/s$//;
+	if($Type eq 'hr') {
+		return($Number,0);
+	} elsif($Type eq 'min') {
+		if ($Number > 59) {
+			return(0, 59);
+		} else {
+			return(0,$Number);
+		}
+	}
+	IntWarn("The Events_NotifyPre configuration option is invalid, I was unable to parse it. Pre-event notifications won't work!");
+	return(0,0);
+}
+
+# Purpose: Return the pre-notification time for an event
+# Usage: my $NewTime = GetPreNotTime("OLD:TIME", $PreNotificationHours, $PreNotificationMinutes, IS_TOMORROW);
+# 
+# OLD:TIME is the time we're working on
+# $PreNotificationHours is the hours returned by ParseNotifyPre();
+# $PreNotificationMinutes is the minutes returned by ParseNotificationPre();
+# IS_TOMORROW is true if the time we got is for tomorrow, not the current day,
+# 	we need to process the time more if IS_TOMORROW is true
+sub GetPreNotTime ($$$$) {
+	# The parsed prenotification hours/minutes
+	# We don't need to do any checks on them here, we just assume they are valid
+	# as ParseNotifyPre() has already validated them
+	my $PreNot_Hours = $_[1];
+	my $PreNot_Minutes = $_[2];
+
+	my $Is_Tomorrow = $_[3];
+		
+	# If they're both zero then we just return undef and don't think about it any more
+	if($PreNot_Hours <= 0 and $PreNot_Minutes <= 0) {
+		return(undef);
+	}
+	
+	# Get and parse the time
+	my $Hours = $_[0];
+	my $Minutes = $_[0];
+	$Hours =~ s/^(\d+):\d+$/$1/;
+	$Minutes =~ s/^\d+:(\d+)$/$1/;
+	
+	# If $Is_Tomorrow is true we need to do some special processing
+	if ($Is_Tomorrow) {
+		IntWarn("IS_TOMORROW is true, but this is not yet supported, this warning is probably harmless");
+		return(undef);
+	} else {
+		# If PreNot_Hours is true then we work on hours (easiest:)
+		if($PreNot_Hours) {
+			$Hours = $Hours - $PreNot_Hours;
+			unless($Hours =~ /^0/) {
+				$Hours = "0$Hours" unless $Hours >= 10;
+			}
+			if ($Hours > 0) {
+				return("$Hours:$Minutes");
+			} else {
+				return(undef);
+			}
+		} else {	# If it isn't then we work on minutes, this is harder
+			IntWarn("We're working on minutes, this is not yet supported so this event will NOT produce an early warning.");
+			return(undef);
+		}
+	}
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE DAEMON FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -235,13 +320,20 @@ sub DayplannerAlarm () {
 	$currsec = "0$currsec" unless $currsec >= 10;
 	$curryear += 1900;
 	$currmonth++;
-	if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"})) {
-			RunNotifier($CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{summary},
-				$CalendarContents{$curryear}{$currmonth}{$currmday}{"$currhour:$currmin"}{fulltext},
+	if(defined($NotificationHash{"$currhour:$currmin"})) {
+		unless(defined($NotificationHash{"$currhour:$currmin"}{PreNotification})) {
+			RunNotifier($NotificationHash{"$currhour:$currmin"}{summary},
+				$NotificationHash{"$currhour:$currmin"}{fulltext},
 				'today',
 				"$currhour:$currmin");
+		} else {
+			RunNotifier($NotificationHash{"$currhour:$currmin"}{summary},
+				$NotificationHash{"$currhour:$currmin"}{fulltext},
+				'today',
+				$NotificationHash{"$currhour:$currmin"}{PreNotification});
+		}
 	} else {
-		IntDebug("Undefined CalendarContent - BUG! \$CalendarContents{$curryear}{$currmonth}{$currmday}{$currhour:$currmin}");
+		IntDebug("Undefined NotificationHash - BUG! \$NotificationHash{$currhour:$currmin} - use the commander and run: DEBUG ENABLE_DEBUGLOG and then DEBUG DUMP_HASHES to get a sensible output for use by a programmer");
 	}
 }
 
@@ -381,6 +473,23 @@ sub CommandHandler ($) {
 			$OutputVerbose = 1;
 			IntDebug("Enabled debugging logging as requested by $PID");
 			return("SUCCESS - writing debugging information to $PATH");
+		} elsif (/^RECALCULATE/) {
+			CalculateNotificationHash();
+			return("done");
+		} elsif (/^(DUMP_HASHES|DUMP_MAINHASH)/) {
+			# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
+			$Data::Dumper::Purity = 1;
+			# Sort the keys
+			$Data::Dumper::Sortkeys = 1;
+			# Set the indentation
+			$Data::Dumper::Indent = 1;
+			print Data::Dumper->Dump([\%NotificationHash], ["*NotificationHash"]);
+			if (/^DUMP_HASHES/) {
+				print Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
+				print Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayContents"]);
+				print Data::Dumper->Dump([\%SpecialEvents], ["*SpecialEvents"]);
+			}
+			return("dumped");
 		} else {
 			IntDebug("Invalid debug command: \"$_\" from $PID");
 			return("ERR INVALID_COMMAND");
@@ -461,15 +570,12 @@ sub MainLoop () {
 			} 
 			# Handle isn't $server, it's an existing connection trying to tlel us something
 			else {
-				# What is it trying to tell?
+				# What is it trying to tell us?
 				my $Command = <$Handle>;
 				# If it is defined then it's a command
 				if ($Command) {
 					chomp($Command);
-					#			print "COMMAND: $Command\n";
-					#print $Handle "okay\n";
 					my ($Reply) = CommandHandler($Command);
-					#print $Handle CommandHandler($Command),"\n";
 					print $Handle "$Reply\n";
 				} 
 				# If it isn't, then it closed the connection
@@ -488,6 +594,47 @@ sub MainLoop () {
 			IntVerbose($Shutdown);
 			unlink($DaemonSocket);
 			exit(0);
+		}
+		# Get the current time/date
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		$curryear += 1900; $currmonth++;
+		# Recalculate our notification hash if needed
+		unless($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday") {
+			CalculateNotificationHash();
+		}
+	}
+}
+
+# Purpose: Calculate todays %NotificationHash
+# Usage: CalculateNotificationHash();
+sub CalculateNotificationHash () {
+	%NotificationHash = ();
+	my ($PreNot_Hours, $PreNot_Minutes) = ParseNotifyPre();
+	
+	# Get the current time/date
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	$curryear += 1900; $currmonth++;
+	
+	# Set LastCalculate to the current time/date
+	$LastCalculate = "$curryear-$currmonth-$curryday-$currmday";
+	
+	# First, calculate the %CalendarContents hash
+	if (defined($CalendarContents{$curryear}{$currmonth}{$currmday})) {
+		foreach my $Time (keys(%{$CalendarContents{$curryear}{$currmonth}{$currmday}})) {
+			$NotificationHash{$Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
+			if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext})) {
+				$NotificationHash{$Time}{fulltext} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext};
+			}
+			my $PreNot_Time = GetPreNotTime($Time, $PreNot_Hours, $PreNot_Minutes, 0);
+			if(defined($PreNot_Time)) {
+				# TODO: We need to make sure another event isn't ocurring at the same time (append a digit or something to it?)
+				$NotificationHash{$PreNot_Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
+				if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext})) {
+					$NotificationHash{$PreNot_Time}{fulltext} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext};
+				}
+				$NotificationHash{$PreNot_Time}{PreNotification} = $Time;
+			}
+				
 		}
 	}
 }
