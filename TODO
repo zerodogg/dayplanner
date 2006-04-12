@@ -1,6 +1,11 @@
+$Id$
+
+TODO file for Day Planner
+An up to date version of this file can always be found in the day planner
+subversion repository
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 * Version 0.1
-- Find a nontechnical name for the daemon for the few places the user will need
-  to know about it
 - Tooltips
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
@@ -19,9 +24,11 @@
 	simplify those too technical
 
 * Version 0.3
-- Add export support to the most common formats (max. two)
+- Add export and import of iCalendar files. See http://en.wikipedia.org/wiki/RFC2445_Syntax_Reference
+	for the standard reference
 - Add export-to-html support
 - Add support for migrating a plan install if found on first startup
+	(integrate tools/plan-migration into the main day planner source)
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
