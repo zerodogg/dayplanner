@@ -102,12 +102,8 @@ sub DataLoadTest () {
 	if (-e "$_[0]") {
 		# If it isn't readable then we warn and return
 		unless (-r "$_[0]") {
-			DPIntWarn("Unable to read the calendar at $_[0]: It isn't readable by me");
+			IntWarn("Unable to read the calendar at $_[0]: It isn't readable by me");
 			return(0);
-		}
-		# If it isn't writeable then we just warn (the file can still be loaded)
-		unless (-w "$_[0]") {
-			DPIntWarn("Unable to write the calendar at $_[0]: It isn't writeable by me. Expect trouble!");
 		}
 		return(1);
 	} else {
@@ -181,7 +177,7 @@ sub FindSleepDuration () {
 # CORE HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Output a debugging stuff if needed
+# Purpose: Output a debugging message if needed
 # Usage: IntDebug(MESSAGE);
 sub IntDebug ($) {
 	if ($DebuggingOutput) {
@@ -216,7 +212,7 @@ sub IntOutputMSG ($) {
 }
 
 # Purpose: Print a warning to STDERR with proper output
-# Usage: DPIntWarn("Warning");
+# Usage: IntWarn("Warning");
 sub IntWarn ($) {
 	warn "Warning: $_[0]\n";
 }
@@ -224,9 +220,13 @@ sub IntWarn ($) {
 # Purpose: Parse the configuration option set in Events_NotifyPre
 # Usage: my ($Hours, $Minutes) = ParseNotifyPre();
 sub ParseNotifyPre () {
-	my $Events_NotifyPre = '2hrs';
+	my $Events_NotifyPre = '20min';
 	# First, verify that the configuration option is even valid
 	# NOTE: If this test is changed HERE it must be changed in dayplanner (client) aswell
+	# TODO: Move this to a more sane place. Perhaps have a ReadConfig() sub that reads the
+	#  day planner config and sets Events_NotifyPre. Perhaps Events_NotifyPre needs a setting
+	#  subroutine? SetEventsNotifyPre("VALUE"); that verifies and such before doing so.
+	#  By doing that the clients could just send a command to the daemon (SET Events_NotifyPre VALUE)
 	unless ($Events_NotifyPre =~ /^(\d+(min|hrs?){1}|0){1}$/) {
 		IntWarn("The Events_NotifyPre configuration option is set to an invalid value ($Events_NotifyPre)");
 	}
@@ -283,9 +283,19 @@ sub GetPreNotTime ($$$$) {
 	
 	# If $Is_Tomorrow is true we need to do some special processing
 	if ($Is_Tomorrow) {
+		# FIXME: Stub
 		IntWarn("IS_TOMORROW is true, but this is not yet supported, this warning is probably harmless");
 		return(undef);
 	} else {
+		# Get the current time/date
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		$curryear += 1900; $currmonth++;
+
+		# Don't do the calculation if the event has already occurred
+		if($Hours <= $currhour and $Minutes <= $currmin) {
+			return(undef);
+		}
+		
 		# If PreNot_Hours is true then we work on hours (easiest:)
 		if($PreNot_Hours) {
 			$Hours = $Hours - $PreNot_Hours;
@@ -298,8 +308,25 @@ sub GetPreNotTime ($$$$) {
 				return(undef);
 			}
 		} else {	# If it isn't then we work on minutes, this is harder
-			IntWarn("We're working on minutes, this is not yet supported so this event will NOT produce an early warning.");
-			return(undef);
+			if ($Minutes > $PreNot_Minutes) {
+				# Yay, okay, we can do it the easy way :D
+				$Minutes = $Minutes - $PreNot_Minutes;
+				unless($Minutes =~ /^0/) {
+					$Minutes = "0$Minutes" unless $Minutes >= 10;
+				}
+				return("$Hours:$Minutes");
+			} elsif ($Minutes == $PreNot_Minutes) {
+				# Even easier :)
+				return("$Hours:00");
+			} else {
+				if($Hours =~ /^00?$/) {
+					return(undef);
+				}
+				$Hours = $Hours - 1;
+				$Minutes = $Minutes + 60;
+				$Minutes = $Minutes - $PreNot_Minutes;
+				return("$Hours:$Minutes");
+			}
 		}
 	}
 }
