@@ -95,7 +95,8 @@ my (
 # Configuration options
 my (
 	$EditorVerboseDefault,	$ToolbarStyle,
-	$Events_NotifyPre,	$Events_NotifyDay
+	$Events_NotifyPre,	$Events_NotifyDay,
+	$Events_DayNotify
 );
 
 
@@ -258,33 +259,44 @@ sub WriteConfig ($$) {
 		return(0);
 	};
 	# Verify the options first
-	unless(defined($ToolbarStyle)) {
+	unless(defined($ToolbarStyle) and length($ToolbarStyle)) {
 		$ToolbarStyle = 'both';
 	}
-	unless(defined($EditorVerboseDefault)) {
+	unless(defined($EditorVerboseDefault) and length($EditorVerboseDefault)) {
 		$EditorVerboseDefault = 0;
 	}
-	unless(defined($Events_NotifyPre)) {
-		$Events_NotifyPre = '3';
+	unless(defined($Events_NotifyPre) and length($Events_NotifyPre)) {
+		$Events_NotifyPre = "30min";
+	}
+	unless(defined($Events_DayNotify) and length($Events_DayNotify)) {
+		$Events_DayNotify = 0;
 	}
 	# Print the config
 	print CONFIG "# Day planner version $Version configuration file\n\n";
-	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n# both = both icons and text\n# text = only text\n# icons = only icons\n";
+	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n#  both = both icons and text\n#  text = only text\n#  icons = only icons\n#  hidden = hide the toolbar\n";
 	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
-	print CONFIG "# If the EventEditor should expand the \"details\" by default\n# 1 = expand\n# 0 = don't expand\n";
-	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n\n";
-	print CONFIG "# If day planner should notify about an event ahead of time.\n# 0 = Don't notify\n";
-	print CONFIG "# 1 = Notify 10 minutes ahead of time\n";
-	print CONFIG "# 2 = Notify 20 minutes ahead of time\n";
-	print CONFIG "# 3 = Notify 30 minutes ahead of time\n";
-	print CONFIG "# 4 = Notify 45 minutes ahead of time\n";
-	print CONFIG "# 5 = Notify 1 hour ahead of time\n";
-	print CONFIG "# 6 = Notify 2 hours ahead of time\n";
-	print CONFIG "# 7 = Notify 4 hours ahead of time\n";
-	print CONFIG "# 8 = Notify 6 hours ahead of time\n";
+	print CONFIG "# If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand\n";
+	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
+	print CONFIG "\n# - - -\n";
+	print CONFIG "\n# If day planner should notify about an event ahead of time.\n#  0 = Don't notify\n";
+	print CONFIG "#  10min = Notify 10 minutes ahead of time\n";
+	print CONFIG "#  20min = Notify 20 minutes ahead of time\n";
+	print CONFIG "#  30min = Notify 30 minutes ahead of time\n";
+	print CONFIG "#  45min = Notify 45 minutes ahead of time\n";
+	print CONFIG "#  1hr  = Notify 1 hour ahead of time\n";
+	print CONFIG "#  2hrs = Notify 2 hours ahead of time\n";
+	print CONFIG "#  4hrs = Notify 4 hours ahead of time\n";
+	print CONFIG "#  6hrs = Notify 6 hours ahead of time\n";
 	print CONFIG "Events_NotifyPre=$Events_NotifyPre\n";
+	print CONFIG "\n# If day planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance\n";
+	print CONFIG "Events_DayNotify=$Events_DayNotify\n";
 	# Close the config file
 	close(CONFIG);
+	# Tell the daemon to reload the config file
+	unless(Daemon_DataSegment("RELOAD_CONFIG") eq "done\n") {
+		# TODO: GUI dialog?
+		DPIntWarn("Failed to tell the daemon to reload its configuration file. This might cause problems");
+	}
 }
 
 # Purpose: Load the configuration file
@@ -314,18 +326,24 @@ sub LoadConfig ($$) {
 		my $Value = $_;
 		$Option =~ s/^\s*(.*)\s*=.*/$1/;
 		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		unless(defined($Value) and length($Value)) {
+			DPIntWarn("Configuration setting \"$Option\" has an empty value");
+		}
 		# TODO: Perhaps these should be verified here?
 		if ($Option eq 'ToolbarStyle') {
 			$ToolbarStyle = $Value;
 		} elsif ($Option eq 'EditorVerboseDefault') {
 			$EditorVerboseDefault = $Value;
 		} elsif ($Option eq 'Events_NotifyPre') {
-			unless($Value =~ /^(0|1|2|3|4|5|6|7|8|9)$/) {
-				DPIntWarn("Invalid Events_NotifyPre setting: \"$Value\", setting to default 3");
-				$Events_NotifyPre = '3';
+			# NOTE: If this test is changed HERE it must be changed in dayplanner-daemon aswell
+			unless ($Value =~ /^(\d+(min|hrs?){1}|0){1}$/) {
+				DPIntWarn("Invalid value for $Option: \"$Value\" - setting to default \"30min\"");
+				$Events_NotifyPre = '30min';
 			} else {
 				$Events_NotifyPre = $Value;
 			}
+		} elsif ($Option eq 'Events_DayNotify') {
+			$Events_DayNotify = $Value;
 		} else {
 			DPIntWarn("Unrecognized configuration setting \"$Option\", ignoring");
 		}
