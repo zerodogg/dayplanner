@@ -246,15 +246,13 @@ sub NonGUINotifier () {
 GetOptions (
 	'help|h' => sub {
 		print "Day planner notifier version $Version\n";
-		print "This program is for use by the dayplanner daemon, you can try running\n";
-		print "it manually - but it won't do you much good :)\n\n";
-		# TODO help
+		print "This program is for use by the dayplanner daemon.\n\n";
 		PrintHelp("-h","--help","Display this help screen");
-		PrintHelp("-s","--socket","Select the socket");
+		PrintHelp("-s","--socket","Select the daemon socket");
 		PrintHelp("-m", "--message", "Set the message");
 		PrintHelp("-f", "--fulltext", "Set the \"fulltext\" entry (details)");
 		PrintHelp("-t", "--time", "Set the time (HH:MM)");
-		PrintHelp("-d", "--date", "Set the date");
+		PrintHelp("-d", "--date", "Set the date (a date string, \"today\" or \"tomorrow\")");
 		exit(0);
 	},
 	'socket|s=s' => \$SocketName,
