@@ -49,11 +49,11 @@ my $DaemonSocket;					# The variable to connect to
 
 # If for some obscure reason HOME isn't set we can't continue
 unless(defined($ENV{HOME}) and $ENV{HOME}) {
-	die gettext(sprintf("The environment variable %s isn't set! Unable to continue\n", "HOME"));
+	die gettext(sprintf("The environment variable %s is not set! Unable to continue\n", "HOME"));
 }
 # The same goes for if HOME doesn't exist or isn't a directory
 unless(-e $ENV{HOME} and -d $ENV{HOME}) {
-	die gettext(sprintf("Your home directory (%s) doesn't exist! Please verify the setting in the environment variable %s. Unable to continue\n", $ENV{HOME}, "HOME"));
+	die gettext(sprintf("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n", $ENV{HOME}, "HOME"));
 }
 
 # Arrays
@@ -222,7 +222,7 @@ sub DaemonConnectionErrorHandler () {
 						'destroy-with-parent',
 						'error',
 						'none',
-						 gettext("There seems to be another day planner already running. You should close the other instance of day planner before you start a new one.\n\nIf you are sure that you want to start a new one, press force. Note however that this may lead to loss of data."));
+						 gettext("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
 
 	$ErrorDialog->add_buttons(
 		'Force' => 'reject',
@@ -236,7 +236,7 @@ sub DaemonConnectionErrorHandler () {
 	} else {
 		$ErrorDialog->destroy;
 		unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-				DPError(gettext("I was unable to force the start. This is due to a bug in the program, please contact the day planner developers."));
+				DPError(gettext("I was unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
 				exit(1);
 			}
 	}
@@ -255,7 +255,7 @@ sub WriteConfig ($$) {
 	# Open the config
 	open(CONFIG, ">$Dir/$File") or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPError(gettext(sprintf("Unable to write the configuration settings to %s: %s", "$Dir/$File", $!)));
+		DPError(gettext(sprintf("Unable to save the configuration settings to %s: %s", "$Dir/$File", $!)));
 		return(0);
 	};
 	# Verify the options first
@@ -368,7 +368,7 @@ sub SaveDefaultConfig () {
 sub CreateSaveDir () {
 	unless (-e $SaveToDir) {
 		mkdir($SaveToDir) or do {
-				DPError(gettext(sprintf("Couldn't create the directory %s: %s\nYou should create this directory manually before closing this dialog", $SaveToDir, $!)));
+				DPError(gettext(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
 			}
 	}
 }
@@ -425,16 +425,16 @@ sub SaveDatafile ($$$$) {
 		$ProgressWin->hide();
 		# If $FallbackDirectory is true then display the error and try to open the fallback
 		if ($FallbackDirectory) {
-			DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting it to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
+			DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
 			$FallbackFailed = 0;
 			open(SAVEFILE, ">$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
 		} 
 		# If FallbackDirectory failed or we didn't find one - output to STDOUT
 		if ($FallbackFailed) {
 			if ($FallbackDirectory) {	# If $FallbackDirectory was attempted but failed then display this
-				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting it to %s instead"), "$FallbackDirectory/$_[1]", $Error, "STDOUT"));
+				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$FallbackDirectory/$_[1]", $Error, "STDOUT"));
 			} else {			# If $FallbackDirectory wasn't possible, display this
-				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting it to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
+				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
 			}
 			print STDOUT Dumper(\%CalendarContents);
 			# By returning 0 we tell the caller that something went very wrong and that we
@@ -464,7 +464,6 @@ sub SaveDatafile ($$$$) {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData () {
-	# TODO: Return SAVE_FAILED when saving fails and DAEMON_RELOAD_FAILURE when the daemon reload fails?
 	my $Return = 'OKAY';
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
 		$Return	= 'SAVE_FAILED';
@@ -477,7 +476,7 @@ sub SaveMainData () {
 	}
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
-		DPWarning(gettext("<b><big>I encountered an error while saving the day planner data files</big></b>.\n\nThere seems to be another day planner running. This may lead to data loss.\n\nAs long as you leave this day planner open your data is safe, however if you close this day planner before the other one is closed you will loose all your changes from this one."));
+		DPWarning(gettext("<b><big>Day planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of day planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
 		if ($Return eq 'OKAY') {
 			$Return = 'DAEMON_RELOAD_FAILURE';
 		}
@@ -1294,7 +1293,7 @@ sub NormalEvent_OK ($$$$$$$) {
 	if ($IsEditing) {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
 			unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
-				DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+				DPError(gettext(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 		}
@@ -1305,7 +1304,7 @@ sub NormalEvent_OK ($$$$$$$) {
 			}
 	}
 	unless ($Summary) {
-		DPError(gettext("You need to enter a summary first"));
+		DPError(gettext("There is no summary for this event. Please enter a summary."));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
@@ -1348,18 +1347,18 @@ sub BirthdayEvent_OK ($$$$) {
 	if ($IsEditing) {
 		if (defined($BirthdayContents{$EventMonth}{$EventDay}{$Summary})) {
 			unless ($EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Summary eq $OldEventSummary) {
-				DPError(gettext(sprintf("You have already added the birthday of someone named \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
+				DPError(gettext(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 		}
 	} else {
 		if (defined($BirthdayContents{$EventMonth}{$EventDay}{$Summary})) {
-			DPError(gettext(sprintf("You have already added the birthday of someone named \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
+			DPError(gettext(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
 			$Error = 1;
 		}
 	}
 	unless ($Summary) {
-		DPError(gettext("You need to enter a name first"));
+		DPError(gettext("A name is required to add a birthday"));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
@@ -1411,27 +1410,27 @@ sub AboutBox () {
 	$MainWindow->set_sensitive(1);
 }
 
-# Purpose: Draw the configuration window and allow the user to set different
+# Purpose: Draw the preferences window and allow the user to set different
 #  configuration options
-# Usage: ConfigWindow();
-sub ConfigWindow () {
-	my $ConfigWindow = Gtk2::Window->new();
-	$ConfigWindow->set_modal(1);
-	$ConfigWindow->set_title(gettext("Preferences"));
-	$ConfigWindow->set_resizable(0);
-	$ConfigWindow->set_border_width(12);
-	$ConfigWindow->set_skip_taskbar_hint(1);
-	$ConfigWindow->set_skip_pager_hint(1);
+# Usage: PreferencesWindow();
+sub PreferencesWindow () {
+	my $PreferencesWindow = Gtk2::Window->new();
+	$PreferencesWindow->set_modal(1);
+	$PreferencesWindow->set_title(gettext("Preferences"));
+	$PreferencesWindow->set_resizable(0);
+	$PreferencesWindow->set_border_width(12);
+	$PreferencesWindow->set_skip_taskbar_hint(1);
+	$PreferencesWindow->set_skip_pager_hint(1);
 
 	# Handle closing
-	$ConfigWindow->signal_connect("destroy" => sub { 
+	$PreferencesWindow->signal_connect("destroy" => sub { 
 			SaveDefaultConfig();
 			});
 	
 	# Creat the vbox
 	my $Config_VBox = Gtk2::VBox->new();
 	$Config_VBox->show();
-	$ConfigWindow->add($Config_VBox);
+	$PreferencesWindow->add($Config_VBox);
 	
 	# ==================================================================
 	# GENERAL
@@ -1524,6 +1523,35 @@ sub ConfigWindow () {
 	# EVENTS
 	# ==================================================================
 	
+	# A simple hash we use to parse back and forth between the PreNotification
+	# combo box and the config option itself
+	my %PreNotificationParser = (
+		0 => '10mins',
+		1 => '20mins',
+		2 => '30mins',
+		3 => '45mins',
+		4 => '1hr',
+		5 => '2hrs',
+		6 => '4hrs',
+		7 => '6hrs',
+		
+		'10mins' => 0,
+		'20mins' => 1,
+		'30mins' => 2,
+		'45mins' => 3,
+		'1hr' => 4,
+		'1hrs' => 4,
+		'2hr' => 5,
+		'2hrs' => 5,
+		'4hr' => 6,
+		'4hrs' => 6,
+		'6hr' => 7,
+		'6hrs' => 7,
+
+		'default' => 3,
+		'readable_default' => '45mins',
+	);
+	
 	# TODO: Settings set here are not taken into account (not saved)
 	
 	# Create the vbox
@@ -1539,34 +1567,43 @@ sub ConfigWindow () {
 	$Events_Label->show();
 	
 	# The main checkbox that enables/disables the entire page
-	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(gettext("Pop up a window to notify me about events"));
+	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(gettext("Use notifications before events"));
 	$Events_EnabledCheckbox->show();
 	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
 
-	
-	# Notification time selector (TODO: horrible comment)
+	# The widgets that selects when the user wants to be notified
 	# The HBox
 	my $TimeSel_HBox = Gtk2::HBox->new();
 	$Events_VBox->pack_start($TimeSel_HBox,0,0,0);
 	$TimeSel_HBox->show();
 	# The label
-	my $TimeSel_Label = Gtk2::Label->new(gettext('How long before the event do you want to be notified?'));
+	my $TimeSel_Label = Gtk2::Label->new(gettext('Time before the event to display the notification') . ': ');
 	$TimeSel_Label->show();
 	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
 	# The combo box
 	my $TimeSel_Combo = Gtk2::ComboBox->new_text();
-	$TimeSel_Combo->insert_text(1, gettext(sprintf("%s minutes","10")));
-	$TimeSel_Combo->insert_text(2, gettext(sprintf("%s minutes","20")));
-	$TimeSel_Combo->insert_text(3, gettext(sprintf("%s minutes","30")));
-	$TimeSel_Combo->insert_text(4, gettext(sprintf("%s minutes","45")));
-	$TimeSel_Combo->insert_text(5, gettext(sprintf("%s hour","1")));
-	$TimeSel_Combo->insert_text(6, gettext(sprintf("%s hours","2")));
-	$TimeSel_Combo->insert_text(7, gettext(sprintf("%s hours","4")));
-	$TimeSel_Combo->insert_text(8, gettext(sprintf("%s hours","6")));
-	# TODO: This needs to be done properly by reading the config option
-	$TimeSel_Combo->set_active(3);
+	$TimeSel_Combo->insert_text(0, gettext(sprintf("%s minutes","10")));
+	$TimeSel_Combo->insert_text(1, gettext(sprintf("%s minutes","20")));
+	$TimeSel_Combo->insert_text(2, gettext(sprintf("%s minutes","30")));
+	$TimeSel_Combo->insert_text(3, gettext(sprintf("%s minutes","45")));
+	$TimeSel_Combo->insert_text(4, gettext(sprintf("%s hour","1")));
+	$TimeSel_Combo->insert_text(5, gettext(sprintf("%s hours","2")));
+	$TimeSel_Combo->insert_text(6, gettext(sprintf("%s hours","4")));
+	$TimeSel_Combo->insert_text(7, gettext(sprintf("%s hours","6")));
+	# Set the value
+	if($Events_NotifyPre eq "0") {
+		$TimeSel_Combo->set_active(3);
+	} elsif (defined($PreNotificationParser{$Events_NotifyPre})) {
+		$TimeSel_Combo->set_active($PreNotificationParser{$Events_NotifyPre});
+	} else {
+		$TimeSel_Combo->set_active($PreNotificationParser{'default'});
+	}
 	$TimeSel_Combo->show();
 	$TimeSel_HBox->pack_start($TimeSel_Combo,0,0,0);
+	# Register the changed signal
+	$TimeSel_Combo->signal_connect('changed' => sub {
+				$Events_NotifyPre = $PreNotificationParser{$TimeSel_Combo->get_active};
+			});
 	
 	# If the user wants to be notified in advance
 	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label(gettext("Warn me one day in advance"));
@@ -1579,16 +1616,21 @@ sub ConfigWindow () {
 				$TimeSel_Combo->set_sensitive(1);
 				$TimeSel_Label->set_sensitive(1);
 				$NotifyAdvance_CheckBox->set_sensitive(1);
+				$Events_NotifyPre = $PreNotificationParser{$TimeSel_Combo->get_active};
 			} else {
 				$TimeSel_Combo->set_sensitive(0);
 				$TimeSel_Label->set_sensitive(0);
 				$NotifyAdvance_CheckBox->set_sensitive(0);
+				$Events_NotifyPre = 0;
 			}
 		});
 	if($Events_NotifyPre) {
 		$Events_EnabledCheckbox->set_active(1);
 	} else {
 		$Events_EnabledCheckbox->set_active(0);
+		$TimeSel_Combo->set_sensitive(0);
+		$TimeSel_Label->set_sensitive(0);
+		$NotifyAdvance_CheckBox->set_sensitive(0);
 	}
 	
 	# ==================================================================
@@ -1601,13 +1643,13 @@ sub ConfigWindow () {
 
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
 	$CloseButton->signal_connect("clicked" => sub { 
-			$ConfigWindow->destroy;
+			$PreferencesWindow->destroy;
 		});
 	$CloseButton->show();
 	$ButtonHBox->pack_end($CloseButton,0,0,0);
 
 	# Show the config window
-	$ConfigWindow->show();
+	$PreferencesWindow->show();
 }
 
 # MAIN WINDOW
@@ -1694,7 +1736,7 @@ sub DrawMainWindow () {
 		[ "/" . gettext("_Calendar") . "/" . gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/" . gettext("_Calendar") . "/" . gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/" . gettext("_Calendar") . "/sep1",					undef,			undef,			4,	"<Separator>"],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Preferences"),		undef,			\&ConfigWindow,		5, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/" . gettext("_Calendar") . "/" . gettext("_Preferences"),		undef,			\&PreferencesWindow,		5, 	'<StockItem>', 'gtk-preferences' ],
 		[ "/" . gettext("_Calendar") . "/sep2",					undef,			undef,			6,	'<Separator>'],
 		[ "/" . gettext("_Calendar") . "/" . gettext("_Quit"),		"<control>Q",		\&QuitSub,		0,	"<StockItem>",	'gtk-quit'],
 		# Help menu
