@@ -145,7 +145,6 @@ sub GtkNotifier () {
 		# This is important, so set the urgency hint and keep it above all other windows
 		# and on all desktops
 		$NotifyDialog->set_keep_above(1);
-		$NotifyDialog->set_urgency_hint(1);
 		$NotifyDialog->stick;
 		$NotifyDialog->set_title("Day Planner event");
 		
