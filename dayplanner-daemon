@@ -81,16 +81,18 @@ sub LoadConfig () {
 	%Config = ();
 	
 	# First, set some fallback defaults
-	$Config{Events_NotifyPre} = '30min';
+	$Config{Events_NotifyPre} = '45min';
 	$Config{Events_DayNotify} = '0';
 	
-	if(-e $ConfigFile and open(CONFIG, "<$ConfigFile")) {
+	if(-e "$DayplannerDir/$ConfigFile" and open(CONFIG, "<$DayplannerDir/$ConfigFile")) {
 		foreach(<CONFIG>) {
 			next if m/^\s*#/;
 			next unless m/=/;
 			chomp;
 			my $Option = $_;
 			my $Value = $_;
+			$Option =~ s/^\s*(.*)\s*=.*/$1/;
+			$Value =~ s/^.*=\s*(.*)\s*/$1/;
 			unless(defined($Value) and length($Value)) {
 				next;
 			}
@@ -104,8 +106,19 @@ sub LoadConfig () {
 				$Config{Events_DayNotify} = $Value;
 			}
 		}
+	} else {
+		IntVerbose("Unable to load configuration file: $DayplannerDir/$ConfigFile: $!\n");
 	}
-	($Config{N_Minutes}, $Config{N_Hours}) = ParseNotifyPre($Config{Events_NotifyPre});
+	($Config{N_Hours}, $Config{N_Minutes}) = ParseNotifyPre($Config{Events_NotifyPre});
+}
+
+# Purpose: Append a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = AppendZero(NUMBER);
+sub AppendZero ($) {
+	if ($_[0] =~ /^\d$/) {
+		return("0$_[0]");
+	}
+	return($_[0]);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -158,6 +171,7 @@ sub FindSleepDuration () {
 	
 	# Push the keys onto the @Keys array
 	foreach(keys(%NotificationHash)) {
+		s/^(prenot|tomorrow)_//;
 		push(@Keys, $_);
 	}
 	my ($hours, $minutes);
@@ -166,7 +180,7 @@ sub FindSleepDuration () {
 		@Keys = sort(@Keys);
 		foreach (@Keys) {
 			my ($testhours, $testminutes) = split(/:/, $_);
-			# Uh, FIXME?
+			# Remove leading zeros from the variables
 			$testhours =~ s/^0(.*)/$1/;
 			$testminutes =~ s/^0(.*)/$1/;
 			# TODO: This might need to become a bit more robust
@@ -255,15 +269,6 @@ sub IntWarn ($) {
 # Usage: my ($Hours, $Minutes) = ParseNotifyPre($Events_NotifyPre);
 sub ParseNotifyPre ($) {
 	my $Events_NotifyPre = $_[0];
-	# First, verify that the configuration option is even valid
-	# NOTE: If this test is changed HERE it must be changed in dayplanner (client) aswell
-	# TODO: Move this to a more sane place. Perhaps have a ReadConfig() sub that reads the
-	#  day planner config and sets Events_NotifyPre. Perhaps Events_NotifyPre needs a setting
-	#  subroutine? SetEventsNotifyPre("VALUE"); that verifies and such before doing so.
-	#  By doing that the clients could just send a command to the daemon (SET Events_NotifyPre VALUE)
-	#unless ($Events_NotifyPre =~ /^(\d+(min|hrs?){1}|0){1}$/) {
-	#	IntWarn("The Events_NotifyPre configuration option is set to an invalid value ($Events_NotifyPre)");
-	#}
 
 	my $Number = $Events_NotifyPre;
 	my $Type = $Events_NotifyPre;
@@ -303,7 +308,7 @@ sub GetPreNotTime ($$$$) {
 	my $PreNot_Minutes = $_[2];
 
 	my $Is_Tomorrow = $_[3];
-		
+	
 	# If they're both zero then we just return undef and don't think about it any more
 	if($PreNot_Hours <= 0 and $PreNot_Minutes <= 0) {
 		return(undef);
@@ -317,9 +322,39 @@ sub GetPreNotTime ($$$$) {
 	
 	# If $Is_Tomorrow is true we need to do some special processing
 	if ($Is_Tomorrow) {
-		# FIXME: Stub
-		IntWarn("IS_TOMORROW is true, but this is not yet supported, this warning is probably harmless");
-		return(undef);
+		# If PreNot_Hours is true then we work on hours (easiest:)
+		if($PreNot_Hours) {
+			my $TestHours = $Hours - $PreNot_Hours;
+			if ($TestHours > 0) {
+				return(undef);
+			} else {
+				my $Today_Hours = $PreNot_Hours - $Hours;
+				my $New_Hours = 24 - $Today_Hours;
+				$New_Hours = AppendZero($New_Hours);
+				return("$New_Hours:$Minutes");
+			}
+		} else {	# If it isn't then we work on minutes, this is harder
+			return(undef);
+			if ($Minutes > $PreNot_Minutes) {
+				# Yay, okay, we can do it the easy way :D
+				$Minutes = $Minutes - $PreNot_Minutes;
+				$Minutes = AppendZero($Minutes);
+				return("$Hours:$Minutes");
+			} elsif ($Minutes == $PreNot_Minutes) {
+				# Even easier :)
+				return("$Hours:00");
+			} else {
+				if($Hours =~ /^00?$/) {
+					return(undef);
+				}
+				$Hours = $Hours - 1;
+				$Minutes = $Minutes + 60;
+				$Minutes = $Minutes - $PreNot_Minutes;
+				$Minutes = AppendZero($Minutes);
+				$Hours = AppendZero($Hours);
+				return("$Hours:$Minutes");
+			}
+		}
 	} else {
 		# Get the current time/date
 		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
@@ -333,9 +368,7 @@ sub GetPreNotTime ($$$$) {
 		# If PreNot_Hours is true then we work on hours (easiest:)
 		if($PreNot_Hours) {
 			$Hours = $Hours - $PreNot_Hours;
-			unless($Hours =~ /^0/) {
-				$Hours = "0$Hours" unless $Hours >= 10;
-			}
+			$Hours = AppendZero($Hours);
 			if ($Hours > 0) {
 				return("$Hours:$Minutes");
 			} else {
@@ -345,9 +378,7 @@ sub GetPreNotTime ($$$$) {
 			if ($Minutes > $PreNot_Minutes) {
 				# Yay, okay, we can do it the easy way :D
 				$Minutes = $Minutes - $PreNot_Minutes;
-				unless($Minutes =~ /^0/) {
-					$Minutes = "0$Minutes" unless $Minutes >= 10;
-				}
+				$Minutes = AppendZero($Minutes);
 				return("$Hours:$Minutes");
 			} elsif ($Minutes == $PreNot_Minutes) {
 				# Even easier :)
@@ -359,6 +390,8 @@ sub GetPreNotTime ($$$$) {
 				$Hours = $Hours - 1;
 				$Minutes = $Minutes + 60;
 				$Minutes = $Minutes - $PreNot_Minutes;
+				$Minutes = AppendZero($Minutes);
+				$Hours = AppendZero($Hours);
 				return("$Hours:$Minutes");
 			}
 		}
@@ -387,14 +420,20 @@ sub DayplannerAlarm () {
 				$NotificationHash{"$currhour:$currmin"}{fulltext},
 				'today',
 				"$currhour:$currmin");
-		} else {
-			RunNotifier($NotificationHash{"$currhour:$currmin"}{summary},
-				$NotificationHash{"$currhour:$currmin"}{fulltext},
-				'today',
-				$NotificationHash{"$currhour:$currmin"}{PreNotification});
-		}
+		} 
+	} elsif(defined($NotificationHash{"prenot_$currhour:$currmin"})) {
+		RunNotifier($NotificationHash{"prenot_$currhour:$currmin"}{summary},
+			$NotificationHash{"prenot_$currhour:$currmin"}{fulltext},
+			'today',
+			$NotificationHash{"prenot_$currhour:$currmin"}{PreNotification});
+
+	} elsif(defined($NotificationHash{"tomorrow_$currhour:$currmin"})) {
+		RunNotifier($NotificationHash{"tomorrow_$currhour:$currmin"}{summary},
+			$NotificationHash{"tomorrow_$currhour:$currmin"}{fulltext},
+			'tomorrow',
+			"$currhour:$currmin");
 	} else {
-		IntDebug("Undefined NotificationHash - BUG! \$NotificationHash{$currhour:$currmin} - use the commander and run: DEBUG ENABLE_DEBUGLOG and then DEBUG DUMP_HASHES to get a sensible output for use by a programmer");
+		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin");
 	}
 }
 
@@ -652,8 +691,6 @@ sub MainLoop () {
 				else {
 					IntDebug("Connection closed");
 					$ConnectionSelect->remove($Handle);
-					# TODO: Is this needed?
-					close($Handle);
 				}
 			}
 		}
@@ -687,7 +724,7 @@ sub CalculateNotificationHash () {
 	# Set LastCalculate to the current time/date
 	$LastCalculate = "$curryear-$currmonth-$curryday-$currmday";
 	
-	# First, calculate the %CalendarContents hash
+	# First, calculate todays part of the %CalendarContents hash
 	if (defined($CalendarContents{$curryear}{$currmonth}{$currmday})) {
 		foreach my $Time (keys(%{$CalendarContents{$curryear}{$currmonth}{$currmday}})) {
 			$NotificationHash{$Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
@@ -695,6 +732,7 @@ sub CalculateNotificationHash () {
 				$NotificationHash{$Time}{fulltext} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext};
 			}
 			my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 0);
+			$PreNot_Time = "prenot_$PreNot_Time";
 			if(defined($PreNot_Time)) {
 				# TODO: We need to make sure another event isn't ocurring at the same time (append a digit or something to it?)
 				$NotificationHash{$PreNot_Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
@@ -706,6 +744,40 @@ sub CalculateNotificationHash () {
 				
 		}
 	}
+	# Now, calculate tomorrows part of the %CalendarContents hash
+	#  this so that in case there's an event tomorrow that has a PerNotTime that would be
+	#  *today* it does pop up. This will probably be rare, but we need to handle it
+	#  none-the-less.
+	my ($tomorrowsec,$tomorrowmin,$tomorrowhour,$tomorrowmday,$tomorrowmonth,$tomorrowyear,$tomorrowwday,$tomorrowyday,$tomorrowisdst) = localtime(time+86400);
+	$tomorrowyear += 1900; $tomorrowmonth++;
+	if (defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday})) {
+		foreach my $Time (keys(%{$CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}})) {
+			my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 1);
+				if(defined($PreNot_Time)) {
+					$PreNot_Time = "prenot_$PreNot_Time";
+					# TODO: We need to make sure another event isn't ocurring at the same time (append a digit or something to it?)
+					$NotificationHash{$PreNot_Time}{summary} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{summary};
+					if(defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext})) {
+						$NotificationHash{$PreNot_Time}{fulltext} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext};
+					}
+					$NotificationHash{$PreNot_Time}{PreNotification} = $Time;
+				}
+		}
+	}
+
+	# Now append tomorrows events if Events_DayNotify is true
+	if($Config{Events_DayNotify} eq '1') {
+		if (defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday})) {
+			foreach my $Time (keys(%{$CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}})) {
+				my $SetTime = "tomorrow_$Time";
+				$NotificationHash{$SetTime}{summary} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{summary};
+				if(defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext})) {
+					$NotificationHash{$SetTime}{fulltext} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext};
+				}
+			}
+		}
+	}
+
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -769,6 +841,6 @@ die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
 
 # Main
 OpenSocket();
-LoadCalendar();
 LoadConfig();
+LoadCalendar();
 MainLoop();
