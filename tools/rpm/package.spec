@@ -1,5 +1,5 @@
 %define	name	dayplanner
-%define	version 0.1
+%define	version [DAYPLANNER_VERSION]
 %define rel	1
 %define	release	%mkrel %rel
 
@@ -13,17 +13,25 @@ Group:		Office
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 License:	GPL
 BuildRequires:	perl
+BuildArch:	noarch
 
 %description
-DESCRIPTION
+Day planner is a simple time management program.
+
+Day planner is designed to help you easily manage your time.
+It can manage appointments, birthdays and more. It makes sure you
+remember your appointments by popping up a dialog box reminding you about it.
 
 %package tools
-Summary: BLAH
-Group: Junk
+Summary: Various tools for use with day planner
+Group: Office
 Requires: dayplanner
 
 %description tools
-DESCRIPTION
+This package contains various tools for use with day planner:
+
+dayplanner-plan-migration: Migrates plan data to day planner data
+dayplanner-commander     : Send raw commands to the day planner daemon
 
 %prep
 %setup -q
