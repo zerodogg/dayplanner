@@ -1,0 +1,80 @@
+#!/bin/bash
+# StartInstaller
+# First part of the day planner installer
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+echo -n "Preparing..."
+
+if [ "$DISPLAY" == "" ]; then
+	echo ""
+	echo "The environment variable DISPLAY isn't set. This means that you don't have X running."
+	echo "Please start x before launching this installer."
+	exit 1
+fi
+
+echo -n "."
+
+if [ ! -e ./xmsg ]; then
+	echo "failed"
+	echo "./xmsg didn't exist. This installer is corrupt"
+	exit 1
+else
+	. ./xmsg
+	xmsg_init
+fi
+
+echo -n "."
+
+if ! type perl &>/dev/null; then
+	xmsg_ok "You don't have perl installed. Please install perl then re-start this installer"
+	exit 1
+fi
+
+echo -n "."
+
+if ! perl -e 'use Gtk2; exit(0);' &>/dev/null; then
+	xmsg_ok "You don't have perl-Gtk2 installed. Please install it then re-start this installer"
+	exit 1
+fi
+
+echo -n "."
+
+if ! perl -e 'use Locale::gettext; exit(0);' &>/dev/null; then
+	xmsg_ok "You don't have the perl module \"Locale::gettext\" installed. Please install it then re-start this installer. (Tip: the package name can be perl-Locale-gettext)"
+	exit 1
+fi
+
+
+echo -n "."
+
+if ! perl -e 'use POSIX; use Data::Dumper; use Getopt::Long; use Cwd; use File::Basename; use IO::Socket; IO::Select; exit(0)' &>/dev/null; then
+	xmsg_ok "You are missing some perl modules. Please make sure you have all of the following perl modules installed: POSIX Data::Dumper Getopt::Long Cwd File::Basename IO::Socket IO::Select"
+	exit 1
+fi
+
+echo -n "."
+
+if ! perl -e 'use Gtk2; Gtk2->init;' &>/dev/null; then
+	echo "I was unable to connect to your X server. Please verify your settings."
+	exit 1
+fi
+
+echo -n "."
+
+echo "done"
+
+echo "Okay, handing control over to the perl installer part"

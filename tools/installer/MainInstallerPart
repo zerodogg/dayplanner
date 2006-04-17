@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+# MainInstallerPart
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use Gtk2;
+
+sub Purge_Gtk2Buf () {
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration();
+	Gtk2->main_iteration while Gtk2->events_pending;
+}
+
+Gtk2->init();
+
+my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into your home directory and put a day planner icon on your desktop. All of this will be done automatically, this is the only dialog box that will require any input from you.\n\nDo you want me to continue?");
+my $Reply = $Dialog->run();
+$Dialog->destroy();
+
+# Flush the display
+Gtk2->main_iteration while Gtk2->events_pending;
+
+my $ProgressWin = Gtk2::Window->new('toplevel');
+$ProgressWin->set_resizable(0);
+$ProgressWin->set_title("Installing...");
+my $PG_Label = Gtk2::Label->new("Installing day planner...");
+$PG_Label->show();
+$ProgressWin->add($PG_Label);
+$ProgressWin->show_all();
+
+Purge_Gtk2Buf();
+
+system("echo WOO; sleep 1s");
+Gtk2->main_iteration while Gtk2->events_pending;
+system("sleep 1s");

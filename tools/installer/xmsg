@@ -1,0 +1,264 @@
+#!/bin/bash
+# (xmsg-src/fsel)
+# Display a file selection box with the directory supplied as the first
+# argument and an optional text. Ex:
+# xmsg_fsel $HOME Select the file
+#
+# Returns 0 and echos a filename on success
+# Returns 1 and echos a lowercase "none" on no file selected
+# Returns 40 when not available
+xmsg_fsel ()
+{
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_FSEL" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	DIR="$1";shift 1;TITLE="$*"
+	if [ "$DIR" == "" ]; then DIR="$PWD";fi
+	if [ "$TITLE" == "" ]; then TITLE="GFSBashLib file selection dialog";fi
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) FILE="`$GFBL_XMSG_PROG --title="$TITLE" --filename="$DIR"/ --file-selection`";;
+		Xdialog ) FILE="`$GFBL_XMSG_PROG --stdout --title "$TITLE" --fselect $DIR 0 0`";;
+		kdialog ) FILE="`$GFBL_XMSG_PROG --title "$TITLE" --name "$TITLE" --caption "$TITLE" --getopenfilename $DIR 2>/dev/null`";;
+	esac
+	if [ "$FILE" == "" ]; then
+		echo "none"
+		return 1
+	fi
+	echo "$FILE"
+	return 0
+}
+# (xmsg-src/dsel)
+# Display a directory selection box with the directory supplied as the first
+# argument and an optional text. Ex:
+# xmsg_dsel $HOME Select the file
+#
+# Returns 0 and echos a filename on success
+# Returns 1 and echos a lowercase "none" on no file selected
+# Returns 40 when not available
+xmsg_dsel ()
+{
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_FSEL" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	DIR="$1";shift 1;TITLE="$*"
+	if [ "$DIR" == "" ]; then DIR="$PWD";fi
+	if [ "$TITLE" == "" ]; then TITLE="GFSBashLib directory selection dialog";fi
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) FILE="`$GFBL_XMSG_PROG --directory --title="$TITLE" --filename="$DIR"/ --file-selection`";;
+		Xdialog ) FILE="`$GFBL_XMSG_PROG --stdout --title "$TITLE" --dselect $DIR 0 0`";;
+		kdialog ) FILE="`$GFBL_XMSG_PROG --title "$TITLE" --name "$TITLE" --caption "$TITLE" --getexistingdirectory $DIR 2>/dev/null`";;
+	esac
+	if [ "$FILE" == "" ]; then
+		echo "none"
+		return 1
+	fi
+	echo "$FILE"
+	return 0
+}
+# (xmsg-src/funcs)
+# The function called when displaying a internal xmsg error
+xmsg_int_error ()
+{
+	echo 1>&2 "*** xmsg ($GFBL_XMSG_VERSION): error: $*"
+	if [ "$GFBL_XMSG_EXIT_ON_ERROR" == "1" ]; then exit 1;fi
+}
+# The function called when displaying a internal xmsg warning
+xmsg_int_warning ()
+{
+	echo 1>&2 "*** xmsg ($GFBL_XMSG_VERSION): warning: $*"
+	if [ "$GFBL_XMSG_EXIT_ON_WARNING" == "1" ]; then exit 1;fi
+}
+# (xmsg-src/init)
+# Initialize xmsg, doesn't take any parameters.
+#
+# Return values:
+# 0  = success
+# 30 = Unable to detect any supported program (xmsg unusable)
+# 31 = No DISPLAY variable set
+xmsg_init ()
+{
+	# This is a simple function that sets which abilities xmsg has
+	xmsg_setfunc ()
+	{
+		# This one can't be selected, if this is run we set it to 1
+		export GFBL_XMSG_AVAIL=1
+
+		export GFBL_XMSG_FSEL="$1"	# File and directory selection
+		export GFBL_XMSG_LESS="$2"	# Display a file on screen
+		export GFBL_XMSG_MENU="$3"	# Graphical menu
+		export GFBL_XMSG_OK="$4"	# Ok dialog
+		export GFBL_XMSG_QUESTION="$5"	# Question dialog
+		export GFBL_XMSG_GETINPUT="$6"	# Input dialog
+	}
+	# First we unset variables that shouldn't be set
+	unset GFBL_XMSG_PROG GFBL_XMSG_AVAIL
+	# Set version variables
+	export GFBL_XMSG_VERSION="0.1"
+
+	# Initial test if we are under X
+	if [ "$DISPLAY" == "" ]; then
+		xmsg_int_error "X is not running, xmsg can not be used in console-only mode"
+		return 31
+	fi
+
+	# Now detect which program to use
+	# Only allow kdialog as primary when we are _in_ KDE.
+	# Using it as default in a non-KDE environment is way too slow
+	# but still a useful fallback.
+	if [[ -n "$KDE_FULL_SESSION" ]]; then
+		local XPROGS="$XMSG_PREFERRED_PROG kdialog zenity Xdialog  gxmessage gmessage xmessage"
+	else
+		local XPROGS="$XMSG_PREFERRED_PROG zenity Xdialog kdialog gxmessage gmessage xmessage"
+	fi
+	for a in $XPROGS; do
+		if type $a &>/dev/null; then
+			export GFBL_XMSG_PROG="$a"
+			break
+		elif [ -x $a ]; then
+			export GFBL_XMSG_PROG="$a"
+			break
+		fi
+	done
+	if [ "$GFBL_XMSG_PROG" == "" ]; then
+		xmsg_int_error "Unable to detect any supported program."
+		export GFBL_XMSG_AVAIL=0
+		return 30
+	fi
+	export GFBL_XMSG_BASEPROG="`basename $GFBL_XMSG_PROG`"
+	# Now we need to know which functionalities we have
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) xmsg_setfunc 1 1 1 1 1 1;;
+		Xdialog ) xmsg_setfunc 1 1 1 1 1 1;;
+		kdialog ) xmsg_setfunc 1 1 1 1 1 1;;
+		gxmessage ) xmsg_setfunc 0 0 0 1 1 1;;
+		gmessage | xmessage ) xmsg_setfunc 0 0 0 1 1;;
+		* ) # Uh oh, we didn't recognise the XMSG_PREFERRED_PROG selected, ignore it and
+		# restart $FUNCNAME with it unset
+		xmsg_int_warning "Could not recognise the program set in XMSG_PREFERRED_PROG ($XMSG_PREFERRED_PROG), ignoring."
+		unset XMSG_PREFERRED_PROG
+		unset XGFBL_XMSG_BASEPROG
+		$FUNCNAME
+		return $?;;
+	esac
+	return 0
+}
+# (xmsg-src/less)
+# Usage: xmsg_less --title [x] [file]
+xmsg_less () {
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_LESS" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	while [ "$#" -gt "0" ]; do
+		case $1 in
+			--title ) local title="$2" ;;
+			* ) break ;;
+		esac
+		shift 2
+	done
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) zenity --height 350 --width 620 --name "$title" --title "$title" --text-info --filename="$@" ;;
+		Xdialog ) Xdialog --no-cancel --ok-label "Close" --title "$title" --textbox "$@" 25 70;;
+		kdialog ) kdialog --title "$title" --name "$title" --caption "$title" --textbox "$@" 620 350 2>/dev/null;;
+	esac
+}
+# (xmsg-src/menu)
+# Usage: xmsg_menu --title [x] --text [text] --menu [menu items]
+# you may also add --menuimg which will be a image displayed on the menu
+# if Xdialog mode is used. You may add --icon which will be a icon used
+# when in zenity mode. You may also add --cols X Y which will be the names
+# of the two coloumns. --nowrap will make xmsg not use the --wrap option
+# for Xdialog.
+# --menu must always be the last option.
+xmsg_menu ()
+{
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_MENU" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	local title="xmsg dialog"
+	local text=" "
+	local zenity=""
+	local Xdialog=""
+	local col1name=" "
+	local col2name=" "
+	local radiobox="0"
+	local XdiaWrap="--wrap"
+	while [ "$#" -gt "0" ]; do
+		case $1 in
+			--text ) local text="$2";shift 1;;
+			--menu ) shift 1;break;;
+			--icon ) local zenity="$zenity --window-icon=$2"; local kdialog="$kdialog --icon $2";shift 1;;
+			--menuimg ) local Xdialog="$Xdialog --icon $2";shift 1;;
+			--cols ) local col1name="$2";local col2name="$3";shift 2;;
+			--title ) local title="$2";shift 1;;
+#			--radio ) local radiobox="0";zenityM="$zenityM --radiolist";;
+			--nowrap ) local XdiaWrap="";;
+			* ) break;;
+		esac
+		shift 1
+	done
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) zenity $zenity --height 350 --width 380 --name "$title" --title "$title" --list "$@" $zenityM --column="$col1name" --column="$col2name" --text "$text";;
+		Xdialog ) Xdialog --stdout $XdiaWrap $Xdialog --title "$title" --menu "$text" 25 55 50 "$@";;
+		kdialog ) kdialog $kdialog --geometry 350x380 --title "$title" --name "$title" --caption "$title" --menu "$text" "$@" 2>/dev/null;;
+	esac
+}
+# (xmsg-src/ok)
+# Display a "ok" box with the text supplied to xmsg_ok, ex:
+# xmsg_ok "Bla bla bla bla"
+#
+# Returns 0 on success
+# Returns 2 when no DISPLAY variable is st
+# Returns 3 on no suitable program detected
+xmsg_ok ()
+{
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_OK" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	MESSAGE="$*"
+	if [ "$MESSAGE" == "" ]; then MESSAGE="Error: No message supplied to $FUNCNAME (GFSBashLib).
+This is a bug in the program you are using,
+please report it to the author.";xmsg_int_warning "$FUNCNAME did not get any message supplied";fi
+	case $GFBL_XMSG_BASEPROG in
+		gxmessage|xmessage|gmessage ) $GFBL_XMSG_PROG "$MESSAGE";;
+		Xdialog ) $GFBL_XMSG_PROG --wrap --msgbox "$MESSAGE" 0 0;;
+		kdialog ) $GFBL_XMSG_PROG --msgbox "$MESSAGE" 0 0 2>/dev/null;;
+		zenity ) $GFBL_XMSG_PROG --info --text "$MESSAGE";;
+	esac
+}
+# (xmsg-src/question)
+# Display a "Ok" and "Cancel" or "Yes" and "No" box with the question supplied
+# Returns 0 on Ok
+# Returns 1 on Cancel
+# Returns 2 when no DISPLAY variable is set
+# Returns 3 on no suitable program detected
+xmsg_question ()
+{
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_QUESTION" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	MESSAGE="$*"
+	if [ "$MESSAGE" == "" ]; then xmsg_ok "Error: No message supplied to $FUNCNAME (GFSBashLib).
+This is a bug in the program you are using,
+please report it to the author.";xmsg_int_warning "$FUNCNAME called without any message supplied";return 1;fi
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) $PROG --question --text="$MESSAGE";RET="$?" ;;
+		Xdialog ) $PROG  --yesno "$MESSAGE" 0 0
+		case $? in
+			1 | 255 ) RET="1" ;;
+			* ) RET="$?";;
+		esac;;
+		xmessage | gmessage | gxmessage ) $PROG -buttons OK:0,Cancel:1 "$MESSAGE";RET="$?";;
+		kdialog ) $PROG --yesno "$MESSAGE";RET="$?";;
+	esac
+	return $RET
+}
+# (xmsg-src/getinput)
+# Usage: xmsg_GetInput --title [x] --text [text]
+# Returns the text string entered
+xmsg_GetInput () {
+	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_GETINPUT" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
+	local text="Please enter the information"
+	local title="XMSG Input box"
+	while [ "$#" -gt "0" ]; do
+		case $1 in
+			--text ) local text="$2"; shift 1;;
+			--title ) local title="$2";shift 1;;
+			* ) break;;
+		esac
+		shift 1
+	done
+	case $GFBL_XMSG_BASEPROG in
+		zenity ) zenity $zenity --width 380 --name "$title" --title "$title" --entry --text "$text";;
+		Xdialog ) Xdialog --stdout --title "$title" --inputbox "$text" 0 55;;
+		kdialog ) kdialog --title "$title" --name "$title" --caption "$title" --inputbox "$text" 2>/dev/null;;
+		gxmessage ) gxmessage -name "$title" -title "$title" -entry "$text";;
+	esac
+}
