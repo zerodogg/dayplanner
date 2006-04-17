@@ -144,6 +144,8 @@ print SPECFILE @RPM_SPECFILE;
 print "done\n";
 close(SPECFILE);
 
+print " NOTE: Remember to add a changelog entry in $OrigDir/tools/rpm/changelog.spec\n";
+
 # Build the RPM package
 print " Building RPM...";
 if(system("rpmbuild -ba $tempdir/dayplanner.spec &> $tempdir/rpmbuild.log")) {
