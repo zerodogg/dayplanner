@@ -334,24 +334,21 @@ sub GetPreNotTime ($$$$) {
 				return("$New_Hours:$Minutes");
 			}
 		} else {	# If it isn't then we work on minutes, this is harder
-			return(undef);
 			if ($Minutes > $PreNot_Minutes) {
-				# Yay, okay, we can do it the easy way :D
-				$Minutes = $Minutes - $PreNot_Minutes;
-				$Minutes = AppendZero($Minutes);
-				return("$Hours:$Minutes");
+				# Nothing to do
+				return(undef);
 			} elsif ($Minutes == $PreNot_Minutes) {
-				# Even easier :)
-				return("$Hours:00");
+				# Nothing to do
+				return(undef);
 			} else {
-				if($Hours =~ /^00?$/) {
+				unless($Hours =~ /^00?$/) {
 					return(undef);
 				}
-				$Hours = $Hours - 1;
+				$Hours = 23;
+				my $New_Minutes = $PreNot_Minutes - $Minutes;
+				$Minutes = 60 - $New_Minutes;
 				$Minutes = $Minutes + 60;
-				$Minutes = $Minutes - $PreNot_Minutes;
 				$Minutes = AppendZero($Minutes);
-				$Hours = AppendZero($Hours);
 				return("$Hours:$Minutes");
 			}
 		}
