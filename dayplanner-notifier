@@ -134,6 +134,8 @@ sub GtkNotifier () {
 		my $MainText;
 		if($Date eq 'today') {
 			$MainText = sprintf("Today at %s:\n%s",$Time,$Message);
+		} elsif ($Date eq 'tomorrow') {
+			$MainText = sprintf("Tomorrow at %s:\n%s",$Time,$Message);
 		} else {
 			$MainText = sprintf("At %s on %s:\n%s",$Time,$Date,$Message);
 		}
