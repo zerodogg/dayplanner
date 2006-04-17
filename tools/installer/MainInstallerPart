@@ -16,13 +16,22 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+# This is a quick "hack" of an installer for Day Planner
+
 use strict;
 use warnings;
 use Gtk2;
 
+my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner/";
+
+print "Perl installer part...\n";
+print "Using install dir: $InstallDirectory\n";
+my $Internal_Version = '$Id$';
+print "Installer version: $Internal_Version\n";
+
 Gtk2->init();
 
-my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into your home directory and put a day planner icon on your desktop. All of this will be done automatically, this is the only dialog box that will require any input from you.\n\nDo you want me to continue?");
+my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically, this is the only dialog box that will require any input from you.\n\nDo you want me to continue?");
 my $Reply = $Dialog->run();
 $Dialog->destroy();
 
@@ -38,4 +47,64 @@ $ProgressWin->add($PG_Label);
 $ProgressWin->show_all();
 Gtk2->main_iteration while Gtk2->events_pending;
 
-system("sleep 1s");
+system("mkdir -p $InstallDirectory");
+Gtk2->main_iteration while Gtk2->events_pending;
+
+system("cp -r ./dayplanner-data/* $InstallDirectory/");
+Gtk2->main_iteration while Gtk2->events_pending;
+
+my @BINDIRS = (
+	"$ENV{HOME}/bin/",
+	"$ENV{HOME}/.bin/",
+	"$ENV{HOME}/.local/bin"
+);
+
+my @BINLINKS;
+
+foreach(@BINDIRS) {
+	symlink("$InstallDirectory/dayplanner", $_);
+	symlink("$InstallDirectory/dayplanner-daemon", $_);
+	symlink("$InstallDirectory/dayplanner-notifier", $_);
+	push(@BINLINKS, $_)
+}
+# Write uninstall script
+open(UNINSTALL, ">$InstallDirectory/uninstall.sh");
+print UNINSTALL "#!/bin/sh\n";
+print UNINSTALL "echo \"Uninstalling...\"\n";
+print UNINSTALL "cd \$HOME\n";
+print UNINSTALL "rm -rf $InstallDirectory\n";
+foreach(@BINLINKS) {
+	print UNINSTALL "rm -f $_/dayplanner $_/dayplanner-daemon $_/dayplanner-notifier\n";
+}
+print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/dayplanner.menu && update-menus\n";
+print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
+print UNINSTALL "echo \"Done, day planner has been uninstalled.\"\n";
+close(UNINSTALL);
+
+# Write desktop item
+if(-d "$ENV{HOME}/Desktop") {
+	open(DESKTOP, ">$InstallDirectory/dayplanner.desktop");
+	print DESKTOP "[Desktop Entry]\n";
+	print DESKTOP "Exec='$InstallDirectory/dayplanner'\n";
+	print DESKTOP "Icon='$InstallDirectory/art/dayplanner_48.png\n'";
+	print DESKTOP "Name='Day planner'\n";
+	print DESKTOP "StartupNotify=true\n";
+	print DESKTOP "Terminal=false\n";
+	print DESKTOP "Type=Application\n";
+	close(DESKTOP);
+}
+# Write menu item
+if(-d "$ENV{HOME}/.menu/") {
+	open(MENU, ">$ENV{HOME}/.menu/dayplanner.menu");
+	print MENU "?package(%{name}):command=\"$InstallDirectory/dayplanner\"  icon=\"$InstallDirectory/art/dayplanner_48.png\"         needs=\"x11\"         section=\"Office/Time Management\"         title=\"Day planner\"         longtitle=\"An easy to use graphical day planner\"\n";
+	close(MENU);
+	system("update-menus &>/dev/null");
+}
+
+$ProgressWin->destroy();
+
+
+my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'question', 'ok', "Okay, I'm done :). You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)");
+$Finished->run();
+$Finished->destroy();
+print "Installer successfully finished!\n";
