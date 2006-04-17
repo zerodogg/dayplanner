@@ -34,6 +34,10 @@ Gtk2->init();
 my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically, this is the only dialog box that will require any input from you.\n\nDo you want me to continue?");
 my $Reply = $Dialog->run();
 $Dialog->destroy();
+unless($Reply eq 'yes') {
+	print "Exiting as requested by user\n";
+	exit(0);
+}
 
 # Flush the display
 Gtk2->main_iteration while Gtk2->events_pending;
@@ -62,9 +66,9 @@ my @BINDIRS = (
 my @BINLINKS;
 
 foreach(@BINDIRS) {
-	symlink("$InstallDirectory/dayplanner", $_);
-	symlink("$InstallDirectory/dayplanner-daemon", $_);
-	symlink("$InstallDirectory/dayplanner-notifier", $_);
+	symlink("$InstallDirectory/dayplanner", "$_/dayplanner");
+	symlink("$InstallDirectory/dayplanner-daemon", "$_/dayplanner-daemon");
+	symlink("$InstallDirectory/dayplanner-notifier", "$_/dayplanner-notifier");
 	push(@BINLINKS, $_)
 }
 # Write uninstall script
@@ -80,6 +84,7 @@ print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/daypl
 print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
 print UNINSTALL "echo \"Done, day planner has been uninstalled.\"\n";
 close(UNINSTALL);
+system("chmod +x $InstallDirectory/uninstall.sh");
 
 # Write desktop item
 if(-d "$ENV{HOME}/Desktop") {
@@ -104,7 +109,7 @@ if(-d "$ENV{HOME}/.menu/") {
 $ProgressWin->destroy();
 
 
-my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'question', 'ok', "Okay, I'm done :). You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)");
+my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "Okay, I'm done :). You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)");
 $Finished->run();
 $Finished->destroy();
 print "Installer successfully finished!\n";
