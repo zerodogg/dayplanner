@@ -39,6 +39,12 @@ fi
 
 echo -n "."
 
+if [ "$HOME" == "" ]; then
+	xmsg_ok "The environment variable HOME is not set. Set this variable to the path to your home directory then re-start this installer."
+fi
+
+echo -n "."
+
 if ! type perl &>/dev/null; then
 	xmsg_ok "You don't have perl installed. Please install perl then re-start this installer"
 	exit 1
@@ -78,3 +84,4 @@ echo -n "."
 echo "done"
 
 echo "Okay, handing control over to the perl installer part"
+perl ./MainInstallerPart
