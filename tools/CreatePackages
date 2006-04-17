@@ -41,6 +41,17 @@ my $tempdir = File::Temp::tempdir(
 	CLEANUP => 1
 );
 print " Created directory $tempdir\n";
+unless(-e "$OrigDir/packages") {
+	mkdir("$OrigDir/packages");
+	print " Created directory $OrigDir/packages\n";
+} else {
+	print " Cleaning $OrigDir/packages/...";
+	foreach(<$OrigDir/packages/*>) {
+		print ".";
+		unlink($_);
+	}
+	print "done\n";
+}
 print " Verifying required components...";
 foreach (qw/tar bzip2 bunzip2 rpm rpmbuild/) {
 	unless (InPath($_)) {
@@ -61,12 +72,15 @@ print "done\n";
 # Clean up the archive
 print " Cleaning up the source directory...";
 system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*.svn*'`");
+print ".";
+system("rm -rf $tempdir/dayplanner-$DPVersion/packages/");
 print "done\n";
 
 print " Packaging...";
 if (system("tar -jcf ./dayplanner-$DPVersion.tar.bz2 ./dayplanner-$DPVersion &> /dev/null")) {
 	die "failed\n";
 }
+system("mv ./dayplanner-$DPVersion.tar.bz2 $OrigDir/packages/");
 print "done\n";
 
 print "Building rpm...\n";
@@ -76,6 +90,12 @@ unless (-e "$OrigDir/tools/rpm/changelog.spec") {
 }
 unless (-e "$OrigDir/tools/rpm/package.spec") {
 	die "failed - $OrigDir/tools/rpm/package.spec does not exist\n";
+}
+unless (-d "$ENV{HOME}/rpm/SOURCES/") {
+	die "failed - $ENV{HOME}/rpm/SOURCES/ does not exist\n";
+}
+unless (-d "$ENV{HOME}/rpm/RPMS/noarch/" and -d "$ENV{HOME}/rpm/SRPMS/") {
+	die("failed - I need/rpm/RPMS/noarch\n");
 }
 print "okay\n";
 print " Preparing specfile...";
@@ -112,9 +132,50 @@ if(system("rpmbuild -ba $tempdir/dayplanner.spec &> $tempdir/rpmbuild.log")) {
 	die "failed\n";
 }
 print "done\n";
+print " Moving files...";
+system("mv $ENV{HOME}/rpm/RPMS/noarch/dayplanner*.rpm $ENV{HOME}/rpm/SRPMS/dayplanner*.rpm $OrigDir/packages/ &>/dev/null");
+print "done\n";
 #print " Verifying RPM files...";
 #my $MkRel = qx/rpm --eval "\%mkrel 1\"/;
 #print "okay\n";
 
-print "Building self-contained installer package...";
+print "Building self-contained installer package...\n";
+print " Preparing...";
+chdir($tempdir);
+print ".";
+mkdir("$tempdir/installer");
+print ".";
+system("mv ./dayplanner-$DPVersion $tempdir/installer/dayplanner-data");
+print ".";
+# Copy the needed files
+foreach(qw/MainInstallerPart StartInstaller xmsg/) {
+	system("cp -r $OrigDir/tools/installer/$_ $tempdir/installer/");
+	print ".";
+}
+print "done\n";
+# Find makeself
+print " Detecting makeself...";
+my $Makeself_Dir;
+my @Makeself_Dirs = (
+	"$ENV{HOME}/makeself",
+	"$ENV{HOME}/downloads/makeself"
+);
+foreach(@Makeself_Dirs) {
+	if (-e "$_/makeself.sh") {
+		$Makeself_Dir = $_;
+		last;
+	}
+}
+unless(defined($Makeself_Dir) and length($Makeself_Dir)) {
+	die("failed - unable to detect makeself. Install makeself to $ENV{HOME}/downloads/makeself please\n");
+}
+chdir($Makeself_Dir);
+print "done\n";
+print " Running makeself...";
+if(system("./makeself.sh $tempdir/installer/ dayplanner-$DPVersion.run 'Generic day planner installation script' ./StartInstaller &>/dev/null")) {
+	die("failed - makeself command exited with a nonzero return value\n");
+}
+print "done\n";
+print " Moving package...";
+system("mv ./dayplanner-$DPVersion.run $OrigDir/packages/");
 print "done\n";
