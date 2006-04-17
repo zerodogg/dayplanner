@@ -20,29 +20,6 @@ use strict;
 use warnings;
 use Gtk2;
 
-sub Purge_Gtk2Buf () {
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration();
-	Gtk2->main_iteration while Gtk2->events_pending;
-}
-
 Gtk2->init();
 
 my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into your home directory and put a day planner icon on your desktop. All of this will be done automatically, this is the only dialog box that will require any input from you.\n\nDo you want me to continue?");
@@ -52,16 +29,13 @@ $Dialog->destroy();
 # Flush the display
 Gtk2->main_iteration while Gtk2->events_pending;
 
+my $PG_Label = Gtk2::Label->new("Installing day planner...");
+$PG_Label->show();
 my $ProgressWin = Gtk2::Window->new('toplevel');
 $ProgressWin->set_resizable(0);
 $ProgressWin->set_title("Installing...");
-my $PG_Label = Gtk2::Label->new("Installing day planner...");
-$PG_Label->show();
 $ProgressWin->add($PG_Label);
 $ProgressWin->show_all();
-
-Purge_Gtk2Buf();
-
-system("echo WOO; sleep 1s");
 Gtk2->main_iteration while Gtk2->events_pending;
+
 system("sleep 1s");
