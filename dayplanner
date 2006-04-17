@@ -40,6 +40,7 @@ my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist dir
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
 my $SpecialEventsFile = "special_events.dpd";		# The filename to save events with special settings
+my $AllDayEventsFile = "allday_events.dpd";		# The filename to save all-day events to:w
 my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration to
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
@@ -58,13 +59,14 @@ unless(-e $ENV{HOME} and -d $ENV{HOME}) {
 
 # Arrays
 my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
-	$ENV{HOME}, "$ENV{HOME}/Desktop", "/tmp", "/var/tmp", "/usr/tmp", "$ENV{HOME}/tmp"
+	$ENV{HOME}, "$ENV{HOME}/Desktop", "$ENV{HOME}/Documents", "$ENV{HOME}/tmp", "/tmp", "/var/tmp", "/usr/tmp"
 );
 
 # Hashes
 my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
+my %AllDayEvents;		# The contents of the all-day events file
 my %MonthNames = (
 	1 => strftime("%B", 0, 0, 0, 1, 0, 0, 0 ),
 	2 => strftime("%B", 0, 0, 0, 1, 1, 0, 0 ),
@@ -273,20 +275,21 @@ sub WriteConfig ($$) {
 	}
 	# Print the config
 	print CONFIG "# Day planner version $Version configuration file\n\n";
+	print CONFIG "# - - -\n# User interface\n# - - -\n";
 	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n#  both = both icons and text\n#  text = only text\n#  icons = only icons\n#  hidden = hide the toolbar\n";
 	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
 	print CONFIG "# If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand\n";
 	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
-	print CONFIG "\n# - - -\n";
+	print CONFIG "\n# - - -\n# Normal events notification\n# - - -\n";
 	print CONFIG "\n# If day planner should notify about an event ahead of time.\n#  0 = Don't notify\n";
 	print CONFIG "#  10min = Notify 10 minutes ahead of time\n";
 	print CONFIG "#  20min = Notify 20 minutes ahead of time\n";
 	print CONFIG "#  30min = Notify 30 minutes ahead of time\n";
 	print CONFIG "#  45min = Notify 45 minutes ahead of time\n";
-	print CONFIG "#  1hr  = Notify 1 hour ahead of time\n";
-	print CONFIG "#  2hrs = Notify 2 hours ahead of time\n";
-	print CONFIG "#  4hrs = Notify 4 hours ahead of time\n";
-	print CONFIG "#  6hrs = Notify 6 hours ahead of time\n";
+	print CONFIG "#  1hr   = Notify 1 hour ahead of time\n";
+	print CONFIG "#  2hrs  = Notify 2 hours ahead of time\n";
+	print CONFIG "#  4hrs  = Notify 4 hours ahead of time\n";
+	print CONFIG "#  6hrs  = Notify 6 hours ahead of time\n";
 	print CONFIG "Events_NotifyPre=$Events_NotifyPre\n";
 	print CONFIG "\n# If day planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance\n";
 	print CONFIG "Events_DayNotify=$Events_DayNotify\n";
@@ -507,6 +510,9 @@ sub LoadCalendar () {
 	if(DataLoadTest("$SaveToDir/$SpecialEventsFile")) {
 		%SpecialEvents = do("$SaveToDir/$SpecialEventsFile");
 	}
+	if(DataLoadTest("$SaveToDir/$AllDayEventsFile")) {
+		%AllDayEvents = do("$SaveToDir/$AllDayEventsFile");
+	}
 	return(1);
 }
 
@@ -707,7 +713,7 @@ sub EscapeKeyHandler () {
 # Purpose: Display an error dialog
 # Usage: DPError("Error message");
 sub DPError ($) {
-	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'error', 'ok', "$_[0]");
+	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'error', 'ok', "$_[0]");
 	$Dialog->run();
 	$Dialog->destroy();
 }
@@ -715,7 +721,7 @@ sub DPError ($) {
 # Purpose: Display a warning dialog
 # Usage: DPWarning("Warning");
 sub DPWarning ($) {
-	my $Dialog = Gtk2::MessageDialog->new_with_markup(undef, "modal", 'warning', 'ok', "$_[0]");
+	my $Dialog = Gtk2::MessageDialog->new_with_markup($MainWindow, "modal", 'warning', 'ok', "$_[0]");
 	$Dialog->run();
 	$Dialog->destroy();
 }
@@ -723,7 +729,7 @@ sub DPWarning ($) {
 # Purpose: Display an information dialog
 # Usage: DPInfo("Information message");
 sub DPInfo ($) {
-	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "$_[0]");
+	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'info', 'ok', "$_[0]");
 	$Dialog->run();
 	$Dialog->destroy();
 }
@@ -1047,7 +1053,7 @@ sub EditEvent () {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Add an event"), gettext('Adding an event on the %s. %s %s'), 'gtk-ok');
+	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Editing an event"), gettext('Editing an event on the %s. %s %s'), 'gtk-ok');
 
 	my $Type = GetEventListType();
 
@@ -1526,19 +1532,19 @@ sub PreferencesWindow () {
 	# A simple hash we use to parse back and forth between the PreNotification
 	# combo box and the config option itself
 	my %PreNotificationParser = (
-		0 => '10mins',
-		1 => '20mins',
-		2 => '30mins',
-		3 => '45mins',
+		0 => '10min',
+		1 => '20min',
+		2 => '30min',
+		3 => '45min',
 		4 => '1hr',
 		5 => '2hrs',
 		6 => '4hrs',
 		7 => '6hrs',
 		
-		'10mins' => 0,
-		'20mins' => 1,
-		'30mins' => 2,
-		'45mins' => 3,
+		'10min' => 0,
+		'20min' => 1,
+		'30min' => 2,
+		'45min' => 3,
 		'1hr' => 4,
 		'1hrs' => 4,
 		'2hr' => 5,
@@ -1551,8 +1557,6 @@ sub PreferencesWindow () {
 		'default' => 3,
 		'readable_default' => '45mins',
 	);
-	
-	# TODO: Settings set here are not taken into account (not saved)
 	
 	# Create the vbox
 	my $Events_VBox = Gtk2::VBox->new();
@@ -1609,6 +1613,12 @@ sub PreferencesWindow () {
 	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label(gettext("Warn me one day in advance"));
 	$NotifyAdvance_CheckBox->show();
 	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
+	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
+			$Events_DayNotify = $NotifyAdvance_CheckBox->get_active();
+		});
+	if($Events_DayNotify) {
+		$NotifyAdvance_CheckBox->set_active(1);
+	}
 	
 	# This needs to be at the bottom so that we can sensitiveize or not the rest of the dialog
 	$Events_EnabledCheckbox->signal_connect('toggled' => sub {
@@ -1723,10 +1733,6 @@ sub DrawMainWindow () {
 	# ==================================================================
 	# MENUBAR
 	# ==================================================================
-#	my %MenuItemStock = (
-#		'quit' => Gtk2::Stock->lookup('qtk-quit')->'label',
-#	);
-#	my $QuitItem = Gtk2::Stock->lookup('qtk-quit');
 	# The menu items
 	my @MenuItems = (
 		# Calendar menu
@@ -1859,7 +1865,7 @@ GetOptions (
 		PrintHelp("-h","--help","Display this help screen and exit");
 		PrintHelp("-v","--version", "Display version information and exit");
 		PrintHelp("-t","--test","Use $ShortSaveDir/debug instead of $ShortSaveDir");
-		PrintHelp("", "--confdir", "Use the directory supplies as configuration directory");
+		PrintHelp("", "--confdir", "Use the directory supplied as configuration directory");
 		PrintHelp("", "", "instead of $ShortSaveDir");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
@@ -1881,23 +1887,28 @@ GetOptions (
 		$SaveToDir = "$SaveToDir/debug";
 	},
 	'confdir=s' => sub {
-		unless (-e $_[1]) {
-			die "$_[1] does not exist\n";
-		}
-		unless (-d $_[1]) {
-			die "$_[1] is not a directory\n";
-		}
-		unless (-w $_[1]) {
-			die "$_[1] is not writeable\n";
+		if (-e $_[1]) {
+			unless (-d $_[1]) {
+				die "$_[1] is not a directory\n";
+			}
+			unless (-w $_[1]) {
+				die "$_[1] is not writeable\n";
+			}
 		}
 		$SaveToDir = $_[1];
 	},
 ) or die "Run $0 --help for more information\n";
 
+my $Gtk2_Initialized = 0;
+
 # Display a message the first time day planner is started.
 # This should probably be changed to have a test of which day planner was last started
 # in later versions (=> 0.2 Beta)
 unless (-e $SaveToDir) {
+	# Initialize Gtk2
+	Gtk2->init;
+	$Gtk2_Initialized = 1;
+	# Display the message
 	DPInfo(gettext(sprintf("This is a beta version of Day planner. It should not be considered feature complete or production ready. Report bugs to %s", 'http://gna.org/projects/dayplanner/')));
 }
 
@@ -1905,8 +1916,9 @@ unless (-e $SaveToDir) {
 LoadDefaultConfig();
 # Load the calendar
 LoadCalendar();
-# Initialize Gtk2
-Gtk2->init;
+unless($Gtk2_Initialized) {
+	Gtk2->init;
+}
 # Initialize the daemon, and if it works draw the main window
 if(DaemonInit()) {
 	# Draw the main window
