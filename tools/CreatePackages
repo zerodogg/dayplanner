@@ -1,0 +1,120 @@
+#!/usr/bin/perl
+# CreatePackages
+# Script to create day planner packages
+# $Id$
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use File::Temp;
+use Cwd qw/realpath getcwd/;
+
+my $OrigDir = realpath(getcwd());
+my $DPVersion = "0.1";
+
+sub InPath ($) {
+	foreach (split /:/, $ENV{PATH}) {
+		if (-x "$_/@_" and ! -d "$_/@_" ) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+$| = 1;
+print "Preparing...\n";
+my $tempdir = File::Temp::tempdir( 
+	CLEANUP => 1
+);
+print " Created directory $tempdir\n";
+print " Verifying required components...";
+foreach (qw/tar bzip2 bunzip2 rpm rpmbuild/) {
+	unless (InPath($_)) {
+		die("failed - \"$_\" is missing\n");
+	}
+}
+print "okay\n";
+
+chdir($tempdir) or die "Unable to chdir to $tempdir: $!\n";
+
+print "Building tarball...\n";
+# Copy the files
+print " Copying files...";
+if (system("cp -r $OrigDir $tempdir/dayplanner-$DPVersion/")) {
+	die "failed\n";
+}
+print "done\n";
+# Clean up the archive
+print " Cleaning up the source directory...";
+system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*.svn*'`");
+print "done\n";
+
+print " Packaging...";
+if (system("tar -jcf ./dayplanner-$DPVersion.tar.bz2 ./dayplanner-$DPVersion &> /dev/null")) {
+	die "failed\n";
+}
+print "done\n";
+
+print "Building rpm...\n";
+print " Checking for required files...";
+unless (-e "$OrigDir/tools/rpm/changelog.spec") {
+	die "failed - $OrigDir/tools/rpm/changelog.spec does not exist\n";
+}
+unless (-e "$OrigDir/tools/rpm/package.spec") {
+	die "failed - $OrigDir/tools/rpm/package.spec does not exist\n";
+}
+print "okay\n";
+print " Preparing specfile...";
+my @RPM_SPECFILE;
+
+# Read package.spec
+open(SPECFILE, "<$OrigDir/tools/rpm/package.spec") or die "failed - unable to open $OrigDir/tools/rpm/package.spec for reading: $!\n";
+
+foreach(<SPECFILE>) {
+	s/\[DAYPLANNER_VERSION\]/$DPVersion/;
+	push(@RPM_SPECFILE, $_);
+}
+close(SPECFILE);
+print ".";
+
+# Read the changelog (changelog.spec)
+open(SPECFILE, "<$OrigDir/tools/rpm/changelog.spec") or die "failed - unable to open $OrigDir/tools/rpm/changelog.spec for reading: $!\n";
+
+foreach(<SPECFILE>) {
+	push(@RPM_SPECFILE, $_);
+}
+close(SPECFILE);
+print ".";
+
+# Write it
+open(SPECFILE, ">$tempdir/dayplanner.spec") or die "failed - unable to open $tempdir/dayplanner.spec for writing: $!\n";
+print SPECFILE @RPM_SPECFILE;
+print "done\n";
+close(SPECFILE);
+
+# Build the RPM package
+print " Building RPM...";
+if(system("rpmbuild -ba $tempdir/dayplanner.spec &> $tempdir/rpmbuild.log")) {
+	die "failed\n";
+}
+print "done\n";
+#print " Verifying RPM files...";
+#my $MkRel = qx/rpm --eval "\%mkrel 1\"/;
+#print "okay\n";
+
+print "Building self-contained installer package...";
+print "done\n";
