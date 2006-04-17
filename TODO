@@ -5,12 +5,6 @@ An up to date version of this file can always be found in the day planner
 subversion repository
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-* Version 0.1
-- Tooltips
-- Have a third party look over all strings (in the pot-file) and try to
-	simplify those too technical
-- Look over TODOs and FIXMEs from the code
-
 * Version 0.2
 - Add doubleclick support for the eventlist
 - Add a week overview
