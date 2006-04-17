@@ -22,8 +22,8 @@ use strict;
 use warnings;
 use File::Temp;
 use Cwd qw/realpath getcwd/;
+use File::Basename qw/dirname/;
 
-my $OrigDir = realpath(getcwd());
 my $DPVersion = "0.1";
 
 sub InPath ($) {
@@ -40,7 +40,18 @@ print "Preparing...\n";
 my $tempdir = File::Temp::tempdir( 
 	CLEANUP => 1
 );
-print " Created directory $tempdir\n";
+print " Detecting the source directory...";
+my $OrigDir = dirname(realpath($0));
+unless(-e "$OrigDir/tools/installer") {
+	$OrigDir = "$OrigDir/../";
+	unless (-e "$OrigDir/tools/installer") {
+		die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
+	}
+}
+$OrigDir = realpath($OrigDir);
+print "found $OrigDir\n";
+
+print " Created temporary directory $tempdir\n";
 unless(-e "$OrigDir/packages") {
 	mkdir("$OrigDir/packages");
 	print " Created directory $OrigDir/packages\n";
@@ -57,6 +68,7 @@ foreach (qw/tar bzip2 bunzip2 rpm rpmbuild/) {
 	unless (InPath($_)) {
 		die("failed - \"$_\" is missing\n");
 	}
+	print ".";
 }
 print "okay\n";
 
@@ -74,6 +86,12 @@ print " Cleaning up the source directory...";
 system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*.svn*'`");
 print ".";
 system("rm -rf $tempdir/dayplanner-$DPVersion/packages/");
+print ".";
+system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*~'`");
+print ".";
+system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*.tmp'`");
+print ".";
+system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*.swp'`");
 print "done\n";
 
 print " Packaging...";
@@ -172,7 +190,7 @@ unless(defined($Makeself_Dir) and length($Makeself_Dir)) {
 chdir($Makeself_Dir);
 print "done\n";
 print " Running makeself...";
-if(system("./makeself.sh $tempdir/installer/ dayplanner-$DPVersion.run 'Generic day planner installation script' ./StartInstaller &>/dev/null")) {
+if(system("./makeself.sh --nox11 $tempdir/installer/ dayplanner-$DPVersion.run 'Generic day planner installation script' ./StartInstaller &>/dev/null")) {
 	die("failed - makeself command exited with a nonzero return value\n");
 }
 print "done\n";
