@@ -95,7 +95,7 @@ my $term = Term::ReadLine->new('Day Planner daemon commander');
 # Get the attribs and set up autocompleteion
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
-$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK !QUIT !HELP !RESTART_DAEMON)];
+$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK RECALCULATE DUMP_HASHES DUMP_MAINHASH DUMP_CONFIG !QUIT !HELP !RESTART_DAEMON)];
 
 # An "eternal" loop getting input and parsing it
 while (1) {
@@ -133,7 +133,11 @@ while (1) {
 			CommandPrint("", "that PID reconnects (PID is removed from the access lists - its connection");
 			CommandPrint("", "to the daemon stays open");
 			CommandPrint("ENABLE_DEBUGLOG", "Enable logging of output to a file. The daemon will reply");
-			CommandPrint("", "the path to the file it will output to");
+			CommandPrint("", "the path to the file it will output to and redirect STDOUT/STDERR to that file");
+			CommandPrint("RECALCULATE", "Recalculate todays events");
+			CommandPrint("DUMP_HASHES", "Dump all of the data hashes to STDOUT");
+			CommandPrint("DUMP_MAINHASH", "Dump the main data hash (\%NotificationHash) to STDOUT");
+			CommandPrint("DUMP_CONFIG", "Dump the internal configuration hash (\%Config) to STDOUT");
 		} elsif ($COMMAND =~ /^!RESTART_DAEMON/) {
 			print "Restarting daemon...\n";
 			print $socket "$$ GET_PATH\n";
@@ -147,7 +151,10 @@ while (1) {
 			} else {
 				print "Daemon shut down, starting a new one...\n";
 				my $DaemonDir = dirname($SocketName);
-				system("$PATH --force-fork --dayplannerdir $DaemonDir");
+				if (system("$PATH --force-fork --dayplannerdir $DaemonDir")) {
+					print "\nStarting a new daemon failed! I can't continue.\n";
+					exit(0);
+				}
 				ConnectToDaemon();
 				my $RESTART_HI = <$socket>;
 				chomp($RESTART_HI);
