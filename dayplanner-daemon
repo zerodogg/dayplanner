@@ -199,6 +199,7 @@ sub FindSleepDuration () {
 			}
 			$hours = $testhours;
 			$minutes = $testminutes;
+			last;
 		}
 	}
 	# If keys is NOT set then we return the amount of seconds until midnight instead
@@ -405,7 +406,7 @@ sub GetPreNotTime ($$$$) {
 # Purpose: Start the notifier and display the alarm
 # Usage: DayplannerAlarm();
 sub DayplannerAlarm () {
-	IntDebug("Alarm");
+	IntDebug("Alarm triggered");
 	
 	my $NotifierStarted;
 	
