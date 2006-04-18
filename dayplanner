@@ -116,10 +116,11 @@ sub DaemonInit () {
 		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
 		if ($ConnectionAttempt eq 'NOHI') {
 			DaemonConnectionErrorHandler();
+			return(1);
 		} elsif ($ConnectionAttempt eq '1') {
 			$DaemonOnline = 1;
-		}
-		return(1);
+			return(1);
+		} 
 	}
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
 		if (-x "$_/$DaemonName") {
@@ -1029,6 +1030,8 @@ sub AddEvent () {
 sub EditEvent () {
 	my $Selected;	# The selected entry
 	
+	$MainWindow->set_sensitive(0);
+	
 	# FIXME: This is just plain weird
 	foreach ($EventlistWidget->get_selected_indices) {
 		$Selected = $_;
@@ -1053,7 +1056,7 @@ sub EditEvent () {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Editing an event"), gettext('Editing an event on the %s. %s %s'), 'gtk-ok');
+	my ($Window, $VBox_HBoxContainer, $OKButton);
 
 	my $Type = GetEventListType();
 
@@ -1061,6 +1064,7 @@ sub EditEvent () {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Editing an event"), gettext('Editing an event on the %s. %s %s'), 'gtk-ok');
 		
 		if(CalendarDefined($EventYear,$EventMonth,$EventDay,$Time)) {
 			
@@ -1082,6 +1086,7 @@ sub EditEvent () {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Editing a birthday"), gettext('Editing a birthday on the %s. %s %s'), 'gtk-ok');
 		
 		$Summary = GetRealBirthdayName($Summary);
 		$TimeHash{OldEventSummary} = $Summary;
