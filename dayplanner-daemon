@@ -32,7 +32,7 @@ use Data::Dumper;		# We need to be able to dump data
 Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
 # Scalars
-my $Version = '0.1 Beta1';
+my $Version = '0.1';
 my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";		# The filename to read events from
 my $BirthdayFile = "birthdays.dpd";		# The filename to read birthdays from
@@ -179,6 +179,10 @@ sub FindSleepDuration () {
 	if (@Keys) {
 		@Keys = sort(@Keys);
 		foreach (@Keys) {
+			unless ($_ =~ /^\d+:\d+$/) {
+				IntWarn("Invalid event time: $_");
+				next;
+			}
 			my ($testhours, $testminutes) = split(/:/, $_);
 			# Remove leading zeros from the variables
 			$testhours =~ s/^0(.*)/$1/;
@@ -402,6 +406,9 @@ sub GetPreNotTime ($$$$) {
 # Usage: DayplannerAlarm();
 sub DayplannerAlarm () {
 	IntDebug("Alarm");
+	
+	my $NotifierStarted;
+	
 	# Get the current time/date
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	$LastAlarm = "$currhour:$currmin";
@@ -412,24 +419,30 @@ sub DayplannerAlarm () {
 	$curryear += 1900;
 	$currmonth++;
 	if(defined($NotificationHash{"$currhour:$currmin"})) {
+		# TODO: Do we need the check for PreNotification?
 		unless(defined($NotificationHash{"$currhour:$currmin"}{PreNotification})) {
 			RunNotifier($NotificationHash{"$currhour:$currmin"}{summary},
 				$NotificationHash{"$currhour:$currmin"}{fulltext},
 				'today',
 				"$currhour:$currmin");
+			$NotifierStarted = 1;
 		} 
-	} elsif(defined($NotificationHash{"prenot_$currhour:$currmin"})) {
+	} 
+	if(defined($NotificationHash{"prenot_$currhour:$currmin"})) {
 		RunNotifier($NotificationHash{"prenot_$currhour:$currmin"}{summary},
 			$NotificationHash{"prenot_$currhour:$currmin"}{fulltext},
 			'today',
 			$NotificationHash{"prenot_$currhour:$currmin"}{PreNotification});
-
-	} elsif(defined($NotificationHash{"tomorrow_$currhour:$currmin"})) {
+		$NotifierStarted = 1;
+	} 
+	if(defined($NotificationHash{"tomorrow_$currhour:$currmin"})) {
 		RunNotifier($NotificationHash{"tomorrow_$currhour:$currmin"}{summary},
 			$NotificationHash{"tomorrow_$currhour:$currmin"}{fulltext},
 			'tomorrow',
 			"$currhour:$currmin");
-	} else {
+		$NotifierStarted = 1;
+	}
+       unless($NotifierStarted) {
 		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin");
 	}
 }
@@ -729,8 +742,8 @@ sub CalculateNotificationHash () {
 				$NotificationHash{$Time}{fulltext} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext};
 			}
 			my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 0);
-			$PreNot_Time = "prenot_$PreNot_Time";
 			if(defined($PreNot_Time)) {
+				$PreNot_Time = "prenot_$PreNot_Time";
 				# TODO: We need to make sure another event isn't ocurring at the same time (append a digit or something to it?)
 				$NotificationHash{$PreNot_Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
 				if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext})) {
