@@ -25,7 +25,7 @@ use Getopt::Long;		# Commandline options
 use IO::Socket;			# Network layer to communicate with the daemon
 use Locale::gettext;		# Translation layer
 
-my $Version = "0.1 Beta 1";
+my $Version = "0.1";
 my $RCSRev = '$Id$';
 
 my $SocketName;			# The socket to connect to

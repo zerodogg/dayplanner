@@ -34,7 +34,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 # setlocale(LC_MESSAGES, "");
 
 # Scalars
-my $Version = "0.1 Beta 1";
+my $Version = "0.1";
 my $RCSRev = '$Id$';
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
@@ -1900,17 +1900,6 @@ GetOptions (
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
-
-# Display a message the first time day planner is started.
-# This should probably be changed to have a test of which day planner was last started
-# in later versions (=> 0.2 Beta)
-unless (-e $SaveToDir) {
-	# Initialize Gtk2
-	Gtk2->init;
-	$Gtk2_Initialized = 1;
-	# Display the message
-	DPInfo(gettext(sprintf("This is a beta version of Day planner. It should not be considered feature complete or production ready. Report bugs to %s", 'http://gna.org/projects/dayplanner/')));
-}
 
 # Load the configuration file
 LoadDefaultConfig();

@@ -116,6 +116,9 @@ unless (-d "$ENV{HOME}/rpm/RPMS/noarch/" and -d "$ENV{HOME}/rpm/SRPMS/") {
 	die("failed - I need/rpm/RPMS/noarch\n");
 }
 print "okay\n";
+print " Copying tarball...";
+system("cp $OrigDir/packages/dayplanner-$DPVersion.tar.bz2 $ENV{HOME}/rpm/SOURCES/");
+print "done\n";
 print " Preparing specfile...";
 my @RPM_SPECFILE;
 
@@ -155,9 +158,9 @@ print "done\n";
 print " Moving files...";
 system("mv $ENV{HOME}/rpm/RPMS/noarch/dayplanner*.rpm $ENV{HOME}/rpm/SRPMS/dayplanner*.rpm $OrigDir/packages/ &>/dev/null");
 print "done\n";
-#print " Verifying RPM files...";
-#my $MkRel = qx/rpm --eval "\%mkrel 1\"/;
-#print "okay\n";
+print " Cleaning up...";
+unlink("$ENV{HOME}/SOURCES/dayplanner-$DPVersion.tar.bz2");
+print "done\n";
 
 print "Building self-contained installer package...\n";
 print " Preparing...";
