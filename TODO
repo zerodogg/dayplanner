@@ -14,6 +14,8 @@ subversion repository
 	it from 24H to AM/PM before displaying it to the user. Should not
 	require too much extra work. Perhaps the use of AM/PM can be detected
 	using strftime?
+- Make the notifier get the information from the daemon *after launch* - currently
+	it allows another user on a multi-user system to see the notification
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 

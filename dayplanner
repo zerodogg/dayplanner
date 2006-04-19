@@ -34,7 +34,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 # setlocale(LC_MESSAGES, "");
 
 # Scalars
-my $Version = "0.1";
+my $Version = "0.2 SVN";
 my $RCSRev = '$Id$';
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
@@ -142,7 +142,7 @@ sub DaemonInit () {
 # Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
 sub DaemonSIGPIPEHandler() {
 	warn("I recieved a SIGPIPE, the daemon is probably offline\n");
-	# TODO: Restart daemon?
+	# TODO: Try to ping the daemon, if unable to ping try to restart, if not mark daemon as offline
 }
 
 # Purpose: Connect to the daemon
