@@ -122,6 +122,12 @@ sub DaemonInit () {
 			return(1);
 		} 
 	}
+	return(StartDaemon);
+}
+
+# Purpose: Start the day planner daemon
+# Usage: StartDaemon();
+sub StartDaemon {
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
 		if (-x "$_/$DaemonName") {
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
@@ -134,15 +140,15 @@ sub DaemonInit () {
 			}
 		}
 	}
-	warn "Unable to start daemon!\n";
+	DPIntWarn("Unable to start daemon!");
 	return(1);
 }
 
 # Purpose: Handle SIGPIPE gracefully
 # Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
 sub DaemonSIGPIPEHandler() {
-	warn("I recieved a SIGPIPE, the daemon is probably offline\n");
-	# TODO: Try to ping the daemon, if unable to ping try to restart, if not mark daemon as offline
+	DPIntWarn("I recieved a SIGPIPE, the daemon is probably offline");
+	StartDaemon;
 }
 
 # Purpose: Connect to the daemon
@@ -178,7 +184,7 @@ sub Daemon_SendData ($) {
 		if(print $DaemonSocket "$$ $_[0]","\n") {
 			       return(1);
 		       } else {
-				warn "Problem sending data to the daemon: $!\n";
+				DPIntWarn("Problem sending data to the daemon: $!");
 		}
 	} 
 	return(0);
