@@ -95,7 +95,7 @@ my $term = Term::ReadLine->new('Day Planner daemon commander');
 # Get the attribs and set up autocompleteion
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
-$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK RECALCULATE DUMP_HASHES DUMP_MAINHASH DUMP_CONFIG !QUIT !HELP !RESTART_DAEMON)];
+$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH NOTIFICATION GET VERIFY CLEAN DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK RECALCULATE DUMP_HASHES DUMP_MAINHASH DUMP_CONFIG !QUIT !HELP !RESTART_DAEMON)];
 
 # An "eternal" loop getting input and parsing it
 while (1) {
@@ -122,6 +122,9 @@ while (1) {
 			CommandPrint("BYE", "Tell the daemon to remove the client from its access lists");
 			CommandPrint("VERSION", "Get the daemon version number");
 			CommandPrint("GET_PATH", "Get the path used to start the daemon");
+			CommandPrint("NOTIFICATION [GET|VERIFY|CLEAN] ID", "Perform the action on the notification");
+			CommandPrint("", "ID supplied. This can very very rarely be done from this commander as it");
+			CommandPrint("", "requires a special condition inside the daemon");
 			CommandPrint("DEBUG [COMMAND]", "Run the debugging command [COMMAND]");
 			print "\nList of debugging commands: (parameters to DEBUG)\n";
 			CommandPrint("DUMP_VARIOUS", "Dump various useful information about the running daemon");
