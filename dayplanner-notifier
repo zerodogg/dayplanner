@@ -30,10 +30,13 @@ my $RCSRev = '$Id$';
 
 my $SocketName;			# The socket to connect to
 my $Socket;			# The IO::Socket object
+
 my $Message;			# The message
 my $Fulltext;			# The fulltext (details)
 my $Time;			# The time
 my $Date;			# The date
+
+my $MessageID;			# The daemon message ID
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # DAEMON COMMUNICATION
@@ -46,7 +49,7 @@ sub DaemonConnect () {
 					Type => SOCK_STREAM,
 					Timeout => 10 )
 					or warn "WARNING: Unable to connect to $SocketName: $@!\n" and return(0);
-	if(Daemon_DataSegment("HI servant") eq "HI\n") {
+	if(Daemon_DataSegment("HI servant") eq "HI") {
 		return(1);
 	} else {
 		warn "WARNING: Unable to connect to $SocketName: The daemon refused my connection\n";
@@ -69,6 +72,7 @@ sub Daemon_GetData () {
 	unless(defined($Data)) {
 		return("ERR UNABLE_TO_GET_DATA");
 	}
+	chomp($Data);
 	return($Data);
 }
 
@@ -84,6 +88,25 @@ sub Daemon_DataSegment ($) {
 sub DaemonDisconnect () {
 	Daemon_DataSegment("BYE");
 	close($Socket);
+}
+
+# Purpose: Get the messages from the daemon
+# Usage: GetMessages(Message ID);
+sub GetMessages ($) {
+	unless(Daemon_DataSegment("NOTIFICATION VERIFY $_[0]") eq 'SET') {
+		die("The MessageID $_[0] is invalid according to the daemon\n");
+	}
+	
+	$Message = Daemon_DataSegment("NOTIFICATION GET $_[0] Summary");
+	$Time = Daemon_DataSegment("NOTIFICATION GET $_[0] Time");
+	$Date = Daemon_DataSegment("NOTIFICATION GET $_[0] Date");
+	$Fulltext = Daemon_DataSegment("NOTIFICATION GET $_[0] Fulltext");
+
+	if($Fulltext eq "$_[0] UNDEF") {
+		$Fulltext = undef;
+	}
+
+	Daemon_DataSegment("NOTIFICATION CLEAN $_[0]");
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -248,12 +271,15 @@ GetOptions (
 	'help|h' => sub {
 		print "Day planner notifier version $Version\n";
 		print "This program is for use by the dayplanner daemon.\n\n";
+		print "Use a --time/--message/--date (and --fulltext) combo if you want to call it manually,\n";
+		print "the daemon uses --id.\n\n";
 		PrintHelp("-h","--help","Display this help screen");
 		PrintHelp("-s","--socket","Select the daemon socket");
 		PrintHelp("-m", "--message", "Set the message");
 		PrintHelp("-f", "--fulltext", "Set the \"fulltext\" entry (details)");
 		PrintHelp("-t", "--time", "Set the time (HH:MM)");
 		PrintHelp("-d", "--date", "Set the date (a date string, \"today\" or \"tomorrow\")");
+		PrintHelp("-i", "--id", "Set the daemon message ID");
 		exit(0);
 	},
 	'socket|s=s' => \$SocketName,
@@ -261,12 +287,15 @@ GetOptions (
 	'time|t=s' => \$Time,
 	'fulltext|f=s' => \$Fulltext,
 	'date|d=s' => \$Date,
+	'id|i=s' => \$MessageID,
 ) or die "See $0 --help for more information\n";
 
 # Verify various things
-die "I need a --time\n" unless defined($Time) and length($Time);
-die "I need a --message\n" unless defined($Message) and length($Message);
-die "I need a --date\n" unless defined($Date) and length($Date);
+unless($MessageID) {
+	die "I need a --time\n" unless defined($Time) and length($Time);
+	die "I need a --message\n" unless defined($Message) and length($Message);
+	die "I need a --date\n" unless defined($Date) and length($Date);
+}
 
 die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
 die "$SocketName does not exist\n" unless -e $SocketName;
@@ -278,5 +307,10 @@ exit if $PID;
 die "I was unable to fork: $!\n" unless defined($PID);
 
 DaemonConnect();
+
+if(defined($MessageID)) {
+	GetMessages($MessageID);
+}
+
 NotifyUser();
 DaemonDisconnect();
