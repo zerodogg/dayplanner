@@ -45,7 +45,7 @@ my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
 	$Shutdown,	$LastAlarm,		$OutputRedirect,
-	$LastCalculate,
+	$LastCalculate,	$NotificationID,
 );						# Global scalars
 
 my (
@@ -58,6 +58,7 @@ my %BirthdayContents;		# Contents of the birthday calendar
 my %SpecialEvents;		# Contents of the speical events calendar
 my %NotificationHash;		# The internal hash data
 my %Config;			# The configuration hash
+my %CurrentNotification;
 
 my %AccessStatus = (
 	Connected => 0,
@@ -456,9 +457,14 @@ sub RunNotifier ($$$$) {
 	IntDebug("Alarm! Task: $Summary at $Time on $Date");
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
 		if ( -x "$_/$NotifierName") {
+			$NotificationID++;
+			$CurrentNotification{$NotificationID}{Summary} = $Summary;
+			$CurrentNotification{$NotificationID}{Fulltext} = $Fulltext;
+			$CurrentNotification{$NotificationID}{Time} = $Time;
+			$CurrentNotification{$NotificationID}{Date} = $Date;
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
 			# and 1-255 on FALSE, so it's the other way around from perl
-			unless(system("$_/$NotifierName --socket \"$DaemonSocket\" --message \"$Summary\" --fulltext \"$Fulltext\" --time \"$Time\" --date \"$Date\"")) {
+			unless(system("$_/$NotifierName --socket \"$DaemonSocket\" --id \"$NotificationID\"")) {
 				return(1);
 			}
 		}
@@ -546,6 +552,35 @@ sub CommandHandler ($) {
 	} elsif (/^GET_PATH/) {
 		IntDebug("GET_PATH request from $PID");
 		return(Cwd::realpath($0));
+	} elsif (s/^NOTIFICATION\s*//) {
+		if (s/^GET\s*//) {
+			my $ID = $_;
+			my $Variable = $_;
+			$ID =~ s/^(.+)\s+.*/$1/;
+			$Variable =~ s/^.+\s+(.+)/$1/;
+			
+			unless(defined($CurrentNotification{$ID})) {
+				return("NOT_SET");
+			}
+			unless(defined($CurrentNotification{$ID}{$Variable})) {
+				return("$ID UNDEF");
+			}
+
+			return($CurrentNotification{$ID}{$Variable});
+		} elsif (s/^VERIFY\s*//) {
+			unless(defined($CurrentNotification{$_})) {
+				return("NOT_SET");
+			}
+			return("SET");
+		} elsif (s/^CLEAN\s*//) {
+			unless(defined($CurrentNotification{$_})) {
+				return("NOT_SET");
+			}
+			delete($CurrentNotification{$_});
+			return("DONE");
+		} else {
+			return("ERR INVALID_COMMAND");
+		}
 	}
 	elsif (s/^DEBUG\s*//) {
 		if (/^DUMP_VARIOUS/) {
@@ -605,6 +640,7 @@ sub CommandHandler ($) {
 					print Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
 					print Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayContents"]);
 					print Data::Dumper->Dump([\%SpecialEvents], ["*SpecialEvents"]);
+					print Data::Dumper->Dump([\%CurrentNotification], ["*CurrentNotification"]);
 				}
 			} elsif (/^DUMP_CONFIG/) {
 				print Data::Dumper->Dump([\%Config], ["*Config"]);
@@ -798,7 +834,7 @@ sub CalculateNotificationHash () {
 GetOptions (
 	'help|h' => sub {
 		print "Day planner daemon version $Version\n\n";
-		PrintHelp("", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
+		PrintHelp("-d", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
 		PrintHelp("-h,", "--help", "Display this help screen");
 		PrintHelp("-n,", "--nofork", "Don't go into the background");
 		PrintHelp("-v,", "--verbose", "Be verbose");
@@ -824,7 +860,7 @@ GetOptions (
 		open(STDOUT, ">$_[1]") or die "Unable to open $_[1]: $!\n";
 		open(STDERR, ">$_[1]") or die "Unable to open $_[1]: $!\n";
 	},
-	'dayplannerdir=s' => sub {
+	'dayplannerdir|d=s' => sub {
 		unless (-e $_[1]) {
 			die "$_[1] does not exist\n";
 		}
@@ -832,6 +868,12 @@ GetOptions (
 			die "I can't write to $_[1]\n";
 		}
 		$DayplannerDir = $_[1];
+	},
+	'socketname|s=s' => sub {
+		if ($_[1] =~ m#/#) {
+			die "The --socketname can't contain a /\n";
+		}
+		$SocketName = $_[1];
 	},
 ) or die "See $0 --help for more information\n";
 
