@@ -122,7 +122,7 @@ sub DaemonInit () {
 			return(1);
 		} 
 	}
-	return(StartDaemon);
+	return(StartDaemon());
 }
 
 # Purpose: Start the day planner daemon
@@ -148,7 +148,7 @@ sub StartDaemon {
 # Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
 sub DaemonSIGPIPEHandler() {
 	DPIntWarn("I recieved a SIGPIPE, the daemon is probably offline");
-	StartDaemon;
+	StartDaemon();
 }
 
 # Purpose: Connect to the daemon
