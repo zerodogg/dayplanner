@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+# SetVersion
+# Simple tool to change the current day planner version in all source
+# files.
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+use strict;
+use warnings;
+use Cwd qw/realpath getcwd/;
+use File::Basename qw/dirname/;
+
+unless (defined($ARGV[0]) and length($ARGV[0])) {
+	die "I need *one* option: The new version number\n";
+}
+
+my $NewVersion = $ARGV[0];
+
+my $OrigDir = dirname(realpath($0));
+unless(-e "$OrigDir/dayplanner") {
+        $OrigDir = "$OrigDir/../";
+        unless (-e "$OrigDir/dayplanner") {
+                $OrigDir = "$OrigDir/../../";
+                unless (-e "$OrigDir/dayplanner") {
+                        die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
+                }
+        }
+}
+$OrigDir = realpath($OrigDir);
+print "Working...\n";
+foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier tools/CreatePackages#) {
+	print " $CurrentFile...";
+	if($CurrentFile eq 'tools/CreatePackages') {
+		$NewVersion =~ s/\s+/_/g;
+		$NewVersion = lc($NewVersion);
+	}
+	
+	open(FILE, "<$OrigDir/$CurrentFile") or die "Unable to open $OrigDir/$CurrentFile: $!\n";
+	my @File;
+	foreach(<FILE>) {
+		#s/^(my\s+\$Version\s+=\s+")\w+\s*\w*\s*\w*\s*(";)/$1$NewVersion$2/;
+		s/^(my\s+\$D?P?Version\s+=\s+["']).*(["'];)/$1$NewVersion$2/;
+		push(@File, $_);
+	}
+	close(FILE);
+	
+	open(WRITE_FILE, ">$OrigDir/$CurrentFile") or die "Unable to open $OrigDir/$CurrentFile for writing: $!\n";
+	foreach(@File) {
+		print WRITE_FILE $_;
+	}
+	close(WRITE_FILE);
+
+	print "done\n";
+}
