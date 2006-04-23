@@ -1408,7 +1408,7 @@ sub AboutBox () {
 	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
-	$AboutDialog->set_website("http://gna.org/projects/dayplanner");
+	$AboutDialog->set_website("http://home.gna.org/dayplanner/");
 	$AboutDialog->set_name(gettext("Day planner"));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
