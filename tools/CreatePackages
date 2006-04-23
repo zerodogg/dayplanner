@@ -45,7 +45,10 @@ my $OrigDir = dirname(realpath($0));
 unless(-e "$OrigDir/tools/installer") {
 	$OrigDir = "$OrigDir/../";
 	unless (-e "$OrigDir/tools/installer") {
-		die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
+		$OrigDir = "$OrigDir/../../";
+		unless (-e "$OrigDir/tools/installer") {
+			die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
+		}
 	}
 }
 $OrigDir = realpath($OrigDir);
