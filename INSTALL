@@ -22,6 +22,8 @@ These files should go into either /usr/share/dayplanner/ or /usr/local/dayplanne
 - art/dayplanner-about.png
 
 If you place the executeables in the same dir as the *png's then the png's can be anywhere
-in the filesystem.
+in the filesystem. A trick if day planner can't detect its images properly is to
+place the executeables in the same directory as the art/ subdirectory and then
+just symlink the executeables into $PATH, day planner handles $PATH fine.
 
 $Id$
