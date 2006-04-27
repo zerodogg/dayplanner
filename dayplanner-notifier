@@ -27,7 +27,7 @@ use Locale::gettext;		# Translation layer
 use Devel::Trace;
            $Devel::Trace::TRACE = 1;   # Enable
 
-my $Version = "0.2 SVN";
+my $Version = "0.1.1";
 my $RCSRev = '$Id$';
 
 my $SocketName;			# The socket to connect to

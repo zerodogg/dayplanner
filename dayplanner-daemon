@@ -33,7 +33,7 @@ use POSIX qw/setsid/;		# We need setsid();
 Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
 # Scalars
-my $Version = '0.2 SVN';
+my $Version = '0.1.1';
 my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";		# The filename to read events from
 my $BirthdayFile = "birthdays.dpd";		# The filename to read birthdays from
