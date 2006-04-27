@@ -34,7 +34,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 # setlocale(LC_MESSAGES, "");
 
 # Scalars
-my $Version = "0.2 SVN";
+my $Version = "0.1.1";
 my $RCSRev = '$Id$';
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
@@ -197,6 +197,10 @@ sub Daemon_SendData ($) {
 # Usage: $Data = Daemon_GetData();
 sub Daemon_GetData {
 	if($DaemonOnline) {
+		unless(defined($DaemonSocket)) {
+			DPIntWarn("BUG!: \$DaemonSocket is undefined");
+			return("ERR UNABLE_TO_GET_DATA");
+		}
 		my $Data = <$DaemonSocket>;
 		unless(defined($Data)) {
 			return("ERR UNABLE_TO_GET_DATA");
@@ -224,6 +228,7 @@ sub CloseDaemon () {
 	if ($DaemonOnline) {
 		my $GetDaemon = Daemon_DataSegment('BYE');
 		close($DaemonSocket);
+		$DaemonOnline = 0;
 	}
 }
 
