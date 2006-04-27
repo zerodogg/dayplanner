@@ -24,6 +24,8 @@ use Gtk2;			# Use Gtk2
 use Getopt::Long;		# Commandline options
 use IO::Socket;			# Network layer to communicate with the daemon
 use Locale::gettext;		# Translation layer
+use Devel::Trace;
+           $Devel::Trace::TRACE = 1;   # Enable
 
 my $Version = "0.2 SVN";
 my $RCSRev = '$Id$';
@@ -37,6 +39,7 @@ my $Time;			# The time
 my $Date;			# The date
 
 my $MessageID;			# The daemon message ID
+my $NoFork;
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # DAEMON COMMUNICATION
@@ -72,8 +75,12 @@ sub Daemon_GetData () {
 	unless(defined($Data)) {
 		return("ERR UNABLE_TO_GET_DATA");
 	}
-	chomp($Data);
-	return($Data);
+	if ($Data =~ /^BEGIN MULTILINE/) {
+		return(UnwrapMultiLinePacket());
+	} else {
+		chomp($Data);
+		return($Data);
+	}
 }
 
 # Purpose: Send something to the daemon and then return the daemons reply
@@ -88,6 +95,38 @@ sub Daemon_DataSegment ($) {
 sub DaemonDisconnect () {
 	Daemon_DataSegment("BYE");
 	close($Socket);
+}
+
+# Purpose: Unwrap multiline packets correctly
+# Usage: my $Multiline = UnwrapMultiLinePacket();
+sub UnwrapMultiLinePacket () {
+	my $MultiLineNotEnded = 1;
+	my $NewMessage;
+	while ($MultiLineNotEnded) {
+		foreach(split(/\n/,<$Socket>)) {
+			if (/^END MULTILINE/) {
+				$MultiLineNotEnded = 0;
+				last;
+			}elsif (s/^\s*ML //) {
+				chomp;
+				if(defined($NewMessage)) {
+					$NewMessage = $NewMessage . "$_\n";
+				} else {
+					$NewMessage = "$_\n";
+				}
+			} elsif (/^NNL$/) {
+				# This means the preceeding line doesn't end with \n
+				$NewMessage =~ s/\n$//;
+			} else {
+				chomp($_);
+				warn("Warning: Unhandled daemon command: $_\n");
+			}
+		}
+	}
+	unless($NewMessage =~ /\n.*\n/) {
+		chomp($NewMessage);
+	}
+	return($NewMessage);
 }
 
 # Purpose: Get the messages from the daemon
@@ -280,6 +319,7 @@ GetOptions (
 		PrintHelp("-t", "--time", "Set the time (HH:MM)");
 		PrintHelp("-d", "--date", "Set the date (a date string, \"today\" or \"tomorrow\")");
 		PrintHelp("-i", "--id", "Set the daemon message ID");
+		PrintHelp("-n", "--nofork", "Don't go into the background");
 		exit(0);
 	},
 	'socket|s=s' => \$SocketName,
@@ -288,6 +328,7 @@ GetOptions (
 	'fulltext|f=s' => \$Fulltext,
 	'date|d=s' => \$Date,
 	'id|i=s' => \$MessageID,
+	'n|nofork' => \$NoFork,
 ) or die "See $0 --help for more information\n";
 
 # Verify various things
@@ -301,10 +342,12 @@ die "I need a --socket to connect to\n" unless defined($SocketName) and length($
 die "$SocketName does not exist\n" unless -e $SocketName;
 die "$SocketName is not a socket\n" unless -S $SocketName;
 
-# Okay, we're here now, fork
-my $PID = fork;
-exit if $PID;
-die "I was unable to fork: $!\n" unless defined($PID);
+unless($NoFork) {
+	# Okay, we're here now, fork
+	my $PID = fork;
+	exit if $PID;
+	die "I was unable to fork: $!\n" unless defined($PID);
+}
 
 DaemonConnect();
 
