@@ -45,6 +45,7 @@ my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration t
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
 my $DaemonOnline = 0;					# Is the daemon online?
+my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 
@@ -109,6 +110,8 @@ my (
 # Purpose: Initialize and connect to the daemon
 # Usage: DaemonInit();
 sub DaemonInit () {
+	$DaemonInitialized = 1;
+	
 	# Handle SIGPIPE
 	$SIG{PIPE} = \&DaemonSIGPIPEHandler;
 
@@ -303,9 +306,11 @@ sub WriteConfig ($$) {
 	# Close the config file
 	close(CONFIG);
 	# Tell the daemon to reload the config file
-	unless(Daemon_DataSegment("RELOAD_CONFIG") eq "done\n") {
-		# TODO: GUI dialog?
-		DPIntWarn("Failed to tell the daemon to reload its configuration file. This might cause problems");
+	if($DaemonInitialized) {
+		unless(Daemon_DataSegment("RELOAD_CONFIG") eq "done\n") {
+			# TODO: GUI dialog?
+			DPIntWarn("Failed to tell the daemon to reload its configuration file. This might cause problems");
+		}
 	}
 }
 
