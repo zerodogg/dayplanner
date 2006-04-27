@@ -169,8 +169,25 @@ while (1) {
 		unless($COMMAND =~ /^(!HELP|!RESTART_DAEMON)/) {	# If the command isn't !HELP nor !RESTART_DAEMON then get and display the daemon reply
 			my $REPLY = <$socket>;
 			if (defined($REPLY)) {
-				chomp($REPLY);
-				print " Daemon replied: $REPLY\n";
+				if($REPLY =~ /^BEGIN MULTILINE/) {
+					print " Multi line daemon reply:\n";
+					print $REPLY;
+					my $ML_NotEnded = 1;
+					while($ML_NotEnded) {
+						foreach(split(/\n/,<$socket>)) {
+							if (/^END MULTILINE/) {
+								print "$_\n";
+								$ML_NotEnded = 0;
+								last;
+							} else {
+								print "	$_\n";
+							}
+						}
+					}
+				} else {
+					chomp($REPLY);
+					print " Daemon replied: $REPLY\n";
+				}
 			} else {
 				print " Daemon didn't reply\n";
 			}
