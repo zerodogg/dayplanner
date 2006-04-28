@@ -216,7 +216,7 @@ sub Daemon_GetData {
 sub Daemon_DataSegment ($) {
 	if($DaemonOnline) {
 		Daemon_SendData($_[0]);
-		return(Daemon_GetData());
+		return(Daemon_ErrorHandler(Daemon_GetData()));
 	} else {
 		return("ERR NOT_ONLINE");
 	}
@@ -235,6 +235,15 @@ sub CloseDaemon () {
 		$DaemonOnline = 0;
 	}
 	return(1);
+}
+
+# Purpose: Display an error message when an error is recieved from the daemon
+# Usage: Daemon_ErrorHandler(Daemon_GetData());
+sub Daemon_ErrorHandler {
+	if ($_[0] =~ /^ERR\s+/) {
+		DPIntWarn("Recived error from daemon: \"$_[0]\"");
+	}
+	return($_[0]);
 }
 
 # Purpose: Display an error dialog about the inability to connect to the daemon
@@ -1938,6 +1947,8 @@ unless($Gtk2_Initialized) {
 if(DaemonInit()) {
 	# Draw the main window
 	DrawMainWindow();
+} else {
+	die "FATAL: Unable to initialize the daemon\n";
 }
 # Rest in the Gtk2 main loop
 Gtk2->main;
