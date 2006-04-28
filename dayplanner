@@ -226,10 +226,15 @@ sub Daemon_DataSegment ($) {
 # Usage: CloseDaemon();
 sub CloseDaemon () {
 	if ($DaemonOnline) {
+		unless(defined($DaemonSocket)) {
+			DPIntWarn("BUG!: \$DaemonSocket is undefined");
+			return(1);
+		}
 		my $GetDaemon = Daemon_DataSegment('BYE');
 		close($DaemonSocket);
 		$DaemonOnline = 0;
 	}
+	return(1);
 }
 
 # Purpose: Display an error dialog about the inability to connect to the daemon
