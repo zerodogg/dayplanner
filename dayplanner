@@ -1046,8 +1046,6 @@ sub AddEvent () {
 sub EditEvent () {
 	my $Selected;	# The selected entry
 	
-	$MainWindow->set_sensitive(0);
-	
 	# FIXME: This is just plain weird
 	foreach ($EventlistWidget->get_selected_indices) {
 		$Selected = $_;
@@ -1056,6 +1054,8 @@ sub EditEvent () {
 	unless(defined($Selected)) {
 		return(0);
 	}
+	
+	$MainWindow->set_sensitive(0);
 
 	# Initialize
 	my $Time = $EventlistWidget->{data}[$Selected][0];
@@ -1326,7 +1326,7 @@ sub NormalEvent_OK ($$$$$$$) {
 		}
 	} else {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-			DPError(gettext(sprintf("There is already an event at %s on %s %s. You can only be at one place at one time, please change the time", $Time, $EventDay, $MonthNames{$EventMonth})));
+				DPError(gettext(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 	}
