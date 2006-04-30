@@ -84,4 +84,6 @@ echo -n "."
 echo "done"
 
 echo "Okay, handing control over to the perl installer part"
-perl ./MainInstallerPart
+if ! perl ./MainInstallerPart; then
+	xmsg_ok "An unkown error occurred when starting the main installer. Unable to proceed"
+fi

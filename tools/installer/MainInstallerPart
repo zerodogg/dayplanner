@@ -113,3 +113,4 @@ my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "Okay, I'm
 $Finished->run();
 $Finished->destroy();
 print "Installer successfully finished!\n";
+exit(0);
