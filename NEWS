@@ -1,0 +1,28 @@
+Day planner version history
+**************************
+
+Version 0.1.1
+-------------
+* Client (dayplanner)
+- Attempts to restart dayplanner-daemon when recieving SIGPIPE
+- Now it won't attempt to tell the daemon to reload its configuration files
+  when the daemon hasn't been started. This avoids a useless (and harmless)
+  warning the first time day planner is started.
+- Fixed a bug that would make the entire window insensitive when you clicked
+  edit without having something to edit selected
+- Handles daemon errors better and is more verbose about them
+
+* Daemon (dayplanner-daemon)
+- -d is now an alias for --dayplannerdir
+- -s/--socketname now sets the name of the socket, is not required
+- Added NOTIFICATION commands. The notifier can now get the information
+  it needs after being launched so that it doesn't show up in "ps aux"
+
+* Notifier (dayplanner-notifier)
+- Now uses the id from --id to get the information from the daemon after
+  launch (the old legacy syntax is supported so that the notifier can be used
+   in scripts)
+
+Version 0.1
+-----------
+- Initial release
