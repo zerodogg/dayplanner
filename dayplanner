@@ -243,6 +243,9 @@ sub Daemon_ErrorHandler {
 	if ($_[0] =~ /^ERR\s+/) {
 		DPIntWarn("Recived error from daemon: \"$_[0]\"");
 	}
+	if(defined($_[1])) {
+		DPIntWarn("Weird multi-return response from caller: [1]=\"$_[1]\"");
+	}
 	return($_[0]);
 }
 
