@@ -31,7 +31,7 @@ print "Installer version: $Internal_Version\n";
 
 Gtk2->init();
 
-my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically, this is the only dialog box that will require any input from you.\n\nDo you want me to continue?");
+my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
 my $Reply = $Dialog->run();
 $Dialog->destroy();
 unless($Reply eq 'yes') {
@@ -108,8 +108,7 @@ if(-d "$ENV{HOME}/.menu/") {
 
 $ProgressWin->destroy();
 
-
-my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "Okay, I'm done :). You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)");
+my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall day planner run $InstallDirectory/uninstall.sh");
 $Finished->run();
 $Finished->destroy();
 print "Installer successfully finished!\n";
