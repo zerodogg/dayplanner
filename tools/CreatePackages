@@ -54,6 +54,14 @@ unless(-e "$OrigDir/tools/installer") {
 $OrigDir = realpath($OrigDir);
 print "found $OrigDir\n";
 
+print " Verifying required components...";
+foreach (qw/tar bzip2 bunzip2 rpm rpmbuild/) {
+	unless (InPath($_)) {
+		die("failed - \"$_\" is missing\n");
+	}
+	print ".";
+}
+print "okay\n";
 print " Created temporary directory $tempdir\n";
 unless(-e "$OrigDir/packages") {
 	mkdir("$OrigDir/packages");
@@ -66,14 +74,6 @@ unless(-e "$OrigDir/packages") {
 	}
 	print "done\n";
 }
-print " Verifying required components...";
-foreach (qw/tar bzip2 bunzip2 rpm rpmbuild/) {
-	unless (InPath($_)) {
-		die("failed - \"$_\" is missing\n");
-	}
-	print ".";
-}
-print "okay\n";
 
 chdir($tempdir) or die "Unable to chdir to $tempdir: $!\n";
 
