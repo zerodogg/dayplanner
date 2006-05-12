@@ -11,6 +11,8 @@ Version 0.1.1
 - Fixed a bug that would make the entire window insensitive when you clicked
   edit without having something to edit selected
 - Handles daemon errors better and is more verbose about them
+- Fixed a simple fixme where we looped over a command without having to
+- Added distro information to --debuginfo
 
 * Daemon (dayplanner-daemon)
 - -d is now an alias for --dayplannerdir
@@ -22,6 +24,7 @@ Version 0.1.1
 - Now uses the id from --id to get the information from the daemon after
   launch (the old legacy syntax is supported so that the notifier can be used
    in scripts)
+- No longer tries to connect to the daemon when run from the commandline
 
 Version 0.1
 -----------
