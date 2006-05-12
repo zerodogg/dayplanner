@@ -144,7 +144,7 @@ sub StartDaemon {
 		}
 	}
 	DPIntWarn("Unable to start daemon!");
-	return(1);
+	return(0);
 }
 
 # Purpose: Handle SIGPIPE gracefully
@@ -664,11 +664,7 @@ sub DetectImage {
 # Usage: DeleteEvent();
 #  (calls CalendarDelete with the correct parameters)
 sub DeleteEvent () {
-	my $Selected;
-	# FIXME: This is just plain weird
-	foreach ($EventlistWidget->get_selected_indices) {
-		$Selected = $_;
-	}
+	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
 	unless(defined($Selected)) {
 		return(0);
@@ -710,11 +706,7 @@ sub GetRealBirthdayName ($) {
 # Purpose: Detect which kind of event is selected in the eventlist
 # Usage: my $Type = GetEventListType();
 sub GetEventListType() {
-	my $Selected;
-	# FIXME: This is just plain weird
-	foreach ($EventlistWidget->get_selected_indices) {
-		$Selected = $_;
-	}
+	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
 		return(0);
@@ -1061,12 +1053,7 @@ sub AddEvent () {
 # Purpose: Edit the event currently selected in the eventlist
 # Usage: EditEvent ();
 sub EditEvent () {
-	my $Selected;	# The selected entry
-	
-	# FIXME: This is just plain weird
-	foreach ($EventlistWidget->get_selected_indices) {
-		$Selected = $_;
-	}
+	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
 		return(0);
@@ -1918,6 +1905,29 @@ GetOptions (
 		print "RCS revision: $RCSRev\n";
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		printf "Perl version %vd\n", $^V;
+		foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat debian ubuntu gentoo suse distro dist slackware NULL/) {
+			if (-e "/etc/$_-release" or -e "/etc/$_-version" or $_ eq "NULL") {
+				my ($DistVer, $File);
+				if(-e "/etc/$_-release") {
+					$File = "$_-release";
+					open(VERSION_FILE, "<", "/etc/$_-release");
+					$DistVer = <VERSION_FILE>;
+				} elsif (-e "/etc/$_-version") {
+					$File = "$_-version";
+					open(VERSION_FILE, "<", "/etc/$_-release");
+					$DistVer = <VERSION_FILE>;
+				} elsif ($_ eq "NULL") {
+					last unless -e "/etc/version";
+					$File = 'version';
+					open(VERSION_FILE, "<", "/etc/version");
+					$DistVer = <VERSION_FILE>;
+				}
+				chomp($DistVer);
+				print "/etc/$File: $DistVer\n";
+				last;
+
+			}
+		}
 		exit(0);
 	},
 	'test|t' => sub {
