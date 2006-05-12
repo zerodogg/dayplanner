@@ -24,8 +24,6 @@ use Gtk2;			# Use Gtk2
 use Getopt::Long;		# Commandline options
 use IO::Socket;			# Network layer to communicate with the daemon
 use Locale::gettext;		# Translation layer
-use Devel::Trace;
-           $Devel::Trace::TRACE = 1;   # Enable
 
 my $Version = "0.1.1";
 my $RCSRev = '$Id$';
@@ -338,9 +336,11 @@ unless($MessageID) {
 	die "I need a --date\n" unless defined($Date) and length($Date);
 }
 
-die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
-die "$SocketName does not exist\n" unless -e $SocketName;
-die "$SocketName is not a socket\n" unless -S $SocketName;
+if(defined($MessageID)) {
+	die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
+	die "$SocketName does not exist\n" unless -e $SocketName;
+	die "$SocketName is not a socket\n" unless -S $SocketName;
+}
 
 unless($NoFork) {
 	# Okay, we're here now, fork
@@ -349,11 +349,12 @@ unless($NoFork) {
 	die "I was unable to fork: $!\n" unless defined($PID);
 }
 
-DaemonConnect();
-
 if(defined($MessageID)) {
+	DaemonConnect();
 	GetMessages($MessageID);
 }
 
 NotifyUser();
-DaemonDisconnect();
+if(defined($MessageID)) {
+	DaemonDisconnect();
+}
