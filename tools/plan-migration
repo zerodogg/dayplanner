@@ -236,12 +236,14 @@ sub MigratePlan () {
 	
 	print "Writing data file: $ShortDataDir/$MainEventsFile...";
 	open(MainCalendar, ">$DayplannerDataDir/$MainEventsFile") or die "failed\nUnable to open $ShortDataDir/$MainEventsFile for writing: $!\n";
+	print MainCalendar "# Day planner data file written by the plan migration script\n# Saved on ", scalar(localtime(time)), "\n";
 	print MainCalendar Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
 	close(MainCalendar);
 	print "done\n";
 
 	print "Writing data file: $ShortDataDir/$BirthdayFile...";
 	open(Birthdays, ">$DayplannerDataDir/$BirthdayFile") or die "failed\nUnable to open $ShortDataDir/$BirthdayFile for writing: $!\n";
+	print Birthdays "# Day planner data file written by the plan migration script\n# Saved on ", scalar(localtime(time)), "\n";
 	print Birthdays Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayContents"]);
 	close(Birthdays);
 	print "done\n\n";
@@ -290,6 +292,7 @@ GetOptions (
 		$DayplannerDataDir = $_[1];
 	},
 	'p|plandir=s' => \$PlanDir,
+	'v|verbose' => \$Verbose,
 ) or die "See $0 --help for more information\n";
 
 Help() unless $Migrate;
