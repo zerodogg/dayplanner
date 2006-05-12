@@ -631,18 +631,19 @@ sub CommandHandler ($) {
 			$Data::Dumper::Sortkeys = 1;
 			# Set the indentation
 			$Data::Dumper::Indent = 1;
+			my $Return = '';
 			if(/^(DUMP_HASHES|DUMP_MAINHASH)/) {
-				print Data::Dumper->Dump([\%NotificationHash], ["*NotificationHash"]);
+				$Return = Data::Dumper->Dump([\%NotificationHash], ["*NotificationHash"]);
 				if (/^DUMP_HASHES/) {
-					print Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
-					print Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayContents"]);
-					print Data::Dumper->Dump([\%SpecialEvents], ["*SpecialEvents"]);
-					print Data::Dumper->Dump([\%CurrentNotification], ["*CurrentNotification"]);
+					$Return = $Return . Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
+					$Return = $Return . Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayContents"]);
+					$Return = $Return . Data::Dumper->Dump([\%SpecialEvents], ["*SpecialEvents"]);
+					$Return = $Return . Data::Dumper->Dump([\%CurrentNotification], ["*CurrentNotification"]);
 				}
 			} elsif (/^DUMP_CONFIG/) {
-				print Data::Dumper->Dump([\%Config], ["*Config"]);
+				$Return = $Return . Data::Dumper->Dump([\%Config], ["*Config"]);
 			}
-			return("dumped");
+			return(PackageMultiLine($Return));
 		} else {
 			IntDebug("Invalid debug command: \"$_\" from $PID");
 			return("ERR INVALID_COMMAND");
