@@ -2,6 +2,9 @@
 Just run ./dayplanner from this directory, it isn't harder.
 
 * GLOBAL INSTALL - MULTI USER and PACKAGERS *
+If you're a packager you may want to look at tools/rpm/* and perhaps also at
+tools/CreatePackages and possibly tools/installer/MainInstallerPart
+
 This is a bit trickier, these files should go into $PATH somewhere, such as in /usr/local/bin or
 /usr/bin/ and be +x:
 - dayplanner
