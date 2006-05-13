@@ -855,11 +855,11 @@ GetOptions (
 		PrintHelp("-n,", "--nofork", "Don't go into the background (and log to STDOUT/STDERR instead of the logfile)");
 		PrintHelp("-v,", "--verbose", "Be verbose");
 		PrintHelp("-V,", "--veryverbose", "Be very verbose");
-		PrintHelp("-d,", "--debug", "Output debugging information");
+		PrintHelp("-D,", "--debug", "Output debugging information");
 		PrintHelp("-o,", "--output", "Output all messages to the file supplied instead of dayplannerdir/$LogfileName");
 		exit(0);
 	},
-	'debug|d' => sub {
+	'debug|D' => sub {
 		$DebuggingOutput = 1;
 		$OutputVerbose = 1;
 		$OutputVeryVerbose = 1;
