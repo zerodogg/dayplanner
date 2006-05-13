@@ -29,6 +29,16 @@ print "Using install dir: $InstallDirectory\n";
 my $Internal_Version = '$Id$';
 print "Installer version: $Internal_Version\n";
 
+sub InPath {
+	foreach (split /:/, $ENV{PATH}) {
+		if (-x "$_/@_") {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
 Gtk2->init();
 
 my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
@@ -86,6 +96,8 @@ print UNINSTALL "echo \"Done, day planner has been uninstalled.\"\n";
 close(UNINSTALL);
 system("chmod +x $InstallDirectory/uninstall.sh");
 
+# TODO: xdg menu support and xdg desktop icon support
+
 # Write desktop item
 if(-d "$ENV{HOME}/Desktop") {
 	open(DESKTOP, ">$InstallDirectory/dayplanner.desktop");
@@ -99,7 +111,8 @@ if(-d "$ENV{HOME}/Desktop") {
 	close(DESKTOP);
 }
 # Write menu item
-if(-d "$ENV{HOME}/.menu/") {
+if(InPath("update-menus")) {
+	mkdir("$ENV{HOME}/.menu/") unless -d "$ENV{HOME}/.menu/";
 	open(MENU, ">$ENV{HOME}/.menu/dayplanner.menu");
 	print MENU "?package(%{name}):command=\"$InstallDirectory/dayplanner\"  icon=\"$InstallDirectory/art/dayplanner_48.png\"         needs=\"x11\"         section=\"Office/Time Management\"         title=\"Day planner\"         longtitle=\"An easy to use graphical day planner\"\n";
 	close(MENU);
