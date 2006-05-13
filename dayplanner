@@ -215,8 +215,9 @@ sub Daemon_GetData {
 # Usage: $Reply = Daemon_DataSegment(DATA);
 sub Daemon_DataSegment ($) {
 	if($DaemonOnline) {
-		Daemon_SendData($_[0]);
-		return(Daemon_ErrorHandler(Daemon_GetData()));
+		if(Daemon_SendData($_[0])) {
+			return(Daemon_ErrorHandler(Daemon_GetData()));
+		}
 	} else {
 		return("ERR NOT_ONLINE");
 	}
