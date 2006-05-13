@@ -43,10 +43,13 @@ $Data::Dumper::Indent = 1;
 # http://en.wikipedia.org/wiki/Computus#Gauss.27s_algorithm
 # Parts of the code stolen from Kenny Fowler
 #
-# Usage: $EasterYDay = EasterCalc();
-sub EasterCalc () {
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-	$year += 1900;
+# Purpose: Calculate on which day easter occurs on in the year YEAR
+# Usage: $EasterYDay = EasterCalc(YEAR);
+# 
+# YEAR should be absolute and not relative to 1900
+sub EasterCalc ($) {
+	my $year = $_[0];
+
 	my $c;
 	my $l;
 	my $k;
@@ -97,10 +100,12 @@ sub HCalc_NumericYDay ($$$) {
 }
 
 # Purpose: Return the English day name of the year day supplied
-# Usage: $DayName = Holiday_DayName(INTEGER_NUMBER);
-sub Holiday_DayName ($) {
-	my ($currsec,$currmin,$currhour,$currmday,$currmon,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-	my $PosixTime = POSIX::mktime(0, 0, 0, $_[0], 0, $curryear);
+# Usage: $DayName = Holiday_DayName(INTEGER_NUMBER, YEAR);
+sub Holiday_DayName ($$) {
+	my $year = $_[1];
+	$year -= 1900;
+	
+	my $PosixTime = POSIX::mktime(0, 0, 0, $_[0], 0, $year);
 	my %NumToDayHash = (
 		0 => 'sunday',
 		1 => 'monday',
@@ -128,12 +133,13 @@ sub HolidayWarn ($$$) {
 }
 
 # Purpose: Interperate and calculate the holiday file
-# Usage: Holiday_Interperate(\%HashRef);
-sub Holiday_Interperate ($$$) {
+# Usage: Holiday_Interperate(\%HashRef, Line_Number, HolidayName, YEAR);
+sub Holiday_Interperate ($$$$) {
 	my $CreativeParser = $_[0];
 	my $LineNo = $_[1];
 	my $HolidayName = $_[2];
-	my ($currsec,$currmin,$currhour,$currmday,$currmon,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	my $Year = $_[3];
+	#my ($currsec,$currmin,$currhour,$currmday,$currmon,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	if(defined($CreativeParser->{MustBeDay})) {
 		if(defined($CreativeParser->{NumericYDay})) {
 			# Parse the main NumericYDay
@@ -151,7 +157,7 @@ sub Holiday_Interperate ($$$) {
 				# Before parsing
 				# Okay, we need to find the closest $CreativeParser{MustBeDay} before $CreativeParser{FinalYDay}
 				while (1) {
-					if(Holiday_DayName($CreativeParser->{FinalYDay}) eq $CreativeParser->{MustBeDay}) {
+					if(Holiday_DayName($CreativeParser->{FinalYDay}, $Year) eq $CreativeParser->{MustBeDay}) {
 						last;
 					}
 					$CreativeParser->{FinalYDay} = $CreativeParser->{FinalYDay} - 1;
@@ -160,7 +166,7 @@ sub Holiday_Interperate ($$$) {
 				# After parsing
 				# Okay, we need to find the closest $CreativeParser{MustBeDay} after $CreativeParser{FinalYDay}
 				while (1) {
-					if(Holiday_DayName($CreativeParser->{FinalYDay}) eq $CreativeParser->{MustBeDay}) {
+					if(Holiday_DayName($CreativeParser->{FinalYDay}, $Year) eq $CreativeParser->{MustBeDay}) {
 						last;
 					}
 					$CreativeParser->{FinalYDay} = $CreativeParser->{FinalYDay} + 1;
@@ -191,22 +197,32 @@ sub Holiday_Interperate ($$$) {
 		$CreativeParser->{FinalYDay} = HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 	}
 	if(defined($CreativeParser->{FinalYDay})) {
-		my $ScalarTime = POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $curryear);
+		my $PosixYear = $Year;
+		$PosixYear -= 1900;
+		my $ScalarTime = POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear);
 		$ScalarTime = localtime($ScalarTime);
 		chomp($ScalarTime);
-		$curryear += 1900;
-		print "$HolidayName is on day $CreativeParser->{FinalYDay} the year $curryear ($ScalarTime)\n";
+		print "$HolidayName is on day $CreativeParser->{FinalYDay} the year $Year ($ScalarTime)\n";
 	}
 }
 
 # Purpose: Load and parse the holiday file
-# Usage: CalcHoliday(FILE);
-sub CalcHoliday ($) {
-	open(HOLIDAYFILE, "<$_[0]") or die;
+# Usage: CalcHoliday(FILE, YEAR);
+sub CalcHoliday ($$) {
+	my $File = $_[0];
+	my $Year = $_[1];
+	
+	# Validate year
+	if($Year > 2037) {
+		warn("Holiday parser: Can't count longer than 3037. Ignoring request for parsing of $File for the year $Year\n");
+		return(0);
+	}
+	
+	my $PosixYear = $Year;
+	$PosixYear -= 1900;
+	open(HOLIDAYFILE, "<$File") or die;
 	my $LineNo;
 	foreach my $Line (<HOLIDAYFILE>) {
-		my ($currsec,$currmin,$currhour,$currmday,$currmon,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		
 		$LineNo++;
 		next if $Line =~ /^\s*[:;#]/;# Ignore these lines
 		next if $Line =~ /^\s*$/;# Ignore lines with only whitespace
@@ -309,9 +325,9 @@ sub CalcHoliday ($) {
 				$day =~ s/(\d+).*/$1/;
 				$month =~ s#^\d+[/\.](\d+)\.?$#$1#;
 				$month--;
-				my $PosixTime = POSIX::mktime(0, 0, 0, $day, $month, $curryear);
-				my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($PosixTime);
-				$CreativeParser{NumericYDay} = $yday;
+				my $PosixTime = POSIX::mktime(0, 0, 0, $day, $month, $PosixYear);
+				my ($new_sec,$new_min,$new_hour,$new_mday,$new_mon,$new_year,$new_wday,$new_yday,$new_isdst) = localtime($PosixTime);
+				$CreativeParser{NumericYDay} = $new_yday;
 			} elsif (/^(january|february|march|april|may|june|july|august|september|october|november|december)$/) {	# Which month it occurs in
 				$CreativeParser{IsMonth} = $_;
 			} elsif (/^plus$/) {			# If the next number should be added to a NumericYDay value
@@ -321,7 +337,7 @@ sub CalcHoliday ($) {
 			} elsif (/^length$/) {			# How long (in days) it lasts. FIXME: is currently ignored
 				$CreativeParser{NextIs} = 'length';
 			} elsif (/^easter$/) {			# The day of easter
-				$CreativeParser{NumericYDay} = EasterCalc();
+				$CreativeParser{NumericYDay} = EasterCalc($Year);
 			} elsif (/^weekend$/) {			# Malplaced weekend keyword
 				$HolidayType = 'red';
 			} elsif (/^\d+$/) {			# Any other number, see below for parsing
@@ -378,11 +394,29 @@ sub CalcHoliday ($) {
 		# Interperate the file
 		# ==================================================================
 
-		# TODO: Holiday_InterperateFile() ?
-		Holiday_Interperate(\%CreativeParser, $LineNo, $HolidayName);
+		Holiday_Interperate(\%CreativeParser, $LineNo, $HolidayName, $Year);
 	}
 }
 
+# Temporary code to allow commandline invocation
+
 die("Usage: $0 holiday_file\n") unless defined($ARGV[0]) and -e $ARGV[0];
 
-CalcHoliday($ARGV[0]);
+my $CalcYear;
+
+if(defined($ARGV[1])) {
+	if ($ARGV[1] =~ /^\d+$/) {
+		if($ARGV[1] < 1900) {
+			die("Can't work with years lower than 1900\n");
+		}
+		$CalcYear = $ARGV[1];
+	} else {
+		die("The second parameter must be numeric\n");
+	}
+} else {
+	 my ($year_sec,$year_min,$year_hour,$year_mday,$year_mon,$year_year,$year_wday,$year_yday,$year_isdst) = localtime(time);
+	 $CalcYear = $year_year;
+	 $CalcYear += 1900;
+}
+
+CalcHoliday($ARGV[0], $CalcYear);
