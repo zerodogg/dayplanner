@@ -76,34 +76,40 @@ my @BINDIRS = (
 my @BINLINKS;
 
 foreach(@BINDIRS) {
-	symlink("$InstallDirectory/dayplanner", "$_/dayplanner");
-	symlink("$InstallDirectory/dayplanner-daemon", "$_/dayplanner-daemon");
-	symlink("$InstallDirectory/dayplanner-notifier", "$_/dayplanner-notifier");
-	push(@BINLINKS, $_)
+	if(-e $_) {
+		symlink("$InstallDirectory/dayplanner", "$_/dayplanner");
+		symlink("$InstallDirectory/dayplanner-daemon", "$_/dayplanner-daemon");
+		symlink("$InstallDirectory/dayplanner-notifier", "$_/dayplanner-notifier");
+		push(@BINLINKS, $_)
+	}
 }
 # Write uninstall script
 open(UNINSTALL, ">$InstallDirectory/uninstall.sh");
 print UNINSTALL "#!/bin/sh\n";
-print UNINSTALL "echo \"Uninstalling...\"\n";
+print UNINSTALL "echo -n \"Uninstalling...\"\n";
 print UNINSTALL "cd \$HOME\n";
 print UNINSTALL "rm -rf $InstallDirectory\n";
+print UNINSTALL "echo -n \".\"\n";
 foreach(@BINLINKS) {
 	print UNINSTALL "rm -f $_/dayplanner $_/dayplanner-daemon $_/dayplanner-notifier\n";
+	print UNINSTALL "echo -n \".\"\n";
 }
 print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/dayplanner.menu && update-menus\n";
+print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
-print UNINSTALL "echo \"Done, day planner has been uninstalled.\"\n";
+print UNINSTALL "echo \"done\"\n";
+print UNINSTALL "echo \"Day planner has been uninstalled.\"\n";
 close(UNINSTALL);
 system("chmod +x $InstallDirectory/uninstall.sh");
 
-# TODO: xdg menu support and xdg desktop icon support
+# TODO: xdg menu support and xdg (portland-project-style) desktop icon support
 
 # Write desktop item
 if(-d "$ENV{HOME}/Desktop") {
-	open(DESKTOP, ">$InstallDirectory/dayplanner.desktop");
+	open(DESKTOP, ">$ENV{HOME}/Desktop/dayplanner.desktop");
 	print DESKTOP "[Desktop Entry]\n";
 	print DESKTOP "Exec='$InstallDirectory/dayplanner'\n";
-	print DESKTOP "Icon='$InstallDirectory/art/dayplanner_48.png\n'";
+	print DESKTOP "Icon='$InstallDirectory/art/dayplanner_48.png'\n";
 	print DESKTOP "Name='Day planner'\n";
 	print DESKTOP "StartupNotify=true\n";
 	print DESKTOP "Terminal=false\n";
