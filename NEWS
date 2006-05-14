@@ -13,6 +13,8 @@ Version 0.1.1
 - Handles daemon errors better and is more verbose about them
 - Fixed a simple fixme where we looped over a command without having to
 - Added distro information to --debuginfo
+- Fixed a bug where day planner would freeze if the daemon shut down
+  while it was running.
 
 * Daemon (dayplanner-daemon)
 - -d is now an alias for --dayplannerdir
