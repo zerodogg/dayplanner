@@ -108,9 +108,9 @@ system("chmod +x $InstallDirectory/uninstall.sh");
 if(-d "$ENV{HOME}/Desktop") {
 	open(DESKTOP, ">$ENV{HOME}/Desktop/dayplanner.desktop");
 	print DESKTOP "[Desktop Entry]\n";
-	print DESKTOP "Exec='$InstallDirectory/dayplanner'\n";
-	print DESKTOP "Icon='$InstallDirectory/art/dayplanner_48.png'\n";
-	print DESKTOP "Name='Day planner'\n";
+	print DESKTOP "Exec=$InstallDirectory/dayplanner\n";
+	print DESKTOP "Icon=$InstallDirectory/art/dayplanner_48.png\n";
+	print DESKTOP "Name=Day planner\n";
 	print DESKTOP "StartupNotify=true\n";
 	print DESKTOP "Terminal=false\n";
 	print DESKTOP "Type=Application\n";
