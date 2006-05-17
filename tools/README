@@ -8,6 +8,8 @@ commander		The day planner daemon commander. Send raw commands
 			to a day planner daemon. Useful for testing
 plan-migration		See README.plan-migration
 CreatePackages		Helper script for producing day planner packages
+HolidayParser		A unfinished parser of .holiday files that will be
+			implemented into the main of day planner once it's finished.
 installer/		Contains the source code for the generic day planner
 			installer
 rpm/			Contains the specfiles for the day planner RPM
