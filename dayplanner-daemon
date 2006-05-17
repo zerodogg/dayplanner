@@ -590,7 +590,7 @@ sub CommandHandler ($) {
 			if (defined($OutputRedirect) and length($OutputRedirect)) {
 					$OutRedir = $OutputRedirect;
 			}
-			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose || Output redirection: $OutRedir");
+			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose || Outputting to $OutputRedirect");
 		} elsif (/^DUMP_CLIENTLIST/) {
 			IntDebug("Client list request from $PID");
 			my $ClientList;
