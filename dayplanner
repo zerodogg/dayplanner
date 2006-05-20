@@ -49,13 +49,17 @@ my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 
+setlocale( LC_MESSAGES, "" );
+#bindtextdomain("dayplanner", "/usr/share/locale");
+textdomain("dayplanner");
+
 # If for some obscure reason HOME isn't set we can't continue
 unless(defined($ENV{HOME}) and $ENV{HOME}) {
-	die gettext(sprintf("The environment variable %s is not set! Unable to continue\n", "HOME"));
+	die(sprintf(gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
 }
 # The same goes for if HOME doesn't exist or isn't a directory
 unless(-e $ENV{HOME} and -d $ENV{HOME}) {
-	die gettext(sprintf("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n", $ENV{HOME}, "HOME"));
+	die sprintf(gettext("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
 }
 
 # Arrays
