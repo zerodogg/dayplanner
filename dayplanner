@@ -1451,7 +1451,7 @@ sub AboutBox () {
 	}
 	# Translator credits
 	unless ($Gettext->get("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
-		$AboutDialog->set_translators($Gettext->get("THE NAMES OF THE TRANSLATORS"));
+		$AboutDialog->set_translator_credits($Gettext->get("THE NAMES OF THE TRANSLATORS"));
 	}
 	$AboutDialog->run;
 	$MainWindow->set_sensitive(1);
