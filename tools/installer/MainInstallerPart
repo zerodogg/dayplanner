@@ -114,6 +114,8 @@ if(-d "$ENV{HOME}/Desktop") {
 	print DESKTOP "StartupNotify=true\n";
 	print DESKTOP "Terminal=false\n";
 	print DESKTOP "Type=Application\n";
+	print DESKTOP "Name[nb]=Dagsplanlegger\n";
+	print DESKTOP "Name[no]=Dagsplanlegger\n";
 	close(DESKTOP);
 }
 # Write menu item
