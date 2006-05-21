@@ -85,6 +85,9 @@ if (system("cp -r $OrigDir $tempdir/dayplanner-$DPVersion/")) {
 }
 print "done\n";
 # Clean up the archive
+
+# TODO: Remove all files that are not in SVN. Can do this by working recursively on
+# all directories and checking .svn/entries
 print " Cleaning up the source directory...";
 system("rm -rf `find $tempdir/dayplanner-$DPVersion/ -name '*.svn*'`");
 print ".";
@@ -178,6 +181,9 @@ foreach(qw/MainInstallerPart StartInstaller xmsg/) {
 	system("cp -r $OrigDir/tools/installer/$_ $tempdir/installer/");
 	print ".";
 }
+print "done\n";
+print " Running tools/BuildLocale...";
+system("$tempdir/installer/dayplanner-data/tools/BuildLocale > /dev/null");
 print "done\n";
 # Find makeself
 print " Detecting makeself...";
