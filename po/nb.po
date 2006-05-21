@@ -1,0 +1,328 @@
+# PO file for Day Planner
+# Copyright (C) 2006 Eskild Hustvedt
+# This file is distributed under the GNU General Public License
+# as published by the Free Software Foundation; either version 2 of the license
+# or (at your option) any later version (the same license as Day Planner)
+#
+# Eskild Hustvedt <zerodogg@skolelinux.no>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: dayplanner 0.1.1\n"
+"Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
+"POT-Creation-Date: 2006-05-20 11:55+0200\n"
+"PO-Revision-Date: 2006-05-20 12:57+0100\n"
+"Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
+"Language-Team: Norwegian Bokmal <i18n-nb@lister.ping.uio.no>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: dayplanner:45
+msgid "dayplanner"
+msgstr "dayplanner"
+
+#: dayplanner:54
+#, perl-format
+msgid "The environment variable %s is not set! Unable to continue\n"
+msgstr "Miljøvariabelen %s er ikke satt! Kan ikke fortsette.\n"
+
+#: dayplanner:58
+#, perl-format
+msgid "Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"
+msgstr "Hjemmemappa di (%s) finnes ikke! Vennligs sjekk at miljøvariabelen %s er satt. Kan ikke fortsette.\n"
+
+#: dayplanner:260
+msgid ""
+"Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n"
+"\n"
+"Running two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."
+msgstr ""
+"En annen dagsplanlegger kjører allerede. Avslutt den dagsplanleggeren som allerede kjører før du fortsetter\n"
+"\n"
+"Du kan tvinge dagsplanleggeren til å tillate flere enn en dagsplanlegger kjørende om gangen. Dette anbefales ikke ettersom det kan ende opp i tap eller skadet data."
+
+#: dayplanner:274
+msgid "I was unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."
+msgstr "Klarte ikke å tvinge oppstarten. Dette er sannsynligvis pga. en feli i programmet. Ta kontakt med utviklerene av dagsplanleggeren."
+
+#: dayplanner:293
+#, perl-format
+msgid "Unable to save the configuration settings to %s: %s"
+msgstr "Klarte ikke lagre oppsettet til %s: %s"
+
+#: dayplanner:354
+#, perl-format
+msgid "Unable to read the configuration settings from %s: %s"
+msgstr "Klarte ikke lese oppsettet fra %s: %s"
+
+#: dayplanner:409
+#, perl-format
+msgid ""
+"Unable to create the directory %s: %s\n"
+"Manually create this directory before closing this dialog."
+msgstr ""
+"Klarte ikke opprette mappa %s: %s\n"
+"Opprett denne mappa manuelt før du lukker dette vinduet."
+
+#: dayplanner:420
+msgid "Saving..."
+msgstr "Lagrer..."
+
+#: dayplanner:466
+#: dayplanner:473
+#: dayplanner:475
+#, perl-format
+msgid ""
+"FATAL ERROR: Unable to open %s for writing: %s\n"
+"Writing to %s instead"
+msgstr ""
+"FATAL FEIL: Klarte ikke å åpne %s for skriving: %s\n"
+"Skriver til %s istedenfor"
+
+#: dayplanner:517
+msgid ""
+"<b><big>Day planner encountered an error while saving events</big></b>.\n"
+"\n"
+"There appears to be another instance of day planner running. This may lead to data loss.\n"
+"\n"
+"Leaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."
+msgstr ""
+"<b><big>En feil oppstod under lagringen av hendelsene.</big></b>\n"
+"\n"
+"Det virker som om en annen dagsplanlegger kjører. Dette kan lede til tap av data.\n"
+"\n"
+"Ved å la denne dagsplanleggeren være åpen til du fikser problemet med den andre dagsplanleggeren vil passe på at informasjonen din forblir trygg. Lukker du denne dagsplanleggeren før den kan sikkert lagre endringene dine vil resultere i tap av data."
+
+#: dayplanner:701
+#: dayplanner:1720
+#, perl-format
+msgid "%s's birthday"
+msgstr "%ss bursdag"
+
+#: dayplanner:784
+msgid "Some files could not be saved correctly. Are you sure you want to quit?"
+msgstr "Noen filer kunne ikke lagres. Er du sikker på at du vil avslutte?"
+
+#: dayplanner:789
+msgid "Are you sure you still want to quit?"
+msgstr "Er du sikker på at du vil avslutte?"
+
+#: dayplanner:947
+#: dayplanner:1702
+msgid "Event"
+msgstr "Hendelse"
+
+#: dayplanner:1001
+msgid "Add an event"
+msgstr "Legg til en hendelse"
+
+#: dayplanner:1001
+#, perl-format
+msgid "Adding an event on the %s. %s %s"
+msgstr "Legger til en hendelse på %s, %s %s"
+
+#: dayplanner:1008
+msgid "Event type:"
+msgstr "Hendelsestype:"
+
+#: dayplanner:1013
+msgid "Normal"
+msgstr "Normal"
+
+#: dayplanner:1014
+msgid "Birthday"
+msgstr "Bursdag"
+
+#: dayplanner:1088
+msgid "Editing an event"
+msgstr "Redigerer en hendelse"
+
+#: dayplanner:1088
+#, perl-format
+msgid "Editing an event on the %s. %s %s"
+msgstr "Redigerer en hendelse på %s. %s %s"
+
+#: dayplanner:1110
+msgid "Editing a birthday"
+msgstr "Redigerer en bursdag"
+
+#: dayplanner:1110
+#, perl-format
+msgid "Editing a birthday on the %s. %s %s"
+msgstr "Redigerer en bursdag på %s. %s %s"
+
+#: dayplanner:1183
+msgid "Time:"
+msgstr "Tid:"
+
+#: dayplanner:1193
+msgid "Summary:"
+msgstr "Sammendrag:"
+
+#: dayplanner:1205
+msgid "Enter a summary of the event here"
+msgstr "Skriv inn et sammendrag av hendelsen her"
+
+#: dayplanner:1212
+#: dayplanner:1540
+msgid "Details"
+msgstr "Detaljer"
+
+#: dayplanner:1218
+msgid "Use this if you need to enter additional information about the event"
+msgstr "Bruk dette hvis du trenger å skrive inn mer informasjon om hendelsen"
+
+#: dayplanner:1283
+msgid "Name:"
+msgstr "Navn:"
+
+#: dayplanner:1295
+msgid "Enter the name of the person whose birthday it is here"
+msgstr "Skriv inn navnet til personen som har bursdag her"
+
+#: dayplanner:1328
+#: dayplanner:1334
+#, perl-format
+msgid "There is already an event at %s on %s %s. Please select another time for this event."
+msgstr "Det er allerede en hendelse klokka %s på %s %s. Velg et annet tidspunkt for denne hendelsen."
+
+#: dayplanner:1339
+msgid "There is no summary for this event. Please enter a summary."
+msgstr "Du har ikke skrevet inn et sammendrag for denne hendelsen. Skriv inn et sammendrag."
+
+#: dayplanner:1382
+#: dayplanner:1388
+#, perl-format
+msgid "A Birthday already exists for \"%s\" on %s %s"
+msgstr "En bursdag eksisterer allerede for «%s» på %s %s"
+
+#: dayplanner:1393
+msgid "A name is required to add a birthday"
+msgstr "Du må skrive inn et navn for å legge til en bursdag"
+
+#: dayplanner:1427
+#: dayplanner:1741
+msgid "Day planner"
+msgstr "Dagsplanlegger"
+
+#: dayplanner:1438
+#: dayplanner:1439
+msgid "THE NAMES OF THE TRANSLATORS"
+msgstr "Eskild Hustvedt <zerodogg at skolelinux dot no>"
+
+#: dayplanner:1451
+msgid "Preferences"
+msgstr "Brukervalg"
+
+#: dayplanner:1476
+msgid "Interface"
+msgstr "Brukergrensesnitt"
+
+#: dayplanner:1487
+msgid "Toolbar icon style"
+msgstr "Ikonstil for verktøylinja"
+
+#: dayplanner:1493
+msgid "Icons only"
+msgstr "Bare ikoner"
+
+#: dayplanner:1494
+msgid "Text only"
+msgstr "Bare tekst"
+
+#: dayplanner:1495
+msgid "Both text and icons"
+msgstr "Både tekst og ikoner"
+
+#: dayplanner:1496
+msgid "Hidden"
+msgstr "Skjult"
+
+#: dayplanner:1540
+#, perl-format
+msgid "Expand \"%s\" by default"
+msgstr "Utvid «%s» som standard"
+
+#: dayplanner:1593
+msgid "General events"
+msgstr "Generelle hendelser"
+
+#: dayplanner:1600
+msgid "Use notifications before events"
+msgstr "Varsle meg om hendelser før hendelsestidspunktet"
+
+#: dayplanner:1610
+msgid "Time before the event to display the notification"
+msgstr "Hvor lenge før hendelsen varslingen skal vises"
+
+#: dayplanner:1615
+#: dayplanner:1616
+#: dayplanner:1617
+#: dayplanner:1618
+#, perl-format
+msgid "%s minutes"
+msgstr "%s minutter"
+
+#: dayplanner:1619
+#, perl-format
+msgid "%s hour"
+msgstr "%s time"
+
+#: dayplanner:1620
+#: dayplanner:1621
+#: dayplanner:1622
+#, perl-format
+msgid "%s hours"
+msgstr "%s timer"
+
+#: dayplanner:1639
+msgid "Warn me one day in advance"
+msgstr "Advar meg en dag på forhånd"
+
+#: dayplanner:1701
+msgid "Time"
+msgstr "Tid"
+
+#: dayplanner:1765
+#: dayplanner:1766
+#: dayplanner:1767
+#: dayplanner:1768
+#: dayplanner:1769
+#: dayplanner:1770
+#: dayplanner:1771
+#: dayplanner:1772
+#: dayplanner:1773
+msgid "_Calendar"
+msgstr "_Kalender"
+
+#: dayplanner:1767
+msgid "_Add an event"
+msgstr "_Legg til en hendelse"
+
+#: dayplanner:1768
+msgid "_Edit this event"
+msgstr "_Rediger denne hendelsen"
+
+#: dayplanner:1769
+msgid "_Delete this event"
+msgstr "_Slett denne hendelsen"
+
+#: dayplanner:1771
+msgid "_Preferences"
+msgstr "_Brukervalg"
+
+#: dayplanner:1773
+msgid "_Quit"
+msgstr "_Avslutt"
+
+#: dayplanner:1775
+#: dayplanner:1776
+msgid "_Help"
+msgstr "_Hjelp"
+
+#: dayplanner:1776
+msgid "_About"
+msgstr "_Om"
+
