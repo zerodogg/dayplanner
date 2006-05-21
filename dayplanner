@@ -36,6 +36,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 # Scalars
 my $Version = "0.1.1";
 my $RCSRev = '$Id$';
+my $SoftwareDir = dirname(Cwd::realpath($0));
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
@@ -49,17 +50,27 @@ my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 
-setlocale( LC_MESSAGES, "" );
-#bindtextdomain("dayplanner", "/usr/share/locale");
+setlocale(LC_MESSAGES, "" );
 textdomain("dayplanner");
+
+# Find out if we have a locale directory in our main dir
+if (-d "$SoftwareDir/locale/" and defined($ENV{LANG})) {
+	my $I18N = $ENV{LANG};
+	if($I18N =~ /:/) {
+		$I18N =~ s/^(.+):.*$/$1/;
+	}
+	if (-e "$SoftwareDir/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
+		bindtextdomain("dayplanner", "$SoftwareDir/locale");
+	}
+}
 
 # If for some obscure reason HOME isn't set we can't continue
 unless(defined($ENV{HOME}) and $ENV{HOME}) {
-	die(sprintf(gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
+	die(sprintf($Gettext->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
 }
 # The same goes for if HOME doesn't exist or isn't a directory
 unless(-e $ENV{HOME} and -d $ENV{HOME}) {
-	die sprintf(gettext("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
+	die sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
 }
 
 # Arrays
@@ -261,7 +272,7 @@ sub DaemonConnectionErrorHandler () {
 						'destroy-with-parent',
 						'error',
 						'none',
-						 gettext("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
+						 $Gettext->get("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
 
 	$ErrorDialog->add_buttons(
 		'Force' => 'reject',
@@ -275,7 +286,7 @@ sub DaemonConnectionErrorHandler () {
 	} else {
 		$ErrorDialog->destroy;
 		unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-				DPError(gettext("I was unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
+				DPError($Gettext->get("I was unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
 				exit(1);
 			}
 	}
@@ -294,7 +305,7 @@ sub WriteConfig ($$) {
 	# Open the config
 	open(CONFIG, ">$Dir/$File") or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPError(gettext(sprintf("Unable to save the configuration settings to %s: %s", "$Dir/$File", $!)));
+		DPError($Gettext->get(sprintf("Unable to save the configuration settings to %s: %s", "$Dir/$File", $!)));
 		return(0);
 	};
 	# Verify the options first
@@ -355,7 +366,7 @@ sub LoadConfig ($$) {
 	
 	# Open the config
 	open(CONFIG, "<$Dir/$File") or do {
-		DPError(gettext(sprintf("Unable to read the configuration settings from %s: %s", "$Dir/$File", $!)));
+		DPError($Gettext->get(sprintf("Unable to read the configuration settings from %s: %s", "$Dir/$File", $!)));
 		return(0);
 	};
 	
@@ -410,7 +421,7 @@ sub SaveDefaultConfig () {
 sub CreateSaveDir () {
 	unless (-e $SaveToDir) {
 		mkdir($SaveToDir) or do {
-				DPError(gettext(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
+				DPError($Gettext->get(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
 			}
 	}
 }
@@ -421,7 +432,7 @@ sub SaveDatafile ($$$$) {
 	# Create the progress window
 	my $ProgressWin = Gtk2::Window->new('toplevel');
 	$ProgressWin->set_modal(1);
-	$ProgressWin->set_title(gettext("Saving..."));
+	$ProgressWin->set_title($Gettext->get("Saving..."));
 	$ProgressWin->set_resizable(0);
 	# Create the progress bar
 	my $ProgressBar = Gtk2::ProgressBar->new();
@@ -467,16 +478,16 @@ sub SaveDatafile ($$$$) {
 		$ProgressWin->hide();
 		# If $FallbackDirectory is true then display the error and try to open the fallback
 		if ($FallbackDirectory) {
-			DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
+			DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
 			$FallbackFailed = 0;
 			open(SAVEFILE, ">$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
 		} 
 		# If FallbackDirectory failed or we didn't find one - output to STDOUT
 		if ($FallbackFailed) {
 			if ($FallbackDirectory) {	# If $FallbackDirectory was attempted but failed then display this
-				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$FallbackDirectory/$_[1]", $Error, "STDOUT"));
+				DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$FallbackDirectory/$_[1]", $Error, "STDOUT"));
 			} else {			# If $FallbackDirectory wasn't possible, display this
-				DPError(sprintf(gettext("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
+				DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
 			}
 			print STDOUT Dumper(\%CalendarContents);
 			# By returning 0 we tell the caller that something went very wrong and that we
@@ -518,7 +529,7 @@ sub SaveMainData () {
 	}
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
-		DPWarning(gettext("<b><big>Day planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of day planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
+		DPWarning($Gettext->get("<b><big>Day planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of day planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
 		if ($Return eq 'OKAY') {
 			$Return = 'DAEMON_RELOAD_FAILURE';
 		}
@@ -702,7 +713,7 @@ sub DeleteEvent () {
 # Usage: my $Name = GetRealBirthdayName(NAME);
 sub GetRealBirthdayName ($) {
 	my $Name = $_[0];
-	my $BirthdayString = gettext("%s's birthday");
+	my $BirthdayString = $Gettext->get("%s's birthday");
 	$BirthdayString =~ s/%s//;
 	$Name =~ s/$BirthdayString$//;
 	return($Name);
@@ -785,12 +796,12 @@ sub QuitSub () {
 	$MainWindow->hide();
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
-		unless(DPQuestion(gettext("Some files could not be saved correctly. Are you sure you want to quit?"))) {
+		unless(DPQuestion($Gettext->get("Some files could not be saved correctly. Are you sure you want to quit?"))) {
 			$MainWindow->show();
 			return(1);
 		}
 	} elsif ($SaveData eq 'DAEMON_RELOAD_FAILURE') {
-		unless(DPQuestion(gettext("Are you sure you still want to quit?"))) {
+		unless(DPQuestion($Gettext->get("Are you sure you still want to quit?"))) {
 			$MainWindow->show();
 			return(1);
 		}
@@ -948,7 +959,7 @@ sub CreateEventContainerWin ($$$) {
 	
 	# Create the frame
 	my $TBFrame = Gtk2::Frame->new();
-	$TBFrame->set_label(gettext("Event"));
+	$TBFrame->set_label($Gettext->get("Event"));
 	$FrameHBox->pack_start($TBFrame,1,1,0);
 	$TBFrame->show();
 	
@@ -1002,20 +1013,20 @@ sub AddEvent () {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Add an event"), gettext('Adding an event on the %s. %s %s'), 'gtk-add');
+	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin($Gettext->get("Add an event"), $Gettext->get('Adding an event on the %s. %s %s'), 'gtk-add');
 	# Create the OK button handler and event type selector
 	# HBox
 	my $SelectorHBox = Gtk2::HBox->new();
 	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
 	$SelectorHBox->show();
 	# Label
-	my $EventTypeLabel = Gtk2::Label->new(gettext("Event type:"));
+	my $EventTypeLabel = Gtk2::Label->new($Gettext->get("Event type:"));
 	$SelectorHBox->pack_start($EventTypeLabel,0,0,0);
 	$EventTypeLabel->show();
 	# Combo selector
 	my $EventType_Combo = Gtk2::ComboBox->new_text;
-	$EventType_Combo->insert_text(0, gettext("Normal"));
-	$EventType_Combo->insert_text(1, gettext("Birthday"));
+	$EventType_Combo->insert_text(0, $Gettext->get("Normal"));
+	$EventType_Combo->insert_text(1, $Gettext->get("Birthday"));
 	$SelectorHBox->pack_start($EventType_Combo,0,0,0);
 	$EventType_Combo->show();
 
@@ -1023,7 +1034,7 @@ sub AddEvent () {
 #	my $Tooltips = Gtk2::Tooltips->new();
 #	$Tooltips->enable();
 	# Set the tooltip
-#	$Tooltips->set_tip($EventType_Combo, gettext("The type of event you are adding. Normal is the standard event. It has entries for time, summary and details. Birthday simply has an entry for the name of the person whose birthday it is"));
+#	$Tooltips->set_tip($EventType_Combo, $Gettext->get("The type of event you are adding. Normal is the standard event. It has entries for time, summary and details. Birthday simply has an entry for the name of the person whose birthday it is"));
 	
 	# Create the widgets for the normal event selection
 	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
@@ -1089,7 +1100,7 @@ sub EditEvent () {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Editing an event"), gettext('Editing an event on the %s. %s %s'), 'gtk-ok');
+		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin($Gettext->get("Editing an event"), $Gettext->get('Editing an event on the %s. %s %s'), 'gtk-ok');
 		
 		if(CalendarDefined($EventYear,$EventMonth,$EventDay,$Time)) {
 			
@@ -1111,7 +1122,7 @@ sub EditEvent () {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(gettext("Editing a birthday"), gettext('Editing a birthday on the %s. %s %s'), 'gtk-ok');
+		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin($Gettext->get("Editing a birthday"), $Gettext->get('Editing a birthday on the %s. %s %s'), 'gtk-ok');
 		
 		$Summary = GetRealBirthdayName($Summary);
 		$TimeHash{OldEventSummary} = $Summary;
@@ -1184,7 +1195,7 @@ sub NormalEventWindow ($$$$) {
 	# ==================================================================
 	
 	# Create the time label
-	my $TimeLabel = Gtk2::Label->new(gettext('Time:'));
+	my $TimeLabel = Gtk2::Label->new($Gettext->get('Time:'));
 	$TimeLabel->show();
 	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
 	
@@ -1194,7 +1205,7 @@ sub NormalEventWindow ($$$$) {
 	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
 	
 	# Create the summary label
-	my $SummaryLabel = Gtk2::Label->new(gettext('Summary:'));
+	my $SummaryLabel = Gtk2::Label->new($Gettext->get('Summary:'));
 	$SummaryLabel->show();
 	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
 
@@ -1206,20 +1217,20 @@ sub NormalEventWindow ($$$$) {
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
-	$Tooltips->set_tip($SummaryEntry, gettext("Enter a summary of the event here"));
+	$Tooltips->set_tip($SummaryEntry, $Gettext->get("Enter a summary of the event here"));
 	
 	# ==================================================================
 	# ADD THE EXTENDED ENTRY
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my $FT_Expander = Gtk2::Expander->new(gettext("Details"));
+	my $FT_Expander = Gtk2::Expander->new($Gettext->get("Details"));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	$FT_Expander->show();
 	if ($EditorVerboseDefault) {
 		$FT_Expander->set_expanded(1);
 	}
-	$Tooltips->set_tip($FT_Expander, gettext("Use this if you need to enter additional information about the event"));
+	$Tooltips->set_tip($FT_Expander, $Gettext->get("Use this if you need to enter additional information about the event"));
 	
 	# Add the extended entry box
 	my $FulltextEntry = Gtk2::TextView->new();
@@ -1284,7 +1295,7 @@ sub BirthdayEventWindow ($$$) {
 	# ==================================================================
 	
 	# Create the summary label
-	my $SummaryLabel = Gtk2::Label->new(gettext('Name:'));
+	my $SummaryLabel = Gtk2::Label->new($Gettext->get('Name:'));
 	$SummaryLabel->show();
 	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
 
@@ -1296,7 +1307,7 @@ sub BirthdayEventWindow ($$$) {
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
-	$Tooltips->set_tip($SummaryEntry, gettext("Enter the name of the person whose birthday it is here"));
+	$Tooltips->set_tip($SummaryEntry, $Gettext->get("Enter the name of the person whose birthday it is here"));
 	
 	return($MainVBox, $SummaryEntry);
 }
@@ -1329,18 +1340,18 @@ sub NormalEvent_OK ($$$$$$$) {
 	if ($IsEditing) {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
 			unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
-				DPError(gettext(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
+				DPError($Gettext->get(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 		}
 	} else {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-				DPError(gettext(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
+				DPError($Gettext->get(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 	}
 	unless ($Summary) {
-		DPError(gettext("There is no summary for this event. Please enter a summary."));
+		DPError($Gettext->get("There is no summary for this event. Please enter a summary."));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
@@ -1383,18 +1394,18 @@ sub BirthdayEvent_OK ($$$$) {
 	if ($IsEditing) {
 		if (defined($BirthdayContents{$EventMonth}{$EventDay}{$Summary})) {
 			unless ($EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Summary eq $OldEventSummary) {
-				DPError(gettext(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
+				DPError($Gettext->get(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
 				$Error = 1;
 			}
 		}
 	} else {
 		if (defined($BirthdayContents{$EventMonth}{$EventDay}{$Summary})) {
-			DPError(gettext(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
+			DPError($Gettext->get(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
 			$Error = 1;
 		}
 	}
 	unless ($Summary) {
-		DPError(gettext("A name is required to add a birthday"));
+		DPError($Gettext->get("A name is required to add a birthday"));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
@@ -1428,7 +1439,7 @@ sub AboutBox () {
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
 	$AboutDialog->set_website("http://home.gna.org/dayplanner/");
-	$AboutDialog->set_name(gettext("Day planner"));
+	$AboutDialog->set_name($Gettext->get("Day planner"));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with day planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
@@ -1439,8 +1450,8 @@ sub AboutBox () {
 		$AboutDialog->set_logo($PixBuf);
 	}
 	# Translator credits
-	unless (gettext("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
-		$AboutDialog->set_translators(gettext("THE NAMES OF THE TRANSLATORS"));
+	unless ($Gettext->get("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
+		$AboutDialog->set_translators($Gettext->get("THE NAMES OF THE TRANSLATORS"));
 	}
 	$AboutDialog->run;
 	$MainWindow->set_sensitive(1);
@@ -1452,7 +1463,7 @@ sub AboutBox () {
 sub PreferencesWindow () {
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
-	$PreferencesWindow->set_title(gettext("Preferences"));
+	$PreferencesWindow->set_title($Gettext->get("Preferences"));
 	$PreferencesWindow->set_resizable(0);
 	$PreferencesWindow->set_border_width(12);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
@@ -1477,7 +1488,7 @@ sub PreferencesWindow () {
 	$General_VBox->show();
 	$Config_VBox->pack_start($General_VBox,0,0,0);
 	
-	my $UI_Label = Gtk2::Label->new("<b>" . gettext("Interface") . "</b>");
+	my $UI_Label = Gtk2::Label->new("<b>" . $Gettext->get("Interface") . "</b>");
 	$UI_Label->set_use_markup(1);
 	$UI_Label->set_alignment(0,1);
 	$General_VBox->pack_start($UI_Label,0,0,0);
@@ -1488,16 +1499,16 @@ sub PreferencesWindow () {
 	$TBStyle_HBox->show();
 	$General_VBox->pack_start($TBStyle_HBox,0,0,0);
 
-	my $TBStyle_Label = Gtk2::Label->new(gettext("Toolbar icon style"));
+	my $TBStyle_Label = Gtk2::Label->new($Gettext->get("Toolbar icon style"));
 	$TBStyle_Label->show();
 	$TBStyle_HBox->pack_start($TBStyle_Label,0,0,0);
 	
 	# The combo options
 	# both, icons, text
-	my $TBStyle_icons = gettext("Icons only");
-	my $TBStyle_text = gettext("Text only");
-	my $TBStyle_both = gettext("Both text and icons");
-	my $TBStyle_hidden = gettext("Hidden");
+	my $TBStyle_icons = $Gettext->get("Icons only");
+	my $TBStyle_text = $Gettext->get("Text only");
+	my $TBStyle_both = $Gettext->get("Both text and icons");
+	my $TBStyle_hidden = $Gettext->get("Hidden");
 	
 	my $TBStyle_Combo = Gtk2::ComboBox->new_text;
 	$TBStyle_Combo->insert_text(0, $TBStyle_icons);
@@ -1541,7 +1552,7 @@ sub PreferencesWindow () {
 			}});
 
 	# EDITOR VERBOSE DEFAULT
-	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(gettext(sprintf("Expand \"%s\" by default", gettext("Details"))));
+	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label($Gettext->get(sprintf("Expand \"%s\" by default", $Gettext->get("Details"))));
 	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
 	if ($EditorVerboseDefault) {
@@ -1594,14 +1605,14 @@ sub PreferencesWindow () {
 	$Config_VBox->pack_start($Events_VBox,0,0,0);
 
 	# The label
-	my $Events_Label = Gtk2::Label->new("<b>" . gettext("General events") . "</b>");
+	my $Events_Label = Gtk2::Label->new("<b>" . $Gettext->get("General events") . "</b>");
 	$Events_Label->set_use_markup(1);
 	$Events_Label->set_alignment(0,1);
 	$Events_VBox->pack_start($Events_Label,0,0,0);
 	$Events_Label->show();
 	
 	# The main checkbox that enables/disables the entire page
-	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(gettext("Use notifications before events"));
+	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label($Gettext->get("Use notifications before events"));
 	$Events_EnabledCheckbox->show();
 	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
 
@@ -1611,19 +1622,19 @@ sub PreferencesWindow () {
 	$Events_VBox->pack_start($TimeSel_HBox,0,0,0);
 	$TimeSel_HBox->show();
 	# The label
-	my $TimeSel_Label = Gtk2::Label->new(gettext('Time before the event to display the notification') . ': ');
+	my $TimeSel_Label = Gtk2::Label->new($Gettext->get('Time before the event to display the notification') . ': ');
 	$TimeSel_Label->show();
 	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
 	# The combo box
 	my $TimeSel_Combo = Gtk2::ComboBox->new_text();
-	$TimeSel_Combo->insert_text(0, gettext(sprintf("%s minutes","10")));
-	$TimeSel_Combo->insert_text(1, gettext(sprintf("%s minutes","20")));
-	$TimeSel_Combo->insert_text(2, gettext(sprintf("%s minutes","30")));
-	$TimeSel_Combo->insert_text(3, gettext(sprintf("%s minutes","45")));
-	$TimeSel_Combo->insert_text(4, gettext(sprintf("%s hour","1")));
-	$TimeSel_Combo->insert_text(5, gettext(sprintf("%s hours","2")));
-	$TimeSel_Combo->insert_text(6, gettext(sprintf("%s hours","4")));
-	$TimeSel_Combo->insert_text(7, gettext(sprintf("%s hours","6")));
+	$TimeSel_Combo->insert_text(0, $Gettext->get(sprintf("%s minutes","10")));
+	$TimeSel_Combo->insert_text(1, $Gettext->get(sprintf("%s minutes","20")));
+	$TimeSel_Combo->insert_text(2, $Gettext->get(sprintf("%s minutes","30")));
+	$TimeSel_Combo->insert_text(3, $Gettext->get(sprintf("%s minutes","45")));
+	$TimeSel_Combo->insert_text(4, $Gettext->get(sprintf("%s hour","1")));
+	$TimeSel_Combo->insert_text(5, $Gettext->get(sprintf("%s hours","2")));
+	$TimeSel_Combo->insert_text(6, $Gettext->get(sprintf("%s hours","4")));
+	$TimeSel_Combo->insert_text(7, $Gettext->get(sprintf("%s hours","6")));
 	# Set the value
 	if($Events_NotifyPre eq "0") {
 		$TimeSel_Combo->set_active(3);
@@ -1640,7 +1651,7 @@ sub PreferencesWindow () {
 			});
 	
 	# If the user wants to be notified in advance
-	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label(gettext("Warn me one day in advance"));
+	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label($Gettext->get("Warn me one day in advance"));
 	$NotifyAdvance_CheckBox->show();
 	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
 	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
@@ -1702,8 +1713,8 @@ sub DrawEventlist() {
 	my $Day = $CalendarWidget->selected_day;
 	unless ($EventlistWidget) {
 		$EventlistWidget = Gtk2::SimpleList->new (
-			gettext("Time") => 'text',
-			gettext("Event") => 'text',
+			$Gettext->get("Time") => 'text',
+			$Gettext->get("Event") => 'text',
 		);
 		$EventlistWin->add($EventlistWidget);
 	} else {
@@ -1721,7 +1732,7 @@ sub DrawEventlist() {
 	}
 	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
 		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
-			push (@{$EventlistWidget->{data}}, ["", sprintf(gettext("%s's birthday"), $Birthday)]);
+			push (@{$EventlistWidget->{data}}, ["", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
 		}
 	}
 	# Register doubleclick (FIXME)
@@ -1742,7 +1753,7 @@ sub DrawMainWindow () {
 	# ==================================================================
 	# Create the main window widget
 	$MainWindow = Gtk2::Window->new('toplevel');
-	$MainWindow->set_title(gettext("Day planner"));
+	$MainWindow->set_title($Gettext->get("Day planner"));
 	$MainWindow->set_default_size (600,300);
 
 	# Set the icon
@@ -1766,18 +1777,18 @@ sub DrawMainWindow () {
 	# The menu items
 	my @MenuItems = (
 		# Calendar menu
-		[ "/" . gettext("_Calendar"),						undef,			undef,			0,	"<Branch>"],
-		[ "/" . gettext("_Calendar") . "/tearoff",				undef,			undef,			0,	"<Tearoff>"],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Add an event"),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
-		[ "/" . gettext("_Calendar") . "/sep1",					undef,			undef,			4,	"<Separator>"],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Preferences"),		undef,			\&PreferencesWindow,		5, 	'<StockItem>', 'gtk-preferences' ],
-		[ "/" . gettext("_Calendar") . "/sep2",					undef,			undef,			6,	'<Separator>'],
-		[ "/" . gettext("_Calendar") . "/" . gettext("_Quit"),		"<control>Q",		\&QuitSub,		0,	"<StockItem>",	'gtk-quit'],
+		[ "/" . $Gettext->get("_Calendar"),						undef,			undef,			0,	"<Branch>"],
+		[ "/" . $Gettext->get("_Calendar") . "/tearoff",				undef,			undef,			0,	"<Tearoff>"],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Add an event"),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
+		[ "/" . $Gettext->get("_Calendar") . "/sep1",					undef,			undef,			4,	"<Separator>"],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Preferences"),		undef,			\&PreferencesWindow,		5, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/" . $Gettext->get("_Calendar") . "/sep2",					undef,			undef,			6,	'<Separator>'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Quit"),		"<control>Q",		\&QuitSub,		0,	"<StockItem>",	'gtk-quit'],
 		# Help menu
-		[ "/" . gettext("_Help"),						undef,			undef,			0,	"<Branch>" ],
-		[ "/" . gettext("_Help") . "/" . gettext("_About"),			undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
+		[ "/" . $Gettext->get("_Help"),						undef,			undef,			0,	"<Branch>" ],
+		[ "/" . $Gettext->get("_Help") . "/" . $Gettext->get("_About"),			undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
 	);
 	# The accelgroup to use for the menuitems
 	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
@@ -1857,7 +1868,7 @@ sub DrawMainWindow () {
 
 	# UPCOMING EVENTS
 	# Create the (placeholder for the) upcoming events widget
-#	my $UpcomingEventsWidget = Gtk2::Label->new(gettext("Upcoming events..."));
+#	my $UpcomingEventsWidget = Gtk2::Label->new($Gettext->get("Upcoming events..."));
 #	$UpcomingEventsWidget->show();
 #	$RightHandVBox->pack_end($UpcomingEventsWidget,0,0,0);
 	
