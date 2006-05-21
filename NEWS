@@ -15,6 +15,9 @@ Version 0.1.1
 - Added distro information to --debuginfo
 - Fixed a bug where day planner would freeze if the daemon shut down
   while it was running.
+- Fixed localization
+- Added Norwegian translation
+- Now places the pop up dialogs on top of the main window
 
 * Daemon (dayplanner-daemon)
 - -d is now an alias for --dayplannerdir
