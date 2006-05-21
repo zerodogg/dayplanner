@@ -430,8 +430,10 @@ sub CreateSaveDir () {
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
 sub SaveDatafile ($$$$) {
 	# Create the progress window
-	my $ProgressWin = Gtk2::Window->new('toplevel');
+	my $ProgressWin = Gtk2::Window->new();
 	$ProgressWin->set_modal(1);
+	$ProgressWin->set_transient_for($MainWindow);
+	$ProgressWin->set_position('center-on-parent');
 	$ProgressWin->set_title($Gettext->get("Saving..."));
 	$ProgressWin->set_resizable(0);
 	# Create the progress bar
@@ -930,8 +932,10 @@ sub CreateEventContainerWin ($$$) {
 	# ==================================================================
 	# BUILD THE WINDOW
 	# ==================================================================
-	my $AddEventBox = Gtk2::Window->new('toplevel');
+	my $AddEventBox = Gtk2::Window->new();
 	$AddEventBox->set_modal(1);
+	$AddEventBox->set_transient_for($MainWindow);
+	$AddEventBox->set_position('center-on-parent');
 	$AddEventBox->set_title($WindowTitle);
 	$AddEventBox->set_resizable(0);
 	$AddEventBox->set_border_width(5);
@@ -1463,6 +1467,8 @@ sub AboutBox () {
 sub PreferencesWindow () {
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
+	$PreferencesWindow->set_transient_for($MainWindow);
+	$PreferencesWindow->set_position('center-on-parent');
 	$PreferencesWindow->set_title($Gettext->get("Preferences"));
 	$PreferencesWindow->set_resizable(0);
 	$PreferencesWindow->set_border_width(12);
