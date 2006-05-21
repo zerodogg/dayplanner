@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+# BuildLocale
+# Build the 
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use Cwd;
+use File::Basename;
+
+$| = 1;
+
+# Usage:
+# Main directory => any links to that directory
+# 
+# The links part can be ''. If not it should be a space seperated list
+my %LocaleDirHash = (
+	# Norwegian bokmål (also puts in aliases for nynorsk)
+	'nb' => 'nb_NO nb_NO.UTF-8 nb_NO.ISO-8859-15 no_NO no_NO.ISO-8859-1 no_NO.ISO-8859-15 no_NO.UTF-8 nn nn_NO nn_NO.ISO-8859-15 nn_NO.UTF-8',
+);
+
+# Usage:
+# *.mo name => LocaleDirHash main directory it should live in
+my %MoToDirHash = (
+	'nb.mo' => 'nb'
+);
+
+my $Self = dirname(Cwd::realpath($0));
+die "Unable to detect the po directory\n" unless (-e "$Self/../po/");
+my $PoDir = "$Self/../po/";
+
+chdir($PoDir) or die;
+
+print "Building mo-files:";
+foreach(<*.po>) {
+	print " $_";
+	my $MoName = $_;
+	$MoName =~ s/po$/mo/;
+	system("msgfmt -o $MoName $_");
+}
+print "\n";
+
+my $LocaleDir = Cwd::realpath("$Self/../");
+$LocaleDir = "$LocaleDir/locale";
+
+print "Creating the $LocaleDir directory tree...\n";
+unless (-d $LocaleDir) {
+	mkdir($LocaleDir);
+	print " Created: $LocaleDir\n";
+}
+
+foreach my $CurrentLocale (keys(%LocaleDirHash)) {
+	unless (-d "$LocaleDir/$CurrentLocale/LC_MESSAGES") {
+		mkdir("$LocaleDir/$CurrentLocale");
+		mkdir("$LocaleDir/$CurrentLocale/LC_MESSAGES");
+		print " Created: $LocaleDir/$CurrentLocale\n";
+	}
+	foreach my $LocaleAlias (split(/\s+/, $LocaleDirHash{$CurrentLocale})) {
+		unless (-e "$LocaleDir/$LocaleAlias") {
+			symlink($CurrentLocale, "$LocaleDir/$LocaleAlias");
+			print " Created symlink from \"$CurrentLocale\" to \"$LocaleAlias\"\n";
+		}
+	}
+}
+
+print "Putting mo-files into place:";
+foreach my $MO (<*.mo>) {
+	unless(defined($MoToDirHash{$MO}) and length($MoToDirHash{$MO})) {
+		warn("\nThe file $MO has no entry in \%MoToDirHash - ignoring\n");
+		next;
+	}
+	unless(-d "$LocaleDir/$MoToDirHash{$MO}/LC_MESSAGES/") {
+		warn("\nThe file $MO has an invalid directory entry in the \%MoToDirHash (or the dir might be missing from the \%LocaleDirHash). Ignoring\n");
+		next;
+	}
+	system("mv $MO $LocaleDir/$MoToDirHash{$MO}/LC_MESSAGES/dayplanner.mo");
+	print " $MO";
+}
+
+print "\nAll done!\n";
