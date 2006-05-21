@@ -1552,7 +1552,7 @@ sub PreferencesWindow () {
 			}});
 
 	# EDITOR VERBOSE DEFAULT
-	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label($Gettext->get(sprintf("Expand \"%s\" by default", $Gettext->get("Details"))));
+	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(sprintf($Gettext->get("Expand \"%s\" by default"), $Gettext->get("Details")));
 	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
 	if ($EditorVerboseDefault) {
@@ -1627,14 +1627,14 @@ sub PreferencesWindow () {
 	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
 	# The combo box
 	my $TimeSel_Combo = Gtk2::ComboBox->new_text();
-	$TimeSel_Combo->insert_text(0, $Gettext->get(sprintf("%s minutes","10")));
-	$TimeSel_Combo->insert_text(1, $Gettext->get(sprintf("%s minutes","20")));
-	$TimeSel_Combo->insert_text(2, $Gettext->get(sprintf("%s minutes","30")));
-	$TimeSel_Combo->insert_text(3, $Gettext->get(sprintf("%s minutes","45")));
-	$TimeSel_Combo->insert_text(4, $Gettext->get(sprintf("%s hour","1")));
-	$TimeSel_Combo->insert_text(5, $Gettext->get(sprintf("%s hours","2")));
-	$TimeSel_Combo->insert_text(6, $Gettext->get(sprintf("%s hours","4")));
-	$TimeSel_Combo->insert_text(7, $Gettext->get(sprintf("%s hours","6")));
+	$TimeSel_Combo->insert_text(0, sprintf($Gettext->get("%s minutes"),"10"));
+	$TimeSel_Combo->insert_text(1, sprintf($Gettext->get("%s minutes"),"20"));
+	$TimeSel_Combo->insert_text(2, sprintf($Gettext->get("%s minutes"),"30"));
+	$TimeSel_Combo->insert_text(3, sprintf($Gettext->get("%s minutes"),"45"));
+	$TimeSel_Combo->insert_text(4, sprintf($Gettext->get("%s hour"),"1"));
+	$TimeSel_Combo->insert_text(5, sprintf($Gettext->get("%s hours"),"2"));
+	$TimeSel_Combo->insert_text(6, sprintf($Gettext->get("%s hours"),"4"));
+	$TimeSel_Combo->insert_text(7, sprintf($Gettext->get("%s hours"),"6"));
 	# Set the value
 	if($Events_NotifyPre eq "0") {
 		$TimeSel_Combo->set_active(3);
