@@ -25,6 +25,7 @@ use Cwd qw/realpath getcwd/;
 use File::Basename qw/dirname/;
 
 my $DPVersion = "0.1.1";
+my $BuildRPM = 1;
 
 sub InPath ($) {
 	foreach (split /:/, $ENV{PATH}) {
@@ -54,13 +55,28 @@ unless(-e "$OrigDir/tools/installer") {
 $OrigDir = realpath($OrigDir);
 print "found $OrigDir\n";
 
+if(defined($ENV{DP_NORPM}) and $ENV{DP_NORPM}  eq '1') {
+	print " Skipping RPM building.\n";
+	$BuildRPM = 0;
+}
+
 print " Verifying required components...";
-foreach (qw/tar bzip2 bunzip2 rpm rpmbuild/) {
+
+my @RequiredComponents;
+
+if ($BuildRPM) {
+	@RequiredComponents = qw/tar bzip2 bunzip2 rpm rpmbuild/;
+} else {
+	@RequiredComponents = qw/tar bzip2 bunzip2/;
+}
+
+foreach (@RequiredComponents) {
 	unless (InPath($_)) {
 		die("failed - \"$_\" is missing\n");
 	}
 	print ".";
 }
+
 print "okay\n";
 print " Created temporary directory $tempdir\n";
 unless(-e "$OrigDir/packages") {
@@ -107,66 +123,70 @@ if (system("tar -jcf ./dayplanner-$DPVersion.tar.bz2 ./dayplanner-$DPVersion &> 
 system("mv ./dayplanner-$DPVersion.tar.bz2 $OrigDir/packages/");
 print "done\n";
 
-print "Building rpm...\n";
-print " Checking for required files...";
-unless (-e "$OrigDir/tools/rpm/changelog.spec") {
-	die "failed - $OrigDir/tools/rpm/changelog.spec does not exist\n";
-}
-unless (-e "$OrigDir/tools/rpm/package.spec") {
-	die "failed - $OrigDir/tools/rpm/package.spec does not exist\n";
-}
-unless (-d "$ENV{HOME}/rpm/SOURCES/") {
-	die "failed - $ENV{HOME}/rpm/SOURCES/ does not exist\n";
-}
-unless (-d "$ENV{HOME}/rpm/RPMS/noarch/" and -d "$ENV{HOME}/rpm/SRPMS/") {
-	die("failed - I need/rpm/RPMS/noarch\n");
-}
-print "okay\n";
-print " Copying tarball...";
-system("cp $OrigDir/packages/dayplanner-$DPVersion.tar.bz2 $ENV{HOME}/rpm/SOURCES/");
-print "done\n";
-print " Preparing specfile...";
-my @RPM_SPECFILE;
+if($BuildRPM) {
+	print "Building rpm...\n";
+	print " Checking for required files...";
+	unless (-e "$OrigDir/tools/rpm/changelog.spec") {
+		die "failed - $OrigDir/tools/rpm/changelog.spec does not exist\n";
+	}
+	unless (-e "$OrigDir/tools/rpm/package.spec") {
+		die "failed - $OrigDir/tools/rpm/package.spec does not exist\n";
+	}
+	unless (-d "$ENV{HOME}/rpm/SOURCES/") {
+		die "failed - $ENV{HOME}/rpm/SOURCES/ does not exist\n";
+	}
+	unless (-d "$ENV{HOME}/rpm/RPMS/noarch/" and -d "$ENV{HOME}/rpm/SRPMS/") {
+		die("failed - I need/rpm/RPMS/noarch\n");
+	}
+	print "okay\n";
+	print " Copying tarball...";
+	system("cp $OrigDir/packages/dayplanner-$DPVersion.tar.bz2 $ENV{HOME}/rpm/SOURCES/");
+	print "done\n";
+	print " Preparing specfile...";
+	my @RPM_SPECFILE;
 
-# Read package.spec
-open(SPECFILE, "<$OrigDir/tools/rpm/package.spec") or die "failed - unable to open $OrigDir/tools/rpm/package.spec for reading: $!\n";
+	# Read package.spec
+	open(SPECFILE, "<$OrigDir/tools/rpm/package.spec") or die "failed - unable to open $OrigDir/tools/rpm/package.spec for reading: $!\n";
 
-foreach(<SPECFILE>) {
-	s/\[DAYPLANNER_VERSION\]/$DPVersion/;
-	push(@RPM_SPECFILE, $_);
+	foreach(<SPECFILE>) {
+		s/\[DAYPLANNER_VERSION\]/$DPVersion/;
+		push(@RPM_SPECFILE, $_);
+	}
+	close(SPECFILE);
+	print ".";
+
+	# Read the changelog (changelog.spec)
+	open(SPECFILE, "<$OrigDir/tools/rpm/changelog.spec") or die "failed - unable to open $OrigDir/tools/rpm/changelog.spec for reading: $!\n";
+
+	foreach(<SPECFILE>) {
+		push(@RPM_SPECFILE, $_);
+	}
+	close(SPECFILE);
+	print ".";
+
+	# Write it
+	open(SPECFILE, ">$tempdir/dayplanner.spec") or die "failed - unable to open $tempdir/dayplanner.spec for writing: $!\n";
+	print SPECFILE @RPM_SPECFILE;
+	print "done\n";
+	close(SPECFILE);
+
+	print " NOTE: Remember to add a changelog entry in $OrigDir/tools/rpm/changelog.spec\n";
+
+	# Build the RPM package
+	print " Building RPM...";
+	if(system("rpmbuild -ba $tempdir/dayplanner.spec &> $tempdir/rpmbuild.log")) {
+		system("mv $tempdir/rpmbuild.log $OrigDir/packages/rpmbuild.log");
+		die("failed - rpm build log saved to $OrigDir/packages/rpmbuild.log\n");
+		#die "failed\n";
+	}
+	print "done\n";
+	print " Moving files...";
+	system("mv $ENV{HOME}/rpm/RPMS/noarch/dayplanner*.rpm $ENV{HOME}/rpm/SRPMS/dayplanner*.rpm $OrigDir/packages/ &>/dev/null");
+	print "done\n";
+	print " Cleaning up...";
+	unlink("$ENV{HOME}/SOURCES/dayplanner-$DPVersion.tar.bz2");
+	print "done\n";
 }
-close(SPECFILE);
-print ".";
-
-# Read the changelog (changelog.spec)
-open(SPECFILE, "<$OrigDir/tools/rpm/changelog.spec") or die "failed - unable to open $OrigDir/tools/rpm/changelog.spec for reading: $!\n";
-
-foreach(<SPECFILE>) {
-	push(@RPM_SPECFILE, $_);
-}
-close(SPECFILE);
-print ".";
-
-# Write it
-open(SPECFILE, ">$tempdir/dayplanner.spec") or die "failed - unable to open $tempdir/dayplanner.spec for writing: $!\n";
-print SPECFILE @RPM_SPECFILE;
-print "done\n";
-close(SPECFILE);
-
-print " NOTE: Remember to add a changelog entry in $OrigDir/tools/rpm/changelog.spec\n";
-
-# Build the RPM package
-print " Building RPM...";
-if(system("rpmbuild -ba $tempdir/dayplanner.spec &> $tempdir/rpmbuild.log")) {
-	die "failed\n";
-}
-print "done\n";
-print " Moving files...";
-system("mv $ENV{HOME}/rpm/RPMS/noarch/dayplanner*.rpm $ENV{HOME}/rpm/SRPMS/dayplanner*.rpm $OrigDir/packages/ &>/dev/null");
-print "done\n";
-print " Cleaning up...";
-unlink("$ENV{HOME}/SOURCES/dayplanner-$DPVersion.tar.bz2");
-print "done\n";
 
 print "Building self-contained installer package...\n";
 print " Preparing...";
