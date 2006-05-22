@@ -923,8 +923,8 @@ LoadCalendar();
 
 unless($NoFork) {
 	open(STDIN, "</dev/null") or IntWarn("Couldn't reopen STDIN to /dev/null: $!");
-	open(STDOUT, ">$Logfile") or IntWarn("Couldn't reopen STDOUT to $Logfile: $!");
-	open(STDERR, ">$Logfile") or IntWarn("Couldn't reopen STDERR to $Logfile: $!");
+	open(STDOUT, ">>$Logfile") or IntWarn("Couldn't reopen STDOUT to $Logfile: $!");
+	open(STDERR, ">>$Logfile") or IntWarn("Couldn't reopen STDERR to $Logfile: $!");
 }
 
 MainLoop();
