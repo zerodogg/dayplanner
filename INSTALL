@@ -29,4 +29,7 @@ in the filesystem. A trick if day planner can't detect its images properly is to
 place the executeables in the same directory as the art/ subdirectory and then
 just symlink the executeables into $PATH, day planner handles $PATH fine.
 
+Lastly, for internationalization you want to run ./tools/BuildLocale /dir.
+On most systems this would be: ./tools/BuildLocale /usr/locale/
+
 $Id$
