@@ -155,7 +155,7 @@ msgstr "Redigerer en bursdag på %s. %s %s"
 
 #: dayplanner:1183
 msgid "Time:"
-msgstr "Tid:"
+msgstr "Tidspunkt:"
 
 #: dayplanner:1193
 msgid "Summary:"
@@ -283,7 +283,7 @@ msgstr "Advar meg en dag på forhånd"
 
 #: dayplanner:1701
 msgid "Time"
-msgstr "Tid"
+msgstr "Klokka"
 
 #: dayplanner:1765
 #: dayplanner:1766
