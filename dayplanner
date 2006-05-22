@@ -1439,6 +1439,8 @@ sub BirthdayEvent_OK ($$$$) {
 sub AboutBox () {
 	$MainWindow->set_sensitive(0);
 	my $AboutDialog = Gtk2::AboutDialog->new;
+	$AboutDialog->set_transient_for($MainWindow);
+	$AboutDialog->set_position('center-on-parent');
 	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
