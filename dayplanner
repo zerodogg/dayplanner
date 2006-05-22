@@ -1344,13 +1344,13 @@ sub NormalEvent_OK ($$$$$$$) {
 	if ($IsEditing) {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
 			unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
-				DPError($Gettext->get(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
+				DPError(sprintf($Gettext->get("There is already an event at %s on %s %s. Please select another time for this event."), $Time, $EventDay, $MonthNames{$EventMonth}));
 				$Error = 1;
 			}
 		}
 	} else {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
-				DPError($Gettext->get(sprintf("There is already an event at %s on %s %s. Please select another time for this event.", $Time, $EventDay, $MonthNames{$EventMonth})));
+				DPError(sprintf($Gettext->get("There is already an event at %s on %s %s. Please select another time for this event."), $Time, $EventDay, $MonthNames{$EventMonth}));
 				$Error = 1;
 			}
 	}
