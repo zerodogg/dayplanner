@@ -24,6 +24,8 @@ use File::Basename;
 
 $| = 1;
 
+my $NoAlias;
+
 # Usage:
 # Main directory => any links to that directory
 # 
@@ -54,8 +56,15 @@ foreach(<*.po>) {
 }
 print "\n";
 
-my $LocaleDir = Cwd::realpath("$Self/../");
-$LocaleDir = "$LocaleDir/locale";
+my $LocaleDir;
+
+if(defined($ARGV[0]) and length($ARGV[0])) {
+	$LocaleDir = $ARGV[0];
+	$NoAlias = 1;
+} else {
+	$LocaleDir = Cwd::realpath("$Self/../");
+	$LocaleDir = "$LocaleDir/locale";
+}
 
 print "Creating the $LocaleDir directory tree...\n";
 unless (-d $LocaleDir) {
@@ -69,10 +78,12 @@ foreach my $CurrentLocale (keys(%LocaleDirHash)) {
 		mkdir("$LocaleDir/$CurrentLocale/LC_MESSAGES");
 		print " Created: $LocaleDir/$CurrentLocale\n";
 	}
-	foreach my $LocaleAlias (split(/\s+/, $LocaleDirHash{$CurrentLocale})) {
-		unless (-e "$LocaleDir/$LocaleAlias") {
-			symlink($CurrentLocale, "$LocaleDir/$LocaleAlias");
-			print " Created symlink from \"$CurrentLocale\" to \"$LocaleAlias\"\n";
+	unless($NoAlias) {
+		foreach my $LocaleAlias (split(/\s+/, $LocaleDirHash{$CurrentLocale})) {
+			unless (-e "$LocaleDir/$LocaleAlias") {
+				symlink($CurrentLocale, "$LocaleDir/$LocaleAlias");
+				print " Created symlink from \"$CurrentLocale\" to \"$LocaleAlias\"\n";
+			}
 		}
 	}
 }
