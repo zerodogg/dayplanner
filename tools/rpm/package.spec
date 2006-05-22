@@ -70,7 +70,12 @@ cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 	longtitle="An easy to use graphical day planner"
 EOF
 
-%post
+./tools/BuildLocale $RPM_BUILD_ROOT/%{_datadir}/locale/
+
+# Find the localization
+%find_lang %{name}
+
+%post 
 %{update_menus}
 
 %postun
@@ -79,7 +84,7 @@ EOF
 %clean 
 rm -rf $RPM_BUILD_ROOT 
 
-%files 
+%files -f dayplanner.lang
 # Note to packagers: Please leave COPYING in here as this package is distributed
 #  from the software website aswell
 %defattr(-,root,root)
