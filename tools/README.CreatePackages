@@ -1,0 +1,24 @@
+This readme file is about the CreatePackages script included in
+day planner.
+
+The script is used to build the source tarball, the Mandriva Linux RPMs
+and the self-contained installer package. So by default you will need to
+have makeself installed, rpm installed and tar+bzip2 installed.
+
+By simply running it the script will build the source tarball,
+the Mandriva Linux RPMs and the self-contained installer of your current
+checked out svn tree of day planner and save them to ./packages/
+
+If you're not on a Mandriva Linux-based GNU/Linux distribution
+(or perhaps not on a GNU/Linux distribution at all) you may want to
+skip building the RPM. You can force the CreatePackages script to
+skip building the RPMs by exporting the environment variable
+DP_NORPM=1 before running the script.
+
+If you for some reason don't want to build the makeself
+self-contained installer package either you can export the
+environment variable DP_NOINSTALLER=1 before running the script.
+
+The combination of DP_NORPM=1 and DP_NOINSTALLER=1 will make
+CreatePackages only create the source tarball (so it will always
+require tar, bzip2).
