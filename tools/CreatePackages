@@ -26,14 +26,10 @@ use File::Basename qw/dirname/;
 
 my $DPVersion = "0.1.1";
 my $BuildRPM = 1;
+my $BuildInstaller = 1;
 
 sub InPath ($) {
-	foreach (split /:/, $ENV{PATH}) {
-		if (-x "$_/@_" and ! -d "$_/@_" ) {
-			return 1;
-		}
-	}
-	return 0;
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {	return 1; } } return 0;
 }
 
 $| = 1;
@@ -58,6 +54,10 @@ print "found $OrigDir\n";
 if(defined($ENV{DP_NORPM}) and $ENV{DP_NORPM}  eq '1') {
 	print " Skipping RPM building.\n";
 	$BuildRPM = 0;
+}
+if(defined($ENV{DP_NOINSTALLER}) and $ENV{DP_NOINSTALLER}  eq '1') {
+	print " Skipping installer building.\n";
+	$BuildInstaller = 0;
 }
 
 print " Verifying required components...";
@@ -188,46 +188,49 @@ if($BuildRPM) {
 	print "done\n";
 }
 
-print "Building self-contained installer package...\n";
-print " Preparing...";
-chdir($tempdir);
-print ".";
-mkdir("$tempdir/installer");
-print ".";
-system("mv ./dayplanner-$DPVersion $tempdir/installer/dayplanner-data");
-print ".";
-# Copy the needed files
-foreach(qw/MainInstallerPart StartInstaller xmsg/) {
-	system("cp -r $OrigDir/tools/installer/$_ $tempdir/installer/");
+if($BuildInstaller) {
+
+	print "Building self-contained installer package...\n";
+	print " Preparing...";
+	chdir($tempdir);
 	print ".";
-}
-print "done\n";
-print " Running tools/BuildLocale...";
-system("$tempdir/installer/dayplanner-data/tools/BuildLocale > /dev/null");
-print "done\n";
-# Find makeself
-print " Detecting makeself...";
-my $Makeself_Dir;
-my @Makeself_Dirs = (
-	"$ENV{HOME}/makeself",
-	"$ENV{HOME}/downloads/makeself"
-);
-foreach(@Makeself_Dirs) {
-	if (-e "$_/makeself.sh") {
-		$Makeself_Dir = $_;
-		last;
+	mkdir("$tempdir/installer");
+	print ".";
+	system("mv ./dayplanner-$DPVersion $tempdir/installer/dayplanner-data");
+	print ".";
+	# Copy the needed files
+	foreach(qw/MainInstallerPart StartInstaller xmsg/) {
+		system("cp -r $OrigDir/tools/installer/$_ $tempdir/installer/");
+		print ".";
 	}
+	print "done\n";
+	print " Running tools/BuildLocale...";
+	system("$tempdir/installer/dayplanner-data/tools/BuildLocale > /dev/null");
+	print "done\n";
+	# Find makeself
+	print " Detecting makeself...";
+	my $Makeself_Dir;
+	my @Makeself_Dirs = (
+		"$ENV{HOME}/makeself",
+		"$ENV{HOME}/downloads/makeself"
+	);
+	foreach(@Makeself_Dirs) {
+		if (-e "$_/makeself.sh") {
+			$Makeself_Dir = $_;
+			last;
+		}
+	}
+	unless(defined($Makeself_Dir) and length($Makeself_Dir)) {
+		die("failed - unable to detect makeself. Install makeself to $ENV{HOME}/downloads/makeself please\n");
+	}
+	chdir($Makeself_Dir);
+	print "done\n";
+	print " Running makeself...";
+	if(system("./makeself.sh --nox11 $tempdir/installer/ dayplanner-$DPVersion.run 'Generic day planner installation script' ./StartInstaller &>/dev/null")) {
+		die("failed - makeself command exited with a nonzero return value\n");
+	}
+	print "done\n";
+	print " Moving package...";
+	system("mv ./dayplanner-$DPVersion.run $OrigDir/packages/");
+	print "done\n";
 }
-unless(defined($Makeself_Dir) and length($Makeself_Dir)) {
-	die("failed - unable to detect makeself. Install makeself to $ENV{HOME}/downloads/makeself please\n");
-}
-chdir($Makeself_Dir);
-print "done\n";
-print " Running makeself...";
-if(system("./makeself.sh --nox11 $tempdir/installer/ dayplanner-$DPVersion.run 'Generic day planner installation script' ./StartInstaller &>/dev/null")) {
-	die("failed - makeself command exited with a nonzero return value\n");
-}
-print "done\n";
-print " Moving package...";
-system("mv ./dayplanner-$DPVersion.run $OrigDir/packages/");
-print "done\n";
