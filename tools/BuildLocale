@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # BuildLocale
-# Build the 
+# Build the locale files and directory tree for day planner
 # Copyright (C) Eskild Hustvedt 2006
 #
 # This program is free software; you can redistribute it and/or
@@ -40,6 +40,14 @@ my %LocaleDirHash = (
 my %MoToDirHash = (
 	'nb.mo' => 'nb'
 );
+
+# Usage: InPath(command)
+sub InPath ($) {
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+}
+
+
+die("I need msgfmt to be installed to work\n") unless InPath("msgfmt");
 
 my $Self = dirname(Cwd::realpath($0));
 die "Unable to detect the po directory\n" unless (-e "$Self/../po/");
