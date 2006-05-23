@@ -1,23 +1,26 @@
+# translation of nb.po to Norsk bokmål
 # PO file for Day Planner
 # Copyright (C) 2006 Eskild Hustvedt
 # This file is distributed under the GNU General Public License
 # as published by the Free Software Foundation; either version 2 of the license
 # or (at your option) any later version (the same license as Day Planner)
-#
 # Eskild Hustvedt <zerodogg@skolelinux.no>, 2006.
+# Jørgen Grønlund <jorgenhg@broadpark.no>, 2006.
+#
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: dayplanner 0.1.1\n"
+"Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-05-20 11:55+0200\n"
-"PO-Revision-Date: 2006-05-20 12:57+0100\n"
-"Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
-"Language-Team: Norwegian Bokmal <i18n-nb@lister.ping.uio.no>\n"
+"PO-Revision-Date: 2006-05-23 20:57+0200\n"
+"Last-Translator: Jørgen Grønlund <jorgenhg@broadpark.no>\n"
+"Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: KBabel 1.10.2\n"
 
 #: dayplanner:45
 msgid "dayplanner"
@@ -31,7 +34,7 @@ msgstr "Miljøvariabelen %s er ikke satt! Kan ikke fortsette.\n"
 #: dayplanner:58
 #, perl-format
 msgid "Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"
-msgstr "Hjemmemappa di (%s) finnes ikke! Vennligs sjekk at miljøvariabelen %s er satt. Kan ikke fortsette.\n"
+msgstr "Din hjemmemappe (%s) finnes ikke! Vennligst sjekk at miljøvariabelen %s er satt. Kan ikke fortsette.\n"
 
 #: dayplanner:260
 msgid ""
@@ -39,13 +42,13 @@ msgid ""
 "\n"
 "Running two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."
 msgstr ""
-"En annen dagsplanlegger kjører allerede. Avslutt den dagsplanleggeren som allerede kjører før du fortsetter\n"
+"En annen dagsplanlegger kjører allerede. Avslutt dagsplanleggeren som allerede kjører før du fortsetter.\n"
 "\n"
-"Du kan tvinge dagsplanleggeren til å tillate flere enn en dagsplanlegger kjørende om gangen. Dette anbefales ikke ettersom det kan ende opp i tap eller skadet data."
+"Du kan tvinge dagsplanleggeren til å kjøre to instanser av programmet på en gang. Dette anbefales ikke da det kan ende opp med tap eller skade av data."
 
 #: dayplanner:274
 msgid "I was unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."
-msgstr "Klarte ikke å tvinge oppstarten. Dette er sannsynligvis pga. en feli i programmet. Ta kontakt med utviklerene av dagsplanleggeren."
+msgstr "Klarte ikke å tvinge oppstart. Dette er sannsynligvis på grunn av en feil i programmet. Ta kontakt med utviklerene av dagsplanleggeren."
 
 #: dayplanner:293
 #, perl-format
@@ -64,11 +67,11 @@ msgid ""
 "Manually create this directory before closing this dialog."
 msgstr ""
 "Klarte ikke opprette mappa %s: %s\n"
-"Opprett denne mappa manuelt før du lukker dette vinduet."
+"Opprett denne mappa manuelt før du lukker dette dialogvinduet."
 
 #: dayplanner:420
 msgid "Saving..."
-msgstr "Lagrer..."
+msgstr "Lagrer ..."
 
 #: dayplanner:466
 #: dayplanner:473
@@ -79,7 +82,7 @@ msgid ""
 "Writing to %s instead"
 msgstr ""
 "FATAL FEIL: Klarte ikke å åpne %s for skriving: %s\n"
-"Skriver til %s istedenfor"
+"Skriver til %s i stedet."
 
 #: dayplanner:517
 msgid ""
@@ -91,9 +94,9 @@ msgid ""
 msgstr ""
 "<b><big>En feil oppstod under lagringen av hendelsene.</big></b>\n"
 "\n"
-"Det virker som om en annen dagsplanlegger kjører. Dette kan lede til tap av data.\n"
+"Det virker som om en annen instans av dagsplanleggeren kjører. Dette kan føre til tap av data.\n"
 "\n"
-"Ved å la denne dagsplanleggeren være åpen til du fikser problemet med den andre dagsplanleggeren vil passe på at informasjonen din forblir trygg. Lukker du denne dagsplanleggeren før den kan sikkert lagre endringene dine vil resultere i tap av data."
+"La denne instansen av dagsplanleggeren være åpen til du fikser problemet med den andre instansen av dagsplanleggeren for å unngå å miste data. Lukker du denne instansen av dagsplanleggeren før den får lagret endringene du har gjort, vil data bli tapt."
 
 #: dayplanner:701
 #: dayplanner:1720
@@ -107,7 +110,7 @@ msgstr "Noen filer kunne ikke lagres. Er du sikker på at du vil avslutte?"
 
 #: dayplanner:789
 msgid "Are you sure you still want to quit?"
-msgstr "Er du sikker på at du vil avslutte?"
+msgstr "Er du sikker på at du fortsatt vil avslutte?"
 
 #: dayplanner:947
 #: dayplanner:1702
@@ -121,7 +124,7 @@ msgstr "Legg til en hendelse"
 #: dayplanner:1001
 #, perl-format
 msgid "Adding an event on the %s. %s %s"
-msgstr "Legger til en hendelse på %s, %s %s"
+msgstr "Legg til en hendelse på %s. %s %s"
 
 #: dayplanner:1008
 msgid "Event type:"
@@ -146,7 +149,7 @@ msgstr "Redigerer en hendelse på %s. %s %s"
 
 #: dayplanner:1110
 msgid "Editing a birthday"
-msgstr "Redigerer en bursdag"
+msgstr "Rediger en bursdag"
 
 #: dayplanner:1110
 #, perl-format
@@ -210,7 +213,9 @@ msgstr "Dagsplanlegger"
 #: dayplanner:1438
 #: dayplanner:1439
 msgid "THE NAMES OF THE TRANSLATORS"
-msgstr "Eskild Hustvedt <zerodogg at skolelinux dot no>"
+msgstr ""
+"Eskild Hustvedt <zerodogg at skolelinux dot no>\n"
+"Jørgen Grønlund <jorgenhg at skolelinux dot no>"
 
 #: dayplanner:1451
 msgid "Preferences"
@@ -226,11 +231,11 @@ msgstr "Ikonstil for verktøylinja"
 
 #: dayplanner:1493
 msgid "Icons only"
-msgstr "Bare ikoner"
+msgstr "Kun ikoner"
 
 #: dayplanner:1494
 msgid "Text only"
-msgstr "Bare tekst"
+msgstr "Kun tekst"
 
 #: dayplanner:1495
 msgid "Both text and icons"
