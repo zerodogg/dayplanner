@@ -146,7 +146,7 @@ sub DaemonInit () {
 # Purpose: Start the day planner daemon
 # Usage: StartDaemon();
 sub StartDaemon {
-	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
+	foreach(split(/:/, sprintf("%s:%s", dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
 		if (-x "$_/$DaemonName") {
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
 			# and 1-255 on FALSE, so it's the other way around from perl
