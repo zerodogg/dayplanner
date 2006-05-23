@@ -330,7 +330,7 @@ GetOptions (
 ) or die "See $0 --help for more information\n";
 
 # Verify various things
-unless($MessageID) {
+unless(defined($MessageID) and length($MessageID)) {
 	die "I need a --time\n" unless defined($Time) and length($Time);
 	die "I need a --message\n" unless defined($Message) and length($Message);
 	die "I need a --date\n" unless defined($Date) and length($Date);
