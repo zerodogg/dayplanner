@@ -1,0 +1,41 @@
+I18N documentation for day planner
+$Id$
+by Eskild Hustvedt <zerodogg A_T skolelinux *D0*T no>
+
+Introduction
+- - - - - - -
+Day planner is designed from the ground up to have support for i18n.
+It uses the GNU Gettext library for the functions.
+
+Essentials for the translator
+- - - - - - - - - - - - - - -
+To generate an updated day planner pot-file run ./tools/buildpot
+This will save the pot file to ./po/dayplanner.pot
+
+Either "msgmerge" it with your current translation or, if you're starting
+a new translation, simply copy it to LANG_CODE.po (ie: nb.po).
+
+Proceed to translate.
+
+- For new translations only:
+	You'll need to edit ./tools/BuildLocale
+	Add your language to the %LocaleDirHash and %MoToDirHash - these are
+	documented in the BuildLocale source code. Feel free to mail me
+	if you have any questions.
+
+Now run ./tools/BuildLocale to build the mo-files and create a ./locale/
+directory tree that day planner will use.
+You can now start day planner by typing ./dayplanner and if your
+locale is properly set you should see day planner in your language.
+
+If all is well and you want to send in your translations then tar both
+your updated BuildLocale and your *.po file and send them to the
+mail address above with a subject similar to "Day planner i18n"
+
+Helper scripts
+- - - - - - - -
+
+./tools/buildpot		Builds the pot-file
+
+./tools/BuildLocale		Builds the entire locale/ directory tree
+				with mo-files and all
