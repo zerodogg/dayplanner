@@ -88,7 +88,7 @@ rm -rf $RPM_BUILD_ROOT
 # Note to packagers: Please leave COPYING in here as this package is distributed
 #  from the software website aswell
 %defattr(-,root,root)
-%doc AUTHORS COPYING NEWS THANKS TODO
+%doc AUTHORS COPYING NEWS THANKS TODO ./doc/*
 %{_bindir}/dayplanner
 %{_bindir}/dayplanner-daemon
 %{_bindir}/dayplanner-notifier
