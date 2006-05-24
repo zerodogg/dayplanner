@@ -46,7 +46,7 @@ my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
-	$Shutdown,	$LastAlarm,		$OutputRedirect,
+	$Shutdown,	$LastAlarm,
 	$LastCalculate,	$NotificationID,	$Logfile
 );						# Global scalars
 
@@ -447,7 +447,7 @@ sub DayplannerAlarm () {
 		$NotifierStarted = 1;
 	}
        unless($NotifierStarted) {
-		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin");
+		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin") if($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday");
 	}
 }
 
@@ -586,11 +586,7 @@ sub CommandHandler ($) {
 	elsif (s/^DEBUG\s*//) {
 		if (/^DUMP_VARIOUS/) {
 			IntDebug("Recieved debugging info request from $PID");
-			my $OutRedir = "None";
-			if (defined($OutputRedirect) and length($OutputRedirect)) {
-					$OutRedir = $OutputRedirect;
-			}
-			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose || Outputting to $OutputRedirect");
+			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose || Outputting to $Logfile");
 		} elsif (/^DUMP_CLIENTLIST/) {
 			IntDebug("Client list request from $PID");
 			my $ClientList;
@@ -871,11 +867,7 @@ GetOptions (
 	},
 	'n|nofork' => \$NoFork,
 	'f|force-fork' => \$ForceFork,
-	'o|output=s' => sub {
-		$OutputRedirect = $_[1];
-		open(STDOUT, ">$_[1]") or die "Unable to open $_[1]: $!\n";
-		open(STDERR, ">$_[1]") or die "Unable to open $_[1]: $!\n";
-	},
+	'o|output=s' => \$Logfile,
 	'dayplannerdir|d=s' => sub {
 		unless (-e $_[1]) {
 			die "$_[1] does not exist\n";
@@ -914,7 +906,7 @@ if (not $NoFork or $ForceFork) {
 die "$DayplannerDir doesn't exist!\n" unless -e $DayplannerDir;
 die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
 
-$Logfile = "$DayplannerDir/$LogfileName";
+$Logfile = "$DayplannerDir/$LogfileName" unless defined($Logfile) and length($Logfile);;
 
 # Main
 OpenSocket();
