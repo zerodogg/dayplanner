@@ -1,8 +1,19 @@
 Day planner version history
 **************************
 
-Version 0.1.1
--------------
+Version 0.1.2 (Unreleased)
+--------------------------
+* Client (dayplanner)
+- Now uses systemwide properties for the toolbar instead of internal
+  ones.
+
+* Daemon (dayplanner-daemon)
+
+* Notifier (dayplanner-notifier)
+
+
+Version 0.1.1 (Released on the 24th of May 2006)
+------------------------------------------------
 * Client (dayplanner)
 - Attempts to restart dayplanner-daemon when recieving SIGPIPE
 - Now it won't attempt to tell the daemon to reload its configuration files
@@ -31,6 +42,6 @@ Version 0.1.1
    in scripts)
 - No longer tries to connect to the daemon when run from the commandline
 
-Version 0.1
------------
+Version 0.1 (Released on the 19th of April 2006)
+------------------------------------------------
 - Initial release
