@@ -34,7 +34,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 # setlocale(LC_MESSAGES, "");
 
 # Scalars
-my $Version = "0.1.1";
+my $Version = "0.1.2";
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
@@ -112,9 +112,8 @@ my (
 
 # Configuration options
 my (
-	$EditorVerboseDefault,	$ToolbarStyle,
-	$Events_NotifyPre,	$Events_NotifyDay,
-	$Events_DayNotify
+	$EditorVerboseDefault,	$Events_NotifyPre,
+	$Events_NotifyDay,	$Events_DayNotify
 );
 
 
@@ -309,9 +308,6 @@ sub WriteConfig ($$) {
 		return(0);
 	};
 	# Verify the options first
-	unless(defined($ToolbarStyle) and length($ToolbarStyle)) {
-		$ToolbarStyle = 'both';
-	}
 	unless(defined($EditorVerboseDefault) and length($EditorVerboseDefault)) {
 		$EditorVerboseDefault = 0;
 	}
@@ -324,8 +320,6 @@ sub WriteConfig ($$) {
 	# Print the config
 	print CONFIG "# Day planner version $Version configuration file\n\n";
 	print CONFIG "# - - -\n# User interface\n# - - -\n";
-	print CONFIG "# Which icon style to have on the toolbar. Valid options:\n#  both = both icons and text\n#  text = only text\n#  icons = only icons\n#  hidden = hide the toolbar\n";
-	print CONFIG "ToolbarStyle=$ToolbarStyle\n\n";
 	print CONFIG "# If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand\n";
 	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
 	print CONFIG "\n# - - -\n# Normal events notification\n# - - -\n";
@@ -383,9 +377,7 @@ sub LoadConfig ($$) {
 			DPIntWarn("Configuration setting \"$Option\" has an empty value");
 		}
 		# TODO: Perhaps these should be verified here?
-		if ($Option eq 'ToolbarStyle') {
-			$ToolbarStyle = $Value;
-		} elsif ($Option eq 'EditorVerboseDefault') {
+		if ($Option eq 'EditorVerboseDefault') {
 			$EditorVerboseDefault = $Value;
 		} elsif ($Option eq 'Events_NotifyPre') {
 			# NOTE: If this test is changed HERE it must be changed in dayplanner-daemon aswell
@@ -397,6 +389,8 @@ sub LoadConfig ($$) {
 			}
 		} elsif ($Option eq 'Events_DayNotify') {
 			$Events_DayNotify = $Value;
+		} elsif ($Option =~ /^ToolbarStyle$/) {
+			DPIntWarn("Deprecated configuration setting \"$Option\" - ignored");
 		} else {
 			DPIntWarn("Unrecognized configuration setting \"$Option\", ignoring");
 		}
@@ -1502,63 +1496,6 @@ sub PreferencesWindow () {
 	$General_VBox->pack_start($UI_Label,0,0,0);
 	$UI_Label->show();
 
-	# TOOLBAR STYLE
-	my $TBStyle_HBox = Gtk2::HBox->new();
-	$TBStyle_HBox->show();
-	$General_VBox->pack_start($TBStyle_HBox,0,0,0);
-
-	my $TBStyle_Label = Gtk2::Label->new($Gettext->get("Toolbar icon style"));
-	$TBStyle_Label->show();
-	$TBStyle_HBox->pack_start($TBStyle_Label,0,0,0);
-	
-	# The combo options
-	# both, icons, text
-	my $TBStyle_icons = $Gettext->get("Icons only");
-	my $TBStyle_text = $Gettext->get("Text only");
-	my $TBStyle_both = $Gettext->get("Both text and icons");
-	my $TBStyle_hidden = $Gettext->get("Hidden");
-	
-	my $TBStyle_Combo = Gtk2::ComboBox->new_text;
-	$TBStyle_Combo->insert_text(0, $TBStyle_icons);
-	$TBStyle_Combo->insert_text(1, $TBStyle_text);
-	$TBStyle_Combo->insert_text(2, $TBStyle_both);
-	$TBStyle_Combo->insert_text(3, $TBStyle_hidden);
-	$TBStyle_Combo->show();
-	$TBStyle_HBox->pack_start($TBStyle_Combo,0,0,0);
-
-	# Set the active style in the combo box
-	if (defined($ToolbarStyle)) {
-		if ($ToolbarStyle eq 'icons') {
-			$TBStyle_Combo->set_active(0);
-		} elsif ($ToolbarStyle eq 'text') {
-			$TBStyle_Combo->set_active(1);
-		} elsif ($ToolbarStyle eq 'both') {
-			$TBStyle_Combo->set_active(2);
-		} elsif ($ToolbarStyle eq 'hidden') {
-			$TBStyle_Combo->set_active(3);
-		}
-	}
-
-	# Change the style of the toolbar and setting in $ToolbarStyle when the user changes it
-	$TBStyle_Combo->signal_connect('changed' => sub {
-			my $ActiveIndex = $TBStyle_Combo->get_active;
-			if ($ActiveIndex == 0) {
-				$Toolbar->set_style('icons');
-				$Toolbar->show();
-				$ToolbarStyle = 'icons';
-			} elsif ($ActiveIndex == 1) {
-				$Toolbar->set_style('text');
-				$Toolbar->show();
-				$ToolbarStyle = 'text';
-			} elsif ($ActiveIndex == 2) {
-				$Toolbar->set_style('both');
-				$ToolbarStyle = 'both';
-				$Toolbar->show();
-			} elsif ($ActiveIndex == 3) {
-				$Toolbar->hide();
-				$ToolbarStyle = 'hidden';
-			}});
-
 	# EDITOR VERBOSE DEFAULT
 	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(sprintf($Gettext->get("Expand \"%s\" by default"), $Gettext->get("Details")));
 	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
@@ -1815,17 +1752,7 @@ sub DrawMainWindow () {
 	# ==================================================================
 	$Toolbar = Gtk2::Toolbar->new();
 	$PrimaryWindowVBox->pack_start($Toolbar,0,0,0);
-	if (defined($ToolbarStyle) and $ToolbarStyle =~ /^(both|icons|text|hidden|both-horiz)$/) {
-		$Toolbar->set_style($ToolbarStyle) unless $ToolbarStyle eq "hidden";
-	} else {
-		if (defined($ToolbarStyle)) {
-			DPIntWarn("Config option ToolbarStyle is set to \"$ToolbarStyle\". This is invalid. Valid settings: both, icons, text, hidden. Assuming ToolbarStyle=both");
-		} else {
-			DPIntWarn("Config option ToolbarStyle isn't set. Assuming ToolbarStyle=both");
-		}
-		$Toolbar->set_style('both');
-	}
-	$Toolbar->show() unless $ToolbarStyle eq "hidden";
+	$Toolbar->show();
 
 	# Edit button
 	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
@@ -1840,6 +1767,9 @@ sub DrawMainWindow () {
 	$AddButton->signal_connect("clicked" => \&AddEvent);
 	$Toolbar->insert($AddButton,0);
 	$AddButton->show();
+
+	$Toolbar->get_nth_item(0)->set_is_important(1);
+	$Toolbar->get_nth_item(1)->set_is_important(1);
 
 	# ==================================================================
 	# WORKING AREA
