@@ -6,10 +6,18 @@ Version 0.1.2 (Unreleased)
 * Client (dayplanner)
 - Now uses systemwide properties for the toolbar instead of internal
   ones.
+- Now saves the state (size and maximized/unmaximized) of the main window
 
 * Daemon (dayplanner-daemon)
+- A minor bugfix in a debugging command
+- A minor bugfix concerning the --output commandline option
 
 * Notifier (dayplanner-notifier)
+
+* Commander
+- Made much more modular
+- Now accepts daemon commands on the commandline
+- Uses Getopt::Long
 
 
 Version 0.1.1 (Released on the 24th of May 2006)
