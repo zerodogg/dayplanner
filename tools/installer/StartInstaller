@@ -19,29 +19,46 @@
 
 echo -n "Preparing..."
 
+ONE="$1"
+
 # Echo and display the error supplied
 SI_Error () {
 	echo "$@"
-	xmsg_ok "$@"
+	[ "$ONE" != "auto" ] && xmsg_ok "$@"
 	exit 1
 }
 
-if [ "$DISPLAY" == "" ]; then
-	echo ""
-	echo "The environment variable DISPLAY isn't set. This means that you don't have X running."
-	echo "Please start x before launching this installer."
-	exit 1
-fi
+if [ "$ONE" != "auto" ]; then
 
-echo -n "."
+	if [ "$DISPLAY" == "" ]; then
+		echo ""
+		echo "The environment variable DISPLAY isn't set. This means that you don't have X running."
+		echo ""
+		echo "If you want to use this installer without X supply the commandline option \"auto\""
+		echo "(this will install day planner without prompting you)"
+		exit 1
+	fi
 
-if [ ! -e ./xmsg ]; then
-	echo "failed"
-	echo "./xmsg didn't exist. This installer is corrupt"
-	exit 1
-else
-	. ./xmsg
-	xmsg_init
+	echo -n "."
+
+	if ! perl -e 'use Gtk2; Gtk2->init;' &>/dev/null; then
+		echo "I was unable to connect to your X server. Please verify your settings."
+		echo ""
+		echo "If you want to use this installer without X supply the commandline option \"auto\""
+		echo "(this will install day planner without prompting you)"
+		exit 1
+	fi
+
+	echo -n "."
+
+	if [ ! -e ./xmsg ]; then
+		echo "failed"
+		echo "./xmsg didn't exist. This installer is corrupt"
+		exit 1
+	else
+		. ./xmsg
+		xmsg_init
+	fi
 fi
 
 echo -n "."
@@ -75,21 +92,13 @@ if ! perl -e 'use POSIX; use Data::Dumper; use Getopt::Long; use Cwd; use File::
 	SI_Error "You are missing some perl modules. Please make sure you have all of the following perl modules installed: POSIX Data::Dumper Getopt::Long Cwd File::Basename IO::Socket IO::Select"
 fi
 
-echo -n "."
-
-if ! perl -e 'use Gtk2; Gtk2->init;' &>/dev/null; then
-	SI_Error "I was unable to connect to your X server. Please verify your settings."
-fi
-
-echo -n "."
-
 echo "done"
 
 if [ "`which perl`" != "/usr/bin/perl" ]; then
 	RealPerl="`which perl`"
 	echo "Nonstandard perl installation detected. Perl is at $RealPerl"
 	echo -n "Repairing day planner files..."
-	for file in ./MainInstallerPart ./dayplanner-data/dayplanner ./dayplanner-data/dayplanner-daemon ./dayplanner-data/tools/plan-migration ./dayplanner-data/tools/commander; do
+	for file in ./MainInstallerPart ./dayplanner-data/dayplanner ./dayplanner-data/dayplanner-notifier ./dayplanner-data/dayplanner-daemon ./dayplanner-data/tools/plan-migration ./dayplanner-data/tools/commander; do
 		echo -n "."
 		perl -pi -e "s#/usr/bin/perl#$RealPerl#g" $file
 	done
@@ -97,6 +106,6 @@ if [ "`which perl`" != "/usr/bin/perl" ]; then
 fi
 
 echo "Okay, handing control over to the perl installer part"
-if ! perl ./MainInstallerPart; then
+if ! perl ./MainInstallerPart "$@"; then
 	SI_Error "An unkown error occurred when starting the main installer. Unable to proceed"
 fi

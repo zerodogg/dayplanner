@@ -22,7 +22,8 @@ use strict;
 use warnings;
 use Gtk2;
 
-my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner/";
+my $ProgressWin;
+my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner";
 
 print "Perl installer part...\n";
 print "Using install dir: $InstallDirectory\n";
@@ -39,37 +40,39 @@ sub InPath {
 }
 
 
-Gtk2->init();
+if(defined($ARGV[0]) and $ARGV[0] eq 'auto') {
+	print "Using automatic install - skipping prompts\n";
+} else {
+	Gtk2->init();
+	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
+	my $Reply = $Dialog->run();
+	$Dialog->destroy();
+	unless($Reply eq 'yes') {
+		print "Exiting as requested by user\n";
+		exit(0);
+	}
+	# Flush the display
+	Gtk2->main_iteration while Gtk2->events_pending;
 
-my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
-my $Reply = $Dialog->run();
-$Dialog->destroy();
-unless($Reply eq 'yes') {
-	print "Exiting as requested by user\n";
-	exit(0);
+	my $PG_Label = Gtk2::Label->new("Installing day planner...");
+	$PG_Label->show();
+	$ProgressWin = Gtk2::Window->new('toplevel');
+	$ProgressWin->set_resizable(0);
+	$ProgressWin->set_title("Installing...");
+	$ProgressWin->add($PG_Label);
+	$ProgressWin->show_all();
+	$ProgressWin->show_now();
+	$PG_Label->show_now();
+	Gtk2->main_iteration while Gtk2->events_pending;
 }
 
-# Flush the display
-Gtk2->main_iteration while Gtk2->events_pending;
-
-my $PG_Label = Gtk2::Label->new("Installing day planner...");
-$PG_Label->show();
-my $ProgressWin = Gtk2::Window->new('toplevel');
-$ProgressWin->set_resizable(0);
-$ProgressWin->set_title("Installing...");
-$ProgressWin->add($PG_Label);
-$ProgressWin->show_all();
-Gtk2->main_iteration while Gtk2->events_pending;
-
 system("mkdir -p $InstallDirectory");
-Gtk2->main_iteration while Gtk2->events_pending;
 
 system("cp -r ./dayplanner-data/* $InstallDirectory/");
-Gtk2->main_iteration while Gtk2->events_pending;
 
 my @BINDIRS = (
-	"$ENV{HOME}/bin/",
-	"$ENV{HOME}/.bin/",
+	"$ENV{HOME}/bin",
+	"$ENV{HOME}/.bin",
 	"$ENV{HOME}/.local/bin"
 );
 
@@ -127,10 +130,11 @@ if(InPath("update-menus")) {
 	system("update-menus &>/dev/null");
 }
 
-$ProgressWin->destroy();
-
-my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall day planner run $InstallDirectory/uninstall.sh");
-$Finished->run();
-$Finished->destroy();
+unless(defined($ARGV[0]) and $ARGV[0] eq 'auto') {
+	$ProgressWin->destroy();
+	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall day planner run $InstallDirectory/uninstall.sh");
+	$Finished->run();
+	$Finished->destroy();
+}
 print "Installer successfully finished!\n";
 exit(0);
