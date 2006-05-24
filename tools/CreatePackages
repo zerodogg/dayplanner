@@ -24,7 +24,7 @@ use File::Temp;
 use Cwd qw/realpath getcwd/;
 use File::Basename qw/dirname/;
 
-my $DPVersion = "0.1.1";
+my $DPVersion = "0.1.2";
 my $BuildRPM = 1;
 my $BuildInstaller = 1;
 
