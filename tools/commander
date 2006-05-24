@@ -21,34 +21,20 @@ use warnings;			# Enable perl warnings
 use IO::Socket;			# Daemon communication
 use Term::ReadLine;		# A more advanced way to get input than <STDIN>
 use File::Basename;
+use Getopt::Long;
 
 my $socket;			# The socket
+my $Is_Interactive;
+my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";	# Default socket
 
-# Set up the signal handling
-$SIG{PIPE} = sub { print "I recieved SIGPIPE - daemon shut down?\n"; };
-$SIG{INT} = sub {
-	if (defined($socket)) {
-		print $socket "$$ BYE";
-	}
-	print("\n");exit(0);};
-
-# The default socket
-my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";
-
-# If $ARGV[0] is set then we want to connect to another socket
-if(defined($ARGV[0]) and length($ARGV[0])) {
-	if ($ARGV[0] =~ /^-(h|-help)/) {
-		print "Usage: $0\n";
-		print "   or: $0 /path/to/daemon/socket\n";
-		print "\nThis is a tool to communicate with a day planner daemon directly\n";
-		print "by sending raw commands to it and displaying the reply.\n";
-		print "It has a simple builtin help system and handles initial connection,\n";
-		print "authentication and adds the PID to the outgoing messages so that you don't\n";
-		print "need to worry about that. This tool is mostly useful for debugging\n";
-		exit(0);
-	}
-	$SocketName = $ARGV[0];
+# Purpose: Print formatted --help messages
+# Usage: PrintHelp("-short", "--long", "Description");
+sub PrintHelp ($$$) {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
+
+# Purpose: Connect to the daemon
+# Usage: ConnectToDaemon();
 sub ConnectToDaemon () {
 	# Verify socket existance
 	unless (-e $SocketName) {
@@ -75,14 +61,6 @@ sub ConnectToDaemon () {
 	# Say HI to the daemon and get the reply
 	print $socket "$$ HI commander\n";
 }
-ConnectToDaemon();
-my $HI_REPLY = <$socket>;
-
-# Print initial warning and welcomming message
-print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
-print "Welcome to the day planner daemon commander\n";
-print "Type !QUIT to quit, !HELP to view known daemon commands\n";
-print "Daemon says $HI_REPLY\n";
 
 # Purpose: Print a nicely formatted help output for commands available
 # Usage: CommandPrint(COMMAND, Description);
@@ -90,17 +68,10 @@ sub CommandPrint ($$) {
 	printf "%-18s %s\n", $_[0], $_[1];
 }
 
-# Create our Term::ReadLine object
-my $term = Term::ReadLine->new('Day Planner daemon commander');
-# Get the attribs and set up autocompleteion
-my $attribs = $term->Attribs;
-$attribs->{completion_entry_function} = $attribs->{list_completion_function};
-$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH NOTIFICATION GET VERIFY CLEAN DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK RECALCULATE DUMP_HASHES DUMP_MAINHASH DUMP_CONFIG !QUIT !HELP !RESTART_DAEMON)];
-
-# An "eternal" loop getting input and parsing it
-while (1) {
-	# Get the input
-	my $COMMAND = $term->readline('Command: ');
+# Purpose: Parse user input and send to daemon if needed
+# Usage: ParseInput(INPUT);
+sub ParseInput ($) {
+	my $COMMAND = $_[0];
 	# Make sure we got something other than emptyness or whitespace
 	if(defined($COMMAND) and $COMMAND =~ /\S/) {
 		chomp($COMMAND);			# Strip newlines
@@ -135,12 +106,11 @@ while (1) {
 			CommandPrint("KICK [PID]", "Kick the PID specified from the daemon - denies further access until");
 			CommandPrint("", "that PID reconnects (PID is removed from the access lists - its connection");
 			CommandPrint("", "to the daemon stays open");
-			CommandPrint("ENABLE_DEBUGLOG", "Enable logging of output to a file. The daemon will reply");
-			CommandPrint("", "the path to the file it will output to and redirect STDOUT/STDERR to that file");
+			CommandPrint("ENABLE_DEBUGLOG", "Enable debugging output to the logfile");
 			CommandPrint("RECALCULATE", "Recalculate todays events");
-			CommandPrint("DUMP_HASHES", "Dump all of the data hashes to STDOUT");
-			CommandPrint("DUMP_MAINHASH", "Dump the main data hash (\%NotificationHash) to STDOUT");
-			CommandPrint("DUMP_CONFIG", "Dump the internal configuration hash (\%Config) to STDOUT");
+			CommandPrint("DUMP_HASHES", "Dump all of the data hashes");
+			CommandPrint("DUMP_MAINHASH", "Dump the main data hash (\%NotificationHash)");
+			CommandPrint("DUMP_CONFIG", "Dump the internal configuration hash (\%Config)");
 		} elsif ($COMMAND =~ /^!RESTART_DAEMON/) {
 			print "Restarting daemon...\n";
 			print $socket "$$ GET_PATH\n";
@@ -198,6 +168,65 @@ while (1) {
 			}
 		}
 	}
+}
+
+# Set up the signal handling
+$SIG{PIPE} = sub { print "I recieved SIGPIPE - daemon shut down?\n"; };	# Handle SIGPIPE gracefully
+$SIG{INT} = sub {				# Handle SIGINT correctly
+	if (defined($socket)) {
+		print $socket "$$ BYE";
+	}
+	print("\n");exit(0);};
+
+# Get commandline options
+GetOptions(
+	'h|help' => sub {
+		print "Day planner commander\n\n";
+		print "Usage: " . basename($0) . " [PARAMETERS] [COMMAND]\n\n";
+		PrintHelp("-h", "--help", "Display this help screen");
+		PrintHelp("-s", "--socket", "Select an alternate socket");
+		print "All commandline arguments are optional.\n";
+		exit(0);
+	},
+	's|socket=s' => \$SocketName,
+) or die "See --help for more information\n";
+
+# If there is something left in @ARGV then we are running in non-interactive mode
+$Is_Interactive = 1 unless(@ARGV);
+
+# Connect to the daemon and save the reply in $HI_REPLY
+ConnectToDaemon();
+my $HI_REPLY = <$socket>;
+
+# If we're interactive present the user with a command prompt
+if($Is_Interactive) {
+	# Print initial warning and welcomming message
+	print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
+	print "Welcome to the day planner daemon commander\n";
+	print "Type !QUIT to quit, !HELP to view known daemon commands\n";
+	print "Daemon says $HI_REPLY\n";
+	
+	# Create our Term::ReadLine object
+	my $term = Term::ReadLine->new('Day Planner daemon commander');
+	# Get the attribs and set up autocompleteion
+	my $attribs = $term->Attribs;
+	$attribs->{completion_entry_function} = $attribs->{list_completion_function};
+	$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH NOTIFICATION GET VERIFY CLEAN DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK RECALCULATE DUMP_HASHES DUMP_MAINHASH DUMP_CONFIG !QUIT !HELP !RESTART_DAEMON)];
+	
+	# Eternal loop getting and parsing user input
+	while (1) {
+		# Get the input
+		my $COMMAND = $term->readline('Command: ');
+		ParseInput($COMMAND);
+	}
+} else {# If we're not interactive just send the commands on the commandline to the
+	# daemon in turn.
+	chomp($HI_REPLY);
+	print " Daemon replied: $HI_REPLY\n";
+	foreach(@ARGV) {
+		ParseInput($_);
+	}
+	ParseInput("!QUIT");
 }
 
 # Terminate the connection if we get this far, should never happen though
