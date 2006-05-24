@@ -33,12 +33,14 @@ my $NoAlias;
 my %LocaleDirHash = (
 	# Norwegian bokmål (also puts in aliases for nynorsk)
 	'nb' => 'nb_NO nb_NO.UTF-8 nb_NO.ISO-8859-15 no_NO no_NO.ISO-8859-1 no_NO.ISO-8859-15 no_NO.UTF-8 nn nn_NO nn_NO.ISO-8859-15 nn_NO.UTF-8',
+	'cs' => 'cs_CZ czech cs_CZ.ISO-8859-2',
 );
 
 # Usage:
 # *.mo name => LocaleDirHash main directory it should live in
 my %MoToDirHash = (
-	'nb.mo' => 'nb'
+	'nb.mo' => 'nb',
+	'cs.mo' => 'cs'
 );
 
 # Usage: InPath(command)
