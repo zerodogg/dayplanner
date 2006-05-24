@@ -1930,7 +1930,7 @@ GetOptions (
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		printf "Perl version %vd\n", $^V;
 		foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat debian ubuntu gentoo suse distro dist slackware NULL/) {
-			if (-e "/etc/$_-release" or -e "/etc/$_-version" or $_ eq "NULL") {
+			if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
 				my ($DistVer, $File);
 				if(-e "/etc/$_-release") {
 					$File = "$_-release";
@@ -1939,6 +1939,10 @@ GetOptions (
 				} elsif (-e "/etc/$_-version") {
 					$File = "$_-version";
 					open(VERSION_FILE, "<", "/etc/$_-release");
+					$DistVer = <VERSION_FILE>;
+				} elsif (-e "/etc/${_}_version") {
+					$File = "${_}_version";
+					open(VERSION_FILE, "<", "/etc/${_}_version");
 					$DistVer = <VERSION_FILE>;
 				} elsif ($_ eq "NULL") {
 					last unless -e "/etc/version";
