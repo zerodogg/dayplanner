@@ -116,6 +116,10 @@ my (
 	$Events_NotifyDay,	$Events_DayNotify
 );
 
+# Window state
+my ($MainWin_Width, $MainWin_Height) = (600,300);
+my $MainWin_Maximized;
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Networking functions
@@ -294,6 +298,75 @@ sub DaemonConnectionErrorHandler () {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Write the state file 
+# Usage: WriteStateFile(DIRECTORY, FILENAME);
+sub WriteStateFile($$) {
+	# The parameters
+	my $Dir = $_[0];
+	my $File = $_[1];
+
+	unless(defined($MainWindow)) {
+		DPIntWarn("Unable to save window state: The main window object is undef!");
+		return(0);
+	}
+	
+	# Open the config
+	open(STATE, ">$Dir/$File") or do {
+		# If we can't then we error out, no need for failsafe stuff - it's just the config file
+		DPIntWarn("Unable to save window state to $Dir/$File: $!");
+		return(0);
+	};
+	if(defined($MainWin_Maximized) and $MainWin_Maximized =~ /maximized/) {
+		$MainWin_Maximized = 1;
+	} else {
+		$MainWin_Maximized = 0;
+		($MainWin_Width, $MainWin_Height) = $MainWindow->get_size();
+	}
+
+	print STATE "# This file contains the saved state of the day planner window.\nMainWin_Width=$MainWin_Width\nMainWin_Height=$MainWin_Height\nMainWin_Maximized=$MainWin_Maximized\n";
+	close(STATE);
+}
+
+# Purpose: Load the state file
+# Usage: LoadStateFile(DIRECTORY, FILENAME);
+sub LoadStateFile($$) {
+	# The parameters
+	my $Dir = $_[0];
+	my $File = $_[1];
+
+	
+	# Open the statefile
+	open(STATE, "<$Dir/$File") or do {
+		return(1);
+	};
+	
+	# Load the config
+	foreach(<STATE>) {
+		next if m/^\s*#/;
+		next unless m/=/;
+		chomp;
+		my $Option = $_;
+		my $Value = $_;
+		$Option =~ s/^\s*(.*)\s*=.*/$1/;
+		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		unless($Value =~ /^\d+$/) {
+			DPIntWarn("Invalid nondigit value for $Option in the statefile: $Value. Ignoring setting.");
+			next;
+		}
+		if($Option eq 'MainWin_Width') {
+			$MainWin_Width = $Value;
+		} elsif ($Option eq 'MainWin_Height') {
+			$MainWin_Height = $Value;
+		} elsif ($Option eq 'MainWin_Maximized') {
+			$MainWin_Maximized = $Value;
+		} else {
+			DPIntWarn("Invalid setting in the statefile: $Option (=$Value). Ignoring.");
+			next;
+		}
+	}
+	close(STATE);
+}
 
 # Purpose: Write the configuration file
 # Usage: WriteConfig(DIRECTORY, FILENAME);
@@ -802,6 +875,9 @@ sub QuitSub () {
 			return(1);
 		}
 	}
+	
+	WriteStateFile($SaveToDir, "state.conf");
+	
 	Gtk2->main_quit;
 	CloseDaemon();
 	exit(0);
@@ -1699,7 +1775,8 @@ sub DrawMainWindow () {
 	# Create the main window widget
 	$MainWindow = Gtk2::Window->new('toplevel');
 	$MainWindow->set_title($Gettext->get("Day planner"));
-	$MainWindow->set_default_size (600,300);
+	$MainWindow->set_default_size ($MainWin_Width,$MainWin_Height);
+	$MainWindow->maximize if ($MainWin_Maximized);
 
 	# Set the icon
 	my $MainWindowIcon = DetectImage("dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
@@ -1710,6 +1787,13 @@ sub DrawMainWindow () {
 	# Make it handle closing
 	$MainWindow->signal_connect("destroy" => \&QuitSub);
 	$MainWindow->signal_connect("delete-event" => \&QuitSub);
+
+	# Handle saving maximized state
+	$MainWindow->signal_connect(window_state_event => sub {
+		my ($widget, $event) = @_;
+		$MainWin_Maximized = ($event->new_window_state & 'maximized');
+	});
+		
 
 	# Create the primary VBox for use inside it
 	my $PrimaryWindowVBox = Gtk2::VBox->new();
@@ -1916,7 +2000,8 @@ unless($Gtk2_Initialized) {
 }
 # Initialize the daemon, and if it works draw the main window
 if(DaemonInit()) {
-	# Draw the main window
+	# Load the state file and draw the main window
+	LoadStateFile($SaveToDir, "state.conf");
 	DrawMainWindow();
 } else {
 	die "FATAL: Unable to initialize the daemon\n";
