@@ -30,6 +30,12 @@ print "Using install dir: $InstallDirectory\n";
 my $Internal_Version = '$Id$';
 print "Installer version: $Internal_Version\n";
 
+die("Fatal internal error: Perl installer part got no data directory supplied\n") unless(defined($ARGV[0]));
+die("Fatal internal error: The data directory supplied ($ARGV[0]) does not exist.\nThis probably means that this package is corrupt, try re-downloading it.\n") unless -e $ARGV[0];
+
+my $InstallerData = $ARGV[0];
+print "Installer data is in $InstallerData\n";
+
 sub InPath {
 	foreach (split /:/, $ENV{PATH}) {
 		if (-x "$_/@_") {
@@ -40,7 +46,7 @@ sub InPath {
 }
 
 
-if(defined($ARGV[0]) and $ARGV[0] eq 'auto') {
+if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	print "Using automatic install - skipping prompts\n";
 } else {
 	Gtk2->init();
@@ -68,7 +74,13 @@ if(defined($ARGV[0]) and $ARGV[0] eq 'auto') {
 
 system("mkdir -p $InstallDirectory");
 
-system("cp -r ./dayplanner-data/* $InstallDirectory/");
+if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS} eq 'TRUE') {
+	# When using the local installer we might get svn files which will make cp display
+	# harmless errors. Setting DAYPLANNER_CP_SILENTERRORS to TRUE silences cp
+	system("cp -r $InstallerData/* $InstallDirectory/ &>/dev/null");
+} else {
+	system("cp -r $InstallerData/* $InstallDirectory/");
+}
 
 my @BINDIRS = (
 	"$ENV{HOME}/bin",
@@ -130,7 +142,7 @@ if(InPath("update-menus")) {
 	system("update-menus &>/dev/null");
 }
 
-unless(defined($ARGV[0]) and $ARGV[0] eq 'auto') {
+unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$ProgressWin->destroy();
 	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall day planner run $InstallDirectory/uninstall.sh");
 	$Finished->run();

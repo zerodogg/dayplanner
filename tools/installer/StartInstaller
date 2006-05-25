@@ -19,16 +19,19 @@
 
 echo -n "Preparing..."
 
-ONE="$1"
+ARGS="$1"
+
+DEFAULT_DATADIR="./dayplanner-data/"
+DATADIR="$DEFAULT_DATADIR"
 
 # Echo and display the error supplied
 SI_Error () {
 	echo "$@"
-	[ "$ONE" != "auto" ] && xmsg_ok "$@"
+	[ "$ARGS" != "auto" ] && xmsg_ok "$@"
 	exit 1
 }
 
-if [ "$ONE" != "auto" ]; then
+if [ "$ARGS" != "auto" ]; then
 
 	if [ "$DISPLAY" == "" ]; then
 		echo ""
@@ -92,6 +95,18 @@ if ! perl -e 'use POSIX; use Data::Dumper; use Getopt::Long; use Cwd; use File::
 	SI_Error "You are missing some perl modules. Please make sure you have all of the following perl modules installed: POSIX Data::Dumper Getopt::Long Cwd File::Basename IO::Socket IO::Select"
 fi
 
+echo -n "."
+
+if [ "$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR" != "" ]; then
+	if [ -e "$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR" ]; then
+		DATADIR="$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR"
+	else
+		echo "Error: the directory in the environment variable DAYPLANNER_INSTALLER_OVERRIDE_DATADIR does not exist. Using default: $DEFAULT_DATADIR"
+	fi
+fi
+
+echo -n "."
+
 echo "done"
 
 if [ "`which perl`" != "/usr/bin/perl" ]; then
@@ -106,6 +121,6 @@ if [ "`which perl`" != "/usr/bin/perl" ]; then
 fi
 
 echo "Okay, handing control over to the perl installer part"
-if ! perl ./MainInstallerPart "$@"; then
+if ! perl ./MainInstallerPart "$DATADIR" "$@"; then
 	SI_Error "An unkown error occurred when starting the main installer. Unable to proceed"
 fi
