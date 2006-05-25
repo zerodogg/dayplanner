@@ -1,8 +1,13 @@
 * LOCAL INSTALL - SINGLE USER *
-Just run ./dayplanner from this directory, it isn't harder.
-If you want day planner in your language (localized) run ./tools/BuildLocale
-(without any commandline parameters). This requires you to have the Gettext tool
-msgfmt installed.
+You can simply run ./dayplanner from this directory (and ./tools/BuildLocale first
+if you want localization).
+
+If you want to *install* day planner run ./tools/installer/InstallLocal
+This will start the day planner installer used in the day planner packages.
+
+Building the locale files requires msgfmt from gettext installed.
+
+- - -
 
 * GLOBAL INSTALL - MULTI USER and PACKAGERS *
 If you're a packager you may want to look at tools/rpm/* and perhaps also at
