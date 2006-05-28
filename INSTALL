@@ -4,6 +4,8 @@ if you want localization).
 
 If you want to *install* day planner run ./tools/installer/InstallLocal
 This will start the day planner installer used in the day planner packages.
+The installer runs ./tools/BuildLocale for you, so if you use the installer
+you don't need to run it manually.
 
 Building the locale files requires msgfmt from gettext installed.
 
