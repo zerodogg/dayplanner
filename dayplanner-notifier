@@ -49,11 +49,11 @@ sub DaemonConnect () {
 	$Socket = IO::Socket::UNIX->new(Peer => $SocketName,
 					Type => SOCK_STREAM,
 					Timeout => 10 )
-					or warn "WARNING: Unable to connect to $SocketName: $@!\n" and return(0);
+					or DPIntWarn("Unable to connect to $SocketName: $@!") and return(0);
 	if(Daemon_DataSegment("HI servant") eq "HI") {
 		return(1);
 	} else {
-		warn "WARNING: Unable to connect to $SocketName: The daemon refused my connection\n";
+		DPIntWarn("Unable to connect to $SocketName: The daemon refused my connection\n");
 		close($Socket);
 		return("NOHI");
 	}
@@ -63,7 +63,7 @@ sub DaemonConnect () {
 # Purpose: Send some data to the daemon
 # Usage: Daemon_SendData(DATA);
 sub Daemon_SendData ($) {
-	print $Socket "$$ $_[0]","\n" or warn "Problem sending data to the daemon: $!\n" and return(0);
+	print $Socket "$$ $_[0]","\n" or DPIntWarn("Problem sending data to the daemon: $!") and return(0);
 }
 
 # Purpose: Get some data from the daemon
@@ -100,8 +100,13 @@ sub DaemonDisconnect () {
 sub UnwrapMultiLinePacket () {
 	my $MultiLineNotEnded = 1;
 	my $NewMessage;
+	my $UnhandledLimit;
+	my $DidSomething;
+	my $DidNotDoAnything;
 	while ($MultiLineNotEnded) {
+		$DidSomething = 0;
 		foreach(split(/\n/,<$Socket>)) {
+			$DidSomething = 1;
 			if (/^END MULTILINE/) {
 				$MultiLineNotEnded = 0;
 				last;
@@ -114,12 +119,36 @@ sub UnwrapMultiLinePacket () {
 				}
 			} elsif (/^NNL$/) {
 				# This means the preceeding line doesn't end with \n
+				unless(defined($NewMessage)) {
+					DPIntWarn("Recieved NNL while unwrapping a multiline packet without any preceeding line. This is a bug in either the daemon or notifier. Ignoring request and proceeding");
+					next;
+				}	
 				$NewMessage =~ s/\n$//;
 			} else {
 				chomp($_);
-				warn("Warning: Unhandled daemon command: $_\n");
+				DPIntWarn("Unhandled daemon command: $_\n");
+				$UnhandledLimit++;
+			}
+			if(defined($UnhandledLimit) and $UnhandledLimit >= 20) {
+				DPIntWarn("Limit of 20 unhandled daemon commands within UnwrapMultiLinePacket exceeded. Assuming END MULTILINE");
+				$MultiLineNotEnded = 0;
+				last;
 			}
 		}
+		if($DidSomething == 0) {
+			$DidNotDoAnything++;
+		} else {
+			$DidNotDoAnything = 0;
+		}
+		if(defined($DidNotDoAnything) and $DidNotDoAnything >= 20) {
+			DPIntWarn("Limit of 20 idle turns through the UnwrapMultiLinePacket loop exceeded. Assuming END MULTILINE");
+			$MultiLineNotEnded = 0;
+			last;
+		}
+	}
+	unless(defined($NewMessage)) {
+		DPIntWarn("\$NewMessage was undefined while unwrapping a multiline packet. This is probably a bug. Returning \"\" scalar string value to caller");
+		return("");
 	}
 	unless($NewMessage =~ /\n.*\n/) {
 		chomp($NewMessage);
@@ -139,7 +168,9 @@ sub GetMessages ($) {
 	$Date = Daemon_DataSegment("NOTIFICATION GET $_[0] Date");
 	$Fulltext = Daemon_DataSegment("NOTIFICATION GET $_[0] Fulltext");
 
-	if($Fulltext eq "$_[0] UNDEF") {
+	# Fulltext is a multiline packet and can thus return "" on failure.
+	# We assume $_[0] UNDEF on ""/failure
+	if($Fulltext eq "$_[0] UNDEF" or $Fulltext eq "") {
 		$Fulltext = undef;
 	}
 
@@ -149,6 +180,12 @@ sub GetMessages ($) {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Display a nicely formatted warning
+# Usage: DPIntWarn("Warning");
+sub DPIntWarn ($) {
+	warn "*** (Day Planner notifier $Version) Warning: $_[0]\n";
+}
 
 # Purpose: Print nicely formatted help output
 # Usage: PrintHelp("-shortoption","--longoption","Description");
