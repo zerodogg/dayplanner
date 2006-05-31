@@ -348,6 +348,7 @@ GetOptions (
 		print "Use a --time/--message/--date (and --fulltext) combo if you want to call it manually,\n";
 		print "the daemon uses --id.\n\n";
 		PrintHelp("-h","--help","Display this help screen");
+		PrintHelp("-v", "--version", "Display version information and exit");
 		PrintHelp("-s","--socket","Select the daemon socket");
 		PrintHelp("-m", "--message", "Set the message");
 		PrintHelp("-f", "--fulltext", "Set the \"fulltext\" entry (details)");
@@ -364,6 +365,11 @@ GetOptions (
 	'date|d=s' => \$Date,
 	'id|i=s' => \$MessageID,
 	'n|nofork' => \$NoFork,
+	'v|version' => sub {
+		print "Day planner notifier version $Version\n";
+		print "RCS revision: $RCSRev\n";
+		exit(0);
+	},
 ) or die "See $0 --help for more information\n";
 
 # Verify various things
