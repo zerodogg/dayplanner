@@ -848,6 +848,7 @@ GetOptions (
 	'help|h' => sub {
 		print "Day planner daemon version $Version\n\n";
 		PrintHelp("-d", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
+		PrintHelp("", "--version", "Display version information and exit");
 		PrintHelp("-h,", "--help", "Display this help screen");
 		PrintHelp("-n,", "--nofork", "Don't go into the background (and log to STDOUT/STDERR instead of the logfile)");
 		PrintHelp("-v,", "--verbose", "Be verbose");
@@ -883,6 +884,11 @@ GetOptions (
 			die "The --socketname can't contain a /\n";
 		}
 		$SocketName = $_[1];
+	},
+	'v|version' => sub {
+		print "Day planner daemon version $Version\n";
+		print "RCS revision: $RCSRev\n";
+		exit(0);
 	},
 ) or die "See $0 --help for more information\n";
 
