@@ -11,8 +11,14 @@ Version 0.1.2 (Unreleased)
 * Daemon (dayplanner-daemon)
 - A minor bugfix in a debugging command
 - A minor bugfix concerning the --output commandline option
+- Now responds to --version
 
 * Notifier (dayplanner-notifier)
+- Now responds to --version
+- Fixed a few errors that where not handled when recieving corrupt
+  multi line packets
+- Fixed a few potential bugs with the multi line packet unwrapping
+  function
 
 * Commander
 - Made much more modular
