@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # Dayplanner commander
+# $Id$
 # Copyright (C) Eskild Hustvedt 2006
 #
 # This program is free software; you can redistribute it and/or
@@ -26,6 +27,7 @@ use Getopt::Long;
 my $socket;			# The socket
 my $Is_Interactive;
 my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";	# Default socket
+my $RCSRev = '$Id$';
 
 # Purpose: Print formatted --help messages
 # Usage: PrintHelp("-short", "--long", "Description");
@@ -185,10 +187,15 @@ GetOptions(
 		print "Usage: " . basename($0) . " [PARAMETERS] [COMMAND]\n\n";
 		PrintHelp("-h", "--help", "Display this help screen");
 		PrintHelp("-s", "--socket", "Select an alternate socket");
+		PrintHelp("-v", "--version", "Print RCS revision and exit");
 		print "All commandline arguments are optional.\n";
 		exit(0);
 	},
 	's|socket=s' => \$SocketName,
+	'r|v|version' => sub {
+		print "Day planner commander $RCSRev\n";
+		exit(0);
+	}
 ) or die "See --help for more information\n";
 
 # If there is something left in @ARGV then we are running in non-interactive mode
