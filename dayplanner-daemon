@@ -592,7 +592,8 @@ sub CommandHandler ($) {
 			my $ClientList;
 			foreach (reverse sort keys(%{$AccessStatus{ClientList}})) {
 				# There must be some better way to do this?
-				if ($ClientList) {
+				# TODO: $ClientList .= $_; ?
+				if (defined($ClientList)) {
 					$ClientList = "$_ $ClientList";
 				} else {
 					$ClientList = $_;
