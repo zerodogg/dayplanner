@@ -7,6 +7,9 @@ buildpot		Build the Day Planner POT file to ../po/dayplanner.pot
 BuildLocale		Build a localization tree in ../locale/ with mo-files
 			and a proper gettext directory structure
 
+updatepo		Run buildpot and then msgmerge existing *.po files with
+			the new pot-file
+
 commander		The day planner daemon commander. Send raw commands
 			to a day planner daemon. Useful for testing
 
