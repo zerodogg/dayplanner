@@ -1943,7 +1943,7 @@ GetOptions (
 		print "RCS revision: $RCSRev\n";
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		printf "Perl version %vd\n", $^V;
-		foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat debian ubuntu gentoo suse distro dist slackware NULL/) {
+		foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu lsb debian gentoo suse distro dist slackware NULL/) {
 			if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
 				my ($DistVer, $File);
 				if(-e "/etc/$_-release") {
