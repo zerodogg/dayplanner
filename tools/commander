@@ -188,7 +188,8 @@ GetOptions(
 		PrintHelp("-h", "--help", "Display this help screen");
 		PrintHelp("-s", "--socket", "Select an alternate socket");
 		PrintHelp("-v", "--version", "Print RCS revision and exit");
-		print "All commandline arguments are optional.\n";
+		print "All commandline arguments are optional.\n\n";
+		print "For help about the commands the daemon accepts enter the command !HELP\n";
 		exit(0);
 	},
 	's|socket=s' => \$SocketName,
@@ -228,11 +229,14 @@ if($Is_Interactive) {
 	}
 } else {# If we're not interactive just send the commands on the commandline to the
 	# daemon in turn.
+	print "Sent: HI\n";
 	chomp($HI_REPLY);
 	print " Daemon replied: $HI_REPLY\n";
 	foreach(@ARGV) {
+		print "Sent: $_\n";
 		ParseInput($_);
 	}
+	print "Sent: BYE\n";
 	ParseInput("!QUIT");
 }
 
