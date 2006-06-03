@@ -25,13 +25,13 @@ use File::Basename qw/dirname/;
 my $Directory = dirname(realpath($0));
 
 unless(-e "$Directory/../../dayplanner" and -e "$Directory/../../dayplanner-daemon" and -e "$Directory/../../dayplanner-notifier") {
-	die("Unable to detect the proper directory containing day planner. I should be in ./tools/installer, with day planner in ./\n");
+	die("Unable to detect the proper directory containing day planner. I should be in ./devel-tools/installer, with day planner in ./\n");
 }
 
 $ENV{DAYPLANNER_INSTALLER_OVERRIDE_DATADIR} = "$Directory/../../";
 $ENV{DAYPLANNER_CP_SILENTERRORS} = "TRUE";
 
-print "Running tools/BuildLocale...";
+print "Running devel-tools/BuildLocale...";
 if (system("$Directory/../BuildLocale &>/dev/null")) {
 	print "failed - not that harmful. Continuing...\n";
 } else {
