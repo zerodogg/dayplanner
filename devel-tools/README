@@ -10,11 +10,6 @@ BuildLocale		Build a localization tree in ../locale/ with mo-files
 updatepo		Run buildpot and then msgmerge existing *.po files with
 			the new pot-file
 
-commander		The day planner daemon commander. Send raw commands
-			to a day planner daemon. Useful for testing
-
-plan-migration		See README.plan-migration
-
 CreatePackages		Helper script for producing day planner packages
 
 HolidayParser		A unfinished parser of .holiday files that will be
