@@ -1,10 +1,10 @@
 * LOCAL INSTALL - SINGLE USER *
-You can simply run ./dayplanner from this directory (and ./tools/BuildLocale first
+You can simply run ./dayplanner from this directory (and ./devel-tools/BuildLocale first
 if you want localization).
 
-If you want to *install* day planner run ./tools/installer/InstallLocal
+If you want to *install* day planner run ./devel-tools/installer/InstallLocal
 This will start the day planner installer used in the day planner packages.
-The installer runs ./tools/BuildLocale for you, so if you use the installer
+The installer runs ./devel-tools/BuildLocale for you, so if you use the installer
 you don't need to run it manually.
 
 Building the locale files requires msgfmt from gettext installed.
@@ -12,8 +12,8 @@ Building the locale files requires msgfmt from gettext installed.
 - - -
 
 * GLOBAL INSTALL - MULTI USER and PACKAGERS *
-If you're a packager you may want to look at tools/rpm/* and perhaps also at
-tools/CreatePackages and possibly tools/installer/MainInstallerPart
+If you're a packager you may want to look at devel-tools/rpm/* and perhaps also at
+devel-tools/CreatePackages and possibly devel-tools/installer/MainInstallerPart
 
 This is a bit trickier, these files should go into $PATH somewhere, such as in /usr/local/bin or
 /usr/bin/ and be +x:
@@ -39,7 +39,7 @@ in the filesystem. A trick if day planner can't detect its images properly is to
 place the executeables in the same directory as the art/ subdirectory and then
 just symlink the executeables into $PATH, day planner handles $PATH fine.
 
-Lastly, for internationalization you want to run ./tools/BuildLocale /dir.
-On most systems this would be: ./tools/BuildLocale /usr/locale/
+Lastly, for internationalization you want to run ./devel-tools/BuildLocale /dir.
+On most systems this would be: ./devel-tools/BuildLocale /usr/locale/
 
 $Id$
