@@ -9,28 +9,45 @@ It uses the GNU Gettext library for the functions.
 
 Essentials for the translator
 - - - - - - - - - - - - - - -
-To generate an updated day planner pot-file run ./tools/buildpot
-This will save the pot file to ./po/dayplanner.pot
 
-Either "msgmerge" it with your current translation or, if you're starting
-a new translation, simply copy it to LANG_CODE.po (ie: nb.po).
+	Creating a new translation
+	- - - - - - - - - - - - - -
+Run ./devel-tools/buildpot - this will create a pot-file in ./po/dayplanner.pot.
+Move this file to ./po/LANG_CODE.po - for instance for Norwegian Bokmål
+this would be: mv ./po/dayplanner.pot ./po/nb.po
+Now start translating ./po/LANG_CODE.po with your favourite po-editor
+(for instance poedit, gtranslator or kbabel).
 
-Proceed to translate.
+When you're done with that you'll need to edit ./devel-tools/BuildLocale.
+Add your language to the %LocaleDirHash and %MoToDirHash - how to do it
+is documented inside the ./devel-tools/BuildLocale file. If you have any
+questions, don't hesitate to e-mail me.
 
-- For new translations only:
-	You'll need to edit ./tools/BuildLocale
-	Add your language to the %LocaleDirHash and %MoToDirHash - these are
-	documented in the BuildLocale source code. Feel free to mail me
-	if you have any questions.
+When you've done that follow the instructions in the sections "building the
+translations" and "sending in the translations".
 
-Now run ./tools/BuildLocale to build the mo-files and create a ./locale/
-directory tree that day planner will use.
-You can now start day planner by typing ./dayplanner and if your
-locale is properly set you should see day planner in your language.
+	Updating a translation
+	- - - - - - - - - - - 
+To update a translation first run ./devel-tools/updatepo
+This will update the po-file for your language in ./po/. Now you can
+just translate as before using your favourite po-editor.
 
-If all is well and you want to send in your translations then tar both
-your updated BuildLocale and your *.po file and send them to the
-mail address above with a subject similar to "Day planner i18n"
+When you've done that follow the instructions in the sections "building the
+translations" and "sending in the translations".
+
+	Building the translations
+	- - - - - - - - - - - - -
+Run ./tools/BuildLocale - this creates a ./locale/ directory tree
+with the resulting mo-files. As long as your system locale is properly
+set you can now just run ./dayplanner and enjoy the program in your language.
+
+	Sending in the translations
+	- - - - - - - - - - - - - -
+We would very much appreciate that you send us your translation of day planner
+so that other users can benefit from your work. To do so send the po-file
+(and if you have changed ./tools/BuildLocale include that file too)
+to the e-mail address at the top of this document. Use "Day Planner i18n"
+or something similar as the subject of the e-mail.
 
 Helper scripts
 - - - - - - - -
