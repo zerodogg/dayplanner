@@ -70,7 +70,7 @@ cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 	longtitle="An easy to use graphical day planner"
 EOF
 
-./tools/BuildLocale $RPM_BUILD_ROOT/%{_datadir}/locale/
+./devel-tools/BuildLocale $RPM_BUILD_ROOT/%{_datadir}/locale/
 
 # Find the localization
 %find_lang %{name}
