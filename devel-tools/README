@@ -1,0 +1,26 @@
+This directory contains various tools for day planner.
+Some of them are only useful for development or debugging, while
+others might be useful for other things too.
+
+buildpot		Build the Day Planner POT file to ../po/dayplanner.pot
+
+BuildLocale		Build a localization tree in ../locale/ with mo-files
+			and a proper gettext directory structure
+
+updatepo		Run buildpot and then msgmerge existing *.po files with
+			the new pot-file
+
+commander		The day planner daemon commander. Send raw commands
+			to a day planner daemon. Useful for testing
+
+plan-migration		See README.plan-migration
+
+CreatePackages		Helper script for producing day planner packages
+
+HolidayParser		A unfinished parser of .holiday files that will be
+			implemented into the main of day planner once it's finished.
+
+installer/		Contains the source code for the generic day planner
+			installer
+
+rpm/			Contains the specfiles for the day planner RPM

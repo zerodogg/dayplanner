@@ -20,11 +20,11 @@ use strict;
 use warnings;
 use Fatal;
 
-unless(-d "./po" and -e "./tools/buildpot") {
+unless(-d "./po" and -e "./devel-tools/buildpot") {
 	die("Please run me from the base of the day planner source tree (not the tools/ dir)\n");
 }
 
-system("sh ./tools/buildpot");
+system("sh ./devel-tools/buildpot");
 chdir("./po");
 foreach(<*.po>) {
 	print "Updating po/$_";

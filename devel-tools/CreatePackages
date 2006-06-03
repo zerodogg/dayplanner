@@ -39,11 +39,11 @@ my $tempdir = File::Temp::tempdir(
 );
 print " Detecting the source directory...";
 my $OrigDir = dirname(realpath($0));
-unless(-e "$OrigDir/tools/installer") {
+unless(-e "$OrigDir/devel-tools/installer") {
 	$OrigDir = "$OrigDir/../";
-	unless (-e "$OrigDir/tools/installer") {
+	unless (-e "$OrigDir/devel-tools/installer") {
 		$OrigDir = "$OrigDir/../../";
-		unless (-e "$OrigDir/tools/installer") {
+		unless (-e "$OrigDir/devel-tools/installer") {
 			die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
 		}
 	}
@@ -126,11 +126,11 @@ print "done\n";
 if($BuildRPM) {
 	print "Building rpm...\n";
 	print " Checking for required files...";
-	unless (-e "$OrigDir/tools/rpm/changelog.spec") {
-		die "failed - $OrigDir/tools/rpm/changelog.spec does not exist\n";
+	unless (-e "$OrigDir/devel-tools/rpm/changelog.spec") {
+		die "failed - $OrigDir/devel-tools/rpm/changelog.spec does not exist\n";
 	}
-	unless (-e "$OrigDir/tools/rpm/package.spec") {
-		die "failed - $OrigDir/tools/rpm/package.spec does not exist\n";
+	unless (-e "$OrigDir/devel-tools/rpm/package.spec") {
+		die "failed - $OrigDir/devel-tools/rpm/package.spec does not exist\n";
 	}
 	unless (-d "$ENV{HOME}/rpm/SOURCES/") {
 		die "failed - $ENV{HOME}/rpm/SOURCES/ does not exist\n";
@@ -146,7 +146,7 @@ if($BuildRPM) {
 	my @RPM_SPECFILE;
 
 	# Read package.spec
-	open(SPECFILE, "<$OrigDir/tools/rpm/package.spec") or die "failed - unable to open $OrigDir/tools/rpm/package.spec for reading: $!\n";
+	open(SPECFILE, "<$OrigDir/devel-tools/rpm/package.spec") or die "failed - unable to open $OrigDir/devel-tools/rpm/package.spec for reading: $!\n";
 
 	foreach(<SPECFILE>) {
 		s/\[DAYPLANNER_VERSION\]/$DPVersion/;
@@ -156,7 +156,7 @@ if($BuildRPM) {
 	print ".";
 
 	# Read the changelog (changelog.spec)
-	open(SPECFILE, "<$OrigDir/tools/rpm/changelog.spec") or die "failed - unable to open $OrigDir/tools/rpm/changelog.spec for reading: $!\n";
+	open(SPECFILE, "<$OrigDir/devel-tools/rpm/changelog.spec") or die "failed - unable to open $OrigDir/devel-tools/rpm/changelog.spec for reading: $!\n";
 
 	foreach(<SPECFILE>) {
 		push(@RPM_SPECFILE, $_);
@@ -170,7 +170,7 @@ if($BuildRPM) {
 	print "done\n";
 	close(SPECFILE);
 
-	print " NOTE: Remember to add a changelog entry in $OrigDir/tools/rpm/changelog.spec\n";
+	print " NOTE: Remember to add a changelog entry in $OrigDir/devel-tools/rpm/changelog.spec\n";
 
 	# Build the RPM package
 	print " Building RPM...";
@@ -200,12 +200,12 @@ if($BuildInstaller) {
 	print ".";
 	# Copy the needed files
 	foreach(qw/MainInstallerPart StartInstaller xmsg/) {
-		system("cp -r $OrigDir/tools/installer/$_ $tempdir/installer/");
+		system("cp -r $OrigDir/devel-tools/installer/$_ $tempdir/installer/");
 		print ".";
 	}
 	print "done\n";
 	print " Running tools/BuildLocale...";
-	system("$tempdir/installer/dayplanner-data/tools/BuildLocale > /dev/null");
+	system("$tempdir/installer/dayplanner-data/devel-tools/BuildLocale > /dev/null");
 	print "done\n";
 	# Find makeself
 	print " Detecting makeself...";

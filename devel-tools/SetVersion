@@ -34,15 +34,15 @@ unless(-e "$OrigDir/dayplanner") {
         unless (-e "$OrigDir/dayplanner") {
                 $OrigDir = "$OrigDir/../../";
                 unless (-e "$OrigDir/dayplanner") {
-                        die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
+                        die "failed - I'm giving up. Run me from the devel-tools directory in the day planner source tree please.\n";
                 }
         }
 }
 $OrigDir = realpath($OrigDir);
 print "Working...\n";
-foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier tools/CreatePackages#) {
+foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier devel-tools/CreatePackages#) {
 	print " $CurrentFile...";
-	if($CurrentFile eq 'tools/CreatePackages') {
+	if($CurrentFile eq 'devel-tools/CreatePackages') {
 		$NewVersion =~ s/\s+/_/g;
 		$NewVersion = lc($NewVersion);
 	}
