@@ -20,9 +20,15 @@ use strict;
 use warnings;
 use Fatal;
 
+sub InPath ($) {
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+}
+
 unless(-d "./po" and -e "./devel-tools/buildpot") {
 	die("Please run me from the base of the day planner source tree (not the tools/ dir)\n");
 }
+
+die("Pease install msgmerge before running me (usually included in the \"gettext\" package)\n") unless InPath("msgmerge");
 
 system("sh ./devel-tools/buildpot");
 chdir("./po");
