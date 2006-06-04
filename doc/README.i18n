@@ -37,7 +37,7 @@ translations" and "sending in the translations".
 
 	Building the translations
 	- - - - - - - - - - - - -
-Run ./tools/BuildLocale - this creates a ./locale/ directory tree
+Run ./devel-tools/BuildLocale - this creates a ./locale/ directory tree
 with the resulting mo-files. As long as your system locale is properly
 set you can now just run ./dayplanner and enjoy the program in your language.
 
@@ -45,14 +45,14 @@ set you can now just run ./dayplanner and enjoy the program in your language.
 	- - - - - - - - - - - - - -
 We would very much appreciate that you send us your translation of day planner
 so that other users can benefit from your work. To do so send the po-file
-(and if you have changed ./tools/BuildLocale include that file too)
+(and if you have changed ./devel-tools/BuildLocale include that file too)
 to the e-mail address at the top of this document. Use "Day Planner i18n"
 or something similar as the subject of the e-mail.
 
 Helper scripts
 - - - - - - - -
 
-./tools/buildpot		Builds the pot-file
+./devel-tools/buildpot		Builds the pot-file
 
-./tools/BuildLocale		Builds the entire locale/ directory tree
+./devel-tools/BuildLocale	Builds the entire locale/ directory tree
 				with mo-files and all
