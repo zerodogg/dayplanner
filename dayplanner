@@ -22,7 +22,6 @@ use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
 use POSIX;			# We need strftime
-#use Glib;
 use Gtk2; 			# Use Gtk2 :)
 use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
@@ -31,7 +30,6 @@ use Getopt::Long;		# Commandline options
 use Cwd;                        # We need Cwd::Realpath to find out which directory we live in
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
 use IO::Socket;			# Network layer to communicate with the daemon
-# setlocale(LC_MESSAGES, "");
 
 # Scalars
 my $Version = "0.1.2";
@@ -50,7 +48,7 @@ my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 
-setlocale(LC_MESSAGES, "" );
+setlocale(LC_ALL, "" );
 textdomain("dayplanner");
 
 # Find out if we have a locale directory in our main dir
