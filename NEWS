@@ -8,6 +8,7 @@ Version 0.1.2 (Unreleased)
   ones.
 - Now saves the state (size and maximized/unmaximized) of the main window
 - Added Czech translation by Vlastimil Ott
+- Added Slovak translation by Michal Spáda
 
 * Daemon (dayplanner-daemon)
 - A minor bugfix in a debugging command
