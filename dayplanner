@@ -81,20 +81,24 @@ my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
 my %AllDayEvents;		# The contents of the all-day events file
+
+# The reason we do not use strftime() or I18N::Langinfo is that these return
+# values in random encodings. By using Gettext->get() we get values
+# in a proper encoding
 my %MonthNames = (
-	1 => strftime("%B", 0, 0, 0, 1, 0, 0, 0 ),
-	2 => strftime("%B", 0, 0, 0, 1, 1, 0, 0 ),
-	3 => strftime("%B", 0, 0, 0, 1, 2, 0, 0 ),
-	4 => strftime("%B", 0, 0, 0, 1, 3, 0, 0 ),
-	5 => strftime("%B", 0, 0, 0, 1, 4, 0, 0 ),
-	6 => strftime("%B", 0, 0, 0, 1, 5, 0, 0 ),
-	7 => strftime("%B", 0, 0, 0, 1, 6, 0, 0 ),
-	8 => strftime("%B", 0, 0, 0, 1, 7, 0, 0 ),
-	9 => strftime("%B", 0, 0, 0, 1, 8, 0, 0 ),
-	10 => strftime("%B", 0, 0, 0, 1, 9, 0, 0 ),
-	11 => strftime("%B", 0, 0, 0, 1, 10, 0, 0 ),
-	12 => strftime("%B", 0, 0, 0, 1, 11, 0, 0 ),
-);				# Localized number => month name hash
+	1 => $Gettext->get("January"),
+	2 => $Gettext->get("February"),
+	3 => $Gettext->get("March"),
+	4 => $Gettext->get("Arpil"),
+	5 => $Gettext->get("May"),
+	6 => $Gettext->get("June"),
+	7 => $Gettext->get("July"),
+	8 => $Gettext->get("August"),
+	9 => $Gettext->get("September"),
+	10 => $Gettext->get("October"),
+	11 => $Gettext->get("November"),
+	12 => $Gettext->get("December")
+);	# Localized hash of month number => Name values
 
 # Gtk2 objects
 my (
