@@ -84,6 +84,14 @@ unless (-d $LocaleDir) {
 	mkdir($LocaleDir);
 	print " Created: $LocaleDir\n";
 }
+unless($NoAlias) {
+	unless (-e "$LocaleDir/README") {
+		open(README, ">", "$LocaleDir/README");
+		print README "This is a local locale tree for day planner. Much equal to that you would\n";
+		print README "find in /usr/share/locale/.";
+		close(README);
+	}
+}
 
 foreach my $CurrentLocale (keys(%LocaleDirHash)) {
 	unless (-d "$LocaleDir/$CurrentLocale/LC_MESSAGES") {
