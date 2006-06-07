@@ -1,8 +1,8 @@
 Day planner version history
 **************************
 
-Version 0.1.2 (Unreleased)
---------------------------
+Version 0.1.2 (Released 7th of June 2006)
+-----------------------------------------
 * Client (dayplanner)
 - Now uses systemwide properties for the toolbar instead of internal
   ones.
