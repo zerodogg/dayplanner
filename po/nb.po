@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-06-05 12:36+0200\n"
+"POT-Creation-Date: 2006-06-07 21:32+0200\n"
 "PO-Revision-Date: 2006-05-23 20:57+0200\n"
 "Last-Translator: Jørgen Grønlund <jorgenhg@broadpark.no>\n"
 "Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: KBabel 1.10.2\n"
 
-#: dayplanner:44
+#: dayplanner:44 dayplanner-notifier:31
 msgid "dayplanner"
 msgstr "dayplanner"
 
@@ -232,7 +232,7 @@ msgstr "Sammendrag:"
 msgid "Enter a summary of the event here"
 msgstr "Skriv inn et sammendrag av hendelsen her"
 
-#: dayplanner:1303 dayplanner:1578
+#: dayplanner:1303 dayplanner:1578 dayplanner-notifier:286
 msgid "Details"
 msgstr "Detaljer"
 
@@ -364,17 +364,31 @@ msgstr "_Hjelp"
 msgid "_About"
 msgstr "_Om"
 
-#~ msgid "Toolbar icon style"
-#~ msgstr "Ikonstil for verktøylinja"
+#: dayplanner-notifier:252
+#, perl-format
+msgid ""
+"Today at %s:\n"
+"%s"
+msgstr "I dag klokka %s:\n%s"
 
-#~ msgid "Icons only"
-#~ msgstr "Kun ikoner"
+#: dayplanner-notifier:254
+#, perl-format
+msgid ""
+"Tomorrow at %s:\n"
+"%s"
+msgstr "I morgen klokka %s:\n%s"
 
-#~ msgid "Text only"
-#~ msgstr "Kun tekst"
+#: dayplanner-notifier:256
+#, perl-format
+msgid ""
+"At %s on %s:\n"
+"%s"
+msgstr "Klokka %s den %s:\n%s"
 
-#~ msgid "Both text and icons"
-#~ msgstr "Både tekst og ikoner"
+#: dayplanner-notifier:267
+msgid "Day planner event"
+msgstr "Dagsplanlegger hendelse"
 
-#~ msgid "Hidden"
-#~ msgstr "Skjult"
+#: dayplanner-notifier:269
+msgid "Postpone"
+msgstr "Utsett"
