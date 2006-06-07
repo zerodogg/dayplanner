@@ -24,9 +24,17 @@ use Gtk2;			# Use Gtk2
 use Getopt::Long;		# Commandline options
 use IO::Socket;			# Network layer to communicate with the daemon
 use Locale::gettext;		# Translation layer
+use POSIX;			# setlocale()
+use Cwd;
+use File::Basename;
+
+my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
+setlocale(LC_ALL, "" );
+textdomain("dayplanner");
 
 my $Version = "0.1.3";
 my $RCSRev = '$Id$';
+my $SoftwareDir = dirname(Cwd::realpath($0));
 
 my $SocketName;			# The socket to connect to
 my $Socket;			# The IO::Socket object
@@ -38,6 +46,17 @@ my $Date;			# The date
 
 my $MessageID;			# The daemon message ID
 my $NoFork;
+
+# Find out if we have a locale directory in our main dir
+if (-d "$SoftwareDir/locale/" and defined($ENV{LANG})) {
+	my $I18N = $ENV{LANG};
+	if($I18N =~ /:/) {
+		$I18N =~ s/^(.+):.*$/$1/;
+	}
+	if (-e "$SoftwareDir/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
+		bindtextdomain("dayplanner", "$SoftwareDir/locale");
+	}
+}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # DAEMON COMMUNICATION
@@ -230,11 +249,11 @@ sub GtkNotifier () {
 	while (1) {
 		my $MainText;
 		if($Date eq 'today') {
-			$MainText = sprintf("Today at %s:\n%s",$Time,$Message);
+			$MainText = sprintf($Gettext->get("Today at %s:\n%s"),$Time,$Message);
 		} elsif ($Date eq 'tomorrow') {
-			$MainText = sprintf("Tomorrow at %s:\n%s",$Time,$Message);
+			$MainText = sprintf($Gettext->get("Tomorrow at %s:\n%s"),$Time,$Message);
 		} else {
-			$MainText = sprintf("At %s on %s:\n%s",$Time,$Date,$Message);
+			$MainText = sprintf($Gettext->get("At %s on %s:\n%s"),$Time,$Date,$Message);
 		}
 		my $NotifyDialog = Gtk2::MessageDialog->new (undef,
 							'destroy-with-parent',
@@ -245,9 +264,9 @@ sub GtkNotifier () {
 		# and on all desktops
 		$NotifyDialog->set_keep_above(1);
 		$NotifyDialog->stick;
-		$NotifyDialog->set_title("Day Planner event");
+		$NotifyDialog->set_title($Gettext->get("Day planner event"));
 		
-		my $PostponeButton = Gtk2::Button->new_with_label('Postpone');
+		my $PostponeButton = Gtk2::Button->new_with_label($Gettext->get('Postpone'));
 		$PostponeButton->can_default(1);
 		my $PostponeImage = Gtk2::Image->new_from_stock('gtk-go-forward','button');
 		$PostponeButton->set_image($PostponeImage);
@@ -264,7 +283,7 @@ sub GtkNotifier () {
 		# If the $Fulltext is defined and set then allow the user to be shown it
 		if(defined($Fulltext) and $Fulltext =~ /\S/) {
 			# The expander
-			my $FT_Expander = Gtk2::Expander->new("Details");
+			my $FT_Expander = Gtk2::Expander->new($Gettext->get("Details"));
 			$FT_Expander->show();
 			$NotifyDialog->vbox->add($FT_Expander);
 			# The textview field
