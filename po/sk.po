@@ -10,15 +10,15 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-06-05 12:36+0200\n"
-"PO-Revision-Date: 2006-06-03 20:39+0200\n"
+"PO-Revision-Date: 2006-06-07 00:17+0200\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-2\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: 8bit"
 
 #: dayplanner:44
 msgid "dayplanner"
@@ -40,51 +40,51 @@ msgstr ""
 
 #: dayplanner:89
 msgid "January"
-msgstr ""
+msgstr "január"
 
 #: dayplanner:90
 msgid "February"
-msgstr ""
+msgstr "február"
 
 #: dayplanner:91
 msgid "March"
-msgstr ""
+msgstr "marec"
 
 #: dayplanner:92
 msgid "April"
-msgstr ""
+msgstr "apríl"
 
 #: dayplanner:93
 msgid "May"
-msgstr ""
+msgstr "máj"
 
 #: dayplanner:94
 msgid "June"
-msgstr ""
+msgstr "jún"
 
 #: dayplanner:95
 msgid "July"
-msgstr ""
+msgstr "júl"
 
 #: dayplanner:96
 msgid "August"
-msgstr ""
+msgstr "august"
 
 #: dayplanner:97
 msgid "September"
-msgstr ""
+msgstr "september"
 
 #: dayplanner:98
 msgid "October"
-msgstr ""
+msgstr "október"
 
 #: dayplanner:99
 msgid "November"
-msgstr ""
+msgstr "november"
 
 #: dayplanner:100
 msgid "December"
-msgstr ""
+msgstr "december"
 
 #: dayplanner:280
 msgid ""
@@ -359,3 +359,4 @@ msgstr "_Nápoveda"
 #: dayplanner:1822
 msgid "_About"
 msgstr "_O aplikácii"
+
