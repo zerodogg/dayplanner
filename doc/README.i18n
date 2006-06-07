@@ -9,6 +9,12 @@ It uses the GNU Gettext library for the functions.
 
 Essentials for the translator
 - - - - - - - - - - - - - - -
+First of all. Make sure you're translating the latest SVN of day planner.
+See http://home.gna.org/dayplanner/subversion.html - if you don't translate
+the SVN then your translations might be outdated before they're done.
+
+Secondly, it's recommended that you join the
+dayplanner-i18n mailing list at https://mail.gna.org/listinfo/dayplanner-i18n/
 
 	Creating a new translation
 	- - - - - - - - - - - - - -
@@ -46,8 +52,7 @@ set you can now just run ./dayplanner and enjoy the program in your language.
 We would very much appreciate that you send us your translation of day planner
 so that other users can benefit from your work. To do so send the po-file
 (and if you have changed ./devel-tools/BuildLocale include that file too)
-to the e-mail address at the top of this document. Use "Day Planner i18n"
-or something similar as the subject of the e-mail.
+to the dayplanner-i18n mailing list.
 
 Helper scripts
 - - - - - - - -
