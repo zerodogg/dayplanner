@@ -48,7 +48,7 @@ my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 
-setlocale(LC_ALL, "" );
+setlocale(LANG, "" );
 textdomain("dayplanner");
 
 # Find out if we have a locale directory in our main dir
