@@ -280,7 +280,7 @@ sub DaemonConnectionErrorHandler () {
 						 $Gettext->get("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
 
 	$ErrorDialog->add_buttons(
-		'Force' => 'reject',
+		$Gettext->get('Force') => 'reject',
 		'gtk-ok' => 'accept',
 	);
 	
@@ -990,7 +990,7 @@ sub TimeSelection ($) {
 }
 
 # Purpose: Create the window that will contain the event editor
-# Usage: my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE);
+# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE);
 #
 # TITLE is the title of the window, LABEL is the label to display on top of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
@@ -1073,7 +1073,7 @@ sub CreateEventContainerWin ($$$) {
 	$AddEventBox->set_default($OKButton);
 
 	# Return the widgets
-	return($AddEventBox, $TBVBox, $OKButton);
+	return($AddEventBox, $TBVBox, $OKButton, $CancelButton);
 }
 
 # Purpose: Add a event. Creates the main window and calls the proper event functions
@@ -1089,8 +1089,7 @@ sub AddEvent () {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin($Gettext->get("Add an event"), $Gettext->get('Adding an event on the %s. %s %s'), 'gtk-add');
-	# Create the OK button handler and event type selector
+	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($Gettext->get("Add an event"), $Gettext->get('Adding an event on the %s. %s %s'), 'gtk-add');
 	# HBox
 	my $SelectorHBox = Gtk2::HBox->new();
 	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
@@ -1107,10 +1106,11 @@ sub AddEvent () {
 	$EventType_Combo->show();
 
 	# Create the tooltips widget
-#	my $Tooltips = Gtk2::Tooltips->new();
-#	$Tooltips->enable();
-	# Set the tooltip
-#	$Tooltips->set_tip($EventType_Combo, $Gettext->get("The type of event you are adding. Normal is the standard event. It has entries for time, summary and details. Birthday simply has an entry for the name of the person whose birthday it is"));
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+	# Set the tooltips
+	$Tooltips->set_tip($OKButton, $Gettext->get("Add this event"));
+	$Tooltips->set_tip($CancelButton, $Gettext->get("Discard this event"));
 	
 	# Create the widgets for the normal event selection
 	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
@@ -1156,6 +1156,8 @@ sub EditEvent () {
 	# Initialize
 	my $Time = $EventlistWidget->{data}[$Selected][0];
 	my $Summary = $EventlistWidget->{data}[$Selected][1];
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my %TimeHash = (
 		EventYear => $EventYear,
@@ -1168,7 +1170,7 @@ sub EditEvent () {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton);
+	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton);
 
 	my $Type = GetEventListType();
 
@@ -1176,10 +1178,10 @@ sub EditEvent () {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin($Gettext->get("Editing an event"), $Gettext->get('Editing an event on the %s. %s %s'), 'gtk-ok');
 		
 		if(CalendarDefined($EventYear,$EventMonth,$EventDay,$Time)) {
-			
+			($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($Gettext->get("Editing an event"), $Gettext->get('Editing an event on the %s. %s %s'), 'gtk-ok');
+
 			# Create the widgets for the normal event selection
 			my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($Time, $OKButton, $VBox_HBoxContainer, $Window);
 	
@@ -1198,7 +1200,7 @@ sub EditEvent () {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton) = CreateEventContainerWin($Gettext->get("Editing a birthday"), $Gettext->get('Editing a birthday on the %s. %s %s'), 'gtk-ok');
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($Gettext->get("Editing a birthday"), $Gettext->get('Editing a birthday on the %s. %s %s'), 'gtk-ok');
 		
 		$Summary = GetRealBirthdayName($Summary);
 		$TimeHash{OldEventSummary} = $Summary;
@@ -1215,8 +1217,13 @@ sub EditEvent () {
 			
 	} else {
 		DPIntWarn("BUG!: EditEvent: \$Type contained invalid value: $Type");
+		$MainWindow->set_sensitive(1);
+		return(0);
 	}
-
+	
+	$Tooltips->set_tip($CancelButton, $Gettext->get("Discard changes"));
+	$Tooltips->set_tip($OKButton, $Gettext->get("Accept changes"));
+			
 	# Show the window
 	$Window->show();
 }
@@ -1548,6 +1555,8 @@ sub PreferencesWindow () {
 	$PreferencesWindow->set_border_width(12);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
 	$PreferencesWindow->set_skip_pager_hint(1);
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
 
 	# Handle closing
 	$PreferencesWindow->signal_connect("destroy" => sub { 
@@ -1588,6 +1597,8 @@ sub PreferencesWindow () {
 				$EditorVerboseDefault = 0;
 			}
 		});
+	
+	$Tooltips->set_tip($EDVDefaultCheckbox, sprintf($Gettext->get("Check this if you want the \"%s\" to be expanded by default in the add and edit events dialogues"), $Gettext->get("Details")));
 	
 	# ==================================================================
 	# EVENTS
@@ -1638,6 +1649,7 @@ sub PreferencesWindow () {
 	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label($Gettext->get("Use notifications before events"));
 	$Events_EnabledCheckbox->show();
 	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
+	$Tooltips->set_tip($Events_EnabledCheckbox, $Gettext->get("Check this if you want day planner to notify you about events before they take place"));
 
 	# The widgets that selects when the user wants to be notified
 	# The HBox
@@ -1683,6 +1695,7 @@ sub PreferencesWindow () {
 	if($Events_DayNotify) {
 		$NotifyAdvance_CheckBox->set_active(1);
 	}
+	$Tooltips->set_tip($NotifyAdvance_CheckBox, $Gettext->get("Check this if you want day planner to warn you about events one day before they take place"));
 	
 	# This needs to be at the bottom so that we can sensitiveize or not the rest of the dialog
 	$Events_EnabledCheckbox->signal_connect('toggled' => sub {
