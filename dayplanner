@@ -52,13 +52,20 @@ setlocale(LC_ALL, "" );
 textdomain("dayplanner");
 
 # Find out if we have a locale directory in our main dir
-if (-d "$SoftwareDir/locale/" and defined($ENV{LANG})) {
-	my $I18N = $ENV{LANG};
-	if($I18N =~ /:/) {
-		$I18N =~ s/^(.+):.*$/$1/;
-	}
-	if (-e "$SoftwareDir/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
-		bindtextdomain("dayplanner", "$SoftwareDir/locale");
+if (-d "$SoftwareDir/locale/") {
+	if(defined($ENV{LC_ALL}) or defined($ENV{LANG})) {
+		my $I18N;
+		if(defined($ENV{LC_ALL}) and length($ENV{LC_ALL})) {
+			$I18N = $ENV{LC_ALL};
+		} else {
+			$I18N = $ENV{LANG};
+		}
+		if($I18N =~ /:/) {
+			$I18N =~ s/^(.+):.*$/$1/;
+		}
+		if (-e "$SoftwareDir/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
+			bindtextdomain("dayplanner", "$SoftwareDir/locale");
+		}
 	}
 }
 
