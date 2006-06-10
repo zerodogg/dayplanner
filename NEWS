@@ -5,6 +5,7 @@ Version 0.1.3 (Unreleased)
 --------------------------
 * Client (dayplanner)
 - Added some tooltips
+- Improved locale detection
 
 * Daemon (dayplanner-daemon)
 
