@@ -129,6 +129,10 @@ my (
 my ($MainWin_Width, $MainWin_Height) = (600,300);
 my $MainWin_Maximized;
 
+# Set up signal handlers
+$SIG{INT} = \&DP_SigHandler;
+$SIG{TERM} = \&DP_SigHandler;
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Networking functions
@@ -733,6 +737,26 @@ sub BirthdayDefined ($$$) {
 			return(1)
 		}
 	return(0);
+}
+
+# Purpose: Handle various signals gracefully
+# Usage: $SIG{SIGNAL} = \&DP_SigHandler;
+sub DP_SigHandler {
+	$| = 1;
+	print "SIG$_[0] recieved.\nSaving data...";
+	if(SaveMainData() eq "SAVE_FAILED") {
+		print "FAILED";
+	} else {
+		print "done";
+	}
+	print "\nWriting state file...";
+	WriteStateFile($SaveToDir, "state.conf");
+	print "done\nExiting the gtk2 main loop...";
+	Gtk2->main_quit;
+	print "done\nClosing the daemon connection...";
+	CloseDaemon();
+	print "done\nExiting\n";
+	exit(0);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
