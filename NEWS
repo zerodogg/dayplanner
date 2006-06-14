@@ -5,6 +5,7 @@ Version 0.2 (Unreleased)
 ------------------------
 * Client (dayplanner)
 - Now properly handles various signals
+- Can now make use of .holiday files
 
 * Daemon (dayplanner-daemon)
 
