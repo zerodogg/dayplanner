@@ -885,7 +885,7 @@ GetOptions (
 		}
 		$SocketName = $_[1];
 	},
-	'v|version' => sub {
+	'version' => sub {
 		print "Day planner daemon version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
