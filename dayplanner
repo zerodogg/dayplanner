@@ -30,6 +30,7 @@ use Getopt::Long;		# Commandline options
 use Cwd;			# We need Cwd::Realpath to find out which directory we live in
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
 use IO::Socket;			# Network layer to communicate with the daemon
+use File::Copy;			# We need to copy the holiday file
 use FindBin;			# So that we can detect module dirs during runtime
 # So that we can use a local Date::HolidayParser
 use lib "$FindBin::Bin/modules/Date-HolidayParser/lib/";
@@ -41,6 +42,7 @@ my $Version = "0.2";
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
+my $HolidayFile = "$SaveToDir/holidays";		# The file to load holiday definitions from
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
 my $SpecialEventsFile = "special_events.dpd";		# The filename to save events with special settings
@@ -93,6 +95,7 @@ my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
 my %AllDayEvents;		# The contents of the all-day events file
+my %Holidays;			# The holidays
 
 # The reason we do not use strftime() or I18N::Langinfo is that these return
 # values in random encodings. By using Gettext->get() we get values
@@ -762,6 +765,77 @@ sub DP_SigHandler {
 	CloseDaemon();
 	print "done\nExiting\n";
 	exit(0);
+}
+
+# Purpose: Make sure we have a .holiday set up
+# Usage: HolidaySetup();
+sub HolidaySetup () {
+	if (-e $HolidayFile) {
+		# TODO: Check if the file is an actual holiday file or a dummy file
+		return(1);
+	}
+	# Hash of LC_ADDRESS code => holiday file
+	my %HolidayFiles = (
+		"nb" => "norway",	# Norway
+		"nn" => "norway",	# Norway
+		"no" => "norway",	# Norway
+		"en_US" => "us",	# USA
+		"us" => "us",		# USA
+		"en_UK" => "uk",	# The UK
+		"uk" => "uk",		# The UK
+		"sv" => "swedish",	# Sweden
+		"fr" => "french",	# France
+		"it" => "italy",	# Italy
+		"el_GR" => "greek",	# Greece
+		"cs_CZ" => "czech",	# Czech
+		"da_DK" => "denmark",	# Denmark
+		"nl_NL" => "dutch",	# The Netherlands
+		"fi_FI" => "finnish",	# Finland
+		"de_DE" => "german",	# Germany
+		"hu_HU" => "hungary",	# Hungary
+		"ja_JP" => "japan",	# Japan
+		"pt_PT" => "portugal",	# Portugal
+		"sk_SK" => "slovak",	# Slovakia
+		"es_ES" => "spain",	# Spain
+	);
+	# Yay, the user already has a .holiday file. Use this one
+	if(-e "$ENV{HOME}/.holiday") {
+		symlink("$ENV{HOME}/.holiday",$HolidayFile);
+		return(1);
+	}
+
+	unless(defined($ENV{LC_ADDRESS})) {
+		DPIntWarn("LC_ADDRESS is not set. Unable to autodetect .holiday file.");
+		return(0);
+	}
+
+	my $CopyFile;
+
+	# Let's try to find the users LC_ADDRESS in the %HolidayFiles hash
+	foreach my $Key (keys(%HolidayFiles)) {
+		if($ENV{LC_ADDRESS} =~ /^$Key/) {
+			$CopyFile = $HolidayFiles{$Key};
+			last;
+		}
+	}
+	if(defined($CopyFile)) {
+		if(-e "$FindBin::Bin/holiday/holiday_$CopyFile") {
+			copy("$FindBin::Bin/holiday/holiday_$CopyFile", $HolidayFile);
+			return(1);
+		} else {
+			DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::Bin/holiday/holiday_$CopyFile) did not exist.");
+		}
+	} else {
+		DPIntWarn("Couldn't detect a .holiday file for $ENV{LC_ADDRESS}. Maybe you would like to write one?");
+	}
+	open(DUMMY_FILE, ">$HolidayFile");
+	print DUMMY_FILE ": $Version\n\n";
+	print DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
+	print DUMMY_FILE ": one suitable for your LC_ADDRESS (which at the time was set to $ENV{LC_ADDRESS}).\n";
+	print DUMMY_FILE ": You may want to write one yourself (see the files contained in the holidays/ directory\n";
+	print DUMMY_FILE ":  of the day planner distribution for examples of the syntax).";
+	close(DUMMY_FILE);
+	return(0);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1807,6 +1881,17 @@ sub DrawEventlist() {
 			push (@{$EventlistWidget->{data}}, ["", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
 		}
 	}
+	unless($Year > 2037 and $Year < 1970) {
+		unless(defined($Holidays{$Year})) {
+				$Holidays{$Year} = Date::HolidayParser::Parse($HolidayFile, $Year);
+		}
+		if(defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
+			foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
+				push(@{$EventlistWidget->{data}}, ["", $CurrHoliday]);
+			}
+		}
+
+	}
 	# Register doubleclick (FIXME)
 #	$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
 #	FIXME: We need this to work
@@ -2049,6 +2134,8 @@ LoadCalendar();
 unless($Gtk2_Initialized) {
 	Gtk2->init;
 }
+# Set up holidays
+HolidaySetup();
 # Initialize the daemon, and if it works draw the main window
 if(DaemonInit()) {
 	# Load the state file and draw the main window
