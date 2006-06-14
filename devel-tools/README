@@ -12,9 +12,6 @@ updatepo		Run buildpot and then msgmerge existing *.po files with
 
 CreatePackages		Helper script for producing day planner packages
 
-HolidayParser		A unfinished parser of .holiday files that will be
-			implemented into the main of day planner once it's finished.
-
 installer/		Contains the source code for the generic day planner
 			installer
 
