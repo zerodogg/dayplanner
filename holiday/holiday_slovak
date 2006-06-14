@@ -1,52 +1,57 @@
 :
 : Author: Mikulas Sustak <sustak@kte.sjf.stuba.sk>
+: Corrected & updated for day planner by Michal Sp√°da 
+: If you come across any trouble while using day planner,
+: or want to send in updates, etc., please contact me at
+: <michal.spada@linuxexpres.cz>
 :
-green " Veµk˝ piatok" on weekend easter minus 2
-green " VeµkonoËn· nedeµa" on weekend easter
-green " VeµkonoËn˝ pondelok" on weekend easter plus 1
 
-small magenta "Nov˝ rok" on 1.1.
-blue " DeÚ vzniku SR" on weekend 1.1.
+green " Veƒæk√Ω piatok" on weekend easter minus 2
+green " Veƒækonoƒçn√° nedeƒæa" on weekend easter
+green " Veƒækonoƒçn√Ω pondelok" on weekend easter plus 1
+
+small magenta "Nov√Ω rok" on 1.1.
+blue " De≈à vzniku SR" on weekend 1.1.
 small black "Alexandra" on 2.1.
 black " Karina" on 2.1.
 small black "Daniela" on 3.1.
 small black "Drahoslav" on 4.1.
 small black "Andrea" on 5.1.
-small black "AntÛnia" on weekend 6.1.
-green " Traja kr·li" on 6.1.
+small black "Ant√≥nia" on weekend 6.1.
+green " Traja kr√°li" on 6.1.
 small black "Bohuslava" on 7.1.
-small black "SeverÌn" on 8.1.
+small black "Sever√≠n" on 8.1.
 small black "Alexej" on 9.1.
-small black "D·πa" on 10.1.
-small black "MalvÌna" on 11.1.
+small black "D√°≈°a" on 10.1.
+small black "Malv√≠na" on 11.1.
 small black "Ernest" on 12.1.
 small black "Rastislav" on 13.1.
 small black "Radovan" on 14.1.
 small black "Dobroslav" on 15.1.
-small black "KristÌna" on 16.1.
-small black "Nataπa" on 17.1.
+small black "Krist√≠na" on 16.1.
+small black "Nata≈°a" on 17.1.
 small black "Bohdana" on 18.1.
-small black "DrahomÌra" on 19.1.
-black " M·rio" on 19.1.
+small black "Drahom√≠ra" on 19.1.
+black " M√°rio" on 19.1.
 small black "Dalibor" on 20.1.
-black " Sebasti·n" on 20.1.
+black " Sebasti√°n" on 20.1.
 small black "Vincent" on 21.1.
 small black "Zora" on 22.1.
-small black "Miloπ" on 23.1.
+small black "Milo≈°" on 23.1.
 small black "Timotej" on 24.1.
 small black "Gejza" on 25.1.
 small black "Tamara" on 26.1.
-small black "Bohuπ" on 27.1.
+small black "Bohu≈°" on 27.1.
 small black "Alfonz" on 28.1.
-small black "Gaπpar" on 29.1.
+small black "Ga≈°par" on 29.1.
 small black "Ema" on 30.1.
 small black "Emil" on 31.1.
 small black "Tatiana" on 1.2.
 small black "Erik" on 2.2.
 black " Erika" on 2.2.
-small black "Blaæej" on 3.2.
+small black "Bla≈æej" on 3.2.
 small black "Veronika" on 4.2.
-small black "Ag·ta" on 5.2.
+small black "Ag√°ta" on 5.2.
 small black "Dorota" on 6.2.
 small black "Vanda" on 7.2.
 small black "Zoja" on 8.2.
@@ -54,17 +59,17 @@ small black "Zdenko" on 9.2.
 small black "Gabriela" on 10.2.
 small black "Dezider" on 11.2.
 small black "Perla" on 12.2.
-small black "Arp·d" on 13.2.
-small black "ValentÌn" on 14.2.
-magenta " DeÚ zaµ˙ben˝ch" on 14.2.
+small black "Arp√°d" on 13.2.
+small black "Valent√≠n" on 14.2.
+magenta " De≈à zaƒæ√∫ben√Ωch" on 14.2.
 small black "Pravoslav" on 15.2.
 small black "Ida" on 16.2.
 black " Liana" on 16.2.
 small black "Miloslava" on 17.2.
-small black "JaromÌr" on 18.2.
+small black "Jarom√≠r" on 18.2.
 small black "Vlasta" on 19.2.
-small black "LÌvia" on 20.2.
-small black "EleonÛra" on 21.2.
+small black "L√≠via" on 20.2.
+small black "Eleon√≥ra" on 21.2.
 small black "Etela" on 22.2.
 small black "Roman" on 23.2.
 black " Romana" on 23.2.
@@ -74,19 +79,18 @@ black " Frederika" on 25.2.
 small black "Viktor" on 26.2.
 small black "Alexander" on 27.2.
 small black "Zlatica" on 28.2.
-small black "" on 29.2.
-small black "AlbÌn" on 1.3.
-small black "Aneæka" on 2.3.
+small black "Alb√≠n" on 1.3.
+small black "Ane≈æka" on 2.3.
 small black "Bohumil" on 3.3.
 black " Bohumila" on 3.3.
-small black "KazimÌr" on 4.3.
+small black "Kazim√≠r" on 4.3.
 small black "Fridrich" on 5.3.
 small black "Radoslav" on 6.3.
 black " Radoslava" on 6.3.
-small black "Tom·π" on 7.3.
+small black "Tom√°≈°" on 7.3.
 small black "Alan, Alana" on 8.3.
-magenta " MDÆ" on 8.3.
-small black "Frantiπka" on 9.3.
+magenta " MD≈Ω" on 8.3.
+small black "Franti≈°ka" on 9.3.
 small black "Branislav" on 10.3.
 black " Bruno" on 10.3.
 small black "Angela" on 11.3.
@@ -96,43 +100,43 @@ small black "Vlastimil" on 13.3.
 small black "Matilda" on 14.3.
 small black "Svetlana" on 15.3.
 small black "Boleslav" on 16.3.
-small black "•ubica" on 17.3.
+small black "ƒΩubica" on 17.3.
 small black "Eduard" on 18.3.
 small black "Jozef" on 19.3.
-small black "VÌªazoslav" on 20.3.
+small black "V√≠≈•azoslav" on 20.3.
 small black "Blahoslav" on 21.3.
-small black "BeÚadik" on 22.3.
-small black "Adri·n" on 23.3.
+small black "Be≈àadik" on 22.3.
+small black "Adri√°n" on 23.3.
 small black "Gabriel" on 24.3.
-small black "Mari·n" on 25.3.
+small black "Mari√°n" on 25.3.
 small black "Emanuel" on 26.3.
 small black "Alena" on 27.3.
-small black "SoÚa" on 28.3.
+small black "So≈àa" on 28.3.
 small black "Miroslav" on 29.3.
 small black "Vieroslava" on 30.3.
-small black "BenjamÌn" on 31.3.
+small black "Benjam√≠n" on 31.3.
 small black "Hugo" on 1.4.
 small black "Zita" on 2.4.
 small black "Richard" on 3.4.
 small black "Izidor" on 4.4.
 small black "Miroslava" on 5.4.
 small black "Irena" on 6.4.
-small black "Zot·n" on 7.4.
+small black "Zot√°n" on 7.4.
 small black "Albert" on 8.4.
 small black "Milena" on 9.4.
 small black "Igor" on 10.4.
-small black "J˙lius" on 11.4.
+small black "J√∫lius" on 11.4.
 small black "Estera" on 12.4.
-small black "Aleπ" on 13.4.
-small black "JustÌna" on 14.4.
+small black "Ale≈°" on 13.4.
+small black "Just√≠na" on 14.4.
 small black "Fedor" on 15.4.
 small black "Dana, Danica" on 16.4.
 small black "Rudolf" on 17.4.
-small black "ValÈr" on 18.4.
+small black "Val√©r" on 18.4.
 small black "Jela" on 19.4.
 small black "Marcel" on 20.4.
-small black "ErvÌn" on 21.4.
-small black "SlavomÌr" on 22.4.
+small black "Erv√≠n" on 21.4.
+small black "Slavom√≠r" on 22.4.
 small black "Vojtech" on 23.4.
 small black "Juraj" on 24.4.
 small black "Marek" on 25.4.
@@ -140,80 +144,80 @@ small black "Jaroslava" on 26.4.
 small black "Jaroslav" on 27.4.
 small black "Jarmila" on 28.4.
 small black "Lea" on 29.4.
-small black "Anast·zia" on 30.4.
-magenta "Sviatok pr·ce" on weekend 1.5.
-small black "Æigmund" on 2.5.
+small black "Anast√°zia" on 30.4.
+magenta "Sviatok pr√°ce" on weekend 1.5.
+small black "≈Ωigmund" on 2.5.
 small black "Galina" on 3.5.
-small black "Flori·n" on 4.5.
+small black "Flori√°n" on 4.5.
 small black "Lesana" on 5.5.
 black " Lesia" on 5.5.
-small black "HermÌna" on 6.5.
+small black "Herm√≠na" on 6.5.
 small black "Monika" on 7.5.
 small black "Ingrida" on 8.5.
-magenta " DeÚ v˝ªazstva nad faπizmom" on weekend 8.5.
+magenta " De≈à v√≠≈•azstva nad fa≈°izmom" on weekend 8.5.
 small black "Roland" on 9.5.
-small black "ViktÛria" on 10.5.
-small black "Blaæena" on 11.5.
-magenta " DeÚ matiek" on 11.5.
-small black "Pankr·c" on 12.5.
-small black "Serv·c" on 13.5.
-small black "Bonif·c" on 14.5.
-small black "Æofia" on 15.5.
-small black "Svetoz·r" on 16.5.
+small black "Vikt√≥ria" on 10.5.
+small black "Bla≈æena" on 11.5.
+magenta " De≈à matiek" on 11.5.
+small black "Pankr√°c" on 12.5.
+small black "Serv√°c" on 13.5.
+small black "Bonif√°c" on 14.5.
+small black "≈Ωofia" on 15.5.
+small black "Svetoz√°r" on 16.5.
 small black "Gizela" on 17.5.
 small black "Viola" on 18.5.
-small black "Gertr˙da" on 19.5.
+small black "Gertr√∫da" on 19.5.
 small black "Bernard" on 20.5.
 small black "Zina" on 21.5.
-small black "J˙lia" on 22.5.
+small black "J√∫lia" on 22.5.
 black " Juliana" on 22.5.
-small black "ÆelmÌra" on 23.5.
+small black "≈Ωelm√≠ra" on 23.5.
 small black "Ela" on 24.5.
 small black "Urban" on 25.5.
-small black "Duπan" on 26.5.
+small black "Du≈°an" on 26.5.
 small black "Iveta" on 27.5.
 small black "Viliam" on 28.5.
 small black "Vilma" on 29.5.
 small black "Ferdinand" on 30.5.
 small black "Petronela" on 31.5.
 black " Petrana" on 31.5.
-small black "Æaneta" on 1.6.
-magenta "MDD" on 1.6.
-small black "XÈnia" on 2.6.
+small black "≈Ωaneta" on 1.6.
+magenta "Medzin√°rodn√Ω de≈à det√≠" on 1.6.
+small black "X√©nia" on 2.6.
 black " Oxana" on 2.6.
-small black "KarolÌna" on 3.6.
+small black "Karol√≠na" on 3.6.
 small black "Lenka" on 4.6.
 small black "Laura" on 5.6.
 small black "Norbert" on 6.6.
-small black "RÛbert" on 7.6.
+small black "R√≥bert" on 7.6.
 small black "Medard" on 8.6.
 small black "Stanislava" on 9.6.
-small black "MargarÈta" on 10.6.
+small black "Margar√©ta" on 10.6.
 small black "Dobroslava" on 11.6.
 small black "Zlatko" on 12.6.
 small black "Anton" on 13.6.
 small black "Vasil" on 14.6.
-small black "VÌt" on 15.6.
-magenta " DeÚ otcov" on 15.6.
+small black "V√≠t" on 15.6.
+magenta " De≈à otcov" on 15.6.
 small black "Blanka" on 16.6.
 black " Bianka" on 16.6.
 small black "Adolf" on 17.6.
 small black "Vratislav" on 18.6.
-small black "AlfrÈd" on 19.6.
-small black "ValÈria" on 20.6.
+small black "Alfr√©d" on 19.6.
+small black "Val√©ria" on 20.6.
 small black "Alojz" on 21.6.
-small black "PaulÌna" on 22.6.
-small black "SidÛnia" on 23.6.
-small black "J·n" on 24.6.
-small black "Tade·π" on 25.6.
-black " OlÌvia" on 25.6.
-small black "Adri·na" on 26.6.
+small black "Paul√≠na" on 22.6.
+small black "Sid√≥nia" on 23.6.
+small black "J√°n" on 24.6.
+small black "Tade√°≈°" on 25.6.
+black " Ol√≠via" on 25.6.
+small black "Adri√°na" on 26.6.
 small black "Ladislav" on 27.6.
 black " Ladislava" on 27.6.
-small black "Be·ta" on 28.6.
+small black "Be√°ta" on 28.6.
 small black "Peter a Pavol" on 29.6.
 black " Petra" on 29.6.
-small black "Mel·nia" on 30.6.
+small black "Mel√°nia" on 30.6.
 small black "Diana" on 1.7.
 small black "Berta" on 2.7.
 small black "Miloslav" on 3.7.
@@ -221,163 +225,163 @@ small black "Prokop" on 4.7.
 small blue "Sviatok sv. Cyrila" on weekend 5.7.
 blue " a sv. Metoda" on weekend 5.7.
 small black "Patrik" on 6.7.
-black " PatrÌcia" on 6.7.
+black " Patr√≠cia" on 6.7.
 small black "Oliver" on 7.7.
 small black "Ivan" on 8.7.
 small black "Lujza" on 9.7.
-small black "Am·lia" on 10.7.
+small black "Am√°lia" on 10.7.
 small black "Milota" on 11.7.
 small black "Nina" on 12.7.
 small black "Margita" on 13.7.
 small black "Kamil" on 14.7.
 small black "Henrich" on 15.7.
-small black "DrahomÌr" on 16.7.
+small black "Drahom√≠r" on 16.7.
 small black "Bohuslav" on 17.7.
 small black "Kamila" on 18.7.
-small black "Duπana" on 19.7.
-small black "Iµja" on 20.7.
-black " Eli·π" on 20.7.
+small black "Du≈°ana" on 19.7.
+small black "Iƒæja" on 20.7.
+black " Eli√°≈°" on 20.7.
 small black "Daniel" on 21.7.
-small black "MagdalÈna" on 22.7.
-small black "Oµga" on 23.7.
-small black "VladimÌr" on 24.7.
+small black "Magdal√©na" on 22.7.
+small black "Oƒæga" on 23.7.
+small black "Vladim√≠r" on 24.7.
 small black "Jakub" on 25.7.
 small black "Anna" on 26.7.
 black " Hana" on 26.7.
-small black "Boæena" on 27.7.
-small black "Kriπtof" on 28.7.
+small black "Bo≈æena" on 27.7.
+small black "Kri≈°tof" on 28.7.
 small black "Marta" on 29.7.
-small black "Libuπa" on 30.7.
-small black "Ign·c" on 31.7.
-small black "Boæidara" on 1.8.
-small black "Gust·v" on 2.8.
-small black "Jerguπ" on 3.8.
+small black "Libu≈°a" on 30.7.
+small black "Ign√°c" on 31.7.
+small black "Bo≈æidara" on 1.8.
+small black "Gust√°v" on 2.8.
+small black "Jergu≈°" on 3.8.
 small black "Dominik" on 4.8.
 black " Dominika" on 4.8.
 small black "Hortenzia" on 5.8.
-small black "JozefÌna" on 6.8.
-small black "©tef·nia" on 7.8.
+small black "Jozef√≠na" on 6.8.
+small black "≈†tef√°nia" on 7.8.
 small black "Oskar" on 8.8.
-small black "•ubomÌra" on 9.8.
+small black "ƒΩubom√≠ra" on 9.8.
 small black "Vavrinec" on 10.8.
 small black "Zuzana" on 11.8.
 small black "Darina" on 12.8.
-small black "•ubomÌr" on 13.8.
-small black "MojmÌr" on 14.8.
+small black "ƒΩubom√≠r" on 13.8.
+small black "Mojm√≠r" on 14.8.
 small black "Marcela" on 15.8.
 small black "Leonard" on 16.8.
 small black "Milica" on 17.8.
 small black "Elena" on 18.8.
 black " Helena" on 18.8.
-small black "L˝dia" on 19.8.
+small black "L√Ωdia" on 19.8.
 small black "Anabela" on 20.8.
 small black "Jana" on 21.8.
-small black "TichomÌr" on 22.8.
+small black "Tichom√≠r" on 22.8.
 small black "Filip" on 23.8.
 small black "Bartolomej" on 24.8.
-small black "•udovÌt" on 25.8.
+small black "ƒΩudov√≠t" on 25.8.
 small black "Samuel" on 26.8.
 small black "Silvia" on 27.8.
-small black "AugustÌn" on 28.8.
+small black "August√≠n" on 28.8.
 small black "Nikola, Nikolaj" on 29.8.
-blue "V˝roËie SNP" on weekend 29.8.
-small black "Ruæena" on 30.8.
+blue "V√Ωroƒçie SNP" on weekend 29.8.
+small black "Ru≈æena" on 30.8.
 small black "Nora" on 31.8.
 small black "Drahoslava" on 1.9.
-blue " DeÚ ˙stavy SR" on weekend 1.9.
+blue " De≈à √∫stavy SR" on weekend 1.9.
 small black "Linda" on 2.9.
 small black "Belo" on 3.9.
-small black "Roz·lia" on 4.9.
+small black "Roz√°lia" on 4.9.
 small black "Regina" on 5.9.
 small black "Alica" on 6.9.
 small black "Marianna" on 7.9.
 small black "Miriama" on 8.9.
 small black "Martina" on 9.9.
 small black "Oleg" on 10.9.
-small black "BysrtÌk" on 11.9.
-small black "M·ria" on 12.9.
+small black "Bystr√≠k" on 11.9.
+small black "M√°ria" on 12.9.
 small black "Ctibor" on 13.9.
-small black "•udomil" on 14.9.
+small black "ƒΩudomil" on 14.9.
 small black "Jolana" on 15.9.
-green " Sedembolestn· Panna M·ria" on weekend 15.9.
-small black "•udmila" on 16.9.
+green " Sedembolestn√° Panna M√°ria" on weekend 15.9.
+small black "ƒΩudmila" on 16.9.
 small black "Olympia" on 17.9.
-small black "EugÈnia" on 18.9.
-small black "KonπtantÌn" on 19.9.
-small black "•uboslav" on 20.9.
-black " •uboslava" on 20.9.
-small black "Mat˙π" on 21.9.
-small black "MÛric" on 22.9.
+small black "Eug√©nia" on 18.9.
+small black "Kon≈°tant√≠n" on 19.9.
+small black "ƒΩuboslav" on 20.9.
+black " ƒΩuboslava" on 20.9.
+small black "Mat√∫≈°" on 21.9.
+small black "M√≥ric" on 22.9.
 small black "Zdenka" on 23.9.
-small black "•uboπ" on 24.9.
-black " •ubor" on 24.9.
+small black "ƒΩubo≈°" on 24.9.
+black " ƒΩubor" on 24.9.
 small black "Vladislav" on 25.9.
 small black "Edit" on 26.9.
-small black "Cypri·n" on 27.9.
-small black "V·clav" on 28.9.
+small black "Cypri√°n" on 27.9.
+small black "V√°clav" on 28.9.
 small black "Michal" on 29.9.
 black " Michaela" on 29.9.
-small black "JarolÌm" on 30.9.
+small black "Jarol√≠m" on 30.9.
 small black "Arnold" on 1.10.
 small black "Levoslav" on 2.10.
 small black "Stela" on 3.10.
-small black "Frantiπek" on 4.10.
+small black "Franti≈°ek" on 4.10.
 small black "Viera" on 5.10.
-small black "Nat·lia" on 6.10.
-small black "Eliπka" on 7.10.
+small black "Nat√°lia" on 6.10.
+small black "Eli≈°ka" on 7.10.
 small black "Brigita" on 8.10.
-small black "Dion˝z" on 9.10.
-small black "SlavomÌra" on 10.10.
-small black "ValentÌna" on 11.10.
-small black "Maximili·n" on 12.10.
+small black "Dion√Ωz" on 9.10.
+small black "Slavom√≠ra" on 10.10.
+small black "Valent√≠na" on 11.10.
+small black "Maximili√°n" on 12.10.
 small black "Koloman" on 13.10.
 small black "Boris" on 14.10.
-small black "TerÈzia" on 15.10.
-small black "VladimÌra" on 16.10.
+small black "Ter√©zia" on 15.10.
+small black "Vladim√≠ra" on 16.10.
 small black "Hedviga" on 17.10.
-small black "Luk·π" on 18.10.
-small black "Kristi·n" on 19.10.
-small black "VendelÌn" on 20.10.
-small black "Urπuµa" on 21.10.
+small black "Luk√°≈°" on 18.10.
+small black "Kristi√°n" on 19.10.
+small black "Vendel√≠n" on 20.10.
+small black "Ur≈°uƒæa" on 21.10.
 small black "Sergej" on 22.10.
 small black "Alojzia" on 23.10.
 small black "Kvetoslava" on 24.10.
 small black "Aurel" on 25.10.
 small black "Demeter" on 26.10.
-small black "SabÌna" on 27.10.
+small black "Sab√≠na" on 27.10.
 small black "Dobromila" on 28.10.
-small black "Kl·ra" on 29.10.
-small black "©imon" on 30.10.
-black " ©imona" on 30.10.
-small black "AurÈlia" on 31.10.
+small black "Kl√°ra" on 29.10.
+small black "≈†imon" on 30.10.
+black " ≈†imona" on 30.10.
+small black "Aur√©lia" on 31.10.
 small black "Denis, Denisa" on 1.11.
-green " Sviatok vπetk˝ch sv‰t˝ch" on weekend 1.11.
-magenta " Pamiatka zosnul˝ch" on 2.11.
+green " Sviatok v≈°etk√Ωch sv√§t√Ωch" on weekend 1.11.
+magenta " Pamiatka zosnul√Ωch" on 2.11.
 small black "Hubert" on 3.11.
 small black "Karol" on 4.11.
 small black "Imrich" on 5.11.
-small black "Ren·ta" on 6.11.
-small black "RenÈ" on 7.11.
-small black "BohumÌr" on 8.11.
+small black "Ren√°ta" on 6.11.
+small black "Ren√©" on 7.11.
+small black "Bohum√≠r" on 8.11.
 small black "Teodor" on 9.11.
 small black "Tibor" on 10.11.
 small black "Martin" on 11.11.
-black " Maroπ" on 11.11.
-small black "Sv‰topluk" on 12.11.
+black " Maro≈°" on 11.11.
+small black "Sv√§topluk" on 12.11.
 small black "Stanislav" on 13.11.
 small black "Irma" on 14.11.
 small black "Leopold" on 15.11.
 small black "Agnesa" on 16.11.
 small black "Klaudia" on 17.11.
-blue " DeÚ boja za slobodu a demokraciu" on weekend 17.11.
+blue " De≈à boja za slobodu a demokraciu" on weekend 17.11.
 small black "Eugen" on 18.11.
-small black "Alæbeta" on 19.11.
-small black "FÈlix" on 20.11.
-small black "ElvÌra" on 21.11.
-small black "CecÌlia" on 22.11.
+small black "Al≈æbeta" on 19.11.
+small black "F√©lix" on 20.11.
+small black "Elv√≠ra" on 21.11.
+small black "Cec√≠lia" on 22.11.
 small black "Klement" on 23.11.
-small black "EmÌlia" on 24.11.
-small black "KatarÌna" on 25.11.
+small black "Em√≠lia" on 24.11.
+small black "Katar√≠na" on 25.11.
 small black "Kornel" on 26.11.
 small black "Milan" on 27.11.
 small black "Henrieta" on 28.11.
@@ -385,38 +389,39 @@ small black "Vratko" on 29.11.
 small black "Ondrej" on 30.11.
 black " Andrej" on 30.11.
 small black "Edmund" on 1.12.
-small black "Bibi·na" on 2.12.
+small black "Bibi√°na" on 2.12.
 small black "Oldrich" on 3.12.
 small black "Barbora" on 4.12.
 small black "Oto" on 5.12.
-small magenta "Mikul·π ;)" on 6.12.
-small black "AmbrÛz" on 7.12.
-small black "MarÌna" on 8.12.
+small magenta "Mikul√°≈°" on 6.12.
+small black "Ambr√≥z" on 7.12.
+small black "Mar√≠na" on 8.12.
 small black "Izabela" on 9.12.
-small black "Rad˙z" on 10.12.
+small black "Rad√∫z" on 10.12.
 small black "Hilda" on 11.12.
-small black "OtÌlia" on 12.12.
+small black "Ot√≠lia" on 12.12.
 small black "Lucia" on 13.12.
 small black "Branislava" on 14.12.
 black " Bronislava" on 14.12.
 small black "Ivica" on 15.12.
-small black "AlbÌna" on 16.12.
-small black "KornÈlia" on 17.12.
-small black "Sl·va" on 18.12.
-black " Sl·vka" on 18.12.
+small black "Alb√≠na" on 16.12.
+small black "Korn√©lia" on 17.12.
+small black "Sl√°va" on 18.12.
+black " Sl√°vka" on 18.12.
 small black "Judita" on 19.12.
 small black "Dagmara" on 20.12.
 small black "Bohdan" on 21.12.
 small black "Adela" on 22.12.
-small black "Nadeæda" on 23.12.
+small black "Nade≈æda" on 23.12.
 small black "Adam a Eva" on 24.12.
-green " ©tedr˝ veËer" on weekend 24.12.
-green " 1. sviatok vianoËn˝" on weekend 25.12
-small black "©tefan" on 26.12.
-green " 2. sviatok vianoËn˝" on weekend 26.12
-small black "FilomÈna" on 27.12.
+green " ≈†tedr√Ω veƒçer" on weekend 24.12.
+green " 1. sviatok vianoƒçn√Ω" on weekend 25.12
+small black "≈†tefan" on 26.12.
+green " 2. sviatok vianoƒçn√Ω" on weekend 26.12
+small black "Filom√©na" on 27.12.
 small black "Ivana" on 28.12.
 black " Ivona" on 28.12.
 small black "Milada" on 29.12.
-small black "D·vid" on 30.12.
+small black "D√°vid" on 30.12.
 small black "Silvester" on 31.12.
+
