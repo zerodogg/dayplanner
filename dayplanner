@@ -839,13 +839,13 @@ sub HolidaySetup () {
 				DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::Bin/holiday/holiday_$CopyFile) did not exist.");
 			}
 		} else {
-			DPIntWarn("Couldn't detect a .holiday file for $ENV{LC_ADDRESS}. Maybe you would like to write one?");
+			DPIntWarn("Couldn't detect a .holiday file for $LocationDetect. Maybe you would like to write one?");
 		}
 	}
 	open(DUMMY_FILE, ">$HolidayFile");
 	print DUMMY_FILE ": $Version\n\n";
 	print DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
-	print DUMMY_FILE ": one suitable for your LC_ADDRESS (which at the time was set to $ENV{LC_ADDRESS}).\n";
+	print DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
 	print DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
 	print DUMMY_FILE ":  of the day planner distribution for examples of the syntax).";
 	close(DUMMY_FILE);
