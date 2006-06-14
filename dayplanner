@@ -27,9 +27,14 @@ use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use Getopt::Long;		# Commandline options
-use Cwd;                        # We need Cwd::Realpath to find out which directory we live in
+use Cwd;			# We need Cwd::Realpath to find out which directory we live in
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
 use IO::Socket;			# Network layer to communicate with the daemon
+use FindBin;			# So that we can detect module dirs during runtime
+# So that we can use a local Date::HolidayParser
+use lib "$FindBin::Bin/modules/Date-HolidayParser/lib/";
+use lib "$FindBin::Bin/modules/";
+use Date::HolidayParser;	# Parsing of .holiday files
 
 # Scalars
 my $Version = "0.2";
