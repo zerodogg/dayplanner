@@ -271,7 +271,7 @@ sub _Holiday_Interperate ($$$$$) {
 	# Calculate the yday of that day-of-the-month
 	elsif(defined($CreativeParser->{IsMonth})) {
 		unless(defined($CreativeParser->{DateNumeric})) {
-				_SyntaxError($LineNo, "It was set which month the day should be on but no information about the day itself ", "Ignoring this line");
+				_SyntaxError($LineNo, $File, "It was set which month the day should be on but no information about the day itself ", "Ignoring this line");
 				return(0);
 			}
 		my $PosixYear = $Year - 1900;
@@ -398,7 +398,7 @@ sub Parse($$) {
 			}
 		}
 		unless($Line =~ /^\s*on/) {
-			_SyntaxError($LineNo, "Missing \"on\" keyword", "Pretending it's there. This might give weird effects");
+			_SyntaxError($LineNo, $File, "Missing \"on\" keyword", "Pretending it's there. This might give weird effects");
 		} else {
 			$Line =~ s/^\s*on\*//;
 		}
@@ -464,13 +464,13 @@ sub Parse($$) {
 				# How long should it last?
 				} elsif ($CreativeParser{NextIs} eq 'length') {
 					if(defined($CreativeParser{Length})) {
-						_SyntaxError($LineNo, "Multiple length statements", "Ignoring \"$_\"");
+						_SyntaxError($LineNo, $File, "Multiple length statements", "Ignoring \"$_\"");
 					} else {
 						$CreativeParser{Length} = $_;
 					}
 				} else {
 					# What on earth am I going to do with this number?
-					_SyntaxError($LineNo, "Got a number ($_)", "I don't know what to do with this number. Ignoring it.");
+					_SyntaxError($LineNo, $File, "Got a number ($_)", "I don't know what to do with this number. Ignoring it.");
 				}
 				$CreativeParser{NextIs} = undef;
 				
