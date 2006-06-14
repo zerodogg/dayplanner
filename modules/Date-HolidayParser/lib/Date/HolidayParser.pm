@@ -143,20 +143,21 @@ sub _HolidayError ($$$) {
 	warn "*** Holiday parser error: $_[1] on line $_[0]. $_[2]\n";
 }
 
-# Purpose: Print a warning about something during the holiday parsing
-# Usage: _HolidayWarn(LINE_NO, ERROR, ACTION_TAKEN);
-sub _HolidayWarn ($$$) {
-	warn "*** Holiday parser warning: $_[1] on line $_[0]. $_[2]\n";
+# Purpose: Print a syntax error in a holiday file
+# Usage: _SyntaxError(LINE_NO, FILENAME, ERROR, ACTION_TAKEN);
+sub _SyntaxError ($$$$) {
+	warn "*** Holiday parser: Syntax error: $_[2] on line $_[0] in $_[1]. $_[3]\n";
 }
 
 # Purpose: Interperate and calculate the holiday file
-# Usage: _Holiday_Interperate(\%CreativeParser, Line_Number, HolidayName, YEAR, \%FinalParsing);
+# Usage: _Holiday_Interperate(\%CreativeParser, Line_Number, HolidayName, YEAR, \%FinalParsing, Filename);
 sub _Holiday_Interperate ($$$$$) {
 	my $CreativeParser = $_[0];
 	my $LineNo = $_[1];
 	my $HolidayName = $_[2];
 	my $Year = $_[3];
 	my $FinalParsing = $_[4];
+	my $File = $_[5];
 	my %MonthMapping = (
 		'january' => 0,
 		'february' => 1,
@@ -181,7 +182,7 @@ sub _Holiday_Interperate ($$$$$) {
 			my $PosixTime = POSIX::mktime(0, 0, 0, 1, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
 			my $proper_yday = _Get_YDay($PosixTime);
 			unless(defined($CreativeParser->{Number})) {
-				_HolidayWarn($LineNo, "\$CreativeParser->{Number} is undef", "Skipping this line. This is probably a bug in the parser");
+				_HolidayError($LineNo, "\$CreativeParser->{Number} is undef", "Skipping this line. This is probably a bug in the parser");
 				return(0);
 			}
 			if($CreativeParser->{Number} eq 'last') {
@@ -237,13 +238,8 @@ sub _Holiday_Interperate ($$$$$) {
 		if(defined($CreativeParser->{NumericYDay})) {
 			# Parse the main NumericYDay
 			$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
-			# We don't know what to do with NumericYDays that has MustBeDay and IsMonth
-			#	if(defined($CreativeParser->{IsMonth})) {
-			#	_HolidayError($LineNo, "The parser calculated a fixed day ($CreativeParser->{FinalYDay}) but a month was defined too", "Ignoring this line. This might be a bug in the parser");
-			#	return(0);
-			#}
 			unless(defined($CreativeParser->{BeforeOrAfter})) {
-				_HolidayWarn($LineNo, "It was not defined if the day should be before or after", "Defaulting to before. This is likely to cause calculation mistakes.");
+				_SyntaxError($LineNo, $File, "It was not defined if the day should be before or after", "Defaulting to before. This is likely to cause calculation mistakes.");
 				$CreativeParser->{BeforeOrAfter} = 'before';
 			}
 			if($CreativeParser->{BeforeOrAfter} eq 'before') {
@@ -268,14 +264,14 @@ sub _Holiday_Interperate ($$$$$) {
 				die("Fatal holiday parser error: BeforeOrAfter was set to an invalid value ($CreativeParser->{BeforeOrAfter}). This is a bug!");
 			}
 		} else {
-			_HolidayError($LineNo, "A day is defined but no other way to find out when the day is could be found", "Ignoring this line");
+			_SyntaxError($LineNo, $File, "A day is defined but no other way to find out when the day is could be found", "Ignoring this line");
 			return(0);
 		}
 	} 
 	# Calculate the yday of that day-of-the-month
 	elsif(defined($CreativeParser->{IsMonth})) {
 		unless(defined($CreativeParser->{DateNumeric})) {
-				_HolidayError($LineNo, "No DateNumeric for IsMonth!", "Ignoring this line");
+				_SyntaxError($LineNo, "It was set which month the day should be on but no information about the day itself ", "Ignoring this line");
 				return(0);
 			}
 		my $PosixYear = $Year - 1900;
@@ -286,11 +282,8 @@ sub _Holiday_Interperate ($$$$$) {
 	# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
 	elsif(defined($CreativeParser->{NumericYDay})) {
 		# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
-		if(defined($CreativeParser->{IsMonth})) {
-			_HolidayError($LineNo, "IsMonth is set but NumericYDay is too", "Parser confused. Ignoring IsMonth");
-		}
 		if(defined($CreativeParser->{MustBeDay})) {
-			_HolidayError($LineNo, "MustBeDay is set but NumericYDay is too", "Parser confused. Ignoring MustBeDay");
+			_SyntaxError($LineNo, $File, "It was set exactly which day the holiday should occur on and also that it should occur on $CreativeParser->{MustBeDay}", "Ignoring the day requirement");
 
 		}
 		$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
@@ -369,7 +362,7 @@ sub Parse($$) {
 						$HolidayType = 'none';
 					} else {
 						$HolidayType = 'none';
-						_HolidayError($LineNo, "Unrecognized holiday type: \"$PreDec\".", "Defaulting to 'none'");
+						_SyntaxError($LineNo, $File, "Unrecognized holiday type: \"$PreDec\".", "Defaulting to 'none'");
 					}
 				}
 			}
@@ -381,7 +374,7 @@ sub Parse($$) {
 		$HolidayName =~ s/^\s*\"(.*)\".*$/$1/;
 		$Line =~ s/^\s*\".*\"//;
 		if ($HolidayName =~ /^\"*$/) {
-			_HolidayError($LineNo, "Fatal, malformed line", "Ignoring this line.");
+			_SyntaxError($LineNo, $File, "The name of the holiday was not defined", "Ignoring this line.");
 			next;
 		}
 	
@@ -401,11 +394,11 @@ sub Parse($$) {
 				}
 			} else {
 				$HolidayType = 'none';
-				_HolidayError($LineNo, "Unrecognized holiday type: \"$HolidayDec\".", "Defaulting to 'none'");
+				_SyntaxError($LineNo, $File, "Unrecognized holiday type: \"$HolidayDec\".", "Defaulting to 'none'");
 			}
 		}
 		unless($Line =~ /^\s*on/) {
-			_HolidayError($LineNo, "Missing \"on\" keyword", "Pretending it's there. This might be a bug in the parser and might give weird effects");
+			_SyntaxError($LineNo, "Missing \"on\" keyword", "Pretending it's there. This might give weird effects");
 		} else {
 			$Line =~ s/^\s*on\*//;
 		}
@@ -471,13 +464,13 @@ sub Parse($$) {
 				# How long should it last?
 				} elsif ($CreativeParser{NextIs} eq 'length') {
 					if(defined($CreativeParser{Length})) {
-						_HolidayError($LineNo, "Multiple length statements", "Ignoring \"$_\"");
+						_SyntaxError($LineNo, "Multiple length statements", "Ignoring \"$_\"");
 					} else {
 						$CreativeParser{Length} = $_;
 					}
 				} else {
 					# What on earth am I going to do with this number?
-					_HolidayError($LineNo, "Got a number ($_)", "I don't know what to do with this number");
+					_SyntaxError($LineNo, "Got a number ($_)", "I don't know what to do with this number. Ignoring it.");
 				}
 				$CreativeParser{NextIs} = undef;
 				
@@ -487,12 +480,12 @@ sub Parse($$) {
 				# FIXME: "every" might need to be taken into account
 				next;
 			} else {
-				_HolidayError($LineNo, "Unrecognized keyword \"$_\"", "Ignoring it. This might cause calculation mistakes! Consider using a combination of other keywords or report this as a bug to the author of this parser");
+				_SyntaxError($LineNo, $File, "Unrecognized keyword \"$_\"", "Ignoring it. This might cause calculation mistakes! Consider using a combination of other keywords or report this as a bug to the author of this parser if you're certain the keyword should be supported");
 			}
 		}
 		
 		unless(defined($CreativeParser{IsMonth}) or defined($CreativeParser{NumericYDay})) {
-			_HolidayError($LineNo, "No \"IsMonth\" nor \"NumericYDay\" after parsing", "Ignoring this line");
+			_SyntaxError($LineNo, $File, "I had no day-of-the-year nor a month defined after parsing", "Ignoring this line");
 			next;
 		}
 
