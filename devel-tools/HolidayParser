@@ -303,7 +303,7 @@ sub CalcHoliday ($$) {
 	
 	# Validate year
 	if($Year > 2037) {
-		warn("Holiday parser: Can't count longer than 3037. Ignoring request for parsing of $File for the year $Year\n");
+		warn("Holiday parser: Can't count longer than 2037 due to limitations with the 32bit posix time functions. Ignoring request for parsing of $File for the year $Year\n");
 		return(0);
 	}
 	
