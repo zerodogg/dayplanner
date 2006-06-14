@@ -4,6 +4,7 @@ Day planner version history
 Version 0.2 (Unreleased)
 ------------------------
 * Client (dayplanner)
+- Now properly handles various signals
 
 * Daemon (dayplanner-daemon)
 
@@ -16,6 +17,7 @@ Version 0.1.3 (Unreleased)
 - Improved locale detection
 
 * Daemon (dayplanner-daemon)
+- Fixed a bug where -v would trigger --version instead of --verbose
 
 * Notifier (dayplanner-notifier)
 - Can now be translated
