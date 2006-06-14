@@ -95,7 +95,9 @@ sub HCalc_NumericYDay ($$$) {
 	if(defined($SUBTRACT_DAYS)) {
 		$DAY -= $SUBTRACT_DAYS;
 	}
-	$DAY++;	# Add a day to make it 1-365 instead of 0-364
+	# mday begins on 1 not 0 - we use mday for all calculations, thus
+	# make the day 1-365 instead of 0-364 here
+	$DAY++;
 	return($DAY);
 }
 
@@ -106,6 +108,7 @@ sub Holiday_DayName ($$) {
 	$year -= 1900;
 	
 	my $PosixTime = POSIX::mktime(0, 0, 0, $_[0], 0, $year);
+	die("*** Holiday_DayName: For some reason mktime returned undef!. Was running: \"POSIX::mktime(0, 0, 0, $_[0], 0, $year)\".\nYou've probably got a loop that has started looping eternally. This error is fatal") unless(defined($PosixTime));
 	my %NumToDayHash = (
 		0 => 'sunday',
 		1 => 'monday',
@@ -120,16 +123,25 @@ sub Holiday_DayName ($$) {
 	return($NumToDayHash{$DayName_wday});
 }
 
+# Purpose: Return the yday of the supplied unix time
+# Usage: $YDay = Get_YDay(UNIX_TIME);
+sub Get_YDay ($) {
+	my $Unix_Time = $_[0];
+	warn("Get_YDay: Invalid usage: must be numeric. Got \"$Unix_Time\"") and return(undef) if $Unix_Time =~ /\D/;
+	my ($get_sec,$get_min,$get_hour,$get_mday,$get_mon,$get_year,$get_wday,$get_yday,$get_isdst) = localtime($Unix_Time);
+	return($get_yday);
+}
+
 # Purpose: Print a warning about some error during the holiday parsing
 # Usage: HolidayError(LINE_NO, ERROR, ACTION_TAKEN);
 sub HolidayError ($$$) {
-	warn "Holiday parser error: $_[1] on line $_[0]. $_[2]\n";
+	warn "*** Holiday parser error: $_[1] on line $_[0]. $_[2]\n";
 }
 
 # Purpose: Print a warning about something during the holiday parsing
 # Usage: HolidayWarn(LINE_NO, ERROR, ACTION_TAKEN);
 sub HolidayWarn ($$$) {
-	warn "Holiday parser warning: $_[1] on line $_[0]. $_[2]\n";
+	warn "*** Holiday parser warning: $_[1] on line $_[0]. $_[2]\n";
 }
 
 # Purpose: Interperate and calculate the holiday file
@@ -139,16 +151,87 @@ sub Holiday_Interperate ($$$$) {
 	my $LineNo = $_[1];
 	my $HolidayName = $_[2];
 	my $Year = $_[3];
-	#my ($currsec,$currmin,$currhour,$currmday,$currmon,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	my %MonthMapping = (
+		'january' => 0,
+		'february' => 1,
+		'march' => 2,
+		'april' => 3,
+		'may' => 4,
+		'june' => 5,
+		'july' => 6,
+		'august' => 7,
+		'september' => 8,
+		'october' => 9,
+		'november' => 10,
+		'december' => 11,
+	);	# Hash mapping the month name to a numeric
+	
 	if(defined($CreativeParser->{MustBeDay})) {
+
+		# If IsMonth is defined then find a NumericYDay that we can use so that
+		# the NumericYDay parsing below can do all of the heavy lifting
+		if (defined($CreativeParser->{IsMonth})) {
+			my $PosixYear = $Year - 1900;
+			my $PosixTime = POSIX::mktime(0, 0, 0, 1, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
+			my $proper_yday = Get_YDay($PosixTime);
+			if($CreativeParser->{Number} eq 'last') {
+				# Find the first of the set day
+				while(1) {
+					if(Holiday_DayName($proper_yday, $Year) eq $CreativeParser->{MustBeDay}) {
+						last;
+					}
+					$proper_yday++;
+				}
+
+				# Find the last of the set day
+				my $Last_YDay = $proper_yday;
+				while(1) {
+					if(Holiday_DayName($proper_yday, $Year) eq $CreativeParser->{MustBeDay}) {
+						$proper_yday += 7;
+					}
+					my $MKTime = POSIX::mktime(0, 0, 0, $proper_yday, 0, $PosixYear);
+					die("mktime returned undef") unless(defined($MKTime));
+					my ($detect_sec,$detect_min,$detect_hour,$detect_mday,$detect_mon,$detect_year,$detect_wday,$detect_yday,$detect_isdst) = localtime($MKTime);
+					# If $detect_mon is not equal to $MonthMapping{$CreativeParser->{IsMonth}} then
+					# we're now on the next month and have found the last of the day
+					unless($detect_mon eq $MonthMapping{$CreativeParser->{IsMonth}}) {
+						last;
+					}
+					$Last_YDay = $proper_yday;
+				}
+				$CreativeParser->{NumericYDay} = $Last_YDay;
+				$CreativeParser->{BeforeOrAfter} = 'before';
+			} else {
+				# Parse the final
+				$CreativeParser->{NumericYDay} = $proper_yday;
+				if($CreativeParser->{Number} eq 'first') {
+					$CreativeParser->{BeforeOrAfter} = 'after';
+				} elsif($CreativeParser->{Number} eq 'second') {
+					$CreativeParser->{BeforeOrAfter} = 'after';
+					$CreativeParser->{AddDays} = 7;
+				} elsif($CreativeParser->{Number} eq 'third') {
+					$CreativeParser->{BeforeOrAfter} = 'after';
+					$CreativeParser->{AddDays} = 14;
+				} elsif($CreativeParser->{Number} eq 'fourth') {
+					$CreativeParser->{BeforeOrAfter} = 'after';
+					$CreativeParser->{AddDays} = 21;
+				} else {
+					die("FATAL: Internal error: \$CreativeParser->{Number} is $CreativeParser->{Number} - this is a bug!\n");
+				}
+			}
+
+		}
+
+
+
 		if(defined($CreativeParser->{NumericYDay})) {
 			# Parse the main NumericYDay
 			$CreativeParser->{FinalYDay} = HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 			# We don't know what to do with NumericYDays that has MustBeDay and IsMonth
-			if(defined($CreativeParser->{IsMonth})) {
-				HolidayError($LineNo, "The parser calculated a fixed day ($CreativeParser->{FinalYDay}) but a month was defined too", "Ignoring this line. This might be a bug in the parser");
-				next;
-			}
+			#	if(defined($CreativeParser->{IsMonth})) {
+			#	HolidayError($LineNo, "The parser calculated a fixed day ($CreativeParser->{FinalYDay}) but a month was defined too", "Ignoring this line. This might be a bug in the parser");
+			#	return(0);
+			#}
 			unless(defined($CreativeParser->{BeforeOrAfter})) {
 				HolidayWarn($LineNo, "It was not defined if the day should be before or after", "Defaulting to before. This is likely to cause calculation mistakes.");
 				$CreativeParser->{BeforeOrAfter} = 'before';
@@ -177,15 +260,27 @@ sub Holiday_Interperate ($$$$) {
 		} elsif (defined($CreativeParser->{IsMonth})) {
 			unless(defined($CreativeParser->{DateNumeric}) or defined($CreativeParser->{Number})) {
 				HolidayError($LineNo, "It was not defined when in the month this day should occur", "Ignoring this line.");
-				next;
+				return(0);
 			}
+			warn("TODO ISMONTH");
 		} else {
 			HolidayError($LineNo, "A day is defined but no other way to find out when the day is could be found", "Ignoring this line");
-			next;
+			return(0);
 		}
-	} elsif(defined($CreativeParser->{IsMonth})) {
-		print "...2\n";
-	} elsif(defined($CreativeParser->{NumericYDay})) {
+	} 
+	# Calculate the yday of that day-of-the-month
+	elsif(defined($CreativeParser->{IsMonth})) {
+		unless(defined($CreativeParser->{DateNumeric})) {
+				HolidayError($LineNo, "No DateNumeric for IsMonth!", "Ignoring this line");
+				return(0);
+			}
+		my $PosixYear = $Year - 1900;
+		my $PosixTime = POSIX::mktime(0, 0, 0, $CreativeParser->{DateNumeric}, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
+		my $proper_yday = Get_YDay($PosixTime);
+		$CreativeParser->{FinalYDay} = $proper_yday;
+	} 
+	# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
+	elsif(defined($CreativeParser->{NumericYDay})) {
 		# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
 		if(defined($CreativeParser->{IsMonth})) {
 			HolidayError($LineNo, "IsMonth is set but NumericYDay is too", "Parser confused. Ignoring IsMonth");
@@ -196,11 +291,11 @@ sub Holiday_Interperate ($$$$) {
 		}
 		$CreativeParser->{FinalYDay} = HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 	}
+
+	# Present the final calculation to the user (should create our hash)
 	if(defined($CreativeParser->{FinalYDay})) {
-		my $PosixYear = $Year;
-		$PosixYear -= 1900;
-		my $ScalarTime = POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear);
-		$ScalarTime = localtime($ScalarTime);
+		my $PosixYear = $Year - 1900;
+		my $ScalarTime = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
 		chomp($ScalarTime);
 		print "$HolidayName is on day $CreativeParser->{FinalYDay} the year $Year ($ScalarTime)\n";
 	}
