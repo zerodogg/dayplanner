@@ -804,29 +804,43 @@ sub HolidaySetup () {
 		return(1);
 	}
 
-	unless(defined($ENV{LC_ADDRESS})) {
-		DPIntWarn("LC_ADDRESS is not set. Unable to autodetect .holiday file.");
-		return(0);
+
+	my $LocationDetect;
+
+	if(defined($ENV{LC_ADDRESS})) {
+		$LocationDetect = $ENV{LC_ADDRESS};
+	} elsif (defined($ENV{LC_TELEPHONE})) {
+		$LocationDetect = $ENV{LC_TELEPHONE};
+	} elsif (defined($ENV{LC_MESSAGES})) {
+		$LocationDetect = $ENV{LC_MESSAGES};
+	} elsif (defined($ENV{LC_ALL})) {
+		$LocationDetect = $ENV{LC_ALL};
+	} elsif (defined($ENV{LANGUAGE})) {
+		$LocationDetect = $ENV{LANGUAGE};
+	} else {
+		DPIntWarn("Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_MESSAGES, LC_ALL nor LANGUAGE was set. Unable to autodetect .holiday file");
 	}
 
 	my $CopyFile;
 
-	# Let's try to find the users LC_ADDRESS in the %HolidayFiles hash
-	foreach my $Key (keys(%HolidayFiles)) {
-		if($ENV{LC_ADDRESS} =~ /^$Key/) {
+	if(defined($LocationDetect)) {
+		# Let's try to find the users LC_ADDRESS in the %HolidayFiles hash
+		foreach my $Key (keys(%HolidayFiles)) {
+			if($LocationDetect =~ /^$Key/) {
 			$CopyFile = $HolidayFiles{$Key};
-			last;
+					last;
+			}
 		}
-	}
-	if(defined($CopyFile)) {
-		if(-e "$FindBin::Bin/holiday/holiday_$CopyFile") {
-			copy("$FindBin::Bin/holiday/holiday_$CopyFile", $HolidayFile);
-			return(1);
+		if(defined($CopyFile)) {
+			if(-e "$FindBin::Bin/holiday/holiday_$CopyFile") {
+				copy("$FindBin::Bin/holiday/holiday_$CopyFile", $HolidayFile);
+				return(1);
+			} else {
+				DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::Bin/holiday/holiday_$CopyFile) did not exist.");
+			}
 		} else {
-			DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::Bin/holiday/holiday_$CopyFile) did not exist.");
+			DPIntWarn("Couldn't detect a .holiday file for $ENV{LC_ADDRESS}. Maybe you would like to write one?");
 		}
-	} else {
-		DPIntWarn("Couldn't detect a .holiday file for $ENV{LC_ADDRESS}. Maybe you would like to write one?");
 	}
 	open(DUMMY_FILE, ">$HolidayFile");
 	print DUMMY_FILE ": $Version\n\n";
