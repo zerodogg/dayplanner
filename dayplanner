@@ -33,8 +33,8 @@ use IO::Socket;			# Network layer to communicate with the daemon
 use File::Copy;			# We need to copy the holiday file
 use FindBin;			# So that we can detect module dirs during runtime
 # So that we can use a local Date::HolidayParser
-use lib "$FindBin::Bin/modules/Date-HolidayParser/lib/";
-use lib "$FindBin::Bin/modules/";
+use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
+use lib "$FindBin::RealBin/modules/";
 use Date::HolidayParser;	# Parsing of .holiday files
 
 # Scalars
@@ -834,11 +834,11 @@ sub HolidaySetup () {
 			}
 		}
 		if(defined($CopyFile)) {
-			if(-e "$FindBin::Bin/holiday/holiday_$CopyFile") {
-				copy("$FindBin::Bin/holiday/holiday_$CopyFile", $HolidayFile);
+			if(-e "$FindBin::RealBin/holiday/holiday_$CopyFile") {
+				copy("$FindBin::RealBin/holiday/holiday_$CopyFile", $HolidayFile);
 				return(1);
 			} else {
-				DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::Bin/holiday/holiday_$CopyFile) did not exist.");
+				DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::RealBin/holiday/holiday_$CopyFile) did not exist.");
 			}
 		} else {
 			DPIntWarn("Couldn't detect a .holiday file for $LocationDetect. Maybe you would like to write one?");
