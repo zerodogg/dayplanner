@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# HolidayParser
+# Date::HolidayParser
 # A parser of ~/.holiday-style files as found in the plan-distribution.
 #  The format is based off of the holiday files found in the
 #  plan-distribution and not any official spec. This because no
@@ -19,16 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-# The parser should spit out a perl hash based upon the holiday file found.
-#
-# A lot of the things in the holiday file is simply dropped.
-# Generally we will have two modes for each holiday entry:
-#  "red"
-#  "none"
-# Red is a special "red" day, while none is a normal day just
-# ticked off. The keywords "red" and "weekend" counts as "red",
-# all others count as "none"
 
 package Date::HolidayParser;
 
