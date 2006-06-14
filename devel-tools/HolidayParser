@@ -257,12 +257,6 @@ sub Holiday_Interperate ($$$$) {
 			} else {
 				die("Fatal holiday parser error: BeforeOrAfter was set to an invalid value ($CreativeParser->{BeforeOrAfter}). This is a bug!");
 			}
-		} elsif (defined($CreativeParser->{IsMonth})) {
-			unless(defined($CreativeParser->{DateNumeric}) or defined($CreativeParser->{Number})) {
-				HolidayError($LineNo, "It was not defined when in the month this day should occur", "Ignoring this line.");
-				return(0);
-			}
-			warn("TODO ISMONTH");
 		} else {
 			HolidayError($LineNo, "A day is defined but no other way to find out when the day is could be found", "Ignoring this line");
 			return(0);
