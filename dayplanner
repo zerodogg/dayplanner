@@ -811,6 +811,8 @@ sub HolidaySetup () {
 		$LocationDetect = $ENV{LC_ADDRESS};
 	} elsif (defined($ENV{LC_TELEPHONE})) {
 		$LocationDetect = $ENV{LC_TELEPHONE};
+	} elsif (defined($ENV{LC_IDENTIFICATION})) {
+		$LocationDetect = $ENV{LC_IDENTIFICATION};
 	} elsif (defined($ENV{LC_MESSAGES})) {
 		$LocationDetect = $ENV{LC_MESSAGES};
 	} elsif (defined($ENV{LC_ALL})) {
@@ -818,7 +820,7 @@ sub HolidaySetup () {
 	} elsif (defined($ENV{LANGUAGE})) {
 		$LocationDetect = $ENV{LANGUAGE};
 	} else {
-		DPIntWarn("Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_MESSAGES, LC_ALL nor LANGUAGE was set. Unable to autodetect .holiday file");
+		DPIntWarn("Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_IDENTIFICATION, LC_MESSAGES, LC_ALL nor LANGUAGE was set. Unable to autodetect .holiday file");
 	}
 
 	my $CopyFile;
