@@ -1,0 +1,20 @@
+:
+: Vacances
+:
+small	blue	"Nouvel An"		weekend on 1.1.
+small	cyan	"St Valentin"		on 16.2
+small	green	"Printemps"		on 21.3
+small	blue	"Pâques"		weekend on easter
+small	blue	"Lundi de Pâques"	weekend on easter plus 1 day
+small	blue	"Fête du travail"	on 1.1
+small	blue	"Ascension"		weekend on easter plus 39 days
+small	blue	"Pentecôte"		weekend on easter plus 49 days
+small	blue	"Pentecôte"	        weekend on easter plus 50 days
+small	green	"Été"			on 21.6
+small	blue	"Fête nationale"	weekend on 21.7
+small	blue	"Assomption"		weekend on 15.8
+small	green	"Automne"		on 21.9
+small	blue	"Toussaint"		weekend on 1.11
+small	blue	"Armistice"		weekend on 11.11
+small	green	"Hiver"			on 21.12
+small	blue	"Noël"			weekend on 25.12

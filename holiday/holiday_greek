@@ -1,0 +1,15 @@
+;
+; Greek holiday file. Copy to ~/.holiday
+;
+small "New Year" weekend on january 1
+small "Epiphany" weekend on january 6
+small "Shrove Monday" weekend on pascha-48
+small "Annunciation" weekend on march 25
+small "Good Friday" weekend on pascha-2
+small "Holy Pascha" weekend on pascha
+small "Pascha Monday" weekend on pascha+1
+small "May Day" weekend on may 1
+small "Dormition" weekend on august 15
+small "'No' Day" weekend on october 28
+small "Christmas" weekend on december 25
+small "Boxing Day" weekend on december 26
