@@ -31,7 +31,9 @@ use POSIX;
 # Exportable functions are ParseHoliday (main parser function) and EasterCalc
 my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
-our $VERSION = 0.1;
+my $VERSION = 0.1;
+
+our $BeSilent;
 
 
 # Easter calculation using the gauss algorithm. See:
@@ -130,13 +132,21 @@ sub _Get_YDay ($) {
 # Purpose: Print a warning about some error during the holiday parsing
 # Usage: _HolidayError(LINE_NO, ERROR, ACTION_TAKEN);
 sub _HolidayError ($$$) {
-	warn "*** Holiday parser error: $_[1] on line $_[0]. $_[2]\n";
+	_PrintError("*** Holiday parser error: $_[1] on line $_[0]. $_[2]\n");
 }
 
 # Purpose: Print a syntax error in a holiday file
 # Usage: _SyntaxError(LINE_NO, FILENAME, ERROR, ACTION_TAKEN);
 sub _SyntaxError ($$$$) {
-	warn "*** Holiday parser: Syntax error: $_[2] on line $_[0] in $_[1]. $_[3]\n";
+	_PrintError("*** Holiday parser: Syntax error: $_[2] on line $_[0] in $_[1]. $_[3]\n");
+}
+
+# Purpose. Actually print the error (obeying $BeSilent)
+# Usage: _PrintError(ERROR);
+sub _PrintError($) {
+	unless($BeSilent) {
+		warn $_[0];
+	}
 }
 
 # Purpose: Interperate and calculate the holiday file
@@ -490,7 +500,8 @@ sub Parse($$) {
 	return(\%FinalParsing);
 }
 
-1; # End of Date::HolidayParser
+# End of Date::HolidayParser
+1;
 
 =head1 NAME
 
@@ -675,9 +686,16 @@ This is a very simple example. It first uses Date::HolidayParser to parse the fi
 and then save the hashref returned to $Holiday. Then it tells Data::Dumper to dump
 a visual (perl-usable) representtion of the hash to stdout.
 
+=head1 SETTINGS
+
+=head2 $Date::HolidayParser::BeSilent
+
+If this is set to any true value then the holiday parser will not output any
+errors (syntax or internal).
+
 =head1 AUTHOR
 
-Eskild Hustvedt , C<< <zerodogg@cpan.org> >>
+Eskild Hustvedt - C<< <zerodogg@cpan.org> >>
 
 =head1 BUGS
 
