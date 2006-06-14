@@ -832,7 +832,7 @@ sub HolidaySetup () {
 	print DUMMY_FILE ": $Version\n\n";
 	print DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
 	print DUMMY_FILE ": one suitable for your LC_ADDRESS (which at the time was set to $ENV{LC_ADDRESS}).\n";
-	print DUMMY_FILE ": You may want to write one yourself (see the files contained in the holidays/ directory\n";
+	print DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
 	print DUMMY_FILE ":  of the day planner distribution for examples of the syntax).";
 	close(DUMMY_FILE);
 	return(0);
