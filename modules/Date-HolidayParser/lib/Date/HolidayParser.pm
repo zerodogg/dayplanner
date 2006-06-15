@@ -505,7 +505,7 @@ Date::HolidayParser - Parser for .holiday-files
 =head1 SYNOPSIS
 
 This module parses .holiday files. These are files that define holidays in various parts
-of the world in an easy to read and easy to write (but hard to parse due to its very slack
+of the world in an easy to read and easy to write (but hard to parse due to its very flexible
 syntax) format.
 
 This module returns a hash that you can read and use within your program.
