@@ -3,6 +3,9 @@ MANIFEST
 META.yml # Will be created by "make dist"
 Makefile.PL
 README
+COPYING
+COPYING.gpl
+COPYING.artistic
 lib/Date/HolidayParser.pm
 t/00-load.t
 t/pod.t
