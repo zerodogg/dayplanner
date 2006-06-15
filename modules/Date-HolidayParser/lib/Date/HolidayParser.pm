@@ -282,8 +282,6 @@ sub _Holiday_Interperate ($$$$$) {
 	# Present the final calculation to the user (should create our hash)
 	if(defined($CreativeParser->{FinalYDay})) {
 		my $PosixYear = $Year - 1900;
-		#my $ScalarTime = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
-		#chomp($ScalarTime);
 		my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
 		$final_mon++;
 		$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
@@ -344,16 +342,16 @@ sub Parse($$) {
 				unless(length($PreDec)) {
 						_HolidayError($LineNo, "LineMode=PreDec, but the predec parser recieved \"$PreDec\" as PreDec", "Ignoring this predec");
 					} else {
-					if($PreDec =~ /^(weekend|red)$/) {
-						$HolidayType = 'red';
-					} elsif ($PreDec =~ /^(black|small|blue|green|cyan|magenta|yellow)$/) {
-						# These are often just "formatting" declerations, and thus ignored by the day planner
-						# parser. In these cases PostDec usually declares more valid stuff
-						$HolidayType = 'none';
-					} else {
-						$HolidayType = 'none';
-						_SyntaxError($LineNo, $File, "Unrecognized holiday type: \"$PreDec\".", "Defaulting to 'none'");
-					}
+						if($PreDec =~ /^(weekend|red)$/) {
+							$HolidayType = 'red';
+						} elsif ($PreDec =~ /^(black|small|blue|green|cyan|magenta|yellow)$/) {
+							# These are often just "formatting" declerations, and thus ignored by the day planner
+							# parser. In these cases PostDec usually declares more valid stuff
+							$HolidayType = 'none';
+						} else {
+							$HolidayType = 'none';
+							_SyntaxError($LineNo, $File, "Unrecognized holiday type: \"$PreDec\".", "Defaulting to 'none'");
+						}
 				}
 			}
 		}
@@ -377,8 +375,7 @@ sub Parse($$) {
 			if($HolidayDec =~ /^(weekend|red)$/) {
 				$HolidayType = 'red';
 			} elsif ($HolidayDec =~ /^(black|small|blue|green|cyan|magenta|yellow)$/) {
-				# These are often just "formatting" declerations, and thus ignored by the day planner
-				# parser. However, if HolidayType already equals something else we ignore it
+				# These are just "formatting" keywords, so we ignore them here.
 				unless(defined($HolidayType) and $HolidayType eq 'red') {
 					$HolidayType = 'none';
 				}
