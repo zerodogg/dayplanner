@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # Date::HolidayParser
+# $Id$
 # A parser of ~/.holiday-style files.
 #  The format is based off of the holiday files found bundled
 #  with the plan program, not any official spec. This because no
