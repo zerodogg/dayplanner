@@ -1,24 +1,14 @@
 #!/usr/bin/perl
 # Date::HolidayParser
-# A parser of ~/.holiday-style files as found in the plan-distribution.
-#  The format is based off of the holiday files found in the
-#  plan-distribution and not any official spec. This because no
+# A parser of ~/.holiday-style files.
+#  The format is based off of the holiday files found bundled
+#  with the plan program, not any official spec. This because no
 #  official spec could be found.
 # Copyright (C) Eskild Hustvedt 2006
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# This program is free software; you can redistribute it and/or modify it
+# under the same terms as Perl itself. There is NO warranty;
+# not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 package Date::HolidayParser;
 
@@ -707,9 +697,10 @@ your bug as I make changes.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2006 Eskild Hustvedt, all rights reserved.
+Copyright (C) 2006 Eskild Hustvedt, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+under the same terms as Perl itself. There is NO warranty;
+not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 =cut
