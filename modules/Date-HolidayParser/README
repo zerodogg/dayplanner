@@ -1,5 +1,10 @@
 Date::HolidayParser
 
+Date::HolidayParser is a parser for .holiday files. These are
+files that define holidays in various parts of the world in
+an easy to read and easy to write (but hard to parse due
+to its very slack flexible) format.
+
 DOCUMENTATION
 The documentation is included in the pm file.
 
