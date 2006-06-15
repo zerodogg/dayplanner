@@ -21,8 +21,11 @@ use POSIX;
 # Exportable functions are ParseHoliday (main parser function) and EasterCalc
 my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
-my $VERSION = 0.1;
+# Version number
+my $VERSION;
+$VERSION = 0.1;
 
+# The user should be able to tell us to be silent
 our $BeSilent;
 
 
