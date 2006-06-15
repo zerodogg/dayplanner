@@ -548,7 +548,7 @@ Parse and EasterCalc functions upon request by issuing
 
 =head2 Date::HolidayParser::Parse
 
-This is the primary function of Date::HolidayParser. It's syntax is:
+This is the primary function of Date::HolidayParser. Its syntax is:
 
 	use Date::HolidayParser;
 
