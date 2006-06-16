@@ -24,7 +24,7 @@ my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
 # Version number
 my $VERSION;
-$VERSION = 0.1;
+$VERSION = 0.1.1;
 
 # The user should be able to tell us to be silent
 our $BeSilent;
@@ -409,13 +409,18 @@ sub Parse($$) {
 				next;
 			} elsif (/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/) {	# This defines which day the holiday should occur on
 				$CreativeParser{MustBeDay} = $_;
-			} elsif (m#^\d+[/\.]\d+\.?$#) {		# This obscure regexp gets numbers in the format XX/YY X/Y, XX.YY and X.Y
+			} elsif (m#^\d+[/\.]\d+\.?$#) {		# This regexp gets numbers in the format XX/YY X/Y, XX.YY and X.Y
 								# With an optional trailing .
 				my $day = $_;
 				my $month = $_;
-				$day =~ s/(\d+).*/$1/;
-				$month =~ s#^\d+[/\.](\d+)\.?$#$1#;
-				$month--;
+				if(m#^\d+\.\d+$#) {		# XX.YY and X.Y is in the format day.month
+					$day =~ s/(\d+).*/$1/;
+					$month =~ s#^\d+\.(\d+)\.?$#$1#;
+				} elsif (m#^\d+/\d+$#) {	# XX/YY and X/Y is in the format month/day
+					$month =~ s/(\d+).*/$1/;
+					$day =~ s#^\d+/(\d+)\.?$#$1#;
+				}
+				$month--;	# The month in the holiday file is 1-12, we use 0-11
 				my $PosixTime = POSIX::mktime(0, 0, 0, $day, $month, $PosixYear);
 				my ($new_sec,$new_min,$new_hour,$new_mday,$new_mon,$new_year,$new_wday,$new_yday,$new_isdst) = localtime($PosixTime);
 				$CreativeParser{NumericYDay} = $new_yday;
@@ -634,13 +639,13 @@ The UK holiday file was chosen because it was rather small and simple.
 	  '1' => {
 	    '1' => {
 	      'New Years Day' => 'red'
-	    },
-	    '12' => {
-	      'Christmas Day' => 'red'
 	    }
 	  },
-	  '2' => {
-	    '12' => {
+	  '12' => {
+	    '25' => {
+	      'Christmas Day' => 'red'
+	    },
+	    '26' => {
 	      'Boxing Day' => 'red'
 	    }
 	  },
