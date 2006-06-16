@@ -124,9 +124,9 @@ sub _Get_YDay ($) {
 }
 
 # Purpose: Print a warning about some error during the holiday parsing
-# Usage: _HolidayError(LINE_NO, ERROR, ACTION_TAKEN);
-sub _HolidayError ($$$) {
-	_PrintError("*** Holiday parser error: $_[1] on line $_[0]. $_[2]\n");
+# Usage: _HolidayError(LINE_NO, FILENAME, ERROR, ACTION_TAKEN);
+sub _HolidayError ($$$$) {
+	_PrintError("*** Holiday parser error: $_[2] on line $_[0] in $_[1]. $_[3]\n");
 }
 
 # Purpose: Print a syntax error in a holiday file
@@ -176,7 +176,7 @@ sub _Holiday_Interperate ($$$$$) {
 			my $PosixTime = POSIX::mktime(0, 0, 0, 1, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
 			my $proper_yday = _Get_YDay($PosixTime);
 			unless(defined($CreativeParser->{Number})) {
-				_HolidayError($LineNo, "\$CreativeParser->{Number} is undef", "Skipping this line. This is probably a bug in the parser");
+				_HolidayError($LineNo, $File, "\$CreativeParser->{Number} is undef", "Skipping this line. This is probably a bug in the parser");
 				return(0);
 			}
 			if($CreativeParser->{Number} eq 'last') {
@@ -283,12 +283,26 @@ sub _Holiday_Interperate ($$$$$) {
 		$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 	}
 
-	# Present the final calculation to the user (should create our hash)
+	#
 	if(defined($CreativeParser->{FinalYDay})) {
-		my $PosixYear = $Year - 1900;
-		my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
-		$final_mon++;
-		$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
+		while(1) {
+			if(defined($CreativeParser->{FinalYDay})) {
+				my $PosixYear = $Year - 1900;
+				my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
+				$final_mon++;
+				$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
+			} else {
+				last;
+			}
+			if(defined($CreativeParser->{Length}) and $CreativeParser->{Length} > 0) {
+				$CreativeParser->{Length}-- or die("FATAL: attempted to reduce -- length but it failed!");
+				$CreativeParser->{FinalYDay}++;
+			} else {
+				last;
+			}
+		}
+	} else {
+		_HolidayError($LineNo, $File, "No FinalYDay after finished parsing", "This is a bug in the parser!");
 	}
 }
 
@@ -344,7 +358,7 @@ sub Parse($$) {
 				chomp($PreDec);
 				$Line =~ s/^\s*$PreDec\s+//;
 				unless(length($PreDec)) {
-						_HolidayError($LineNo, "LineMode=PreDec, but the predec parser recieved \"$PreDec\" as PreDec", "Ignoring this predec");
+						_HolidayError($LineNo, $File, "LineMode=PreDec, but the predec parser recieved \"$PreDec\" as PreDec", "Ignoring this predec");
 					} else {
 						if($PreDec =~ /^(weekend|red)$/) {
 							$HolidayType = 'red';
@@ -473,7 +487,7 @@ sub Parse($$) {
 			} elsif (/^(before|after)$/) {	# If a day should be before or after a certain day/date
 				$CreativeParser{BeforeOrAfter} = $_;
 			} elsif (/^(in|on|days|day|every)$/) {	# Ignored, just keywords for easier human parsing
-				# FIXME: "every" might need to be taken into account
+				# FIXME: "every" needs to be taken into account
 				next;
 			} else {
 				_SyntaxError($LineNo, $File, "Unrecognized keyword \"$_\"", "Ignoring it. This might cause calculation mistakes! Consider using a combination of other keywords or report this as a bug to the author of this parser if you're certain the keyword should be supported");
@@ -688,6 +702,10 @@ a visual (perl-usable) representtion of the hash to stdout.
 
 If this is set to any true value then the holiday parser will not output any
 errors (syntax or internal).
+
+=head1 LIMITATIONS
+
+The parser does not support the every keyword properly yet.
 
 =head1 AUTHOR
 
