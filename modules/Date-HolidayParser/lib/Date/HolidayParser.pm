@@ -24,7 +24,7 @@ my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
 # Version number
 my $VERSION;
-$VERSION = 0.1.1;
+$VERSION = 0.2;
 
 # The user should be able to tell us to be silent
 our $BeSilent;
@@ -145,7 +145,7 @@ sub _PrintError($) {
 
 # Purpose: Interperate and calculate the holiday file
 # Usage: _Holiday_Interperate(\%CreativeParser, Line_Number, HolidayName, YEAR, \%FinalParsing, Filename);
-sub _Holiday_Interperate ($$$$$) {
+sub _Holiday_Interperate ($$$$$$) {
 	my $CreativeParser = $_[0];
 	my $LineNo = $_[1];
 	my $HolidayName = $_[2];
@@ -195,7 +195,6 @@ sub _Holiday_Interperate ($$$$$) {
 						$proper_yday += 7;
 					}
 					my $MKTime = POSIX::mktime(0, 0, 0, $proper_yday, 0, $PosixYear);
-					die("mktime returned undef") unless(defined($MKTime));
 					my ($detect_sec,$detect_min,$detect_hour,$detect_mday,$detect_mon,$detect_year,$detect_wday,$detect_yday,$detect_isdst) = localtime($MKTime);
 					# If $detect_mon is not equal to $MonthMapping{$CreativeParser->{IsMonth}} then
 					# we're now on the next month and have found the last of the day
@@ -221,7 +220,7 @@ sub _Holiday_Interperate ($$$$$) {
 					$CreativeParser->{BeforeOrAfter} = 'after';
 					$CreativeParser->{AddDays} = 21;
 				} else {
-					die("FATAL: Internal error: \$CreativeParser->{Number} is \"$CreativeParser->{Number}\" - this is a bug!\n") unless $CreativeParser->{Number} eq 'null';
+					_HolidayError($LineNo, $File, "\$CreativeParer->{Number} is \"$CreativeParser->{Number}\"", "This is a bug in the parser. This line will be ignored") and return(undef) unless $CreativeParser->{Number} eq 'null';
 				}
 			}
 
@@ -255,7 +254,8 @@ sub _Holiday_Interperate ($$$$$) {
 					$CreativeParser->{FinalYDay} = $CreativeParser->{FinalYDay} + 1;
 				}
 			} else {
-				die("Fatal holiday parser error: BeforeOrAfter was set to an invalid value ($CreativeParser->{BeforeOrAfter}). This is a bug!");
+				_HolidayError($LineNo, $File, "BeforeOrAfter was set to an invalid value ($CreativeParser->{BeforeOrAfter})", "This is a bug in the parser. This line will be ignored.");
+				return(undef);
 			}
 		} else {
 			_SyntaxError($LineNo, $File, "A day is defined but no other way to find out when the day is could be found", "Ignoring this line");
@@ -283,7 +283,14 @@ sub _Holiday_Interperate ($$$$$) {
 		$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 	}
 
-	#
+	# Verify the use of the "every" keyword
+	if(defined($CreativeParser->{Every}) and not defined($CreativeParser->{Number})) {
+		_SyntaxError($LineNo, $File, "Use of the \"every\" keyword without any trailing month", "Ignoring the \"every\" keyword.");
+	}
+	if(defined($CreativeParser->{Every}) and defined($CreativeParser->{Length})) {
+		_SyntaxError($LineNo, $File, "Use of both \"every\" and \"length", "This might give unpredictable results.");
+	}
+	# Do the final parsing and add it to the hash
 	if(defined($CreativeParser->{FinalYDay})) {
 		while(1) {
 			if(defined($CreativeParser->{FinalYDay})) {
@@ -294,8 +301,16 @@ sub _Holiday_Interperate ($$$$$) {
 			} else {
 				last;
 			}
-			if(defined($CreativeParser->{Length}) and $CreativeParser->{Length} > 0) {
-				$CreativeParser->{Length}-- or die("FATAL: attempted to reduce -- length but it failed!");
+			if(defined($CreativeParser->{Every}) and defined($CreativeParser->{Number})) {
+				delete($CreativeParser->{Every});
+				if($CreativeParser->{Number} ne "second") {
+					_SyntaxError($LineNo, $File, "Nonsense use of $CreativeParser->{Number} along with \"every\"","Ignoring the \"every\" keyword.");
+				} else {
+					# Add 14 days 
+					$CreativeParser->{FinalYDay} += 14;
+				}
+			}elsif(defined($CreativeParser->{Length}) and $CreativeParser->{Length} > 0) {
+				$CreativeParser->{Length}-- or die("FATAL: attempted to reduce (--) length but it failed! This is a bug.");
 				$CreativeParser->{FinalYDay}++;
 			} else {
 				last;
@@ -304,6 +319,7 @@ sub _Holiday_Interperate ($$$$$) {
 	} else {
 		_HolidayError($LineNo, $File, "No FinalYDay after finished parsing", "This is a bug in the parser!");
 	}
+	return(1);
 }
 
 # Purpose: Load and parse the holiday file
@@ -425,6 +441,7 @@ sub Parse($$) {
 				$CreativeParser{MustBeDay} = $_;
 			} elsif (m#^\d+[/\.]\d+\.?$#) {		# This regexp gets numbers in the format XX/YY X/Y, XX.YY and X.Y
 								# With an optional trailing .
+				s/\.$//;
 				my $day = $_;
 				my $month = $_;
 				if(m#^\d+\.\d+$#) {		# XX.YY and X.Y is in the format day.month
@@ -486,8 +503,9 @@ sub Parse($$) {
 				
 			} elsif (/^(before|after)$/) {	# If a day should be before or after a certain day/date
 				$CreativeParser{BeforeOrAfter} = $_;
-			} elsif (/^(in|on|days|day|every)$/) {	# Ignored, just keywords for easier human parsing
-				# FIXME: "every" needs to be taken into account
+			} elsif (/^every$/) {
+				$CreativeParser{Every} = 1;
+			} elsif (/^(in|on|days|day)$/) {	# Ignored, just keywords for easier human parsing
 				next;
 			} else {
 				_SyntaxError($LineNo, $File, "Unrecognized keyword \"$_\"", "Ignoring it. This might cause calculation mistakes! Consider using a combination of other keywords or report this as a bug to the author of this parser if you're certain the keyword should be supported");
@@ -505,7 +523,7 @@ sub Parse($$) {
 		# Interperate the line
 		# ==================================================================
 
-		_Holiday_Interperate(\%CreativeParser, $LineNo, $HolidayName, $Year, \%FinalParsing);
+		_Holiday_Interperate(\%CreativeParser, $LineNo, $HolidayName, $Year, \%FinalParsing, $File);
 	}
 	return(\%FinalParsing);
 }
@@ -702,10 +720,6 @@ a visual (perl-usable) representtion of the hash to stdout.
 
 If this is set to any true value then the holiday parser will not output any
 errors (syntax or internal).
-
-=head1 LIMITATIONS
-
-The parser does not support the every keyword properly yet.
 
 =head1 AUTHOR
 
