@@ -1,5 +1,12 @@
 Revision history for Date-HolidayParser
 
+Version 0.2
+-----------
+- Fixed parsing XX/YY dates
+- Now parses the "length" and "every" keyword
+- Fixed parsing dates that has a trailing dot
+- Now doesn't die unless it's absolutely required
+
 Version 0.1 (Released 15th of June 2006)
 ----------------------------------------
 - First version, released on an unsuspecting world
