@@ -583,7 +583,7 @@ This is the primary function of Date::HolidayParser. Its syntax is:
 	my $Holidays = Date::HolidayParser::Parse("/path/to/holiday.file", "YEAR");
 
 YEAR must be a full year (ie. 2006) not a year relative to 1900 (ie. 106).
-The path must be the full ptah to the holiday file you want to parse.
+The path must be the full path to the holiday file you want to parse.
 
 It returns a hashref with the parsed data or undef on failure.
 See the section HASH SYNTAX below for the syntax of the returned hashref.
@@ -625,13 +625,22 @@ NAME OF THE HOLIDAY is the name of the holiday as set by the .holiday-file.
 
 TYPE OF HOLIDAY is the type of holiday it is. It is one of the following:
 
-	"none" means that it is a normal day.
-	"red" means that it is a "red" day (ie. public holiday/day off).
+=over
+
+=item *
+
+"none" means that it is a normal day.
+
+=item *
+
+"red" means that it is a "red" day (ie. public holiday/day off).
+
+=back
 
 =head1 EXAMPLE
 
-Here is a (rather elaborate) example of the module in use.
-The UK holiday file was chosen because it was rather small and simple.
+Here is an example of the module in use.
+The UK holiday file was chosen because it is rather small and simple.
 
 =head2 The holiday file
 
@@ -719,7 +728,8 @@ a visual (perl-usable) representtion of the hash to stdout.
 =head2 $Date::HolidayParser::BeSilent
 
 If this is set to any true value then the holiday parser will not output any
-errors (syntax or internal).
+errors (syntax or internal) unless they are fatal (causing the module to
+die()) or invalid usage of one or more of the functions.
 
 =head1 AUTHOR
 
