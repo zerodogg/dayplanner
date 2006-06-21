@@ -13,12 +13,12 @@ msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-06-10 15:59+0200\n"
-"PO-Revision-Date: 2006-06-07 00:15+0200\n"
+"PO-Revision-Date: 2006-06-15 01:19+0200\n"
 "Last-Translator: Vlastimil Ott <vlastimil@e-ott.info>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-2\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: 8bit"
 
 #: dayplanner:44 dayplanner-notifier:31
 msgid "dayplanner"
@@ -101,7 +101,7 @@ msgstr ""
 
 #: dayplanner:290
 msgid "Force"
-msgstr ""
+msgstr "Vynutit start"
 
 #: dayplanner:301
 msgid ""
@@ -202,14 +202,12 @@ msgid "Birthday"
 msgstr "Narozeniny"
 
 #: dayplanner:1119
-#, fuzzy
 msgid "Add this event"
-msgstr "_Upravit událost"
+msgstr "_Pøidat událost"
 
 #: dayplanner:1120
-#, fuzzy
 msgid "Discard this event"
-msgstr "_Upravit událost"
+msgstr "_Smazat tuto událost"
 
 #: dayplanner:1190
 msgid "Editing an event"
@@ -231,11 +229,11 @@ msgstr "Úprava narozenin %s. %s %s"
 
 #: dayplanner:1231
 msgid "Discard changes"
-msgstr ""
+msgstr "Zahodit zmìny"
 
 #: dayplanner:1232
 msgid "Accept changes"
-msgstr ""
+msgstr "Ulo¾it zmìny"
 
 #: dayplanner:1288
 msgid "Time:"
@@ -292,6 +290,7 @@ msgstr "Denní plánovaè"
 #: dayplanner:1545 dayplanner:1546
 msgid "THE NAMES OF THE TRANSLATORS"
 msgstr "Vlastimil Ott"
+"(nìkteré bezvýznamné èásti Michal Spáda)"
 
 #: dayplanner:1560
 msgid "Preferences"
@@ -311,7 +310,7 @@ msgstr "V¾dy rozbalit \"%s\""
 msgid ""
 "Check this if you want the \"%s\" to be expanded by default in the add and "
 "edit events dialogues"
-msgstr ""
+msgstr "Za¹krtnìte, pokud chcete pøi pøidávání a úpravách události standardnì expandovat \"%s\""
 
 #: dayplanner:1649
 msgid "General events"
@@ -325,7 +324,7 @@ msgstr "Pøed událostí zobrazit upozornìní"
 msgid ""
 "Check this if you want day planner to notify you about events before they "
 "take place"
-msgstr ""
+msgstr "Za¹krtnìte, pokud si pøejete, aby vás denní plánovaè upozoròoval na blí¾ící se události"
 
 #: dayplanner:1667
 msgid "Time before the event to display the notification"
@@ -354,7 +353,7 @@ msgstr "Varuj mì den pøedem"
 msgid ""
 "Check this if you want day planner to warn you about events one day before "
 "they take place"
-msgstr ""
+msgstr "Za¹krtnìte, pokud si pøejete, aby vás denní plánovaè upozoròoval na nadcházející události den pøedem"
 
 #: dayplanner:1759
 msgid "Time"
@@ -399,27 +398,31 @@ msgstr "_O programu"
 msgid ""
 "Today at %s:\n"
 "%s"
-msgstr ""
+msgstr "Dnes v(e) %s:\n"
+"%s"
 
 #: dayplanner-notifier:254
 #, perl-format
 msgid ""
 "Tomorrow at %s:\n"
 "%s"
-msgstr ""
+msgstr "Zítra v %s:\n"
+"%s"
 
 #: dayplanner-notifier:256
 #, perl-format
 msgid ""
 "At %s on %s:\n"
 "%s"
-msgstr ""
+msgstr "V(e) %s dne %s:\n"
+"%s"
 
 #: dayplanner-notifier:267
-#, fuzzy
 msgid "Day planner event"
-msgstr "Denní plánovaè"
+msgstr "Událost denního plánovaèe"
 
 #: dayplanner-notifier:269
 msgid "Postpone"
-msgstr ""
+msgstr "Odlo¾it"
+
+
