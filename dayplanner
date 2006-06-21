@@ -194,7 +194,7 @@ sub DaemonSIGPIPEHandler() {
 }
 
 # Purpose: Connect to the daemon
-# Usage: ConnectToDaemon(/path/to/socket);
+# Usage: ConnectToDaemon(/path/to/socket, FORCE/undef);
 sub ConnectToDaemon ($$) {
 	my $HI = 'HI client';
 	if(defined($_[1]) and $_[1] eq 'FORCE') {
@@ -205,7 +205,7 @@ sub ConnectToDaemon ($$) {
 		Type	=> SOCK_STREAM,
 		Timeout	=> 5)
 		or return("NOCONNECT");
-	$DaemonOnline = 1;
+	$DaemonOnline = 1;	# If DaemonOnline isn't 1 then Daemon_DataSegment won't send the data
 	if(Daemon_DataSegment($HI) eq "HI\n") {
 		return(1);
 	} else {
@@ -220,16 +220,26 @@ sub ConnectToDaemon ($$) {
 sub Daemon_SendData ($) {
 	if($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
-			DPIntWarn("BUG!: \$DaemonSocket is undefined");
-			return(0);
+			DPIntWarn("\$DaemonSocket is suddenly undef, attempting reconnect");
+			Daemon_AttemptReconnect() or DPIntWarn("Unable to reconnect, expect trouble") and return(0);
 		}
 		if(print $DaemonSocket "$$ $_[0]","\n") {
-			       return(1);
-		       } else {
-				DPIntWarn("Problem sending data to the daemon: $!");
+			return(1);
+		} else {
+			DPIntWarn("Problem sending data to the daemon: $!");
 		}
 	} 
 	return(0);
+}
+
+# Purpose: Reconnect after $DaemonSocket for some reason has gone undef
+# Usage: Daemon_AttemptReconnect();
+sub Daemon_AttemptReconnect () {
+	if(ConnectToDaemon("$SaveToDir/$DaemonSocketName", undef) eq 'NOHI') {
+		return(undef);
+	} else {
+		return(1);
+	}
 }
 
 # Purpose: Get some data from the daemon
@@ -237,8 +247,8 @@ sub Daemon_SendData ($) {
 sub Daemon_GetData {
 	if($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
-			DPIntWarn("BUG!: \$DaemonSocket is undefined");
-			return("ERR UNABLE_TO_GET_DATA");
+			DPIntWarn("\$DaemonSocket is suddenly undef, attempting reconnect");
+			Daemon_AttemptReconnect() or DPIntWarn("Unable to reconnect, expect trouble") and return("ERR NOT_ONLINE");
 		}
 		my $Data = <$DaemonSocket>;
 		unless(defined($Data)) {
@@ -267,11 +277,11 @@ sub Daemon_DataSegment ($) {
 sub CloseDaemon () {
 	if ($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
-			DPIntWarn("BUG!: \$DaemonSocket is undefined");
-			return(1);
+			DPIntWarn("\$DaemonSocket is suddenly undef. Doesn't matter though since we're closing the connection anyway.");
+		} else {
+			my $GetDaemon = Daemon_DataSegment('BYE');
+			close($DaemonSocket);
 		}
-		my $GetDaemon = Daemon_DataSegment('BYE');
-		close($DaemonSocket);
 		$DaemonOnline = 0;
 	}
 	return(1);
