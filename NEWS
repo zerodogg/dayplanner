@@ -11,8 +11,8 @@ Version 0.2 (Unreleased)
 
 * Notifier (dayplanner-notifier)
 
-Version 0.1.3 (Unreleased)
---------------------------
+Version 0.1.3 (Released on the 21st of June 2006)
+-------------------------------------------------
 * Client (dayplanner)
 - Added some tooltips
 - Improved locale detection
@@ -23,8 +23,8 @@ Version 0.1.3 (Unreleased)
 * Notifier (dayplanner-notifier)
 - Can now be translated
 
-Version 0.1.2 (Released 7th of June 2006)
------------------------------------------
+Version 0.1.2 (Released on the 7th of June 2006)
+------------------------------------------------
 * Client (dayplanner)
 - Now uses systemwide properties for the toolbar instead of internal
   ones.
