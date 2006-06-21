@@ -41,5 +41,7 @@ just symlink the executeables into $PATH, day planner handles $PATH fine.
 
 Lastly, for internationalization you want to run ./devel-tools/BuildLocale /dir.
 On most systems this would be: ./devel-tools/BuildLocale /usr/locale/
+or as it would be for RPM packagers:
+./devel-tools/BuildLocale $RPM_BUILD_ROOT/usr/locale/
 
 $Id$
