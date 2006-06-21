@@ -29,7 +29,7 @@ use Cwd;
 use File::Basename;
 
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
-setlocale(LANG, "" );
+setlocale(LC_ALL, "" );
 textdomain("dayplanner");
 
 my $Version = "0.2";
