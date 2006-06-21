@@ -494,6 +494,8 @@ sub CommandHandler ($) {
 			if ($AccessStatus{Connected}) {
 				if ($_ =~ /FORCE/ ) {
 					IntVeryVerbose("$PID is forcing a connection");
+				} elsif (defined($AccessStatus{Connected}) and $PID eq $AccessStatus{Connected}) {
+					IntDebug("$PID appears to have lost its connection to the daemon and wants to reconnect - allowing it to do so.");
 				} else {
 					IntVeryVerbose("Refusing connection from $PID");
 					delete($AccessStatus{ClientList}{$PID});
