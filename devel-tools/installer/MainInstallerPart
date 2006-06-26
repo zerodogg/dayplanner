@@ -25,6 +25,8 @@ use Gtk2;
 my $ProgressWin;
 my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner";
 
+$| = 1;
+
 print "Perl installer part...\n";
 print "Using install dir: $InstallDirectory\n";
 my $Internal_Version = '$Id$';
@@ -72,6 +74,8 @@ if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	Gtk2->main_iteration while Gtk2->events_pending;
 }
 
+print "Installing...";
+
 system("mkdir -p $InstallDirectory");
 
 if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS} eq 'TRUE') {
@@ -82,11 +86,15 @@ if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS
 	system("cp -r $InstallerData/* $InstallDirectory/");
 }
 
+print ".";
+
 my @BINDIRS = (
 	"$ENV{HOME}/bin",
 	"$ENV{HOME}/.bin",
 	"$ENV{HOME}/.local/bin"
 );
+
+print ".";
 
 my @BINLINKS;
 
@@ -117,6 +125,8 @@ print UNINSTALL "echo \"Day planner has been uninstalled.\"\n";
 close(UNINSTALL);
 system("chmod +x $InstallDirectory/uninstall.sh");
 
+print ".";
+
 # TODO: xdg menu support and xdg (portland-project-style) desktop icon support
 
 # Write desktop item
@@ -142,6 +152,7 @@ if(InPath("update-menus")) {
 	system("update-menus &>/dev/null");
 }
 
+print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$ProgressWin->destroy();
 	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall day planner run $InstallDirectory/uninstall.sh");
