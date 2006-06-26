@@ -134,7 +134,7 @@ my (
 );
 
 # Window state
-my ($MainWin_Width, $MainWin_Height) = (600,300);
+my ($MainWin_Width, $MainWin_Height) = (600,300);	# Default size is 600x300 - overridden by state.conf
 my $MainWin_Maximized;
 
 # Set up signal handlers
@@ -939,11 +939,16 @@ sub GetEventListType() {
 	my $Summary = $EventlistWidget->{data}[$Selected][1];
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 
+	my $BirthdayString = $Gettext->get("%s's birthday");
+	$BirthdayString =~ s/%s//g;
+
 	# Detect the event type
 	if (defined($Time) and length($Time)) {
 		return('normal');
-	} elsif (defined($Summary) and length($Summary)) {
+	} elsif (defined($Summary) and length($Summary) and $Summary =~ /$BirthdayString/) {
 		return('bday')
+	} elsif (defined($Summary) and length($Summary)) {
+		return('holiday')
 	} else {
 		return(0);
 		DPIntWarn("FATAL: GetEventListType: Unable to get the type of the selected event ($EventYear-$EventMonth-$EventDay-$Time/$Summary");
@@ -1351,6 +1356,10 @@ sub EditEvent () {
 			return(0);
 		}
 			
+	} elsif ($Type eq 'holiday') {
+		DPInfo(sprintf($Gettext->get("This event is a \"holiday\" event. It is a predefined event read from a special \"holiday\"-file. You can't edit this information directly from day planner.\n\nIf you really want to edit this file you can do so by pointing a text editor to %s"), $HolidayFile));
+		$MainWindow->set_sensitive(1);
+		return(1);
 	} else {
 		DPIntWarn("BUG!: EditEvent: \$Type contained invalid value: $Type");
 		$MainWindow->set_sensitive(1);
@@ -1682,6 +1691,7 @@ sub AboutBox () {
 #  configuration options
 # Usage: PreferencesWindow();
 sub PreferencesWindow () {
+	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
 	$PreferencesWindow->set_transient_for($MainWindow);
@@ -1696,6 +1706,7 @@ sub PreferencesWindow () {
 
 	# Handle closing
 	$PreferencesWindow->signal_connect("destroy" => sub { 
+			$MainWindow->set_sensitive(1);
 			SaveDefaultConfig();
 			});
 	
@@ -1907,13 +1918,15 @@ sub DrawEventlist() {
 			push (@{$EventlistWidget->{data}}, ["", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
 		}
 	}
-	unless($Year > 2037 and $Year < 1970) {
-		unless(defined($Holidays{$Year})) {
-				$Holidays{$Year} = Date::HolidayParser::Parse($HolidayFile, $Year);
-		}
-		if(defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
-			foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
-				push(@{$EventlistWidget->{data}}, ["", $CurrHoliday]);
+	unless($Year > 2037) {
+		unless($Year < 1970) {
+			unless(defined($Holidays{$Year})) {
+					$Holidays{$Year} = Date::HolidayParser::Parse($HolidayFile, $Year);
+			}
+			if(defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
+				foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
+					push(@{$EventlistWidget->{data}}, ["", $CurrHoliday]);
+				}
 			}
 		}
 
