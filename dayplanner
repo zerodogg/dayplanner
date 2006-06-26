@@ -122,6 +122,8 @@ my (
 	$ToolbarEditButton
 );	# Gtk objects
 
+my $HolidayParser; # The Date::HolidayParser object
+
 # Global date variables
 my (
 	$currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst
@@ -1920,8 +1922,11 @@ sub DrawEventlist() {
 	}
 	unless($Year > 2037) {
 		unless($Year < 1970) {
+			unless(defined($HolidayParser)) {
+				$HolidayParser = Date::HolidayParser->new($HolidayFile);
+			}
 			unless(defined($Holidays{$Year})) {
-					$Holidays{$Year} = Date::HolidayParser::Parse($HolidayFile, $Year);
+					$Holidays{$Year} = $HolidayParser->get($Year);
 			}
 			if(defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
 				foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
