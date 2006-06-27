@@ -44,4 +44,12 @@ On most systems this would be: ./devel-tools/BuildLocale /usr/locale/
 or as it would be for RPM packagers:
 ./devel-tools/BuildLocale $RPM_BUILD_ROOT/usr/locale/
 
+* SPECIAL NOTES CONCERNING THE Date::HolidayParser MODULE AND PACKAGING*
+Most likely you will want to package Date::HolidayParser seperately from
+day planner. You can do this by getting the source tarball from
+CPAN. However, if for some reason you want to package the module along
+with day planner it is contained in ./modules/Date-HolidayParser/.
+Read the README in that directory for installation instructions and
+check your distributions perl module packaging guidelines.
+
 $Id$
