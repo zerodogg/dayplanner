@@ -9,6 +9,7 @@ Version 0.2 (Unreleased)
 - Now handles the daemon socket variable going undef much more gracefully
 - The main window is now unsensitive when the preferences dialog is displayed
 - Now displays a graphical error if the environment variable HOME isn't valid
+- Added Norwegian Nynorsk translation
 
 * Daemon (dayplanner-daemon)
 
