@@ -33,9 +33,9 @@ subversion repository
 	simplify those too technical
 
 * Version 0.5
-- Add a "upcoming events" widget below the calendar widget in the main window
-- Add special.dpd (Support for: repeat every ... days, ... months, and also support for
-			repeat until ...)
+- Add support for:
+	- Repeat every X [days|months]
+	- Repeat until ...
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
