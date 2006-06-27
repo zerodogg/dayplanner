@@ -40,10 +40,9 @@ use Date::HolidayParser;	# Parsing of .holiday files
 # Scalars
 my $Version = "0.2";
 my $RCSRev = '$Id$';
-my $SoftwareDir = dirname(Cwd::realpath($0));
-my $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
-my $HolidayFile = "$SaveToDir/holidays";		# The file to load holiday definitions from
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
+my $SaveToDir;						# The configuration and eventlist directory (set later)
+my $HolidayFile;					# The file to load holiday definitions from (set later)
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
 my $SpecialEventsFile = "special_events.dpd";		# The filename to save events with special settings
 my $AllDayEventsFile = "allday_events.dpd";		# The filename to save all-day events to
@@ -59,7 +58,7 @@ setlocale(LC_ALL, "" );
 textdomain("dayplanner");
 
 # Find out if we have a locale directory in our main dir
-if (-d "$SoftwareDir/locale/") {
+if (-d "$FindBin::RealBin/locale/") {
 	if(defined($ENV{LC_ALL}) or defined($ENV{LANG})) {
 		my $I18N;
 		if(defined($ENV{LC_ALL}) and length($ENV{LC_ALL})) {
@@ -70,19 +69,10 @@ if (-d "$SoftwareDir/locale/") {
 		if($I18N =~ /:/) {
 			$I18N =~ s/^(.+):.*$/$1/;
 		}
-		if (-e "$SoftwareDir/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
-			bindtextdomain("dayplanner", "$SoftwareDir/locale");
+		if (-e "$FindBin::RealBin/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
+			bindtextdomain("dayplanner", "$FindBin::RealBin/locale");
 		}
 	}
-}
-
-# If for some obscure reason HOME isn't set we can't continue
-unless(defined($ENV{HOME}) and $ENV{HOME}) {
-	die(sprintf($Gettext->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
-}
-# The same goes for if HOME doesn't exist or isn't a directory
-unless(-e $ENV{HOME} and -d $ENV{HOME}) {
-	die sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
 }
 
 # Arrays
@@ -2170,6 +2160,22 @@ GetOptions (
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
+
+# If for some obscure reason HOME isn't set we can't continue
+unless(defined($ENV{HOME}) and $ENV{HOME}) {
+	Gtk2->init;
+	DPError(sprintf($Gettext->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
+	die(sprintf($Gettext->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
+}
+# The same goes for if HOME doesn't exist or isn't a directory
+unless(-e $ENV{HOME} and -d $ENV{HOME}) {
+	Gtk2->init;
+	DPError(sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME"));
+	die sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
+}
+# Set SaveToDir and HolidayFile
+$SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
+$HolidayFile = "$SaveToDir/holidays";		# The file to load holiday definitions from
 
 # Load the configuration file
 LoadDefaultConfig();
