@@ -86,6 +86,7 @@ my %BirthdayContents;		# The contents of the birthday file
 my %SpecialEvents;		# The contents of the special events file
 my %AllDayEvents;		# The contents of the all-day events file
 my %Holidays;			# The holidays
+my %InternalConfig;		# Internal configuration values
 
 # The reason we do not use strftime() or I18N::Langinfo is that these return
 # values in random encodings. By using Gettext->get() we get values
@@ -126,8 +127,7 @@ my (
 );
 
 # Window state
-my ($MainWin_Width, $MainWin_Height) = (600,300);	# Default size is 600x300 - overridden by state.conf
-my $MainWin_Maximized;
+($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,300);	# Default size is 600x300 - overridden by state.conf
 
 # Set up signal handlers
 $SIG{INT} = \&DP_SigHandler;
@@ -329,25 +329,42 @@ sub WriteStateFile($$) {
 	my $Dir = $_[0];
 	my $File = $_[1];
 
+	my $NewWinState = 1;
+
+	my %Explenations = (
+		MainWin_Maximized => "If the main window is maximized or not (0=false, 1=true)",
+		MainWin_Width => "The width of the main window",
+		MainWin_Height => "The height of the main window",
+		AutostartOn => "If the preferences setting for autostarting the daemon on login is on or not",
+		AddedAutostart => "If day planner has (automatically) set the daemon to start on login (this ONLY sets if it has been automatically added or not. It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
+	);
+
 	unless(defined($MainWindow)) {
 		DPIntWarn("Unable to save window state: The main window object is undef!");
-		return(0);
+		$NewWinState = 0;
 	}
 	
-	# Open the config
+	# Open the config for writing
 	open(STATE, ">$Dir/$File") or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
 		DPIntWarn("Unable to save window state to $Dir/$File: $!");
 		return(0);
 	};
-	if(defined($MainWin_Maximized) and $MainWin_Maximized =~ /maximized/) {
-		$MainWin_Maximized = 1;
+	if(defined($InternalConfig{MainWin_Maximized}) and $InternalConfig{MainWin_Maximized} =~ /maximized/) {
+		$InternalConfig{MainWin_Maximized} = 1;
 	} else {
-		$MainWin_Maximized = 0;
-		($MainWin_Width, $MainWin_Height) = $MainWindow->get_size();
+		$InternalConfig{MainWin_Maximized} = 0;
+		if($NewWinState) {
+			($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = $MainWindow->get_size();
+		}
 	}
-
-	print STATE "# This file contains the saved state of the day planner window.\nMainWin_Width=$MainWin_Width\nMainWin_Height=$MainWin_Height\nMainWin_Maximized=$MainWin_Maximized\n";
+	print STATE "# This file contains internal configuration used by day planner\n";
+	foreach(sort(keys(%InternalConfig))) {
+		if(defined($Explenations{$_})) {
+			print STATE "\n# $Explenations{$_}";
+		}
+		print STATE "\n$_=$InternalConfig{$_}\n";
+	}
 	close(STATE);
 }
 
@@ -360,13 +377,13 @@ sub LoadStateFile($$) {
 
 	
 	# Open the statefile
-	open(STATE, "<$Dir/$File") or do {
+	open(STATE, "<", "$Dir/$File") or do {
 		return(1);
 	};
 	
 	# Load the config
 	foreach(<STATE>) {
-		next if m/^\s*#/;
+		next if m/^\s*(#.*)?$/;
 		next unless m/=/;
 		chomp;
 		my $Option = $_;
@@ -377,16 +394,7 @@ sub LoadStateFile($$) {
 			DPIntWarn("Invalid nondigit value for $Option in the statefile: $Value. Ignoring setting.");
 			next;
 		}
-		if($Option eq 'MainWin_Width') {
-			$MainWin_Width = $Value;
-		} elsif ($Option eq 'MainWin_Height') {
-			$MainWin_Height = $Value;
-		} elsif ($Option eq 'MainWin_Maximized') {
-			$MainWin_Maximized = $Value;
-		} else {
-			DPIntWarn("Invalid setting in the statefile: $Option (=$Value). Ignoring.");
-			next;
-		}
+		$InternalConfig{$Option} = $Value;
 	}
 	close(STATE);
 }
@@ -856,9 +864,246 @@ sub HolidaySetup () {
 	return(0);
 }
 
+# Purpose: Remove the daemon from autostart for the various DMs/WMs
+# Usage: RemoveAutostart();
+sub RemoveAutostart () {
+	# KDE, XDG and XFCE4 - easy
+	foreach("$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh") {
+		unlink($_) if -e $_;
+	}
+
+	# Fluxbox
+	if(-w "$ENV{HOME}/.fluxbox/startup") {
+		my @FluxboxStartup;
+		open(OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
+		push(@FluxboxStartup, $_) foreach(<OLDFLUX>);
+		close(OLDFLUX);
+		open(FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
+		foreach(@FluxboxStartup) {
+			unless(/$DaemonName/) {
+				chomp;
+				print FLUXSTART "$_\n";
+			}
+		}
+		close(FLUXSTART);
+	}
+	# GNOME 2 versions 2.12 and older.
+	#  This solution is very very hacky and unreliable, but it will have to do.
+	if(-w "$ENV{HOME}/.gnome2/session-manual") {
+		my @Gnome2Session;
+		open(GNOME2SESS, "<", "$ENV{HOME}/.gnome2/session-manual");
+		push(@Gnome2Session, $_) foreach(<GNOME2SESS>);
+		close(GNOME2SESS);
+		my ($Last, $Has_DP, $DP_ID, $Nullout);
+		# Parse
+		foreach(@Gnome2Session) {
+			next unless /\=/;
+			next unless /^\d,/;
+			my $ID = $_;
+			$ID =~ s/^(\d+).*/$1/;
+			if(/$DaemonName/) {
+				$DP_ID = $ID;
+				$Has_DP = 1;
+			}
+			$Last = $ID;
+			# Make sure we're not starting on yet another session.
+			if($ID == 0) {
+				# GAH, another session decleration. This is too much for us to parse.
+				# Use the alternate nullout method (continue attempting to parse if Has_DP is
+				# false
+				$Nullout = 1;
+				last if $Has_DP;
+			}
+		}
+		
+		# We've got three ways to do this, one more hacky than the next - but
+		# as gnome2 (2.12 and older) doesn't have any good way of dealing with
+		# this we'll have to do this.
+		if($Has_DP) {
+			if($Last == 0) {
+				# Wee, LAST is 0, just 0 out the file
+				open(GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				close(GNOME2SESS);
+			} elsif($Nullout) {
+				DPIntWarn("Unable to properly remove the GNOME2 day planner entry from $ENV{HOME}/.gnome2/session-manual. A workaround to disable the daemon startup has been applied but you may want to use the GNOME2 session manager to remove it completely.");
+				foreach(@Gnome2Session) {
+					s/=.*$DaemonName.*/perl -e '# Removed by day planner'/;
+				}
+				open(GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				foreach(@Gnome2Session) {
+					print GNOME2SESS $_;
+				}
+				close(GNOME2SESS);
+			} else {
+				my $NumClients = $Last + 1;
+				# Write out changes
+				open(GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				foreach(@Gnome2Session) {
+					chomp;
+					s/^num_clients=\d+/num_clients=$Last/;
+					s/^$Last,/$DP_ID,/;
+					next if /^$DP_ID,/;
+					print "$_\n";
+				}
+				close(GNOME2SESS);
+			}
+		}
+	}
+	return(1);
+}
+
+# Purpose: Add the daemon to autostart for the various DMs/WMs
+# Usage: AddAutostart(OLD_GNOME?);
+# 	OLD_GNOME is either 1 or 0, defines if the GNOME version used is
+# 	older than 2.13 or not
+sub AddAutostart ($) {
+	my $TryGnome = $_[0];
+	my $DaemonExec;
+	my $RETURN = "okay";
+	foreach(split(/:/, sprintf("%s:%s", dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
+		if (-x "$_/$DaemonName") {
+			$DaemonExec = "$_/$DaemonName";
+			last;
+		}
+	}
+	die("Unable to detect the daemon") unless(defined($DaemonExec));
+
+	# KDE - this is easy
+	if(-d "$ENV{HOME}/.kde/") {
+		mkdir("$ENV{HOME}/.kde/Autostart/") unless -e "$ENV{HOME}/.kde/Autostart/";
+		open(KDESCRIPT, ">", "$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh");
+		print KDESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
+		print KDESCRIPT "$DaemonExec\n";
+		close(KDESCRIPT);
+	}
+	# Freedesktop spec - this is easy too
+	if(-d "$ENV{HOME}/.config/") {
+		mkdir("$ENV{HOME}/.config/autostart/") unless -e "$ENV{HOME}/.config/autostart";
+		open(XDGSTART, ">", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop");
+		print XDGSTART "# Autogenerated startup desktop file written by day planner\n";
+		print XDGSTART "[DESKTOP ENTRY]\n";
+		print XDGSTART "Type=Application\n";
+		print XDGSTART "Name=Day planner daemon autostart\n";
+		print XDGSTART "Comment=Automatically start the day planner daemon on session startup\n";
+		print XDGSTART "Exec=$DaemonExec\n";
+		print XDGSTART "StartupNotify=false\n";
+		print XDGSTART "StartupWMClass=fales\n";
+		close(XDGSTART);
+	}
+	# GNOME - this is harder. No real common spec or easy way to do it. 2.14 or so
+	#  supports the freedesktop spec, older however - does not.
+	if(-d "$ENV{HOME}/.gnome2/") {
+		# If it doesn't exist then we just write it
+		unless(-e "$ENV{HOME}/.gnome2/session-manual") {
+			open(GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+			print GNOMESESS "[Default]\nnum_clients=1\n0,RestartStyleHint=3\n0,Priority=50\n0,RestartCommand=$DaemonExec\n0,Program=$DaemonExec";
+			close(GNOMESESS);
+		} else {
+			$RETURN = "gnome-fail";
+			my @G2H;
+			open(GNOMESESS, "<", "$ENV{HOME}/.gnome2/session-manual");
+			foreach(<GNOMESESS>) {
+				if(s/perl -e '# Removed by day planner'/$DaemonExec/i) {
+					$RETURN = "okay";
+				}
+				push(@G2H, $_);
+			}
+			close(GNOMESESS);
+			if($RETURN eq "okay") {
+				open(GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				print GNOMESESS $_ foreach(@G2H);
+				close(GNOMESESS);
+			}
+		}
+	}
+	# XFce 4
+	if(-d "$ENV{HOME}/.config/xfce4/" and -d "$ENV{HOME}/Desktop/") {
+		mkdir("$ENV{HOME}/Desktop/Autostart") unless -e "$ENV{HOME}/Desktop/Autostart";
+		open(XFCESCRIPT, ">", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh");
+		print XFCESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
+		print XFCESCRIPT "$DaemonExec\n";
+		close(XFCESCRIPT);
+	}
+	# Fluxbox
+	if(-d "$ENV{HOME}/.fluxbox") {
+		my @FluxboxStartup;
+		push(@FluxboxStartup, "$DaemonExec &");
+		if(-e "$ENV{HOME}/.fluxbox/startup") {
+			open(OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
+			push(@FluxboxStartup, $_) foreach(<OLDFLUX>);
+			close(OLDFLUX);
+		}
+		open(FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
+		foreach(@FluxboxStartup) {
+			chomp;
+			print FLUXSTART "$_\n";
+		}
+		close(FLUXSTART);
+	}
+	return($RETURN);
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Wrapper around AddAutostart that detects if we have an pre-2.14
+# 		version of GNOME and displays an information dialog about the
+# 		inability to add a gnome autostart
+# Usage: DP_AddAutostart();
+sub DP_AddAutostart () {
+	my $GNOME_Version;
+	my $Old_GNOME;
+
+	# Set the settings var
+	$InternalConfig{AutostartOn} = 1;
+
+	# Try to get the gnome version from the gnome control center
+	foreach(split(/:/, sprintf("%s:%s", dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
+		if (-x "$_/gnome-control-center") {
+			$GNOME_Version = qx#$_/gnome-control-center --version#;
+			chomp($GNOME_Version);
+			$GNOME_Version =~ s/^(.+)\s+(.+)\s+(.+)$/$3/;
+			$GNOME_Version =~ s/^(\d+\.\d+).*$/$1/;
+			$GNOME_Version = undef unless($GNOME_Version =~ /^\d+\.\d+(\.\d+.*)?$/);
+			last;
+		}
+	}
+	if(defined($GNOME_Version)) {
+		unless($GNOME_Version > 2.12) {
+			$Old_GNOME = 1;
+		}
+	} else {	# If we couldn't get the GNOME version then we just assume the user 
+			# either doesn't use GNOME or has a version of GNOME newer than 2.12
+		$Old_GNOME = 0;
+	}
+
+	my $Result = AddAutostart($Old_GNOME);
+	return(1) if $Result =~ /^okay$/;
+
+	if($Result =~ /^gnome-fail$/) {
+		# GNOME failed, check if GNOME_DESKTOP_SESSION_ID is set.
+		# If it isn't set, then the user isn't running GNOME *now* so we don't want to display the
+		# error.
+		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
+			# It's set, so the user is running GNOME - display the error
+			DPError($Gettext->get("A problem occurred when setting up automatic startup of the day planner reminder.\n\nYou will have to set it up manually. Do this by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in tthe field \"Startup Command\" and press \"OK\". It is now set up.\n\nSorry for any inconvenience this may have caused."));
+		}
+	} else {
+		DPIntWarn("Unknown return value from AddAutostart(): $Result");
+	}
+	return(1);
+}
+
+# Purpose: Wrapper around RemoveAutostart that sets the config vars
+# Usage: DP_RemoveAutostart();
+sub DP_RemoveAutostart () {
+	if(DPQuestion($Gettext->get("Are you sure you want to disable the automatic startup of the reminder?\n\nBy doing this you will not get notified about events without having started day planner at least once."))) {
+		$InternalConfig{AutostartOn} = 1;
+		return(RemoveAutostart());
+	}
+	return(undef);
+}
 
 # Purpose: Detect the path to the image file(s) supplied. Returns the path to the
 # 		first one found or undef
@@ -1738,7 +1983,7 @@ sub PreferencesWindow () {
 		});
 	
 	$Tooltips->set_tip($EDVDefaultCheckbox, sprintf($Gettext->get("Check this if you want the \"%s\" to be expanded by default in the add and edit events dialogues"), $Gettext->get("Details")));
-	
+
 	# ==================================================================
 	# EVENTS
 	# ==================================================================
@@ -1783,8 +2028,24 @@ sub PreferencesWindow () {
 	$Events_Label->set_alignment(0,1);
 	$Events_VBox->pack_start($Events_Label,0,0,0);
 	$Events_Label->show();
+
+	# If the reminder should autostart on login or not
+	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label($Gettext->get("Start the day planner reminder automatically when logging in"));
+	$AutostartReminder_Checkbox->show();
+	$Events_VBox->pack_start($AutostartReminder_Checkbox,0,0,0);
+	$Tooltips->set_tip($AutostartReminder_Checkbox,$Gettext->get("If you want the day planner reminder to start automatically when you log in"));
+	$AutostartReminder_Checkbox->set_active(1) if $InternalConfig{AddedAutostart};
+	$AutostartReminder_Checkbox->signal_connect('toggled' => sub {
+			if($AutostartReminder_Checkbox->get_active) {
+				DP_AddAutostart();
+			} else {
+				unless(DP_RemoveAutostart()) {
+					$AutostartReminder_Checkbox->set_active(1);
+				}
+			}
+		});
 	
-	# The main checkbox that enables/disables the entire page
+	# The main checkbox that enables/disables the rest of the page
 	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label($Gettext->get("Use notifications before events"));
 	$Events_EnabledCheckbox->show();
 	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
@@ -1945,8 +2206,8 @@ sub DrawMainWindow () {
 	# Create the main window widget
 	$MainWindow = Gtk2::Window->new('toplevel');
 	$MainWindow->set_title($Gettext->get("Day planner"));
-	$MainWindow->set_default_size ($MainWin_Width,$MainWin_Height);
-	$MainWindow->maximize if ($MainWin_Maximized);
+	$MainWindow->set_default_size ($InternalConfig{MainWin_Width},$InternalConfig{MainWin_Height});
+	$MainWindow->maximize if ($InternalConfig{MainWin_Maximized});
 
 	# Set the icon
 	my $MainWindowIcon = DetectImage("dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
@@ -1961,7 +2222,7 @@ sub DrawMainWindow () {
 	# Handle saving maximized state
 	$MainWindow->signal_connect(window_state_event => sub {
 		my ($widget, $event) = @_;
-		$MainWin_Maximized = ($event->new_window_state & 'maximized');
+		$InternalConfig{MainWin_Maximized} = ($event->new_window_state & 'maximized');
 	});
 		
 
@@ -2194,5 +2455,11 @@ if(DaemonInit()) {
 } else {
 	die "FATAL: Unable to initialize the daemon\n";
 }
+# Initialize the remaining parts
+unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
+	DP_AddAutostart();
+	$InternalConfig{AddedAutostart} = 1;
+}
+
 # Rest in the Gtk2 main loop
 Gtk2->main;
