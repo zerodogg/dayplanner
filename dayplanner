@@ -337,6 +337,8 @@ sub WriteStateFile($$) {
 		MainWin_Height => "The height of the main window",
 		AutostartOn => "If the preferences setting for autostarting the daemon on login is on or not",
 		AddedAutostart => "If day planner has (automatically) set the daemon to start on login (this ONLY sets if it has been automatically added or not. It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
+		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
+		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
 	);
 
 	unless(defined($MainWindow)) {
@@ -358,7 +360,7 @@ sub WriteStateFile($$) {
 			($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = $MainWindow->get_size();
 		}
 	}
-	print STATE "# This file contains internal configuration used by day planner\n";
+	print STATE "# This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually\n";
 	foreach(sort(keys(%InternalConfig))) {
 		if(defined($Explenations{$_})) {
 			print STATE "\n# $Explenations{$_}";
@@ -390,10 +392,6 @@ sub LoadStateFile($$) {
 		my $Value = $_;
 		$Option =~ s/^\s*(.*)\s*=.*/$1/;
 		$Value =~ s/^.*=\s*(.*)\s*/$1/;
-		unless($Value =~ /^\d+$/) {
-			DPIntWarn("Invalid nondigit value for $Option in the statefile: $Value. Ignoring setting.");
-			next;
-		}
 		$InternalConfig{$Option} = $Value;
 	}
 	close(STATE);
@@ -780,8 +778,14 @@ sub DP_SigHandler {
 # Purpose: Make sure we have a .holiday set up
 # Usage: HolidaySetup();
 sub HolidaySetup () {
-	if (-e $HolidayFile) {
-		# TODO: Check if the file is an actual holiday file or a dummy file
+	# If Holiday_Setup is true and the file exists then day planner has properly set up
+	# a holiday-file.
+	#
+	# If Holiday_Attempted is defined and equal to $Version then we've attempted and failed
+	# to set up a holiday file in this version of day planner so we'll skip trying again.
+	if($InternalConfig{Holiday_Setup} and -e $HolidayFile) {
+		return(1);
+	} elsif(defined($InternalConfig{Holiday_Attempted}) and $InternalConfig{Holiday_Attempted} eq $Version) {
 		return(1);
 	}
 	# Hash of LC_ADDRESS code => holiday file
@@ -811,6 +815,7 @@ sub HolidaySetup () {
 	# Yay, the user already has a .holiday file. Use this one
 	if(-e "$ENV{HOME}/.holiday") {
 		symlink("$ENV{HOME}/.holiday",$HolidayFile);
+		$InternalConfig{Holiday_Setup} = 1; delete($InternalConfig{Holiday_Attempted}) if defined($InternalConfig{Holiday_Attempted});
 		return(1);
 	}
 
@@ -846,6 +851,7 @@ sub HolidaySetup () {
 		if(defined($CopyFile)) {
 			if(-e "$FindBin::RealBin/holiday/holiday_$CopyFile") {
 				copy("$FindBin::RealBin/holiday/holiday_$CopyFile", $HolidayFile);
+				$InternalConfig{Holiday_Setup} = 1; delete($InternalConfig{Holiday_Attempted}) if defined($InternalConfig{Holiday_Attempted});
 				return(1);
 			} else {
 				DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::RealBin/holiday/holiday_$CopyFile) did not exist.");
@@ -855,12 +861,14 @@ sub HolidaySetup () {
 		}
 	}
 	open(DUMMY_FILE, ">$HolidayFile");
-	print DUMMY_FILE ": $Version\n\n";
 	print DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
 	print DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
 	print DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
-	print DUMMY_FILE ":  of the day planner distribution for examples of the syntax).";
+	print DUMMY_FILE ":  of the day planner distribution for examples of the syntax).\n";
+	print DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run day planner";
 	close(DUMMY_FILE);
+	$InternalConfig{Holiday_Setup} = 0;
+	$InternalConfig{Holiday_Attempted} = $Version;
 	return(0);
 }
 
@@ -2440,6 +2448,8 @@ $HolidayFile = "$SaveToDir/holidays";		# The file to load holiday definitions fr
 
 # Load the configuration file
 LoadDefaultConfig();
+# Load the internal state file
+LoadStateFile($SaveToDir, "state.conf");
 # Load the calendar
 LoadCalendar();
 unless($Gtk2_Initialized) {
@@ -2449,8 +2459,7 @@ unless($Gtk2_Initialized) {
 HolidaySetup();
 # Initialize the daemon, and if it works draw the main window
 if(DaemonInit()) {
-	# Load the state file and draw the main window
-	LoadStateFile($SaveToDir, "state.conf");
+	# Draw the main window
 	DrawMainWindow();
 } else {
 	die "FATAL: Unable to initialize the daemon\n";
