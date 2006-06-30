@@ -10,6 +10,9 @@ Version 0.2 (Unreleased)
 - The main window is now unsensitive when the preferences dialog is displayed
 - Now displays a graphical error if the environment variable HOME isn't valid
 - Added Norwegian Nynorsk translation
+- Can now add and remove the daemon from autostarting along with the
+  users session.
+- Now uses state.conf for more internal data
 
 * Daemon (dayplanner-daemon)
 
