@@ -61,3 +61,30 @@ Helper scripts
 
 ./devel-tools/BuildLocale	Builds the entire locale/ directory tree
 				with mo-files and all
+
+Holiday files
+- - - - - - -
+If your country doesn't have a holiday file or day planner doesn't autodetect
+your countries holiday file properly here is what you can do.
+
+	Writing a holiday file
+	- - - - - - - - - - -
+See the already written holiday files in the holiday/ subdirectory.
+Write your own one using that syntax. After you've finished writing it,
+copy the file to ~/.dayplanner/holidays and launch day planner. Any
+syntax errors will be written to stderr on the console so that you can
+fix them.
+
+When done you can send in the file to the dayplanner-i18n mailing list.
+You can also send fixes or updates to already existing holiday files to
+that list.
+
+	Fixing day planner autodetection
+	- - - - - - - - - - - - - - - - -
+If day planner doesn't properly detect your countries holiday file you
+will need to provide the following information:
+The output of:
+perl -e 'foreach(keys(%ENV)) { print "$_=$ENV{$_} || " if $_ =~ /^LC_/;} print "\n"'
+And the name of the holiday file (ie. holiday_norway).
+Autodetection for that country will then be added and included in the
+next release of day planner.
