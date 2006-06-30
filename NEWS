@@ -17,6 +17,7 @@ Version 0.2 (Unreleased)
 * Daemon (dayplanner-daemon)
 
 * Notifier (dayplanner-notifier)
+- Now has support for notifying users without accessing X.
 
 Version 0.1.3 (Released on the 21st of June 2006)
 -------------------------------------------------
