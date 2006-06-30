@@ -227,6 +227,13 @@ sub X_Available () {
 	}
 }
 
+# Purpose: Find out if a command is in PATH or not
+# Usage: InPath(COMMAND);
+sub InPath ($) {
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+}
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN NOTIFICATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -319,14 +326,7 @@ sub GtkNotifier () {
 # Purpose: Notify the user using a nongraphical system
 # Usage: NonGUINotifier();
 sub NonGUINotifier () {
-	# TODO: Discussion follows
-	#
-	# This routine can use system(wall "MESSAGE"); the possible issue with that is that
-	# all users listening for wall's can see the message, allowing other local users
-	# to view the messages. This could be an option, but a normal user wouldn't understand
-	# it if it was from the GUI - so this isn't a liveable alternative. Usually however
-	# the user will be able to use the GtkNotifier. Perhaps we could simulate wall by using
-	# write on all terminals returned by who -wu. This would in theory be safer.
+	# Discussion follows
 	#
 	# To further up the ability of the daemon to use the GtkNotifier, perhaps the dayplanner
 	# process could use a new HI format: HI client $ENV{DISPLAY} so that the daemon can set
@@ -334,27 +334,47 @@ sub NonGUINotifier () {
 	# the last client started. Maybe rather add a command "ADD_DISPLAY" to the daemon.
 	# Perhaps also a dayplanner-daemon --add-display command, which
 	# adds the current DISPLAY or the display supplied to the display pool
-	#
-	# We might also want to guess a bit more about displays available, this can also be
-	# done with who -wu, or better, perhaps with some standard perl module or other hack.
-	#
-	# We need to get a viable method to make sure that users get to know about their
-	# appointments.
-	#
-	# Another viable alternative is mailing the notification to the user, and this is
-	# a truly viable alternative. First of all by using the local mail delivery system,
-	# secondly by mailing a user selectable addy. This could be chosen by having a config
-	# option that could be: Always mail, only mail when nothing else can be done, never mail.
-	# And then have the user select E-mail address - this address could be attempted to be
-	# retrieved from gnome if the gnome stuff is available (use Mail::Send; if it is standard
-	# 	module)
-	#
-	# Bottom line is this:
-	# - We should do all we can to make sure the user can use the GtkNotifier
-	# - We should do all we possibly can to make sure the user GETS their notifications
-	# - When the GtkNotifier just can't be used we should do what we can to try to
-	#   get the notification to him/her anyway.
-	print "TODO\n";
+	my $MainText;
+	if($Date eq 'today') {
+		$MainText = sprintf($Gettext->get("Today at %s:\n%s"),$Time,$Message);
+	} elsif ($Date eq 'tomorrow') {
+		$MainText = sprintf($Gettext->get("Tomorrow at %s:\n%s"),$Time,$Message);
+	} else {
+		$MainText = sprintf($Gettext->get("At %s on %s:\n%s"),$Time,$Date,$Message);
+	}
+	unless(WriteTo(cuserid(), $MainText)) {
+		print "---\n$MainText\n---\n";
+	}
+}
+
+# Purpose: Write a message to all writable terminals owned by the user supplied
+# Usage: my $Return = WriteTo(USER, MESSAGE);
+# 	The return value is 0 if nothing was written anywhere, 1 if something was
+# 	written.
+sub WriteTo ($$) {
+	my ($User,$Message) = @_;
+	return(0) unless InPath("who");
+	return(0) unless InPath("write");
+	my $Return = 0;
+	open(WHO, "who -T|");
+	my @WritableDevs;
+	foreach(<WHO>) {
+		next unless s/^$User\s+//;
+		chomp;
+		my $Writable;
+
+		if(s/^\+\s+//) {
+			s/^(\S+).+/$1/;
+			push(@WritableDevs, $_);
+		}
+	}
+	close(WHO);
+	foreach my $Target (@WritableDevs) {
+		open(WRITE, "|write $User $Target");
+		print WRITE "$Message";
+		close(WRITE);
+		$Return = 1;
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
