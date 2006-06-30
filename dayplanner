@@ -312,7 +312,7 @@ sub DaemonConnectionErrorHandler () {
 	} else {
 		$ErrorDialog->destroy;
 		unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-				DPError($Gettext->get("I was unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
+				DPError($Gettext->get("Unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
 				exit(1);
 			}
 	}
@@ -1095,7 +1095,7 @@ sub DP_AddAutostart () {
 		# error.
 		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
 			# It's set, so the user is running GNOME - display the error
-			DPError($Gettext->get("A problem occurred when setting up automatic startup of the day planner reminder.\n\nYou will have to set it up manually. Do this by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in tthe field \"Startup Command\" and press \"OK\". It is now set up.\n\nSorry for any inconvenience this may have caused."));
+			DPError($Gettext->get("A problem occurred while setting up automatic startup of the day planner reminder.\n\nYou will have to set it up manually. Do this by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in tthe field \"Startup Command\" and press \"OK\". It is now set up.\n\nSorry for any inconvenience this may have caused."));
 		}
 	} else {
 		DPIntWarn("Unknown return value from AddAutostart(): $Result");
@@ -2362,13 +2362,10 @@ sub DrawMainWindow () {
 GetOptions (
 	'help|h' => sub {
 		print "Day planner version $Version\n\n";
-		my $ShortSaveDir = $SaveToDir;
-		$ShortSaveDir =~ s/^$ENV{HOME}/~/;
 		PrintHelp("-h","--help","Display this help screen and exit");
 		PrintHelp("-v","--version", "Display version information and exit");
-		PrintHelp("-t","--test","Use $ShortSaveDir/debug instead of $ShortSaveDir");
+		PrintHelp("-t","--test","Use a seperate debug/ configuration directory");
 		PrintHelp("", "--confdir", "Use the directory supplied as configuration directory");
-		PrintHelp("", "", "instead of $ShortSaveDir");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
