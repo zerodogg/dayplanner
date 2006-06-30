@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-06-30 17:06+0200\n"
-"PO-Revision-Date: 2006-06-30 17:12+0200\n"
+"POT-Creation-Date: 2006-07-01 01:13+0200\n"
+"PO-Revision-Date: 2006-07-01 01:14+0200\n"
 "Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
 "Language-Team: Norsk nynorsk <i18n-no@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -95,7 +95,7 @@ msgstr "Tving"
 
 #: dayplanner:315
 msgid ""
-"I was unable to force the start. This is likely due to a bug in the program, "
+"Unable to force the start. This is likely due to a bug in the program, "
 "please contact the day planner developers."
 msgstr ""
 "Klarte ikkje å tvinge oppstart. Dette er sannsynlegvis på grunn av ein feil "
@@ -157,16 +157,22 @@ msgstr ""
 
 #: dayplanner:1098
 msgid ""
-"A problem occurred when setting up automatic startup of the day planner "
+"A problem occurred while setting up automatic startup of the day planner "
 "reminder.\n"
 "\n"
 "You will have to set it up manually. Do this by selecting: menu -> desktop -"
 "> settings -> sessions. From there select \"Startup Programs\", click \"Add"
 "\". Type \"dayplanner-daemon\" in tthe field \"Startup Command\" and press "
-"\"OK\". It is now set up.\n"
+"\"OK\". It is now set up."
+msgstr ""
+"Eit problem oppstod under oppsett av den automatiske oppstarten av "
+"dagsplanleggar-påminnaren.\n"
 "\n"
-"Sorry for any inconvenience this may have caused."
-msgstr "Eit problem oppstod under oppsett av den automatiske oppstarten av dagsplanleggar-påminnaren.\n\nDu må sette den opp manuelt. Gjer dette ved å velja: meny -> Skrivebordsmiljø -> Brukarval -> Økter. I vindauget som kjem opp velg «Oppstartsprogrammer» og trykk på «Legg til». Skriv inn «dayplanner-daemon» i feltet «oppstartskommando» og trykk «OK». Automatisk oppstart av påminnaren er no satt opp."
+"Du må sette den opp manuelt. Gjer dette ved å velja: meny -> "
+"Skrivebordsmiljø -> Brukarval -> Økter. I vindauget som kjem opp velg "
+"«Oppstartsprogrammer» og trykk på «Legg til». Skriv inn «dayplanner-daemon» "
+"i feltet «oppstartskommando» og trykk «OK». Automatisk oppstart av "
+"påminnaren er no satt opp."
 
 #: dayplanner:1109
 msgid ""
@@ -174,7 +180,11 @@ msgid ""
 "\n"
 "By doing this you will not get notified about events without having started "
 "day planner at least once."
-msgstr "Er du sikker på at du vil skru av den automatiske oppstarten av påminnaren?\n\nVed å gjera dette vil du ikkje få påminningar om hendingar utan å ha starta dagsplanleggaren minst ein gong."
+msgstr ""
+"Er du sikker på at du vil skru av den automatiske oppstarten av påminnaren?\n"
+"\n"
+"Ved å gjera dette vil du ikkje få påminningar om hendingar utan å ha starta "
+"dagsplanleggaren minst ein gong."
 
 #: dayplanner:1168 dayplanner:1187 dayplanner:2179
 #, perl-format
@@ -441,12 +451,12 @@ msgstr "_Hjelp"
 msgid "_About"
 msgstr "_Om"
 
-#: dayplanner:2436 dayplanner:2437
+#: dayplanner:2433 dayplanner:2434
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Miljøvariabelen %s er ikkje satt! Kan ikkje fortsette.\n"
 
-#: dayplanner:2442 dayplanner:2443
+#: dayplanner:2439 dayplanner:2440
 #, perl-format
 msgid ""
 "Your home directory (%s) doesn't exist! Please verify that the environment "
