@@ -2454,13 +2454,11 @@ unless($Gtk2_Initialized) {
 }
 # Set up holidays
 HolidaySetup();
+# Draw the main window
+DrawMainWindow();
+Gtk2->main_iteration while Gtk2->events_pending;
 # Initialize the daemon, and if it works draw the main window
-if(DaemonInit()) {
-	# Draw the main window
-	DrawMainWindow();
-} else {
-	die "FATAL: Unable to initialize the daemon\n";
-}
+DaemonInit() or die();
 # Initialize the remaining parts
 unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 	DP_AddAutostart();
