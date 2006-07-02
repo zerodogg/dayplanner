@@ -349,7 +349,7 @@ sub WriteStateFile($$) {
 	# Open the config for writing
 	open(STATE, ">$Dir/$File") or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPIntWarn("Unable to save window state to $Dir/$File: $!");
+		DPIntWarn("Unable to save internal state to $Dir/$File: $!");
 		return(0);
 	};
 	if(defined($InternalConfig{MainWin_Maximized}) and $InternalConfig{MainWin_Maximized} =~ /maximized/) {
@@ -362,6 +362,7 @@ sub WriteStateFile($$) {
 	}
 	print STATE "# This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually\n";
 	foreach(sort(keys(%InternalConfig))) {
+		next unless length($InternalConfig{$_});	# Don't write empty options
 		if(defined($Explenations{$_})) {
 			print STATE "\n# $Explenations{$_}";
 		}
