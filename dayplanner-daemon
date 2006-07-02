@@ -43,6 +43,7 @@ my $LogfileName = "daemon.log";			# The filename to log to
 my $ConfigFile = "dayplanner.conf";		# The dayplanner config
 my $SocketName = "dayplannerd";			# The name of the socket to use
 my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
+my $Self = $0;
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
 	$Server,	$ConnectionSelect,	$ForceFork,
@@ -122,6 +123,12 @@ sub AppendZero ($) {
 		return("0$_[0]");
 	}
 	return($_[0]);
+}
+
+# Purpose: Set the program status
+# Usage: SetStatus(STATUS);
+sub SetStatus ($) {
+	$0 = "dayplanner-daemon [$_[0]]";
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -457,7 +464,7 @@ sub RunNotifier ($$$$) {
 	# Notifier
 	my ($Summary, $Fulltext, $Date, $Time) = @_;
 	IntDebug("Alarm! Task: $Summary at $Time on $Date");
-	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($0))))) {
+	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($Self))))) {
 		if ( -x "$_/$NotifierName") {
 			$NotificationID++;
 			$CurrentNotification{$NotificationID}{Summary} = $Summary;
@@ -477,6 +484,7 @@ sub RunNotifier ($$$$) {
 # Purpose: Handle commands
 # Usage: CommandHandler(COMMAND);
 sub CommandHandler ($) {
+	SetStatus("processing");
 	$_ = $_[0];
 	my $PID = $_[0];
 	$PID =~ s/^(\d+)\s+(.*)/$1/;
@@ -555,7 +563,7 @@ sub CommandHandler ($) {
 		return($Version);
 	} elsif (/^GET_PATH/) {
 		IntDebug("GET_PATH request from $PID");
-		return(Cwd::realpath($0));
+		return(Cwd::realpath($Self));
 	} elsif (s/^NOTIFICATION\s*//) {
 		if (s/^GET\s*//) {
 			my $ID = $_;
@@ -707,6 +715,7 @@ sub MainLoop () {
 	# Loop for eternity
 	while (1) {
 		my $SleepTime = FindSleepDuration();
+		SetStatus("sleeping");
 		# Block until one handle is available or it times out
 		my @Ready_Handles = $ConnectionSelect->can_read($SleepTime);
 		# Timeout is true if no handle was processed
@@ -918,6 +927,7 @@ die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
 $Logfile = "$DayplannerDir/$LogfileName" unless defined($Logfile) and length($Logfile);;
 
 # Main
+SetStatus("starting");
 OpenSocket();
 LoadConfig();
 LoadCalendar();
