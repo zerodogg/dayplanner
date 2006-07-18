@@ -326,6 +326,10 @@ sub GtkNotifier () {
 # Purpose: Notify the user using a nongraphical system
 # Usage: NonGUINotifier();
 sub NonGUINotifier () {
+	my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
+	unless($sysname eq "Linux") {
+		print "*** dayplanner-notifier ($Version): Not running under GNU/Linux but attempting to use the NonGUINotifier. This might not work as expected if a non-GNU compatible who is installed\n";
+	}
 	# Discussion follows
 	#
 	# To further up the ability of the daemon to use the GtkNotifier, perhaps the dayplanner
