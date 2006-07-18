@@ -89,11 +89,12 @@ if ! perl -e 'use Locale::gettext; exit(0);' &>/dev/null; then
 fi
 
 
-echo -n "."
-
-if ! perl -e 'use POSIX; use Data::Dumper; use Getopt::Long; use Cwd; use File::Basename; use IO::Socket; IO::Select; exit(0)' &>/dev/null; then
-	SI_Error "You are missing some perl modules. Please make sure you have all of the following perl modules installed: POSIX Data::Dumper Getopt::Long Cwd File::Basename IO::Socket IO::Select"
-fi
+for a in POSIX Data::Dumper Getopt::Long Cwd File::Basename IO::Socket IO::Select; do
+	echo -n "."
+	if ! perl -e "use $a; exit(0);" &>/dev/null; then
+		SI_Error "You are missing the perl module \"$a\". Please install this perl module and then re-start this installer."
+	fi
+done
 
 echo -n "."
 
@@ -122,5 +123,5 @@ fi
 
 echo "Okay, handing control over to the perl installer part"
 if ! perl ./MainInstallerPart "$DATADIR" "$@"; then
-	SI_Error "An unkown error occurred when starting the main installer. Unable to proceed"
+	SI_Error "An unkown error occurred with the main installer. Unable to proceed. This is a bug, please report it to the day planner developers."
 fi
