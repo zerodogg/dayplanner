@@ -2436,9 +2436,10 @@ unless(defined($ENV{HOME}) and $ENV{HOME}) {
 }
 # The same goes for if HOME doesn't exist or isn't a directory
 unless(-e $ENV{HOME} and -d $ENV{HOME}) {
+	printf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
 	Gtk2->init;
 	DPError(sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME"));
-	die sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
+	die("\n");
 }
 # Set SaveToDir and HolidayFile
 $SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
