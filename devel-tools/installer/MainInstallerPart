@@ -66,16 +66,27 @@ if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$PG_Label->show();
 	$ProgressWin = Gtk2::Window->new('toplevel');
 	$ProgressWin->set_resizable(0);
+	$ProgressWin->set_position("center");
 	$ProgressWin->set_title("Installing...");
 	$ProgressWin->add($PG_Label);
+	$ProgressWin->show();
 	$ProgressWin->show_all();
 	$ProgressWin->show_now();
 	$PG_Label->show_now();
 	Gtk2->main_iteration while Gtk2->events_pending;
 }
 
-print "Installing...";
 
+if(-d $InstallDirectory) {
+	print "Found old install, running uninstaller first...\n";
+	if(-e "$InstallDirectory/uninstall.sh") {
+		system("sh '$InstallDirectory/uninstall.sh'") and print "Uninstaller failed, expect trouble.\n";
+	} else {
+		print "Failed to run uninstaller, expect trouble.\n";
+	}
+}
+
+print "Installing...";
 system("mkdir -p $InstallDirectory");
 
 if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS} eq 'TRUE') {
