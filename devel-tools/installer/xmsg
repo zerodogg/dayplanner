@@ -1,56 +1,24 @@
 #!/bin/bash
-# (xmsg-src/fsel)
-# Display a file selection box with the directory supplied as the first
-# argument and an optional text. Ex:
-# xmsg_fsel $HOME Select the file
+# xmsg from GFSBashLib (http://goldenfiles.sf.net)
+# Copyright (C) Eskild Hustvedt 2005
 #
-# Returns 0 and echos a filename on success
-# Returns 1 and echos a lowercase "none" on no file selected
-# Returns 40 when not available
-xmsg_fsel ()
-{
-	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_FSEL" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
-	DIR="$1";shift 1;TITLE="$*"
-	if [ "$DIR" == "" ]; then DIR="$PWD";fi
-	if [ "$TITLE" == "" ]; then TITLE="GFSBashLib file selection dialog";fi
-	case $GFBL_XMSG_BASEPROG in
-		zenity ) FILE="`$GFBL_XMSG_PROG --title="$TITLE" --filename="$DIR"/ --file-selection`";;
-		Xdialog ) FILE="`$GFBL_XMSG_PROG --stdout --title "$TITLE" --fselect $DIR 0 0`";;
-		kdialog ) FILE="`$GFBL_XMSG_PROG --title "$TITLE" --name "$TITLE" --caption "$TITLE" --getopenfilename $DIR 2>/dev/null`";;
-	esac
-	if [ "$FILE" == "" ]; then
-		echo "none"
-		return 1
-	fi
-	echo "$FILE"
-	return 0
-}
-# (xmsg-src/dsel)
-# Display a directory selection box with the directory supplied as the first
-# argument and an optional text. Ex:
-# xmsg_dsel $HOME Select the file
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 #
-# Returns 0 and echos a filename on success
-# Returns 1 and echos a lowercase "none" on no file selected
-# Returns 40 when not available
-xmsg_dsel ()
-{
-	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_FSEL" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
-	DIR="$1";shift 1;TITLE="$*"
-	if [ "$DIR" == "" ]; then DIR="$PWD";fi
-	if [ "$TITLE" == "" ]; then TITLE="GFSBashLib directory selection dialog";fi
-	case $GFBL_XMSG_BASEPROG in
-		zenity ) FILE="`$GFBL_XMSG_PROG --directory --title="$TITLE" --filename="$DIR"/ --file-selection`";;
-		Xdialog ) FILE="`$GFBL_XMSG_PROG --stdout --title "$TITLE" --dselect $DIR 0 0`";;
-		kdialog ) FILE="`$GFBL_XMSG_PROG --title "$TITLE" --name "$TITLE" --caption "$TITLE" --getexistingdirectory $DIR 2>/dev/null`";;
-	esac
-	if [ "$FILE" == "" ]; then
-		echo "none"
-		return 1
-	fi
-	echo "$FILE"
-	return 0
-}
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+# NOTE: This is a heavily stripped version of xmsg. Get the one from the
+# gfsbashlib CVS instead if you plan to use it.
+
 # (xmsg-src/funcs)
 # The function called when displaying a internal xmsg error
 xmsg_int_error ()
@@ -138,62 +106,6 @@ xmsg_init ()
 	esac
 	return 0
 }
-# (xmsg-src/less)
-# Usage: xmsg_less --title [x] [file]
-xmsg_less () {
-	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_LESS" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
-	while [ "$#" -gt "0" ]; do
-		case $1 in
-			--title ) local title="$2" ;;
-			* ) break ;;
-		esac
-		shift 2
-	done
-	case $GFBL_XMSG_BASEPROG in
-		zenity ) zenity --height 350 --width 620 --name "$title" --title "$title" --text-info --filename="$@" ;;
-		Xdialog ) Xdialog --no-cancel --ok-label "Close" --title "$title" --textbox "$@" 25 70;;
-		kdialog ) kdialog --title "$title" --name "$title" --caption "$title" --textbox "$@" 620 350 2>/dev/null;;
-	esac
-}
-# (xmsg-src/menu)
-# Usage: xmsg_menu --title [x] --text [text] --menu [menu items]
-# you may also add --menuimg which will be a image displayed on the menu
-# if Xdialog mode is used. You may add --icon which will be a icon used
-# when in zenity mode. You may also add --cols X Y which will be the names
-# of the two coloumns. --nowrap will make xmsg not use the --wrap option
-# for Xdialog.
-# --menu must always be the last option.
-xmsg_menu ()
-{
-	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_MENU" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
-	local title="xmsg dialog"
-	local text=" "
-	local zenity=""
-	local Xdialog=""
-	local col1name=" "
-	local col2name=" "
-	local radiobox="0"
-	local XdiaWrap="--wrap"
-	while [ "$#" -gt "0" ]; do
-		case $1 in
-			--text ) local text="$2";shift 1;;
-			--menu ) shift 1;break;;
-			--icon ) local zenity="$zenity --window-icon=$2"; local kdialog="$kdialog --icon $2";shift 1;;
-			--menuimg ) local Xdialog="$Xdialog --icon $2";shift 1;;
-			--cols ) local col1name="$2";local col2name="$3";shift 2;;
-			--title ) local title="$2";shift 1;;
-#			--radio ) local radiobox="0";zenityM="$zenityM --radiolist";;
-			--nowrap ) local XdiaWrap="";;
-			* ) break;;
-		esac
-		shift 1
-	done
-	case $GFBL_XMSG_BASEPROG in
-		zenity ) zenity $zenity --height 350 --width 380 --name "$title" --title "$title" --list "$@" $zenityM --column="$col1name" --column="$col2name" --text "$text";;
-		Xdialog ) Xdialog --stdout $XdiaWrap $Xdialog --title "$title" --menu "$text" 25 55 50 "$@";;
-		kdialog ) kdialog $kdialog --geometry 350x380 --title "$title" --name "$title" --caption "$title" --menu "$text" "$@" 2>/dev/null;;
-	esac
-}
 # (xmsg-src/ok)
 # Display a "ok" box with the text supplied to xmsg_ok, ex:
 # xmsg_ok "Bla bla bla bla"
@@ -213,52 +125,5 @@ please report it to the author.";xmsg_int_warning "$FUNCNAME did not get any mes
 		Xdialog ) $GFBL_XMSG_PROG --wrap --msgbox "$MESSAGE" 0 0;;
 		kdialog ) $GFBL_XMSG_PROG --msgbox "$MESSAGE" 0 0 2>/dev/null;;
 		zenity ) $GFBL_XMSG_PROG --info --text "$MESSAGE";;
-	esac
-}
-# (xmsg-src/question)
-# Display a "Ok" and "Cancel" or "Yes" and "No" box with the question supplied
-# Returns 0 on Ok
-# Returns 1 on Cancel
-# Returns 2 when no DISPLAY variable is set
-# Returns 3 on no suitable program detected
-xmsg_question ()
-{
-	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_QUESTION" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
-	MESSAGE="$*"
-	if [ "$MESSAGE" == "" ]; then xmsg_ok "Error: No message supplied to $FUNCNAME (GFSBashLib).
-This is a bug in the program you are using,
-please report it to the author.";xmsg_int_warning "$FUNCNAME called without any message supplied";return 1;fi
-	case $GFBL_XMSG_BASEPROG in
-		zenity ) $PROG --question --text="$MESSAGE";RET="$?" ;;
-		Xdialog ) $PROG  --yesno "$MESSAGE" 0 0
-		case $? in
-			1 | 255 ) RET="1" ;;
-			* ) RET="$?";;
-		esac;;
-		xmessage | gmessage | gxmessage ) $PROG -buttons OK:0,Cancel:1 "$MESSAGE";RET="$?";;
-		kdialog ) $PROG --yesno "$MESSAGE";RET="$?";;
-	esac
-	return $RET
-}
-# (xmsg-src/getinput)
-# Usage: xmsg_GetInput --title [x] --text [text]
-# Returns the text string entered
-xmsg_GetInput () {
-	if [ "$GFBL_XMSG_AVAIL" != "1" ] || [ "$GFBL_XMSG_GETINPUT" != "1" ]; then  xmsg_int_warning "$FUNCNAME called but not available" ;return 40 ;fi
-	local text="Please enter the information"
-	local title="XMSG Input box"
-	while [ "$#" -gt "0" ]; do
-		case $1 in
-			--text ) local text="$2"; shift 1;;
-			--title ) local title="$2";shift 1;;
-			* ) break;;
-		esac
-		shift 1
-	done
-	case $GFBL_XMSG_BASEPROG in
-		zenity ) zenity $zenity --width 380 --name "$title" --title "$title" --entry --text "$text";;
-		Xdialog ) Xdialog --stdout --title "$title" --inputbox "$text" 0 55;;
-		kdialog ) kdialog --title "$title" --name "$title" --caption "$title" --inputbox "$text" 2>/dev/null;;
-		gxmessage ) gxmessage -name "$title" -title "$title" -entry "$text";;
 	esac
 }
