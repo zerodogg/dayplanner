@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-07-18 16:40+0200\n"
-"PO-Revision-Date: 2006-06-27 18:31+0200\n"
+"PO-Revision-Date: 2006-07-18 16:44+0200\n"
 "Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
 "Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -93,7 +93,6 @@ msgid "Force"
 msgstr "Tving"
 
 #: dayplanner:315
-#, fuzzy
 msgid ""
 "Unable to force the start. This is likely due to a bug in the program, "
 "please contact the day planner developers."
@@ -165,6 +164,14 @@ msgid ""
 "\". Type \"dayplanner-daemon\" in tthe field \"Startup Command\" and press "
 "\"OK\". It is now set up."
 msgstr ""
+"Et problem oppstod under oppsett av den automatiske oppstarten av "
+"dagsplanlegger-påminneren.\n"
+"\n"
+"Du må sette den opp manuelt. Gjør dette ved å velge: meny -> "
+"Skrivebordsmiljø -> Brukervalg -> Økter. I vinduet som kom opp velg "
+"«Oppstartsprogrammer» og trykk på «Legg til». Skriv inn «dayplanner-daemon» "
+"i feltet «oppstartskommando» og trykk «OK». Automatisk oppstart av "
+"påminneren er no satt opp."
 
 #: dayplanner:1110
 msgid ""
@@ -173,6 +180,10 @@ msgid ""
 "By doing this you will not get notified about events without having started "
 "day planner at least once."
 msgstr ""
+"Er du sikker på at du vil skru av den automatiske oppstarten av påminneren?\n"
+"\n"
+"Ved å gjøre dette vil du ikke få påminnelser om hendelser utan å ha starta "
+"dagsplanleggeren minst en gang."
 
 #: dayplanner:1169 dayplanner:1188 dayplanner:2180
 #, perl-format
@@ -353,12 +364,12 @@ msgstr "Generelle hendelser"
 
 #: dayplanner:2042
 msgid "Start the day planner reminder automatically when logging in"
-msgstr ""
+msgstr "Start påminneren automatisk under innlogging"
 
 #: dayplanner:2045
 msgid ""
 "If you want the day planner reminder to start automatically when you log in"
-msgstr ""
+msgstr "Om du vil at påminneren skal startes automatisk når du logger inn"
 
 #: dayplanner:2058
 msgid "Use notifications before events"
