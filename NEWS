@@ -13,6 +13,7 @@ Version 0.2 (Unreleased)
 - Can now add and remove the daemon from autostarting along with the
   users session.
 - Now uses state.conf for more internal data
+- You can now double-click on an entry to edit it
 
 * Daemon (dayplanner-daemon)
 
