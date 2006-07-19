@@ -691,6 +691,60 @@ sub DataLoadTest () {
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Get OS/distro version information
+# Usage: print "OS: ",GetDistVer(),"\n";
+sub GetDistVer () {
+	# GNU/Linux and BSD
+	foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu lsb debian gentoo suse distro dist slackware freebsd openbsd netbsd dragonflybsd NULL/) {
+		if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
+			my ($DistVer, $File);
+			if(-e "/etc/$_-release") {
+				$File = "$_-release";
+				open(VERSION_FILE, "<", "/etc/$_-release");
+				$DistVer = <VERSION_FILE>;
+			} elsif (-e "/etc/$_-version") {
+				$File = "$_-version";
+				open(VERSION_FILE, "<", "/etc/$_-release");
+				$DistVer = <VERSION_FILE>;
+			} elsif (-e "/etc/${_}_version") {
+				$File = "${_}_version";
+				open(VERSION_FILE, "<", "/etc/${_}_version");
+				$DistVer = <VERSION_FILE>;
+			} elsif ($_ eq "NULL") {
+				last unless -e "/etc/version";
+				$File = 'version';
+				open(VERSION_FILE, "<", "/etc/version");
+				$DistVer = <VERSION_FILE>;
+			}
+			chomp($DistVer);
+			return("/etc/$File: $DistVer");
+		}
+	}
+	# Didn't find anything yet. Get uname info
+	my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
+	if ($sysname =~ /darwin/i) {
+		my $DarwinName;
+		my $DarwinOSVer;
+		# Darwin kernel, try to get OS X info.
+		if(InPath("sw_vers")) {
+			if(open(SW_VERS, "sw_vers |")) {
+				foreach(<SW_VERS>) {
+					chomp;
+					if (s/^ProductName:\s+//gi) {
+						$DarwinName = $_;
+					} elsif(s/^ProductVersion:\s+//) {
+						$DarwinOSVer = $_;
+					}
+				}
+			}
+		}
+		if(defined($DarwinOSVer) and defined($DarwinName)) {
+			return("$DarwinName $DarwinOSVer ($machine)");
+		}
+	}
+	return("Unknown ($sysname $release $version $machine)");
+}
+
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
 sub DPIntWarn ($) {
@@ -2416,33 +2470,7 @@ GetOptions (
 		print "RCS revision: $RCSRev\n";
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		printf "Perl version %vd\n", $^V;
-		foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu lsb debian gentoo suse distro dist slackware NULL/) {
-			if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
-				my ($DistVer, $File);
-				if(-e "/etc/$_-release") {
-					$File = "$_-release";
-					open(VERSION_FILE, "<", "/etc/$_-release");
-					$DistVer = <VERSION_FILE>;
-				} elsif (-e "/etc/$_-version") {
-					$File = "$_-version";
-					open(VERSION_FILE, "<", "/etc/$_-release");
-					$DistVer = <VERSION_FILE>;
-				} elsif (-e "/etc/${_}_version") {
-					$File = "${_}_version";
-					open(VERSION_FILE, "<", "/etc/${_}_version");
-					$DistVer = <VERSION_FILE>;
-				} elsif ($_ eq "NULL") {
-					last unless -e "/etc/version";
-					$File = 'version';
-					open(VERSION_FILE, "<", "/etc/version");
-					$DistVer = <VERSION_FILE>;
-				}
-				chomp($DistVer);
-				print "/etc/$File: $DistVer\n";
-				last;
-
-			}
-		}
+		print "OS: ", GetDistVer(), "\n";
 		exit(0);
 	},
 	'test|t' => sub {
