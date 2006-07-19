@@ -1365,6 +1365,13 @@ sub CalendarChange () {
 	SetActiveCalItems($CalendarWidget->year, $Month);
 }
 
+# Purpose: Get the day, month and year in a single string from a calendar
+# Usage: my $Date = Get_DateInfo($CALWIDGET);
+sub Get_DateInfo ($) {
+	my ($year, $month, $day) = $CalendarWidget->get_date();
+	return("$year$month$day");
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI event adding functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2238,17 +2245,6 @@ sub DrawEventlist() {
 			$MenuEditEntry->set_sensitive(1);
 			$MenuDeleteEntry->set_sensitive(1);
 		});
-		# Handle making the toolbar edit button insensitive
-		$EventlistWidget->signal_connect('focus-out-event' => sub {
-			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
-			# If $Selected is defined then something *is* selected and thus we just return (false)
-			if(defined($Selected)) {
-				return(0);
-			}
-			$ToolbarEditButton->set_sensitive(0);
-			$MenuEditEntry->set_sensitive(0);
-			$MenuDeleteEntry->set_sensitive(0);
-		});
 	} else {
 		# Remove data if needed
 		@{$EventlistWidget->{data}} = ();
@@ -2411,12 +2407,20 @@ sub DrawMainWindow () {
 	$CalendarWidget->show();
 	$CalendarWidget->display_options(['show-week-numbers', 'show-day-names','show-heading']);
 	$RightHandVBox->pack_start($CalendarWidget,0,0,0);
+	
+	my $LastDay = Get_DateInfo($CalendarWidget);
 
 	$CalendarWidget->signal_connect('prev-month' => \&CalendarChange);
 	$CalendarWidget->signal_connect('next-month' => \&CalendarChange);
 	$CalendarWidget->signal_connect('prev-year' => \&CalendarChange);
 	$CalendarWidget->signal_connect('next-year' => \&CalendarChange);
-	$CalendarWidget->signal_connect('day-selected' => \&DrawEventlist);
+	$CalendarWidget->signal_connect('day-selected' => sub {
+			if(Get_DateInfo($CalendarWidget) eq $LastDay) {
+				return;
+			}
+			$LastDay = Get_DateInfo($CalendarWidget);
+			DrawEventlist();
+		});
 
 	# UPCOMING EVENTS
 	# Create the (placeholder for the) upcoming events widget
