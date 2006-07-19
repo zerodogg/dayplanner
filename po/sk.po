@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-07-18 16:40+0200\n"
+"POT-Creation-Date: 2005-07-16 16:57+0200\n"
 "PO-Revision-Date: 2006-07-01 01:15+0200\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
@@ -171,73 +171,73 @@ msgid ""
 "day planner at least once."
 msgstr ""
 
-#: dayplanner:1169 dayplanner:1188 dayplanner:2180
+#: dayplanner:1170 dayplanner:1189 dayplanner:2214
 #, perl-format
 msgid "%s's birthday"
 msgstr "%s má narodeniny"
 
-#: dayplanner:1257
+#: dayplanner:1258
 msgid "Some files could not be saved correctly. Are you sure you want to quit?"
 msgstr ""
 "Niektoré súbory nebolo mo¾né korektne ulo¾i». Chcete naozaj ukonèi» prácu a "
 "zavrie» plánovaè?"
 
-#: dayplanner:1262
+#: dayplanner:1263
 msgid "Are you sure you still want to quit?"
 msgstr "Stále chcete aplikáciu ukonèi»?"
 
-#: dayplanner:1425 dayplanner:2162
+#: dayplanner:1426 dayplanner:2171
 msgid "Event"
 msgstr "Udalos»"
 
-#: dayplanner:1479
+#: dayplanner:1480
 msgid "Add an event"
 msgstr "Prida» udalos»"
 
-#: dayplanner:1479
+#: dayplanner:1480
 #, perl-format
 msgid "Adding an event on the %s. %s %s"
 msgstr "Pridávam udalos» na dátum %s.%s %s"
 
-#: dayplanner:1485
+#: dayplanner:1486
 msgid "Event type:"
 msgstr "Typ udalosti:"
 
-#: dayplanner:1490
+#: dayplanner:1491
 msgid "Normal"
 msgstr "Normálna"
 
-#: dayplanner:1491
+#: dayplanner:1492
 msgid "Birthday"
 msgstr "Narodeniny"
 
-#: dayplanner:1499
+#: dayplanner:1500
 msgid "Add this event"
 msgstr "_Prida» udalos»"
 
-#: dayplanner:1500
+#: dayplanner:1501
 msgid "Discard this event"
 msgstr "_Odstráni» túto udalos»"
 
-#: dayplanner:1570
+#: dayplanner:1572
 msgid "Editing an event"
 msgstr "Upravujem udalos»"
 
-#: dayplanner:1570
+#: dayplanner:1572
 #, perl-format
 msgid "Editing an event on the %s. %s %s"
 msgstr "Upravujem udalos» %s. %s %s"
 
-#: dayplanner:1590
+#: dayplanner:1592
 msgid "Editing a birthday"
 msgstr "Upravujem narodeniny"
 
-#: dayplanner:1590
+#: dayplanner:1592
 #, perl-format
 msgid "Editing a birthday on the %s. %s %s"
 msgstr "Upravujem narodeniny dòa %s. %s %s"
 
-#: dayplanner:1606
+#: dayplanner:1608
 #, perl-format
 msgid ""
 "This event is a \"holiday\" event. It is a predefined event read from a "
@@ -248,43 +248,43 @@ msgid ""
 "to %s"
 msgstr ""
 
-#: dayplanner:1615
+#: dayplanner:1617
 msgid "Discard changes"
 msgstr "Zahodi» zmeny"
 
-#: dayplanner:1616
+#: dayplanner:1618
 msgid "Accept changes"
 msgstr "Prija» a ulo¾i» zmeny"
 
-#: dayplanner:1672
+#: dayplanner:1674
 msgid "Time:"
 msgstr "Èas:"
 
-#: dayplanner:1682
+#: dayplanner:1684
 msgid "Summary:"
 msgstr "Zhrnutie:"
 
-#: dayplanner:1694
+#: dayplanner:1696
 msgid "Enter a summary of the event here"
 msgstr "Sem zadajte struèné zhrnutie toho, o akú udalos» ide"
 
-#: dayplanner:1701 dayplanner:1980 dayplanner:1994 dayplanner-notifier:293
+#: dayplanner:1703 dayplanner:1982 dayplanner:1996 dayplanner-notifier:293
 msgid "Details"
 msgstr "Podrobnosti"
 
-#: dayplanner:1707
+#: dayplanner:1709
 msgid "Use this if you need to enter additional information about the event"
 msgstr "Sem zadajte prípadné ïal¹ie (podrobnej¹ie) informácie o udalosti"
 
-#: dayplanner:1772
+#: dayplanner:1774
 msgid "Name:"
 msgstr "Meno:"
 
-#: dayplanner:1784
+#: dayplanner:1786
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Sem zadajte meno osoby, ktorá oslavuje narodeniny"
 
-#: dayplanner:1817 dayplanner:1823
+#: dayplanner:1819 dayplanner:1825
 #, perl-format
 msgid ""
 "There is already an event at %s on %s %s. Please select another time for "
@@ -293,41 +293,41 @@ msgstr ""
 "Na %s dòa %s %s je u¾ naplánovaná iná udalos». Zvoµte pre aktuálnu udalos» "
 "iný èas."
 
-#: dayplanner:1828
+#: dayplanner:1830
 msgid "There is no summary for this event. Please enter a summary."
 msgstr "Táto udalos» nemá nijaké zhrnutie, zadajte ho, prosím."
 
-#: dayplanner:1871 dayplanner:1877
+#: dayplanner:1873 dayplanner:1879
 #, perl-format
 msgid "A Birthday already exists for \"%s\" on %s %s"
 msgstr "\"%s\" u¾ má zadané narodeniny na %s %s"
 
-#: dayplanner:1882
+#: dayplanner:1884
 msgid "A name is required to add a birthday"
 msgstr "Ak chcete zada» narodeniny, musíte upresni» meno osoby"
 
-#: dayplanner:1918 dayplanner:2217
+#: dayplanner:1920 dayplanner:2244
 msgid "Day planner"
 msgstr "Plánovaè"
 
-#: dayplanner:1929 dayplanner:1930
+#: dayplanner:1931 dayplanner:1932
 msgid "THE NAMES OF THE TRANSLATORS"
 msgstr "Michal Spáda"
 
-#: dayplanner:1945
+#: dayplanner:1947
 msgid "Preferences"
 msgstr "Osobné nastavenia"
 
-#: dayplanner:1973
+#: dayplanner:1975
 msgid "Interface"
 msgstr "Rozhranie"
 
-#: dayplanner:1980
+#: dayplanner:1982
 #, perl-format
 msgid "Expand \"%s\" by default"
 msgstr "©tandardne expandova» \"%s\""
 
-#: dayplanner:1994
+#: dayplanner:1996
 #, perl-format
 msgid ""
 "Check this if you want the \"%s\" to be expanded by default in the add and "
@@ -336,54 +336,54 @@ msgstr ""
 "Za¹krtnite, ak chcete, aby dochádzalo k automatickej expanzii \"%s\" pri "
 "pridávaní a úprave udalosti"
 
-#: dayplanner:2035
+#: dayplanner:2037
 msgid "General events"
 msgstr "V¹eobecné udalosti"
 
-#: dayplanner:2042
+#: dayplanner:2044
 msgid "Start the day planner reminder automatically when logging in"
 msgstr ""
 
-#: dayplanner:2045
+#: dayplanner:2047
 msgid ""
 "If you want the day planner reminder to start automatically when you log in"
 msgstr ""
 
-#: dayplanner:2058
+#: dayplanner:2060
 msgid "Use notifications before events"
 msgstr "Pou¾i» upozornenia na udalosti"
 
-#: dayplanner:2061
+#: dayplanner:2063
 msgid ""
 "Check this if you want day planner to notify you about events before they "
 "take place"
 msgstr ""
 "Za¹krtnite, ak chcete, aby vás plánovaè upozoròoval na nadchádzajúce udalosti"
 
-#: dayplanner:2069
+#: dayplanner:2071
 msgid "Time before the event to display the notification"
 msgstr "Ako dlho pred udalos»ou zobrazi» upozornenie"
 
-#: dayplanner:2074 dayplanner:2075 dayplanner:2076 dayplanner:2077
+#: dayplanner:2076 dayplanner:2077 dayplanner:2078 dayplanner:2079
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minút"
 
-#: dayplanner:2078
+#: dayplanner:2080
 #, perl-format
 msgid "%s hour"
 msgstr "%s hodinu"
 
-#: dayplanner:2079 dayplanner:2080 dayplanner:2081
+#: dayplanner:2081 dayplanner:2082 dayplanner:2083
 #, perl-format
 msgid "%s hours"
 msgstr "%s hodín"
 
-#: dayplanner:2098
+#: dayplanner:2100
 msgid "Warn me one day in advance"
 msgstr "Upozorni ma deò vopred"
 
-#: dayplanner:2107
+#: dayplanner:2109
 msgid ""
 "Check this if you want day planner to warn you about events one day before "
 "they take place"
@@ -391,50 +391,50 @@ msgstr ""
 "Za¹krtnite, ak chcete, aby vás plánovaè upozornil na ka¾dú udalos» deò "
 "predtým, ne¾ nastane"
 
-#: dayplanner:2161
+#: dayplanner:2170
 msgid "Time"
 msgstr "Èas"
 
-#: dayplanner:2249 dayplanner:2250 dayplanner:2251 dayplanner:2252
-#: dayplanner:2253 dayplanner:2254 dayplanner:2255 dayplanner:2256
-#: dayplanner:2257
+#: dayplanner:2276 dayplanner:2277 dayplanner:2278 dayplanner:2279
+#: dayplanner:2280 dayplanner:2281 dayplanner:2282 dayplanner:2283
+#: dayplanner:2284 dayplanner:2302 dayplanner:2306
 msgid "_Calendar"
 msgstr "_Kalendár"
 
-#: dayplanner:2251
+#: dayplanner:2278
 msgid "_Add an event"
 msgstr "_Prida» udalos»"
 
-#: dayplanner:2252
+#: dayplanner:2279 dayplanner:2302
 msgid "_Edit this event"
 msgstr "_Upravi» udalos»"
 
-#: dayplanner:2253
+#: dayplanner:2280 dayplanner:2306
 msgid "_Delete this event"
 msgstr "_Zmaza» udalos»"
 
-#: dayplanner:2255
+#: dayplanner:2282
 msgid "_Preferences"
 msgstr "_Osobné nastavenia"
 
-#: dayplanner:2257
+#: dayplanner:2284
 msgid "_Quit"
 msgstr "_Ukonèi» program"
 
-#: dayplanner:2259 dayplanner:2260
+#: dayplanner:2286 dayplanner:2287
 msgid "_Help"
 msgstr "_Nápoveda"
 
-#: dayplanner:2260
+#: dayplanner:2287
 msgid "_About"
 msgstr "_O aplikácii"
 
-#: dayplanner:2434 dayplanner:2435
+#: dayplanner:2470 dayplanner:2471
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Premenná prostredia %s nie je nastavená! Nemô¾em pokraèova»\n"
 
-#: dayplanner:2439 dayplanner:2441
+#: dayplanner:2475 dayplanner:2477
 #, perl-format
 msgid ""
 "Your home directory (%s) doesn't exist! Please verify that the environment "
