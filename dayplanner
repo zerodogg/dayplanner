@@ -2156,12 +2156,18 @@ sub DrawEventlist() {
 	my $Year = $CalendarWidget->year;
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
+#	$ToolbarEditButton->set_sensitive(0);
 	unless ($EventlistWidget) {
 		$EventlistWidget = Gtk2::SimpleList->new (
 			$Gettext->get("Time") => 'text',
 			$Gettext->get("Event") => 'text',
 		);
+		$EventlistWidget->set_rules_hint(1);
+		$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
 		$EventlistWin->add($EventlistWidget);
+#		$EventlistWidget->signal_connect('' => sub {
+#			$ToolbarEditButton->set_sensitive(1);
+#		});
 	} else {
 		@{$EventlistWidget->{data}} = ();
 	}
@@ -2196,13 +2202,6 @@ sub DrawEventlist() {
 		}
 
 	}
-	# Register doubleclick (FIXME)
-#	$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
-#	FIXME: We need this to work
-#	$EventlistWidget->get_model->signal_connect('changed' => sub {
-#			$ToolbarEditButton->set_sensitive(1);
-#		});
-#	$ToolbarEditButton->set_sensitive(0);
 	$EventlistWidget->show();
 }
 
