@@ -110,7 +110,7 @@ my %MonthNames = (
 my (
 	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
 	$EventlistWin,		$MainWindow,		$Toolbar,
-	$ToolbarEditButton
+	$ToolbarEditButton,	$MenuEditEntry,
 );	# Gtk objects
 
 my $HolidayParser; # The Date::HolidayParser object
@@ -2156,7 +2156,12 @@ sub DrawEventlist() {
 	my $Year = $CalendarWidget->year;
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
-#	$ToolbarEditButton->set_sensitive(0);
+	
+	# New eventlist so make the toolbar edit button and edit menu entry insensitive
+	$ToolbarEditButton->set_sensitive(0);
+	$MenuEditEntry->set_sensitive(0);
+
+	# Create the widget if needed
 	unless ($EventlistWidget) {
 		$EventlistWidget = Gtk2::SimpleList->new (
 			$Gettext->get("Time") => 'text',
@@ -2165,10 +2170,28 @@ sub DrawEventlist() {
 		$EventlistWidget->set_rules_hint(1);
 		$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
 		$EventlistWin->add($EventlistWidget);
-#		$EventlistWidget->signal_connect('' => sub {
-#			$ToolbarEditButton->set_sensitive(1);
-#		});
+		# Handle making the toolbar edit button sensitive
+		$EventlistWidget->signal_connect('focus-in-event' => sub {
+			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
+			# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
+			unless(defined($Selected)) {
+				return(0);
+			}
+			$ToolbarEditButton->set_sensitive(1);
+			$MenuEditEntry->set_sensitive(1);
+		});
+		# Handle making the toolbar edit button insensitive
+		$EventlistWidget->signal_connect('focus-out-event' => sub {
+			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
+			# If $Selected is defined then something *is* selected and thus we just return (false)
+			if(defined($Selected)) {
+				return(0);
+			}
+			$ToolbarEditButton->set_sensitive(0);
+			$MenuEditEntry->set_sensitive(0);
+		});
 	} else {
+		# Remove data if needed
 		@{$EventlistWidget->{data}} = ();
 	}
 	# Main calendar contents
@@ -2270,6 +2293,10 @@ sub DrawMainWindow () {
 	# Show it
 	$Menu_ItemFactory->get_widget("<main>")->show();
 	
+	my $Get = "/". $Gettext->get("_Calendar") . "/" . $Gettext->get("_Edit this event");
+	$Get =~ s/_//g;
+	$MenuEditEntry = $Menu_ItemFactory->get_widget($Get);
+
 	# ==================================================================
 	# TOOLBAR
 	# ==================================================================
