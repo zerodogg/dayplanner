@@ -110,7 +110,7 @@ my %MonthNames = (
 my (
 	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
 	$EventlistWin,		$MainWindow,		$Toolbar,
-	$ToolbarEditButton,	$MenuEditEntry,
+	$ToolbarEditButton,	$MenuEditEntry,		$MenuDeleteEntry,
 );	# Gtk objects
 
 my $HolidayParser; # The Date::HolidayParser object
@@ -2157,9 +2157,10 @@ sub DrawEventlist() {
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
 	
-	# New eventlist so make the toolbar edit button and edit menu entry insensitive
+	# New eventlist so make the toolbar edit button and edit/delete menu entries insensitive
 	$ToolbarEditButton->set_sensitive(0);
 	$MenuEditEntry->set_sensitive(0);
+	$MenuDeleteEntry->set_sensitive(0);
 
 	# Create the widget if needed
 	unless ($EventlistWidget) {
@@ -2179,6 +2180,7 @@ sub DrawEventlist() {
 			}
 			$ToolbarEditButton->set_sensitive(1);
 			$MenuEditEntry->set_sensitive(1);
+			$MenuDeleteEntry->set_sensitive(1);
 		});
 		# Handle making the toolbar edit button insensitive
 		$EventlistWidget->signal_connect('focus-out-event' => sub {
@@ -2189,6 +2191,7 @@ sub DrawEventlist() {
 			}
 			$ToolbarEditButton->set_sensitive(0);
 			$MenuEditEntry->set_sensitive(0);
+			$MenuDeleteEntry->set_sensitive(0);
 		});
 	} else {
 		# Remove data if needed
@@ -2293,9 +2296,14 @@ sub DrawMainWindow () {
 	# Show it
 	$Menu_ItemFactory->get_widget("<main>")->show();
 	
+	# Create two widget objects for the edit/delete menu entries
 	my $Get = "/". $Gettext->get("_Calendar") . "/" . $Gettext->get("_Edit this event");
 	$Get =~ s/_//g;
 	$MenuEditEntry = $Menu_ItemFactory->get_widget($Get);
+
+	$Get = "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Delete this event");
+	$Get =~ s/_//g;
+	$MenuDeleteEntry = $Menu_ItemFactory->get_widget($Get);
 
 	# ==================================================================
 	# TOOLBAR
