@@ -2368,8 +2368,6 @@ sub DrawMainWindow () {
 	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
-	# TODO: This should be uncommented again once the signal is ready
-	#$ToolbarEditButton->set_sensitive(0);
 	$ToolbarEditButton->show();
 	
 	# Add button
