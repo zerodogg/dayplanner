@@ -1136,6 +1136,7 @@ sub DeleteEvent () {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
 	unless(defined($Selected)) {
+		DPIntWarn("DeletEvent() called without any event selected");
 		return(0);
 	}
 	my $Type = GetEventListType();
@@ -1535,6 +1536,7 @@ sub EditEvent () {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
+		DPIntWarn("EditEvent() called with no event selected");
 		return(0);
 	}
 	
