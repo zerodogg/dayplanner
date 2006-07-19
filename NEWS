@@ -14,6 +14,8 @@ Version 0.2 (Unreleased)
   users session.
 - Now uses state.conf for more internal data
 - You can now double-click on an entry to edit it
+- You can no longer activate the "edit" toolbar and menu entries
+  when nothing is selected.
 
 * Daemon (dayplanner-daemon)
 
