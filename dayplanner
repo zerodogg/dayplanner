@@ -866,6 +866,7 @@ sub HolidaySetup () {
 		"pt_PT" => "portugal",	# Portugal
 		"sk_SK" => "slovak",	# Slovakia
 		"es_ES" => "spain",	# Spain
+		"en_CA" => "canada",	# Canada
 	);
 	# Yay, the user already has a .holiday file. Use this one
 	if(-e "$ENV{HOME}/.holiday") {
