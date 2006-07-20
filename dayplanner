@@ -895,10 +895,11 @@ sub HolidaySetup () {
 	}
 
 	my $CopyFile;
-
+	
 	if(defined($LocationDetect)) {
 		# Let's try to find the users LC_ADDRESS in the %HolidayFiles hash
-		foreach my $Key (keys(%HolidayFiles)) {
+		# We sort it so that we test the longest entries before testing the short ones
+		foreach my $Key (sort {length($b) <=> length($a)} keys(%HolidayFiles)) {
 			if($LocationDetect =~ /^$Key/) {
 			$CopyFile = $HolidayFiles{$Key};
 					last;
