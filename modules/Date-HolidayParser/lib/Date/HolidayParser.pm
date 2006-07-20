@@ -213,7 +213,7 @@ sub _interperate_year {
 				my $proper_yday = _Get_YDay($PosixTime);
 				unless(defined($CreativeParser->{Number})) {
 					_HolidayError($LineNo, $File, "\$CreativeParser->{Number} is undef", "Skipping this line. This is probably a bug in the parser");
-					return(0);
+					next;
 				}
 				if($CreativeParser->{Number} eq 'last') {
 					# Find the first of the set day
@@ -295,14 +295,14 @@ sub _interperate_year {
 				}
 			} else {
 				_SyntaxError($LineNo, $File, "A day is defined but no other way to find out when the day is could be found", "Ignoring this line");
-				return(0);
+				next;
 			}
 		} 
 		# Calculate the yday of that day-of-the-month
 		elsif(defined($CreativeParser->{IsMonth})) {
 			unless(defined($CreativeParser->{DateNumeric})) {
 					_SyntaxError($LineNo, $File, "It was set which month the day should be on but no information about the day itself ", "Ignoring this line");
-					return(0);
+					next;
 			}
 			my $PosixYear = $Year - 1900;
 			my $PosixTime = POSIX::mktime(0, 0, 0, $CreativeParser->{DateNumeric}, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
