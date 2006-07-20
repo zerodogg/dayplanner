@@ -2274,7 +2274,7 @@ sub DrawEventlist() {
 			unless(defined($Holidays{$Year})) {
 					$Holidays{$Year} = $HolidayParser->get($Year);
 			}
-			if(defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
+			if(defined($Holidays{$Year}) and defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
 				foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
 					push(@{$EventlistWidget->{data}}, ["", $CurrHoliday]);
 				}
