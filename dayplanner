@@ -2422,9 +2422,17 @@ sub DrawMainWindow () {
 
 	# UPCOMING EVENTS
 	# Create the (placeholder for the) upcoming events widget
-#	my $UpcomingEventsWidget = Gtk2::Label->new($Gettext->get("Upcoming events..."));
-#	$UpcomingEventsWidget->show();
-#	$RightHandVBox->pack_end($UpcomingEventsWidget,0,0,0);
+	my $UpcomingEventsWindow = Gtk2::ScrolledWindow->new;
+	$UpcomingEventsWindow->set_policy('automatic', 'automatic');
+	$UpcomingEventsWindow->show();
+	my $UpcomingEventsWidget = Gtk2::TextView->new();
+	my $UpcomingEventsBuffer = Gtk2::TextBuffer->new();
+	$UpcomingEventsBuffer->set_text("Upcoming events [MOCKUP]:\n\nOn monday\n at 20:00: Go home\n at 21:00 Movies\n\nOn tuesday...\n at 14:30: Doctor\n at 16:00 Home\n\nOn saturday..\n\n");
+	$UpcomingEventsWidget->set_buffer($UpcomingEventsBuffer);
+	$UpcomingEventsWidget->set_editable(0);
+	$UpcomingEventsWidget->show();
+	$UpcomingEventsWindow->add($UpcomingEventsWidget);
+	$RightHandVBox->pack_end($UpcomingEventsWindow,1,1,0);
 	
 	# ==================================================================
 	# TASK LIST
