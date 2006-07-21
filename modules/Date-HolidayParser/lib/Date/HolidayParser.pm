@@ -167,6 +167,7 @@ sub _interperate_year {
 	my $PosixYear = $Year - 1900;
 	my $FinalParsing = {};
 	foreach my $LineNo (keys(%{$self->{parsed}})) {
+		# TODO: Don't save temporary junk in CreativeParser
 		my $CreativeParser = $self->{parsed}->{$LineNo};
 		my $HolidayName = $self->{parsed}->{$LineNo}{name};
 		my $File = $self->{FILE};
@@ -194,8 +195,7 @@ sub _interperate_year {
 			$month =~ s/^(\d+)-(\d+)$/$1/;
 			$day =~ s/^(\d+)-(\d+)$/$2/;
 			my $PosixTime = POSIX::mktime(0, 0, 0, $day, $month, $PosixYear);
-			my ($new_sec,$new_min,$new_hour,$new_mday,$new_mon,$new_year,$new_wday,$new_yday,$new_isdst) = localtime($PosixTime);
-			$CreativeParser->{NumericYDay} = $new_yday;
+			$CreativeParser->{NumericYDay} = _Get_YDay($PosixTime);
 		}
 		
 		unless(defined($CreativeParser->{IsMonth}) or defined($CreativeParser->{NumericYDay})) {
@@ -256,7 +256,7 @@ sub _interperate_year {
 						$CreativeParser->{BeforeOrAfter} = 'after';
 						$CreativeParser->{AddDays} = 21;
 					} else {
-						_HolidayError($LineNo, $File, "\$CreativeParer->{Number} is \"$CreativeParser->{Number}\"", "This is a bug in the parser. This line will be ignored") and return(undef) unless $CreativeParser->{Number} eq 'null';
+						_HolidayError($LineNo, $File, "\$CreativeParer->{Number} is \"$CreativeParser->{Number}\"", "This is a bug in the parser. This line will be ignored") and next unless $CreativeParser->{Number} eq 'null';
 					}
 				}
 	
@@ -307,7 +307,7 @@ sub _interperate_year {
 			my $PosixYear = $Year - 1900;
 			my $PosixTime = POSIX::mktime(0, 0, 0, $CreativeParser->{DateNumeric}, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
 			my $proper_yday = _Get_YDay($PosixTime);
-			$CreativeParser->{FinalYDay} = $proper_yday;
+			$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($proper_yday, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 		}	 
 		# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
 		elsif(defined($CreativeParser->{NumericYDay})) {
@@ -334,9 +334,7 @@ sub _interperate_year {
 					my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
 					$final_mon++;
 					$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
-				} else {
-					last;
-				}
+				} 
 				if(defined($CreativeParser->{Every}) and defined($CreativeParser->{Number})) {
 					delete($CreativeParser->{Every});
 					if($CreativeParser->{Number} ne "second") {
