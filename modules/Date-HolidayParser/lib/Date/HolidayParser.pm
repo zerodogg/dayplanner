@@ -499,6 +499,7 @@ sub _load_and_parse {
 			} elsif (/^weekend$/) {			# Malplaced weekend keyword
 				$HolidayType = 'red';
 			} elsif (/^\d+$/) {			# Any other number, see below for parsing
+				_SyntaxError($LineNo, $File, "Unreasonably high number", "Ignoring the number. This might give weird results") and next if $_ > 365;
 				# If NextIs is not defined then it's a DateNumeric
 				unless(defined($CreativeParser{NextIs}) and $CreativeParser{NextIs}) {
 					$CreativeParser{DateNumeric} = $_;
@@ -526,11 +527,7 @@ sub _load_and_parse {
 					} else {
 						$CreativeParser{Length} = $_;
 					}
-				} else {
-					# What on earth am I going to do with this number?
-					_SyntaxError($LineNo, $File, "Got a number ($_)", "I don't know what to do with this number. Ignoring it.");
 				}
-				$CreativeParser{NextIs} = undef;
 				
 			} elsif (/^(before|after)$/) {	# If a day should be before or after a certain day/date
 				$CreativeParser{BeforeOrAfter} = $_;
