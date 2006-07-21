@@ -1744,7 +1744,7 @@ sub NormalEventWindow ($$$$) {
 	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
 	
 	# Create the summary label
-	my $SummaryLabel = Gtk2::Label->new($Gettext->get('Summary:'));
+	my $SummaryLabel = Gtk2::Label->new($Gettext->get('Description:'));
 	$SummaryLabel->show();
 	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
 
@@ -1756,7 +1756,7 @@ sub NormalEventWindow ($$$$) {
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
-	$Tooltips->set_tip($SummaryEntry, $Gettext->get("Enter a summary of the event here"));
+	$Tooltips->set_tip($SummaryEntry, $Gettext->get("Enter a description of the event here"));
 	
 	# ==================================================================
 	# ADD THE EXTENDED ENTRY

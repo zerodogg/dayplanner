@@ -257,6 +257,33 @@ sub PrintHelp($$$) {
         printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
 
+# Purpose: Load the state file
+# Usage: LoadStateFile(DIRECTORY, FILENAME);
+sub LoadStateFile($$) {
+	# The parameters
+	my $Dir = $_[0];
+	my $File = $_[1];
+
+	
+	# Open the statefile
+	open(STATE, "<", "$Dir/$File") or do {
+		return(1);
+	};
+	
+	# Load the config
+	foreach(<STATE>) {
+		next if m/^\s*(#.*)?$/;
+		next unless m/=/;
+		chomp;
+		my $Option = $_;
+		my $Value = $_;
+		$Option =~ s/^\s*(.*)\s*=.*/$1/;
+		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		$InternalConfig{$Option} = $Value;
+	}
+	close(STATE);
+}
+
 # Purpose: Display the help(ful) information
 # Usage: Help();
 sub Help () {
