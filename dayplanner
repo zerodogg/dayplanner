@@ -323,6 +323,72 @@ sub DaemonConnectionErrorHandler () {
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Write a configuration file
+# Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
+sub WriteConfigFile ($$$) {
+	my ($File, $Config, $Explanations) = @_;
+
+	# Open the config for writing
+	open(CONFIG, ">", "$File") or do {
+		# If we can't then we error out, no need for failsafe stuff - it's just the config file
+		DPIntWarn("Unable to save the configuration file $File: $!");
+		return(0);
+	};
+	if(defined($Explanations->{HEADER})) {
+		print CONFIG "# $Explanations->{HEADER}\n";
+	}
+	foreach(sort(keys(%{$Config}))) {
+		next unless length($Config->{$_});	# Don't write empty options
+		if(defined($Explanations->{$_})) {
+			print CONFIG "\n# $Explanations->{$_}";
+		}
+		print CONFIG "\n$_=$Config->{$_}\n";
+	}
+	close(CONFIG);
+}
+
+# Purpose: Load a configuration file
+# Usage: LoadConfigFile(/FILE, \%ConfigHash, \%OptionRegexHash, OnlyValidOptions?);
+#  OptionRegeXhash can be available for only a select few of the config options
+#  or skipped completely (by replacing it by undef).
+#  If OnlyValidOptions is true it will cause LoadConfigFile to skip options not in
+#  the OptionRegexHash.
+sub LoadConfigFile ($$$$) {
+	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
+
+	open(CONFIG, "<", "$File") or do {
+		DPError($Gettext->get(sprintf("Unable to read the configuration settings from %s: %s", $File, $!)));
+		return(0);
+	};
+	foreach(<CONFIG>) {
+		next if m/^\s*(#.*)?$/;
+		next unless m/=/;
+		chomp;
+		my $Option = $_;
+		my $Value = $_;
+		$Option =~ s/^\s*(.*)\s*=.*/$1/;
+		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		if($OnlyValidOptions) {
+			unless(defined($OptionRegex->{$Option})) {
+				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
+				next;
+			}
+		}
+		unless(defined($Value)) {
+			DPIntWarn("Empty value for option $Option in $File");
+		}
+		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
+			my $MustMatch = $OptionRegex->{$Option};
+			unless ($Value =~ /$MustMatch/) {
+				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{Option}.\n";
+				next;
+			}
+		}
+		$ConfigHash->{$Option} = $Value;
+	}
+	close(CONFIG);
+}
+
 # Purpose: Write the state file 
 # Usage: WriteStateFile(DIRECTORY, FILENAME);
 sub WriteStateFile($$) {
@@ -363,49 +429,9 @@ sub LoadStateFile($$) {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
-
-	
-	# Open the statefile
-	open(STATE, "<", "$Dir/$File") or do {
-		return(1);
-	};
-	
-	# Load the config
-	foreach(<STATE>) {
-		next if m/^\s*(#.*)?$/;
-		next unless m/=/;
-		chomp;
-		my $Option = $_;
-		my $Value = $_;
-		$Option =~ s/^\s*(.*)\s*=.*/$1/;
-		$Value =~ s/^.*=\s*(.*)\s*/$1/;
-		$InternalConfig{$Option} = $Value;
+	if(-e "$Dir/$File") {
+		LoadConfigFile("$Dir/$File", \%InternalConfig, undef, 0);
 	}
-	close(STATE);
-}
-
-# Purpose: Write a configuration file
-# Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
-sub WriteConfigFile ($$$) {
-	my ($File, $Config, $Explanations) = @_;
-
-	# Open the config for writing
-	open(CONFIG, ">", "$File") or do {
-		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPIntWarn("Unable to save the configuration file $File: $!");
-		return(0);
-	};
-	if(defined($Explanations->{HEADER})) {
-		print CONFIG "# $Explanations->{HEADER}\n";
-	}
-	foreach(sort(keys(%{$Config}))) {
-		next unless length($Config->{$_});	# Don't write empty options
-		if(defined($Explanations->{$_})) {
-			print CONFIG "\n# $Explanations->{$_}";
-		}
-		print CONFIG "\n$_=$Config->{$_}\n";
-	}
-	close(CONFIG);
 }
 
 # Purpose: Write the configuration file
@@ -455,43 +481,14 @@ sub LoadConfig ($$) {
 		return(1);
 	}
 	
-	# Open the config
-	open(CONFIG, "<$Dir/$File") or do {
-		DPError($Gettext->get(sprintf("Unable to read the configuration settings from %s: %s", "$Dir/$File", $!)));
-		return(0);
-	};
-	
-	# Load the config
-	foreach(<CONFIG>) {
-		next if m/^\s*#/;
-		next unless m/=/;
-		chomp;
-		my $Option = $_;
-		my $Value = $_;
-		$Option =~ s/^\s*(.*)\s*=.*/$1/;
-		$Value =~ s/^.*=\s*(.*)\s*/$1/;
-		unless(defined($Value) and length($Value)) {
-			DPIntWarn("Configuration setting \"$Option\" has an empty value");
-		}
-		# TODO: Perhaps these should be verified here?
-		if ($Option eq 'EditorVerboseDefault') {
-			$UserConfig{EditorVerboseDefault} = $Value;
-		} elsif ($Option eq 'Events_NotifyPre') {
-			# NOTE: If this test is changed HERE it must be changed in dayplanner-daemon aswell
-			unless ($Value =~ /^(\d+(min|hrs?){1}|0){1}$/) {
-				DPIntWarn("Invalid value for $Option: \"$Value\" - setting to default \"30min\"");
-				$UserConfig{Events_NotifyPre} = '30min';
-			} else {
-				$UserConfig{Events_NotifyPre} = $Value;
-			}
-		} elsif ($Option eq 'Events_DayNotify') {
-			$UserConfig{Events_DayNotify} = $Value;
-		} elsif ($Option =~ /^ToolbarStyle$/) {
-			DPIntWarn("Deprecated configuration setting \"$Option\" - ignored");
-		} else {
-			DPIntWarn("Unrecognized configuration setting \"$Option\", ignoring");
-		}
-	}
+	my %OptionRegexHash = (
+			EditorVerboseDefault => '^\d+$',
+			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
+			Events_DayNotify => '^\d+$',
+		);
+
+	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash, undef);
+	return(1);
 }
 
 # Purpose: Load the default configuration file
