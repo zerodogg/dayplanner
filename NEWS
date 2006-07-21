@@ -18,6 +18,7 @@ Version 0.2 (Unreleased)
   when nothing is selected.
 - Removed the text on the image in the about dialog
 - Changed the name of the "summary" field to "description"
+- Switched to more generalized configuration loading/writing functions
 
 * Daemon (dayplanner-daemon)
 
