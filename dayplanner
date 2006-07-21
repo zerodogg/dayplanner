@@ -87,6 +87,7 @@ my %SpecialEvents;		# The contents of the special events file
 my %AllDayEvents;		# The contents of the all-day events file
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
+my %UserConfig;			# User-selected configuration values
 
 # The reason we do not use strftime() or I18N::Langinfo is that these return
 # values in random encodings. By using Gettext->get() we get values
@@ -121,10 +122,10 @@ my (
 );
 
 # Configuration options
-my (
-	$EditorVerboseDefault,	$Events_NotifyPre,
-	$Events_NotifyDay,	$Events_DayNotify
-);
+#my (
+#	$UserConfig{EditorVerboseDefault},	$UserConfig{Events_NotifyPre},
+#	$UserConfig{Events_NotifyDay},	$UserConfig{Events_DayNotify}
+#);
 
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,300);	# Default size is 600x300 - overridden by state.conf
@@ -339,19 +340,10 @@ sub WriteStateFile($$) {
 		AddedAutostart => "If day planner has (automatically) set the daemon to start on login (this ONLY sets if it has been automatically added or not. It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
 		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
 		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
+		HEADER => "This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually",
 	);
 
-	unless(defined($MainWindow)) {
-		DPIntWarn("Unable to save window state: The main window object is undef!");
-		$NewWinState = 0;
-	}
 	
-	# Open the config for writing
-	open(STATE, ">$Dir/$File") or do {
-		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPIntWarn("Unable to save internal state to $Dir/$File: $!");
-		return(0);
-	};
 	if(defined($InternalConfig{MainWin_Maximized}) and $InternalConfig{MainWin_Maximized} =~ /maximized/) {
 		$InternalConfig{MainWin_Maximized} = 1;
 	} else {
@@ -360,15 +352,9 @@ sub WriteStateFile($$) {
 			($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = $MainWindow->get_size();
 		}
 	}
-	print STATE "# This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually\n";
-	foreach(sort(keys(%InternalConfig))) {
-		next unless length($InternalConfig{$_});	# Don't write empty options
-		if(defined($Explenations{$_})) {
-			print STATE "\n# $Explenations{$_}";
-		}
-		print STATE "\n$_=$InternalConfig{$_}\n";
-	}
-	close(STATE);
+	
+	# Write the actual file
+	WriteConfigFile("$Dir/$File", \%InternalConfig, \%Explenations);
 }
 
 # Purpose: Load the state file
@@ -398,48 +384,56 @@ sub LoadStateFile($$) {
 	close(STATE);
 }
 
+# Purpose: Write a configuration file
+# Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
+sub WriteConfigFile ($$$) {
+	my ($File, $Config, $Explanations) = @_;
+
+	# Open the config for writing
+	open(CONFIG, ">", "$File") or do {
+		# If we can't then we error out, no need for failsafe stuff - it's just the config file
+		DPIntWarn("Unable to save the configuration file $File: $!");
+		return(0);
+	};
+	if(defined($Explanations->{HEADER})) {
+		print CONFIG "# $Explanations->{HEADER}\n";
+	}
+	foreach(sort(keys(%{$Config}))) {
+		next unless length($Config->{$_});	# Don't write empty options
+		if(defined($Explanations->{$_})) {
+			print CONFIG "\n# $Explanations->{$_}";
+		}
+		print CONFIG "\n$_=$Config->{$_}\n";
+	}
+	close(CONFIG);
+}
+
 # Purpose: Write the configuration file
 # Usage: WriteConfig(DIRECTORY, FILENAME);
 sub WriteConfig ($$) {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
-	# Open the config
-	open(CONFIG, ">$Dir/$File") or do {
-		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPError($Gettext->get(sprintf("Unable to save the configuration settings to %s: %s", "$Dir/$File", $!)));
-		return(0);
-	};
 	# Verify the options first
-	unless(defined($EditorVerboseDefault) and length($EditorVerboseDefault)) {
-		$EditorVerboseDefault = 0;
+	unless(defined($UserConfig{EditorVerboseDefault}) and length($UserConfig{EditorVerboseDefault})) {
+		$UserConfig{EditorVerboseDefault} = 0;
 	}
-	unless(defined($Events_NotifyPre) and length($Events_NotifyPre)) {
-		$Events_NotifyPre = "30min";
+	unless(defined($UserConfig{Events_NotifyPre}) and length($UserConfig{Events_NotifyPre})) {
+		$UserConfig{Events_NotifyPre} = "30min";
 	}
-	unless(defined($Events_DayNotify) and length($Events_DayNotify)) {
-		$Events_DayNotify = 0;
+	unless(defined($UserConfig{Events_DayNotify}) and length($UserConfig{Events_DayNotify})) {
+		$UserConfig{Events_DayNotify} = 0;
 	}
-	# Print the config
-	print CONFIG "# Day planner version $Version configuration file\n\n";
-	print CONFIG "# - - -\n# User interface\n# - - -\n";
-	print CONFIG "# If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand\n";
-	print CONFIG "EditorVerboseDefault=$EditorVerboseDefault\n";
-	print CONFIG "\n# - - -\n# Normal events notification\n# - - -\n";
-	print CONFIG "\n# If day planner should notify about an event ahead of time.\n#  0 = Don't notify\n";
-	print CONFIG "#  10min = Notify 10 minutes ahead of time\n";
-	print CONFIG "#  20min = Notify 20 minutes ahead of time\n";
-	print CONFIG "#  30min = Notify 30 minutes ahead of time\n";
-	print CONFIG "#  45min = Notify 45 minutes ahead of time\n";
-	print CONFIG "#  1hr   = Notify 1 hour ahead of time\n";
-	print CONFIG "#  2hrs  = Notify 2 hours ahead of time\n";
-	print CONFIG "#  4hrs  = Notify 4 hours ahead of time\n";
-	print CONFIG "#  6hrs  = Notify 6 hours ahead of time\n";
-	print CONFIG "Events_NotifyPre=$Events_NotifyPre\n";
-	print CONFIG "\n# If day planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance\n";
-	print CONFIG "Events_DayNotify=$Events_DayNotify\n";
-	# Close the config file
-	close(CONFIG);
+	my %Explanations = (
+		EditorVerboseDefault => "If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand",
+		Events_NotifyPre => "If day planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
+		Events_DayNotify => "If day planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
+		HEADER => "Day planner $Version configuration file",
+	);
+	
+	# Write the actual file
+	WriteConfigFile("$Dir/$File", \%UserConfig, \%Explanations);
+
 	# Tell the daemon to reload the config file
 	if($DaemonInitialized) {
 		unless(Daemon_DataSegment("RELOAD_CONFIG") eq "done\n") {
@@ -481,17 +475,17 @@ sub LoadConfig ($$) {
 		}
 		# TODO: Perhaps these should be verified here?
 		if ($Option eq 'EditorVerboseDefault') {
-			$EditorVerboseDefault = $Value;
+			$UserConfig{EditorVerboseDefault} = $Value;
 		} elsif ($Option eq 'Events_NotifyPre') {
 			# NOTE: If this test is changed HERE it must be changed in dayplanner-daemon aswell
 			unless ($Value =~ /^(\d+(min|hrs?){1}|0){1}$/) {
 				DPIntWarn("Invalid value for $Option: \"$Value\" - setting to default \"30min\"");
-				$Events_NotifyPre = '30min';
+				$UserConfig{Events_NotifyPre} = '30min';
 			} else {
-				$Events_NotifyPre = $Value;
+				$UserConfig{Events_NotifyPre} = $Value;
 			}
 		} elsif ($Option eq 'Events_DayNotify') {
-			$Events_DayNotify = $Value;
+			$UserConfig{Events_DayNotify} = $Value;
 		} elsif ($Option =~ /^ToolbarStyle$/) {
 			DPIntWarn("Deprecated configuration setting \"$Option\" - ignored");
 		} else {
@@ -1766,7 +1760,7 @@ sub NormalEventWindow ($$$$) {
 	my $FT_Expander = Gtk2::Expander->new($Gettext->get("Details"));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	$FT_Expander->show();
-	if ($EditorVerboseDefault) {
+	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
 	$Tooltips->set_tip($FT_Expander, $Gettext->get("Use this if you need to enter additional information about the event"));
@@ -2045,14 +2039,14 @@ sub PreferencesWindow () {
 	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(sprintf($Gettext->get("Expand \"%s\" by default"), $Gettext->get("Details")));
 	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
-	if ($EditorVerboseDefault) {
+	if ($UserConfig{EditorVerboseDefault}) {
 		$EDVDefaultCheckbox->set_active(1);
 	}
 	$EDVDefaultCheckbox->signal_connect( "toggled" => sub {
 			if ($EDVDefaultCheckbox->get_active) {
-				$EditorVerboseDefault = 1;
+				$UserConfig{EditorVerboseDefault} = 1;
 			} else {
-				$EditorVerboseDefault = 0;
+				$UserConfig{EditorVerboseDefault} = 0;
 			}
 		});
 	
@@ -2145,10 +2139,10 @@ sub PreferencesWindow () {
 	$TimeSel_Combo->insert_text(6, sprintf($Gettext->get("%s hours"),"4"));
 	$TimeSel_Combo->insert_text(7, sprintf($Gettext->get("%s hours"),"6"));
 	# Set the value
-	if($Events_NotifyPre eq "0") {
+	if($UserConfig{Events_NotifyPre} eq "0") {
 		$TimeSel_Combo->set_active(3);
-	} elsif (defined($PreNotificationParser{$Events_NotifyPre})) {
-		$TimeSel_Combo->set_active($PreNotificationParser{$Events_NotifyPre});
+	} elsif (defined($PreNotificationParser{$UserConfig{Events_NotifyPre}})) {
+		$TimeSel_Combo->set_active($PreNotificationParser{$UserConfig{Events_NotifyPre}});
 	} else {
 		$TimeSel_Combo->set_active($PreNotificationParser{'default'});
 	}
@@ -2156,7 +2150,7 @@ sub PreferencesWindow () {
 	$TimeSel_HBox->pack_start($TimeSel_Combo,0,0,0);
 	# Register the changed signal
 	$TimeSel_Combo->signal_connect('changed' => sub {
-				$Events_NotifyPre = $PreNotificationParser{$TimeSel_Combo->get_active};
+				$UserConfig{Events_NotifyPre} = $PreNotificationParser{$TimeSel_Combo->get_active};
 			});
 	
 	# If the user wants to be notified in advance
@@ -2164,9 +2158,9 @@ sub PreferencesWindow () {
 	$NotifyAdvance_CheckBox->show();
 	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
 	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
-			$Events_DayNotify = $NotifyAdvance_CheckBox->get_active();
+			$UserConfig{Events_DayNotify} = $NotifyAdvance_CheckBox->get_active();
 		});
-	if($Events_DayNotify) {
+	if($UserConfig{Events_DayNotify}) {
 		$NotifyAdvance_CheckBox->set_active(1);
 	}
 	$Tooltips->set_tip($NotifyAdvance_CheckBox, $Gettext->get("Check this if you want day planner to warn you about events one day before they take place"));
@@ -2177,15 +2171,15 @@ sub PreferencesWindow () {
 				$TimeSel_Combo->set_sensitive(1);
 				$TimeSel_Label->set_sensitive(1);
 				$NotifyAdvance_CheckBox->set_sensitive(1);
-				$Events_NotifyPre = $PreNotificationParser{$TimeSel_Combo->get_active};
+				$UserConfig{Events_NotifyPre} = $PreNotificationParser{$TimeSel_Combo->get_active};
 			} else {
 				$TimeSel_Combo->set_sensitive(0);
 				$TimeSel_Label->set_sensitive(0);
 				$NotifyAdvance_CheckBox->set_sensitive(0);
-				$Events_NotifyPre = 0;
+				$UserConfig{Events_NotifyPre} = 0;
 			}
 		});
-	if($Events_NotifyPre) {
+	if($UserConfig{Events_NotifyPre}) {
 		$Events_EnabledCheckbox->set_active(1);
 	} else {
 		$Events_EnabledCheckbox->set_active(0);
