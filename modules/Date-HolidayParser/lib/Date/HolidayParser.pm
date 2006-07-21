@@ -327,7 +327,7 @@ sub _interperate_year {
 			_SyntaxError($LineNo, $File, "Use of both \"every\" and \"length", "This might give unpredictable results.");
 		}
 		# Do the final parsing and add it to the hash
-		if(defined($FinalYDay)) {
+		if(defined($FinalYDay) and $FinalYDay =~ /^\d+$/) {
 			while(1) {
 				if(defined($FinalYDay)) {
 					my $PosixYear = $Year - 1900;
@@ -350,6 +350,8 @@ sub _interperate_year {
 					last;
 				}
 			}
+		} elsif(defined($FinalYDay)) {
+			_HolidayError($LineNo, $File, "Invalid FinalYDay ($FinalYDay) after finished parsing", "This is a bug in the parser!");
 		} else {
 			_HolidayError($LineNo, $File, "No FinalYDay after finished parsing", "This is a bug in the parser!");
 		}
