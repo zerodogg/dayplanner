@@ -167,7 +167,7 @@ sub _interperate_year {
 	my $PosixYear = $Year - 1900;
 	my $FinalParsing = {};
 	foreach my $LineNo (keys(%{$self->{parsed}})) {
-		my $FinalYDay;
+		my ($FinalYDay, $NumericYDay);
 		my $CreativeParser = $self->{parsed}->{$LineNo};
 		my $HolidayName = $self->{parsed}->{$LineNo}{name};
 		my $File = $self->{FILE};
@@ -187,7 +187,7 @@ sub _interperate_year {
 		);	# Hash mapping the month name to a numeric
 	
 		if(defined($CreativeParser->{AddEaster})) {
-			$CreativeParser->{NumericYDay} = EasterCalc($Year);
+			$NumericYDay = EasterCalc($Year);
 		}
 		if(defined($CreativeParser->{MonthDay})) {
 			my $month = $CreativeParser->{MonthDay};
@@ -195,10 +195,10 @@ sub _interperate_year {
 			$month =~ s/^(\d+)-(\d+)$/$1/;
 			$day =~ s/^(\d+)-(\d+)$/$2/;
 			my $PosixTime = POSIX::mktime(0, 0, 0, $day, $month, $PosixYear);
-			$CreativeParser->{NumericYDay} = _Get_YDay($PosixTime);
+			$NumericYDay = _Get_YDay($PosixTime);
 		}
 		
-		unless(defined($CreativeParser->{IsMonth}) or defined($CreativeParser->{NumericYDay})) {
+		unless(defined($CreativeParser->{IsMonth}) or defined($NumericYDay)) {
 			_SyntaxError($LineNo, $File, "I had no day-of-the-year nor a month defined after parsing", "Ignoring this line");
 			next;
 		}
@@ -207,7 +207,7 @@ sub _interperate_year {
 	
 			# If IsMonth is defined then find a NumericYDay that we can use so that
 			# the NumericYDay parsing below can do all of the heavy lifting
-			if (defined($CreativeParser->{IsMonth})) {
+			if (defined($CreativeParser->{IsMonth}) and defined($CreativeParser->{Number})) {
 				my $PosixYear = $Year - 1900;
 				my $PosixTime = POSIX::mktime(0, 0, 0, 1, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
 				my $proper_yday = _Get_YDay($PosixTime);
@@ -239,11 +239,11 @@ sub _interperate_year {
 						}
 						$Last_YDay = $proper_yday;
 					}
-					$CreativeParser->{NumericYDay} = $Last_YDay;
+					$NumericYDay = $Last_YDay;
 					$CreativeParser->{BeforeOrAfter} = 'before';
 				} else {
 					# Parse the final
-					$CreativeParser->{NumericYDay} = $proper_yday;
+					$NumericYDay = $proper_yday;
 					if($CreativeParser->{Number} eq 'first') {
 						$CreativeParser->{BeforeOrAfter} = 'after';
 					} elsif($CreativeParser->{Number} eq 'second') {
@@ -259,14 +259,20 @@ sub _interperate_year {
 						_HolidayError($LineNo, $File, "\$CreativeParer->{Number} is \"$CreativeParser->{Number}\"", "This is a bug in the parser. This line will be ignored") and next unless $CreativeParser->{Number} eq 'null';
 					}
 				}
-	
+			} elsif (defined($CreativeParser->{IsMonth}) and defined($CreativeParser->{DateNumeric})) {
+				my $PosixYear = $Year - 1900;
+				my $PosixTime = POSIX::mktime(0, 0, 0, $CreativeParser->{DateNumeric}, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
+				$NumericYDay = _Get_YDay($PosixTime);
+			} elsif (defined($CreativeParser->{IsMonth})) {
+				_SynaxError($LineNo, $File, "There is a month defined but no way to find out which day of the month it is referring to", "Ignoring this line.");
+				next;
 			}
 	
 	
 	
-			if(defined($CreativeParser->{NumericYDay})) {
+			if(defined($NumericYDay)) {
 				# Parse the main NumericYDay
-				$FinalYDay = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
+				$FinalYDay = _HCalc_NumericYDay($NumericYDay, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 				unless(defined($CreativeParser->{BeforeOrAfter})) {
 					_SyntaxError($LineNo, $File, "It was not defined if the day should be before or after", "Defaulting to before. This is likely to cause calculation mistakes.");
 					$CreativeParser->{BeforeOrAfter} = 'before';
@@ -310,13 +316,13 @@ sub _interperate_year {
 			$FinalYDay = _HCalc_NumericYDay($proper_yday, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 		}	 
 		# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
-		elsif(defined($CreativeParser->{NumericYDay})) {
+		elsif(defined($NumericYDay)) {
 			# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
 			if(defined($CreativeParser->{MustBeDay})) {
 				_SyntaxError($LineNo, $File, "It was set exactly which day the holiday should occur on and also that it should occur on $CreativeParser->{MustBeDay}", "Ignoring the day requirement");
 	
 			}
-			$FinalYDay = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
+			$FinalYDay = _HCalc_NumericYDay($NumericYDay, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 		}
 	
 		# Verify the use of the "every" keyword
@@ -480,9 +486,6 @@ sub _load_and_parse {
 				}
 				$month--;	# The month in the holiday file is 1-12, we use 0-11
 				$CreativeParser{MonthDay} = "$month-$day";
-				#my $PosixTime = POSIX::mktime(0, 0, 0, $day, $month, $PosixYear);
-				#my ($new_sec,$new_min,$new_hour,$new_mday,$new_mon,$new_year,$new_wday,$new_yday,$new_isdst) = localtime($PosixTime);
-				#$CreativeParser{NumericYDay} = $new_yday;
 			} elsif (/^(january|february|march|april|may|june|july|august|september|october|november|december)$/) {	# Which month it occurs in
 				$CreativeParser{IsMonth} = $_;
 			} elsif (/^plus$/) {			# If the next number should be added to a NumericYDay value
@@ -492,7 +495,6 @@ sub _load_and_parse {
 			} elsif (/^length$/) {			# How long (in days) it lasts. FIXME: is currently ignored
 				$CreativeParser{NextIs} = 'length';
 			} elsif (/^easter$/) {			# The day of easter
-				#$CreativeParser{NumericYDay} = EasterCalc($Year);
 				$CreativeParser{AddEaster} = 1;
 			} elsif (/^weekend$/) {			# Malplaced weekend keyword
 				$HolidayType = 'red';
