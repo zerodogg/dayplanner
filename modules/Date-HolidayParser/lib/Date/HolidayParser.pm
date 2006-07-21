@@ -578,10 +578,11 @@ sub new {
 # Usage: my $HashRef = $object->get(YEAR);
 sub get {
 	my $self = $_[0];
-	carp("Needs an option: The year to parse") and return(undef) unless(defined($_[1]));
+	carp("Date::HolidayParser->get needs an parameter: The year to parse") and return(undef) unless(defined($_[1]));
 	my $Year = $_[1];
-	carp("\"$Year\" must be a digit") and return(undef) if $Year =~ /\D/;
-	carp("\"$Year\" must be lower than 2037") and return(undef) if $Year > 2037;
+	carp("Date::HolidayParser: The year must be a digit") and return(undef) if $Year =~ /\D/;
+	carp("Date::HolidayParser: Can't parse years lower than 1971") and return(undef) if $Year < 1971;
+	carp("Date::HolidayParser: Can't parse years higher than 2037") and return(undef) if $Year > 2037;
 	return($self->_interperate_year($Year));
 }
 # End of Date::HolidayParser
