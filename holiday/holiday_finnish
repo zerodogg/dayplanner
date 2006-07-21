@@ -1,3 +1,4 @@
+:
 : Finnish holiday file. Copy to ~/.holiday
 :
 : Author: Steven Wahlberg <stegu@iki.fi>
@@ -20,28 +21,6 @@ red "Loppiainen" weekend on 6 january
 
 blue "Runebergin p‰iv‰"  on 5 february
 blue "Yst‰v‰np‰iv‰" on 14 february
-: karkausp‰iv‰ vain karkausvuotena. Kuinka m‰‰ritell‰‰n plan:lle?
-: blue "Karkausp‰iv‰" on 29 february minus 5 days
-blue "Karkausp‰iv‰" on 24 february 1964
-blue "Karkausp‰iv‰" on 24 february 1968
-blue "Karkausp‰iv‰" on 24 february 1972
-blue "Karkausp‰iv‰" on 24 february 1976
-blue "Karkausp‰iv‰" on 24 february 1980
-blue "Karkausp‰iv‰" on 24 february 1984
-blue "Karkausp‰iv‰" on 24 february 1988
-blue "Karkausp‰iv‰" on 24 february 1992
-blue "Karkausp‰iv‰" on 24 february 1996
-blue "Karkausp‰iv‰" on 24 february 2000
-blue "Karkausp‰iv‰" on 24 february 2004
-blue "Karkausp‰iv‰" on 24 february 2008
-blue "Karkausp‰iv‰" on 24 february 2012
-blue "Karkausp‰iv‰" on 24 february 2016
-blue "Karkausp‰iv‰" on 24 february 2020
-blue "Karkausp‰iv‰" on 24 february 2024
-blue "Karkausp‰iv‰" on 24 february 2028
-blue "Karkausp‰iv‰" on 24 february 2032
-blue "Karkausp‰iv‰" on 24 february 2036
-blue "Karkausp‰iv‰" on 24 february 2040
 blue "Kalevalan p‰iv‰" on  28 february
 
 blue "Naistenp‰iv‰" on 8 march
