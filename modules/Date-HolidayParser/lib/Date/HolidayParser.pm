@@ -167,7 +167,7 @@ sub _interperate_year {
 	my $PosixYear = $Year - 1900;
 	my $FinalParsing = {};
 	foreach my $LineNo (keys(%{$self->{parsed}})) {
-		# TODO: Don't save temporary junk in CreativeParser
+		my $FinalYDay;
 		my $CreativeParser = $self->{parsed}->{$LineNo};
 		my $HolidayName = $self->{parsed}->{$LineNo}{name};
 		my $File = $self->{FILE};
@@ -266,7 +266,7 @@ sub _interperate_year {
 	
 			if(defined($CreativeParser->{NumericYDay})) {
 				# Parse the main NumericYDay
-				$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
+				$FinalYDay = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 				unless(defined($CreativeParser->{BeforeOrAfter})) {
 					_SyntaxError($LineNo, $File, "It was not defined if the day should be before or after", "Defaulting to before. This is likely to cause calculation mistakes.");
 					$CreativeParser->{BeforeOrAfter} = 'before';
@@ -275,19 +275,19 @@ sub _interperate_year {
 					# Before parsing
 					# Okay, we need to find the closest $CreativeParser{MustBeDay} before $CreativeParser{FinalYDay}
 					while (1) {
-						if(_Holiday_DayName($CreativeParser->{FinalYDay}, $Year) eq $CreativeParser->{MustBeDay}) {
+						if(_Holiday_DayName($FinalYDay, $Year) eq $CreativeParser->{MustBeDay}) {
 							last;
 						}
-						$CreativeParser->{FinalYDay} = $CreativeParser->{FinalYDay} - 1;
+						$FinalYDay = $FinalYDay - 1;
 					}
 				} elsif ($CreativeParser->{BeforeOrAfter} eq 'after') {
 					# After parsing
 					# Okay, we need to find the closest $CreativeParser{MustBeDay} after $CreativeParser{FinalYDay}
 					while (1) {
-						if(_Holiday_DayName($CreativeParser->{FinalYDay}, $Year) eq $CreativeParser->{MustBeDay}) {
+						if(_Holiday_DayName($FinalYDay, $Year) eq $CreativeParser->{MustBeDay}) {
 							last;
 						}
-						$CreativeParser->{FinalYDay} = $CreativeParser->{FinalYDay} + 1;
+						$FinalYDay = $FinalYDay + 1;
 					}
 				} else {
 					_HolidayError($LineNo, $File, "BeforeOrAfter was set to an invalid value ($CreativeParser->{BeforeOrAfter})", "This is a bug in the parser. This line will be ignored.");
@@ -307,7 +307,7 @@ sub _interperate_year {
 			my $PosixYear = $Year - 1900;
 			my $PosixTime = POSIX::mktime(0, 0, 0, $CreativeParser->{DateNumeric}, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
 			my $proper_yday = _Get_YDay($PosixTime);
-			$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($proper_yday, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
+			$FinalYDay = _HCalc_NumericYDay($proper_yday, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 		}	 
 		# NumericYDay-only parsing is the simplest solution. This is pure and simple maths
 		elsif(defined($CreativeParser->{NumericYDay})) {
@@ -316,7 +316,7 @@ sub _interperate_year {
 				_SyntaxError($LineNo, $File, "It was set exactly which day the holiday should occur on and also that it should occur on $CreativeParser->{MustBeDay}", "Ignoring the day requirement");
 	
 			}
-			$CreativeParser->{FinalYDay} = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
+			$FinalYDay = _HCalc_NumericYDay($CreativeParser->{NumericYDay}, $CreativeParser->{AddDays}, $CreativeParser->{SubtDays});
 		}
 	
 		# Verify the use of the "every" keyword
@@ -327,11 +327,11 @@ sub _interperate_year {
 			_SyntaxError($LineNo, $File, "Use of both \"every\" and \"length", "This might give unpredictable results.");
 		}
 		# Do the final parsing and add it to the hash
-		if(defined($CreativeParser->{FinalYDay})) {
+		if(defined($FinalYDay)) {
 			while(1) {
-				if(defined($CreativeParser->{FinalYDay})) {
+				if(defined($FinalYDay)) {
 					my $PosixYear = $Year - 1900;
-					my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $CreativeParser->{FinalYDay}, 0, $PosixYear));
+					my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $FinalYDay, 0, $PosixYear));
 					$final_mon++;
 					$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
 				} 
@@ -341,11 +341,11 @@ sub _interperate_year {
 						_SyntaxError($LineNo, $File, "Nonsense use of $CreativeParser->{Number} along with \"every\"","Ignoring the \"every\" keyword.");
 					} else {
 						# Add 14 days 
-						$CreativeParser->{FinalYDay} += 14;
+						$FinalYDay += 14;
 					}
 				}elsif(defined($CreativeParser->{Length}) and $CreativeParser->{Length} > 0) {
 					$CreativeParser->{Length}-- or die("FATAL: attempted to reduce (--) length but it failed! This is a bug.");
-					$CreativeParser->{FinalYDay}++;
+					$FinalYDay++;
 				} else {
 					last;
 				}
