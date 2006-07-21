@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# updatepo
+# postat
 # Copyright (C) Eskild Hustvedt 2006
 #
 # This program is free software; you can redistribute it and/or
@@ -18,7 +18,6 @@
 
 use strict;
 use warnings;
-use Fatal;
 
 sub InPath ($) {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
@@ -28,11 +27,13 @@ unless(-d "./po" and -e "./devel-tools/buildpot") {
 	die("Please run me from the base of the day planner source tree (not the devel-tools/ dir)\n");
 }
 
-die("Pease install msgmerge before running me (usually included in the \"gettext\" package)\n") unless InPath("msgmerge");
+die("Pease install msgfmt before running me (usually included in the \"gettext\" package)\n") unless InPath("msgfmt");
 
-system("sh ./devel-tools/buildpot");
-chdir("./po");
+system("perl ./devel-tools/updatepo");
+
+print "\nStatistics:\n";
+chdir("./po/");
 foreach(<*.po>) {
-	print "Updating po/$_";
-	system("msgmerge -U $_ dayplanner.pot");
+	print "$_: ";
+	system("LC_ALL=C msgfmt --statistics $_");
 }
