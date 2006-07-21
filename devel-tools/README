@@ -7,6 +7,8 @@ buildpot		Build the Day Planner POT file to ../po/dayplanner.pot
 BuildLocale		Build a localization tree in ../locale/ with mo-files
 			and a proper gettext directory structure
 
+postat			View translation statistics
+
 updatepo		Run buildpot and then msgmerge existing *.po files with
 			the new pot-file
 
