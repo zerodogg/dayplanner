@@ -17,6 +17,7 @@ Version 0.2 (Unreleased)
 - You can no longer activate the "edit" toolbar and menu entries
   when nothing is selected.
 - Removed the text on the image in the about dialog
+- Changed the name of the "summary" field to "description"
 
 * Daemon (dayplanner-daemon)
 
