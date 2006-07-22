@@ -2491,6 +2491,9 @@ sub DrawMainWindow () {
 	SetActiveCalItems($curryear, $currmonth);
 	$CalendarWidget->show();
 	$CalendarWidget->display_options(['show-week-numbers', 'show-day-names','show-heading']);
+	$currmonth--;
+	# Work around a possible Gtk2::Calendar bug by explicitly setting the month/year combo
+	$CalendarWidget->select_month($currmonth, $curryear);
 	$RightHandVBox->pack_start($CalendarWidget,0,0,0);
 	
 	my $LastDay = Get_DateInfo($CalendarWidget);
