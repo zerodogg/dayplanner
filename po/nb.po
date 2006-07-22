@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-07-22 18:42+0200\n"
-"PO-Revision-Date: 2006-07-22 18:44+0200\n"
+"PO-Revision-Date: 2006-07-22 20:37+0200\n"
 "Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
 "Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -178,7 +178,6 @@ msgid "Saturday"
 msgstr "Lørdag"
 
 #: dayplanner:1166
-#, fuzzy
 msgid "Tomorrow"
 msgstr "I morgen"
 
