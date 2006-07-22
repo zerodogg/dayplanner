@@ -129,7 +129,7 @@ my (
 #);
 
 # Window state
-($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,300);	# Default size is 600x300 - overridden by state.conf
+($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
 
 # Set up signal handlers
 $SIG{INT} = \&DP_SigHandler;
