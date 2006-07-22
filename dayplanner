@@ -2330,6 +2330,14 @@ sub DrawEventlist() {
 			$MenuEditEntry->set_sensitive(1);
 			$MenuDeleteEntry->set_sensitive(1);
 		});
+		$EventlistWidget->signal_connect('focus-out-event' => sub {
+			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
+			if(defined($Selected)) {
+				$ToolbarEditButton->set_sensitive(1);
+				$MenuEditEntry->set_sensitive(1);
+				$MenuDeleteEntry->set_sensitive(1);
+			}
+		});
 	} else {
 		# Remove data if needed
 		@{$EventlistWidget->{data}} = ();
