@@ -1169,7 +1169,7 @@ sub PopulateUpcomingEvents () {
 			$NewUpcoming .= "\n\n";
 			$NewUpcoming .= $DayNames{$getwday};
 		}
-		$NewUpcoming .= " ($getmday.$getmday.$HumanYear) :\n ";
+		$NewUpcoming .= " ($getmday.$getmonth.$HumanYear) :\n ";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
 			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
@@ -2322,17 +2322,8 @@ sub DrawEventlist() {
 		# Handle making the toolbar edit button sensitive
 		$EventlistWidget->signal_connect('focus-in-event' => sub {
 			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
-			# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
-			unless(defined($Selected)) {
-				return(0);
-			}
-			$ToolbarEditButton->set_sensitive(1);
-			$MenuEditEntry->set_sensitive(1);
-			$MenuDeleteEntry->set_sensitive(1);
-		});
-		$EventlistWidget->signal_connect('focus-out-event' => sub {
-			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
-			if(defined($Selected)) {
+			# If there is something in that data array then there is something selected on focus-in-event
+			if(@{$EventlistWidget->{data}}) {
 				$ToolbarEditButton->set_sensitive(1);
 				$MenuEditEntry->set_sensitive(1);
 				$MenuDeleteEntry->set_sensitive(1);
@@ -2375,6 +2366,7 @@ sub DrawEventlist() {
 		}
 
 	}
+
 	$EventlistWidget->show();
 }
 
