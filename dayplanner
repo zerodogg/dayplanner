@@ -1132,6 +1132,7 @@ sub AddAutostart ($) {
 # Usage: PopulateUpcomingEvents();
 sub PopulateUpcomingEvents () {
 	my $NewUpcoming;
+	my $HasUpcoming;
 	my %DayNames = (
 		0 => $Gettext->get("Sunday"),
 		1 => $Gettext->get("Monday"),
@@ -1141,7 +1142,7 @@ sub PopulateUpcomingEvents () {
 		5 => $Gettext->get("Friday"),
 		6 => $Gettext->get("Saturday")
 	);
-	
+
 	# Today is
 	my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime(time);
 	my $Year = $getyear;
@@ -1188,7 +1189,11 @@ sub PopulateUpcomingEvents () {
 		}
 
 	}
+	unless($HasUpcoming) {
+		$NewUpcoming = $Gettext->get("You have no upcoming events the next seven days");
+	}
 	unless($UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
+
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
 	}
 }
@@ -2520,6 +2525,7 @@ sub DrawMainWindow () {
 	$UpcomingEventsBuffer = Gtk2::TextBuffer->new();
 	$UpcomingEventsWidget->set_buffer($UpcomingEventsBuffer);
 	$UpcomingEventsWidget->set_editable(0);
+	$UpcomingEventsWidget->set_wrap_mode("word");
 	$UpcomingEventsWidget->show();
 	$UpcomingEventsWindow->add($UpcomingEventsWidget);
 	# Pack it onto the main window
