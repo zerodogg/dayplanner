@@ -112,6 +112,7 @@ my (
 	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
 	$EventlistWin,		$MainWindow,		$Toolbar,
 	$ToolbarEditButton,	$MenuEditEntry,		$MenuDeleteEntry,
+	$UpcomingEventsBuffer,	$UpcomingEventsWidget,
 );	# Gtk objects
 
 my $HolidayParser; # The Date::HolidayParser object
@@ -801,6 +802,30 @@ sub BirthdayDefined ($$$) {
 	return(0);
 }
 
+# Purpose: Recursively test for defined data in %CalendarContents
+# 		If a single test is run then invalid data might get inserted into %CalendarContents
+# 		this avoids that by doing a recursive test
+# Usage: CalendarDayDefined(year,month,day);
+sub CalendarDayDefined ($$$) {
+	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
+	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay})) {
+			return(1)
+		}
+	return(0);
+}
+
+# Purpose: Recursively test for defined data in %BirthdayContents
+# 		If a single test is run then invalid data might get inserted into %BirthdayContents
+# 		this avoids that by doing a recursive test
+# Usage: BirthdayDayDefined(month,day);
+sub BirthdayDayDefined ($$) {
+	my ($EventMonth, $EventDay, $EventSummary) = @_;
+	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay})) {
+			return(1)
+		}
+	return(0);
+}
+
 # Purpose: Handle various signals gracefully
 # Usage: $SIG{SIGNAL} = \&DP_SigHandler;
 sub DP_SigHandler {
@@ -1103,6 +1128,71 @@ sub AddAutostart ($) {
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Populate the upcoming events widget
+# Usage: PopulateUpcomingEvents();
+sub PopulateUpcomingEvents () {
+	my $NewUpcoming;
+	my %DayNames = (
+		0 => $Gettext->get("Sunday"),
+		1 => $Gettext->get("Monday"),
+		2 => $Gettext->get("Tuesday"),
+		3 => $Gettext->get("Wednesday"),
+		4 => $Gettext->get("Thursday"),
+		5 => $Gettext->get("Friday"),
+		6 => $Gettext->get("Saturday")
+	);
+	
+	# Today is
+	my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime(time);
+	my $Year = $getyear;
+
+	# Prepare
+	my $TheYday = $getyday;
+	my $FirstDay = 1;
+	my $AddDays = 7;
+	$TheYday++; # Yearday currently starts at 0, we need it to start at 1
+
+	# Main population loop
+	while($AddDays) {
+		$TheYday++;
+		$AddDays--;
+		
+		my $Mktime = POSIX::mktime(0, 0, 0, $TheYday, 0, $Year);
+		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($Mktime);
+		$getmonth++;
+		my $HumanYear = $getyear+1900;
+
+		if($FirstDay) {
+			$NewUpcoming = $Gettext->get("Tomorrow");
+			$FirstDay = 0;
+		} else {
+			$NewUpcoming .= "\n\n";
+			$NewUpcoming .= $DayNames{$getwday};
+		}
+		$NewUpcoming .= " ($getmday.$getmday.$HumanYear) :\n ";
+		my $HasEvents;
+		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
+			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
+				$HasEvents = 1;
+				$NewUpcoming .= $Gettext->get("At") . " $_: $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
+			}
+		}
+		if(BirthdayDayDefined($getmonth, $getmday)) {
+			foreach my $Birthday (keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
+					$HasEvents = 1;
+					$NewUpcoming .= sprintf($Gettext->get("%s's birthday"), $Birthday);
+			}
+		}
+		unless($HasEvents) {
+			$NewUpcoming .= $Gettext->get("(nothing)");
+		}
+
+	}
+	unless($UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
+		$UpcomingEventsBuffer->set_text($NewUpcoming);
+	}
+}
+
 # Purpose: Wrapper around AddAutostart that detects if we have an pre-2.14
 # 		version of GNOME and displays an information dialog about the
 # 		inability to add a gnome autostart
@@ -1128,6 +1218,8 @@ sub DP_AddAutostart () {
 	if(defined($GNOME_Version)) {
 		unless($GNOME_Version > 2.12) {
 			$Old_GNOME = 1;
+		} else {
+			$Old_GNOME = 0;
 		}
 	} else {	# If we couldn't get the GNOME version then we just assume the user 
 			# either doesn't use GNOME or has a version of GNOME newer than 2.12
@@ -1366,7 +1458,7 @@ sub Get_DateInfo ($) {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# GUI event adding functions
+# GUI event adding and editing functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
@@ -2241,6 +2333,8 @@ sub DrawEventlist() {
 	} else {
 		# Remove data if needed
 		@{$EventlistWidget->{data}} = ();
+		# Repopulate the upcoming events widget
+		PopulateUpcomingEvents();
 	}
 	# Main calendar contents
 	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
@@ -2414,17 +2508,18 @@ sub DrawMainWindow () {
 		});
 
 	# UPCOMING EVENTS
-	# Create the (placeholder for the) upcoming events widget
+	# Create the scrolled window
 	my $UpcomingEventsWindow = Gtk2::ScrolledWindow->new;
 	$UpcomingEventsWindow->set_policy('automatic', 'automatic');
 	$UpcomingEventsWindow->show();
-	my $UpcomingEventsWidget = Gtk2::TextView->new();
-	my $UpcomingEventsBuffer = Gtk2::TextBuffer->new();
-	$UpcomingEventsBuffer->set_text("Upcoming events [MOCKUP]:\n\nOn monday\n at 20:00: Go home\n at 21:00 Movies\n\nOn tuesday...\n at 14:30: Doctor\n at 16:00 Home\n\nOn saturday..\n\n");
+	# Create the TextView and TextBuffer objects
+	$UpcomingEventsWidget = Gtk2::TextView->new();
+	$UpcomingEventsBuffer = Gtk2::TextBuffer->new();
 	$UpcomingEventsWidget->set_buffer($UpcomingEventsBuffer);
 	$UpcomingEventsWidget->set_editable(0);
 	$UpcomingEventsWidget->show();
 	$UpcomingEventsWindow->add($UpcomingEventsWidget);
+	# Pack it onto the main window
 	$RightHandVBox->pack_end($UpcomingEventsWindow,1,1,0);
 	
 	# ==================================================================
@@ -2526,13 +2621,15 @@ HolidaySetup();
 # Draw the main window
 DrawMainWindow();
 Gtk2->main_iteration while Gtk2->events_pending;
-# Initialize the daemon, and if it works draw the main window
+# Initialize the daemon
 DaemonInit() or die();
-# Initialize the remaining parts
+# Add autostart if needed
 unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 	DP_AddAutostart();
 	$InternalConfig{AddedAutostart} = 1;
 }
+# Populate the upcoming events widget
+PopulateUpcomingEvents();
 
 # Rest in the Gtk2 main loop
 Gtk2->main;
