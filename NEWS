@@ -7,7 +7,7 @@ Version 0.2 (Unreleased)
 - Now properly handles various signals
 - Can now make use of .holiday files
 - Now handles the daemon socket variable going undef much more gracefully
-- The main window is now unsensitive when the preferences dialog is displayed
+- The main window is now insensitive when the preferences dialog is displayed
 - Now displays a graphical error if the environment variable HOME isn't valid
 - Added Norwegian Nynorsk translation
 - Can now add and remove the daemon from autostarting along with the
@@ -19,6 +19,7 @@ Version 0.2 (Unreleased)
 - Removed the text on the image in the about dialog
 - Changed the name of the "summary" field to "description"
 - Switched to more generalized configuration loading/writing functions
+- Added a summary of the upcoming week
 
 * Daemon (dayplanner-daemon)
 

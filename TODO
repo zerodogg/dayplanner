@@ -7,7 +7,6 @@ subversion repository.
 
 * Version 0.2
 - - - - - - -
-- Add a week overview
 - Add support for am/pm
 	- This will be "emulated" in the sense that the internal clock and
 	data format will still use 24H time, but an internal function will translate
