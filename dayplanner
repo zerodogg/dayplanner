@@ -1155,13 +1155,15 @@ sub PopulateUpcomingEvents () {
 
 	# Main population loop
 	while($AddDays) {
-		$TheYday++;
-		$AddDays--;
+		$TheYday++;	# This is a new day
+		$AddDays--;	# One less day to add
 		
-		my $Mktime = POSIX::mktime(0, 0, 0, $TheYday, 0, $Year);
-		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($Mktime);
-		$getmonth++;
-		my $HumanYear = $getyear+1900;
+		my $Mktime = POSIX::mktime(0, 0, 0, $TheYday, 0, $Year);	# Get the POSIX time of this day
+
+		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($Mktime);	# Get the real time of this day
+		$getmonth++;	# Month should be 1-12 not 0-11
+
+		my $HumanYear = $getyear+1900;	# Human readable year
 
 		if($FirstDay) {
 			$NewUpcoming = $Gettext->get("Tomorrow");
@@ -1186,6 +1188,8 @@ sub PopulateUpcomingEvents () {
 		}
 		unless($HasEvents) {
 			$NewUpcoming .= $Gettext->get("(nothing)");
+		} else {
+			$HasUpcoming = 1;
 		}
 
 	}
