@@ -37,3 +37,4 @@ foreach(<*.po>) {
 	print "$_: ";
 	system("LC_ALL=C msgfmt --statistics $_");
 }
+unlink("messages.mo");
