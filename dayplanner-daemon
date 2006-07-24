@@ -600,14 +600,8 @@ sub CommandHandler ($) {
 		} elsif (/^DUMP_CLIENTLIST/) {
 			IntDebug("Client list request from $PID");
 			my $ClientList;
-			foreach (reverse sort keys(%{$AccessStatus{ClientList}})) {
-				# There must be some better way to do this?
-				# TODO: $ClientList .= $_; ?
-				if (defined($ClientList)) {
-					$ClientList = "$_ $ClientList";
-				} else {
-					$ClientList = $_;
-				}
+			foreach (sort keys(%{$AccessStatus{ClientList}})) {
+				$ClientList .= $_;
 			}
 			return($ClientList);
 		} elsif (/^DUMP_SLEEPTIME/) {
