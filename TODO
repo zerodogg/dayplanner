@@ -21,6 +21,8 @@ subversion repository.
 - Add export and import of iCalendar files. See http://en.wikipedia.org/wiki/RFC2445_Syntax_Reference
 	for the standard reference
 - Add export-to-html support
+- Add export and import of day planner data files
+	(including the ability to only export birthdays)
 - Add support for migrating a plan install if found on first startup
 	(integrate tools/plan-migration into the main day planner source)
 - Have a third party look over all strings (in the pot-file) and try to
