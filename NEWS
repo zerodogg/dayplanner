@@ -22,6 +22,7 @@ Version 0.2 (Unreleased)
 - Added a summary of the upcoming week
 
 * Daemon (dayplanner-daemon)
+- Now sets the process status (as shown in ps aux)
 
 * Notifier (dayplanner-notifier)
 - Now has support for notifying users without accessing X.
