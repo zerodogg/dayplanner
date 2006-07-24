@@ -65,7 +65,6 @@ Version 0.1.2 (Released on the 7th of June 2006)
 - Now accepts daemon commands on the commandline
 - Uses Getopt::Long
 
-
 Version 0.1.1 (Released on the 24th of May 2006)
 ------------------------------------------------
 * Client (dayplanner)
