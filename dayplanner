@@ -1179,7 +1179,7 @@ sub PopulateUpcomingEvents () {
 			$h->{text} .= $DayNames{$getwday};
 			$h->{dayname} = $DayNames{$getwday};
 		}
-		#$h->{date} = "$getmday.$getmonth.$HumanYear";
+		$h->{date} = "$getmday.$getmonth.$HumanYear";
 		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :\n ";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
@@ -1217,14 +1217,14 @@ sub PopulateUpcomingEvents () {
 			next unless(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents}));
 
 			my @OtherNoevents;	# Array of the next keys without any events
-			#my $LastDate;
+			my $LastDate;
 			my $LastDay;		# The last day with noevents
 
 			# For each of the next dates with no events set it up for usage here and if we had another
 			# noevents before this push it onto the @OtherNoevents array and replace the $LastDay value
 			# with ours.
 			while(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents})) {
-				#$LastDate = $InformationHash{$Next}{date};
+				$LastDate = $InformationHash{$Next}{date};
 				if(defined($LastDay)) {
 					push(@OtherNoevents, $LastDay);
 				}
@@ -1258,7 +1258,7 @@ sub PopulateUpcomingEvents () {
 			# Delete the $LastDay key
 			delete($InformationHash{$LastDay});
 			# Finalize the string
-			$InformationHash{$key}{text} .= ":\n" . $Gettext->get("(nothing)");
+			$InformationHash{$key}{text} .= " ($InformationHash{$key}{date}-$LastDate): " . $Gettext->get("(nothing)");
 		}
 		# Build our $NewUpcoming
 		foreach my $key(sort(keys(%InformationHash))) {
