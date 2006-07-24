@@ -1126,6 +1126,38 @@ sub AddAutostart ($) {
 	return($RETURN);
 }
 
+# Purpose: Get the number of *milli*seconds until midnight
+# Usage: my $miliseconds = MilisecondsUntilMidnight();
+sub MilisecondsUntilMidnight () {
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	# Convert hours to seconds
+	$currhour = $currhour * 60 * 60;
+	# Minutes to seconds
+	$currmin = $currmin * 60;
+
+	my $SecondsInADay = 86400;
+	my $total = $SecondsInADay - ($currhour + ($currmin + $currsec));
+	return($total*1000);
+}
+
+# Purpose: Repopulate the UpcomingEvents widget on a timer (every 24h)
+# Usage: \&Day_Changed_Event;
+sub Day_Changed_Event {
+	# First repopulate the upcoming events widget
+	PopulateUpcomingEvents();
+	# Now reset the timer
+	Set_DayChangeTimer();
+	# Return false to make Glib remove the old timer
+	return(0);
+}
+
+# Purpose: Set the day-changed timer
+# Usage: Set_DayChangeTimer();
+sub Set_DayChangeTimer () {
+	# Set the timer
+	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2710,8 +2742,9 @@ unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutosta
 	DP_AddAutostart();
 	$InternalConfig{AddedAutostart} = 1;
 }
-# Populate the upcoming events widget
+# Set the redraw timer and populate the upcoming events widget
 PopulateUpcomingEvents();
+Set_DayChangeTimer();
 
 # Rest in the Gtk2 main loop
 Gtk2->main;
