@@ -1131,8 +1131,10 @@ sub AddAutostart ($) {
 # Purpose: Populate the upcoming events widget
 # Usage: PopulateUpcomingEvents();
 sub PopulateUpcomingEvents () {
+	# TODO: Write a DataUpdated() function that calls this. No need to call it every time the main events widget is updated.
 	my $NewUpcoming;
 	my $HasUpcoming;
+	my %InformationHash;
 	my %DayNames = (
 		0 => $Gettext->get("Sunday"),
 		1 => $Gettext->get("Monday"),
@@ -1153,10 +1155,13 @@ sub PopulateUpcomingEvents () {
 	my $AddDays = 7;
 	$TheYday++; # Yearday currently starts at 0, we need it to start at 1
 
-	# Main population loop
+	# Loop used to populate the %InformationHash
 	while($AddDays) {
 		$TheYday++;	# This is a new day
 		$AddDays--;	# One less day to add
+
+		$InformationHash{$TheYday} = {};
+		my $h = $InformationHash{$TheYday};
 		
 		my $Mktime = POSIX::mktime(0, 0, 0, $TheYday, 0, $Year);	# Get the POSIX time of this day
 
@@ -1166,28 +1171,32 @@ sub PopulateUpcomingEvents () {
 		my $HumanYear = $getyear+1900;	# Human readable year
 
 		if($FirstDay) {
-			$NewUpcoming = $Gettext->get("Tomorrow");
+			$h->{text}= $Gettext->get("Tomorrow");
+			$h->{dayname} = $h->{text};
 			$FirstDay = 0;
 		} else {
-			$NewUpcoming .= "\n\n";
-			$NewUpcoming .= $DayNames{$getwday};
+			$h->{text} .= "\n\n";
+			$h->{text} .= $DayNames{$getwday};
+			$h->{dayname} = $DayNames{$getwday};
 		}
-		$NewUpcoming .= " ($getmday.$getmonth.$HumanYear) :\n ";
+		#$h->{date} = "$getmday.$getmonth.$HumanYear";
+		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :\n ";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
 			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
 				$HasEvents = 1;
-				$NewUpcoming .= $Gettext->get("At") . " $_: $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
+				$h->{text} .= $Gettext->get("At") . " $_: $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
 			}
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
 			foreach my $Birthday (keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
 					$HasEvents = 1;
-					$NewUpcoming .= sprintf($Gettext->get("%s's birthday"), $Birthday);
+					$h->{text} .= sprintf($Gettext->get("%s's birthday"), $Birthday);
 			}
 		}
 		unless($HasEvents) {
-			$NewUpcoming .= $Gettext->get("(nothing)");
+			$h->{text} .= $Gettext->get("(nothing)");
+			$h->{noevents} = 1;
 		} else {
 			$HasUpcoming = 1;
 		}
@@ -1195,9 +1204,70 @@ sub PopulateUpcomingEvents () {
 	}
 	unless($HasUpcoming) {
 		$NewUpcoming = $Gettext->get("You have no upcoming events the next seven days");
-	}
-	unless($UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
+	} else {
+		# Remove duplicate (nothing)'s
+		foreach my $key (sort(keys(%InformationHash))) {
+			# If the key doesn't exist (any more) or doesn't have noevents then skip it
+			next unless(defined($InformationHash{$key}));
+			next unless(defined($InformationHash{$key}{noevents}));
+			# Find out which key is next
+			my $Next = $key;
+			$Next++;
+			# Skip if the next key doesn't have noevents set
+			next unless(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents}));
 
+			my @OtherNoevents;	# Array of the next keys without any events
+			#my $LastDate;
+			my $LastDay;		# The last day with noevents
+
+			# For each of the next dates with no events set it up for usage here and if we had another
+			# noevents before this push it onto the @OtherNoevents array and replace the $LastDay value
+			# with ours.
+			while(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents})) {
+				#$LastDate = $InformationHash{$Next}{date};
+				if(defined($LastDay)) {
+					push(@OtherNoevents, $LastDay);
+				}
+				$LastDay = $Next;
+				$Next++;
+			}
+			# Reset the current text to simply \n\n
+			$InformationHash{$key}{text} = "\n\n";
+			# If there is something in @OtherNoevents then do more processing
+			if(@OtherNoevents) {
+				# First day (current key)
+				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname},";
+
+				my $Counter;	# Count how many times we've gone through the foreach
+				foreach(@OtherNoevents) {
+					$Counter++;	# Up the counter
+					$InformationHash{$key}{text} .= " $InformationHash{$_}{dayname}";
+					unless($Counter eq scalar(@OtherNoevents)) {	# If the counter doesn't equal the number of entries
+											# in the array then append a comma.
+						$InformationHash{$key}{text} .= ",";
+					}
+					# Delete the key
+					delete($InformationHash{$_});
+				}
+				# Append the last entries
+				$InformationHash{$key}{text} .= " " . $Gettext->get("and") . " $InformationHash{$LastDay}{dayname}";
+			} else {
+				# Build the string
+				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname} " . $Gettext->get("and") . "$InformationHash{$LastDay}{dayname}";
+			}
+			# Delete the $LastDay key
+			delete($InformationHash{$LastDay});
+			# Finalize the string
+			$InformationHash{$key}{text} .= ":\n" . $Gettext->get("(nothing)");
+		}
+		# Build our $NewUpcoming
+		foreach my $key(sort(keys(%InformationHash))) {
+			$NewUpcoming .= $InformationHash{$key}{text};
+		}
+	}
+	
+	# Don't update the widget if the text hasn't changed
+	unless($UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
 	}
 }
