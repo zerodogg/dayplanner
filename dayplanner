@@ -635,6 +635,8 @@ sub UpdatedData () {
 	SaveMainData();
 	# Redraw the event list
 	DrawEventlist();
+	# Repopulate the upcoming events
+	PopulateUpcomingEvents();
 	# Redraw the calendar
 	CalendarChange();
 }
@@ -1131,7 +1133,6 @@ sub AddAutostart ($) {
 # Purpose: Populate the upcoming events widget
 # Usage: PopulateUpcomingEvents();
 sub PopulateUpcomingEvents () {
-	# TODO: Write a DataUpdated() function that calls this. No need to call it every time the main events widget is updated.
 	my $NewUpcoming;
 	my $HasUpcoming;
 	my %InformationHash;
@@ -2411,8 +2412,6 @@ sub DrawEventlist() {
 	} else {
 		# Remove data if needed
 		@{$EventlistWidget->{data}} = ();
-		# Repopulate the upcoming events widget
-		PopulateUpcomingEvents();
 	}
 	# Main calendar contents
 	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
