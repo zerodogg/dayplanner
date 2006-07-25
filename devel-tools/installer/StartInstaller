@@ -44,16 +44,6 @@ if [ "$ARGS" != "auto" ]; then
 
 	echo -n "."
 
-	if ! perl -e 'use Gtk2; Gtk2->init;' &>/dev/null; then
-		echo "I was unable to connect to your X server. Please verify your settings."
-		echo ""
-		echo "If you want to use this installer without X supply the commandline option \"auto\""
-		echo "(this will install day planner without prompting you)"
-		exit 1
-	fi
-
-	echo -n "."
-
 	if [ ! -e ./xmsg ]; then
 		echo "failed"
 		echo "./xmsg didn't exist. This installer is corrupt"
