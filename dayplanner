@@ -1238,6 +1238,7 @@ sub PopulateUpcomingEvents () {
 	unless($HasUpcoming) {
 		$NewUpcoming = $Gettext->get("You have no upcoming events the next seven days");
 	} else {
+		my $LoopNum;
 		# Remove duplicate (nothing)'s
 		foreach my $key (sort(keys(%InformationHash))) {
 			# If the key doesn't exist (any more) or doesn't have noevents then skip it
@@ -1252,6 +1253,7 @@ sub PopulateUpcomingEvents () {
 			my @OtherNoevents;	# Array of the next keys without any events
 			my $LastDate;
 			my $LastDay;		# The last day with noevents
+			$LoopNum++;		# Up the loop counter
 
 			# For each of the next dates with no events set it up for usage here and if we had another
 			# noevents before this push it onto the @OtherNoevents array and replace the $LastDay value
@@ -1264,8 +1266,12 @@ sub PopulateUpcomingEvents () {
 				$LastDay = $Next;
 				$Next++;
 			}
-			# Reset the current text to simply \n\n
-			$InformationHash{$key}{text} = "\n\n";
+			# Reset the current text 
+			if($LoopNum > 1) {
+				$InformationHash{$key}{text} = "\n\n";
+			} else {
+				$InformationHash{$key}{text} = "";
+			}
 			# If there is something in @OtherNoevents then do more processing
 			if(@OtherNoevents) {
 				# First day (current key)
