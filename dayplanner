@@ -1292,7 +1292,7 @@ sub PopulateUpcomingEvents () {
 				$InformationHash{$key}{text} .= " " . $Gettext->get("and") . " $InformationHash{$LastDay}{dayname}";
 			} else {
 				# Build the string
-				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname} " . $Gettext->get("and") . "$InformationHash{$LastDay}{dayname}";
+				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname} " . $Gettext->get("and") . " $InformationHash{$LastDay}{dayname}";
 			}
 			# Delete the $LastDay key
 			delete($InformationHash{$LastDay});
