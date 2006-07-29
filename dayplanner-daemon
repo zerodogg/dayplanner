@@ -494,6 +494,7 @@ sub CommandHandler ($) {
 		IntDebug("Malformed request: $_");
 		return("ERR MALFORMED_REQUEST");
 	}
+	study();
 	s/^(\d+)\s+//;
 	# HI is the first command clients should run to identify themselves
 	if (/^HI\s+(\w+)/) {
