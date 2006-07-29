@@ -511,6 +511,9 @@ sub CreateSaveDir () {
 	unless (-e $SaveToDir) {
 		mkdir($SaveToDir) or do {
 				DPError($Gettext->get(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
+				unless(-d $SaveToDir) {
+					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
+				}
 			}
 	}
 }
@@ -1075,7 +1078,7 @@ sub AddAutostart ($) {
 	}
 	# GNOME - this is harder. No real common spec or easy way to do it. 2.14 or so
 	#  supports the freedesktop spec, older however - does not.
-	if(-d "$ENV{HOME}/.gnome2/") {
+	if(-d "$ENV{HOME}/.gnome2/" and $TryGnome) {
 		# If it doesn't exist then we just write it
 		unless(-e "$ENV{HOME}/.gnome2/session-manual") {
 			open(GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
@@ -1243,6 +1246,7 @@ sub PopulateUpcomingEvents () {
 		foreach my $key (sort(keys(%InformationHash))) {
 			# If the key doesn't exist (any more) or doesn't have noevents then skip it
 			next unless(defined($InformationHash{$key}));
+			$LoopNum++;		# Up the loop counter
 			next unless(defined($InformationHash{$key}{noevents}));
 			# Find out which key is next
 			my $Next = $key;
@@ -1253,7 +1257,6 @@ sub PopulateUpcomingEvents () {
 			my @OtherNoevents;	# Array of the next keys without any events
 			my $LastDate;
 			my $LastDay;		# The last day with noevents
-			$LoopNum++;		# Up the loop counter
 
 			# For each of the next dates with no events set it up for usage here and if we had another
 			# noevents before this push it onto the @OtherNoevents array and replace the $LastDay value
@@ -1304,7 +1307,6 @@ sub PopulateUpcomingEvents () {
 			$NewUpcoming .= $InformationHash{$key}{text};
 		}
 	}
-	
 	# Don't update the widget if the text hasn't changed
 	unless($UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
@@ -2693,7 +2695,7 @@ GetOptions (
 	},
 	'test|t' => sub {
 		print "*** (Day Planner $Version) Running in test mode\n";
-		$SaveToDir = "$SaveToDir/debug";
+		$SaveToDir = "$ENV{HOME}/debug";
 	},
 	'confdir=s' => sub {
 		if (-e $_[1]) {
@@ -2723,9 +2725,10 @@ unless(-e $ENV{HOME} and -d $ENV{HOME}) {
 	DPError(sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME"));
 	die("\n");
 }
+Gtk2->init;
 # Set SaveToDir and HolidayFile
-$SaveToDir = "$ENV{HOME}/.dayplanner";		# The configuration and eventlist directory
-$HolidayFile = "$SaveToDir/holidays";		# The file to load holiday definitions from
+$SaveToDir = "$ENV{HOME}/.dayplanner" unless(defined($SaveToDir));	# The configuration and eventlist directory
+$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
 
 # Load the configuration file
 LoadDefaultConfig();
@@ -2733,9 +2736,6 @@ LoadDefaultConfig();
 LoadStateFile($SaveToDir, "state.conf");
 # Load the calendar
 LoadCalendar();
-unless($Gtk2_Initialized) {
-	Gtk2->init;
-}
 # Set up holidays
 HolidaySetup();
 # Draw the main window
