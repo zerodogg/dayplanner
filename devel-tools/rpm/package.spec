@@ -1,3 +1,6 @@
+%define include_holidayparser 0
+%{?_with_holidayparser: %{expand: %%global include_holidayparser 1}}
+
 %define	name	dayplanner
 %define	version [DAYPLANNER_VERSION]
 %define rel	1
@@ -22,6 +25,10 @@ Day planner is designed to help you easily manage your time.
 It can manage appointments, birthdays and more. It makes sure you
 remember your appointments by popping up a dialog box reminding you about it.
 
+%if %include_holidayparser
+This package also includes the Date::HolidayParser perl module
+%endif
+
 %package tools
 Summary: Various tools for use with day planner
 Group: Office
@@ -39,16 +46,23 @@ dayplanner-commander     : Send raw commands to the day planner daemon
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_bindir}/
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/
 
 # Install the binaries
 for a in dayplanner dayplanner-daemon dayplanner-notifier; do
-	install -m755 $a $RPM_BUILD_ROOT%{_bindir}/
+	install -m755 $a $RPM_BUILD_ROOT%{_datadir}/%name/
+	ln -s %{_datadir}/%name/$a $RPM_BUILD_ROOT%{_bindir}/
 done
 install -m755 ./tools/commander $RPM_BUILD_ROOT%{_bindir}/dayplanner-commander
 install -m755 ./tools/plan-migration $RPM_BUILD_ROOT%{_bindir}/dayplanner-plan-migration
 
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/
 install -m644 ./art/dayplanner-about.png $RPM_BUILD_ROOT%{_datadir}/%name/
+
+# Install Date::HolidayParser if needed
+%if %include_holidayparser
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/modules/Date-HolidayParser/lib/
+cp -r ./modules/Date-HolidayParser/lib/* $RPM_BUILD_ROOT%{_datadir}/%name/modules/Date-HolidayParser/lib/
+%endif
 
 # Install the icons
 install -m644 ./art/dayplanner_24.png -D $RPM_BUILD_ROOT%{_iconsdir}/dayplanner.png
