@@ -9,6 +9,7 @@
 "1. Nyttårsdag" weekend on 1.1
 "2. Nyttårsdag" on 2.1
 "Grunnlovsdag" weekend on 17.5
+"Off. høytidsdag" weekend on 1.5
 
 : Andre merkedagar
 "Morsdag" on second sunday in february
@@ -19,23 +20,21 @@
 "Kvinnedagen" on 8 march
 
 : Offentlege fridagar frå kristen tradisjon 
-"Bots & bededag" weekend on last sunday in october
-"Søn. før faste" weekend on easter minus 49
 "Skjærtorsdag" weekend on easter minus 3
 "Langfredag" weekend on easter minus 2
-"Påskeaften" on easter minus 1
 "1. Påskedag" weekend on easter
 "2. Påskedag" weekend on easter plus 1
-"Pinseaften" on easter plus 48 days
 "1. Pinsedag" weekend on easter plus 49 days
 "2. Pinsedag" weekend on easter plus 50 days
 "Kristi Him.f.dag" weekend on easter plus 39 days
-"Off. høytidsdag" weekend on 1.5
 "1. Juledag" weekend on 25.12
 "2. Juledag" weekend on 26.12
 
 : Andre vanlege merkedagar frå kristen tradisjon
+"Søn. før faste" weekend on easter minus 49
+"Påskeaften" on easter minus 1
 "St. Hans" on 23.6
+"Pinseaften" on easter plus 48 days
 "1. Advent" on sunday before 23.12 minus 21 days
 "2. Advent" on sunday before 23.12 minus 14 days
 "3. Advent" on sunday before 23.12 minus 7 days
