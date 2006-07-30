@@ -1,7 +1,7 @@
 :
 : Finnish holiday file. Copy to ~/.holiday
 :
-: Author: Steven Wahlberg <stegu@iki.fi>
+: Original author: Steven Wahlberg <stegu@iki.fi>
 
 : p‰‰si‰isen m‰‰r‰‰m‰t
 red "Laskiaissunnuntai" on easter minus 49 days
@@ -24,9 +24,9 @@ blue "Yst‰v‰np‰iv‰" on 14 february
 blue "Kalevalan p‰iv‰" on  28 february
 
 blue "Naistenp‰iv‰" on 8 march
-cyan "Kes‰aika (+1)" on last sunday in march
+cyan "Kes‰aika" on last sunday in march
 
-blue "Acricolanp‰iv‰" on 9 april
+blue "Acrigolanp‰iv‰" on 9 april
 blue "Veteraanip‰iv‰" on 27 april
 
 blue "Vappu" weekend on 1 may
@@ -42,10 +42,10 @@ blue "Unikeonp‰iv‰" on 27 july
 blue "Kansainv‰linen lasten p‰iv‰" on 7 october
 blue "Aleksis Kiven p‰iv‰" on 10 october
 blue "YK:n p‰iv‰" on 24 october
-cyan "Kes‰aika (-1)" on last sunday in october
+cyan "Normaaliaika" on last sunday in october
 
 red "Pyh‰inp‰iv‰" weekend on first saturday in november
-blue "Svenska dagen" on 6 november
+blue "Ruotsalaisuuden p‰iv‰" on 6 november
 blue "Is‰np‰iv‰" on second sunday in november
 
 red "1. adventtisunnuntai" on on sunday before 24 december minus 21 days
