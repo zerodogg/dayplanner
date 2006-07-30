@@ -13,7 +13,9 @@ If you're not on a Mandriva Linux-based GNU/Linux distribution
 (or perhaps not on a GNU/Linux distribution at all) you may want to
 skip building the RPM. You can force the CreatePackages script to
 skip building the RPMs by exporting the environment variable
-DP_NORPM=1 before running the script.
+DP_NORPM=1 before running the script. When building an RPM you can
+also force CreatePackages to save the build log by exporting the
+environment variable DP_SAVERPMLOG=1 before running the script.
 
 If you for some reason don't want to build the makeself
 self-contained installer package either you can export the
