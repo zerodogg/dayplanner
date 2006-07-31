@@ -136,7 +136,7 @@ sub _SyntaxError {
 
 # Purpose. Actually print the error (obeying $BeSilent)
 # Usage: _PrintError(ERROR);
-sub _PrintError($) {
+sub _PrintError {
 	unless($BeSilent) {
 		warn $_[0];
 	}
@@ -375,9 +375,9 @@ sub _load_and_parse {
 	carp("$File is not readable") and return(undef) unless -r $File;
 
 	my %FinalParsing;
-	open(HOLIDAYFILE, "<$File") or croak("Unable to open $File for reading");
+	open(my $HolidayFile, "<" ,"$File") or croak("Unable to open $File for reading");
 	my $LineNo;
-	foreach my $Line (<HOLIDAYFILE>) {
+	while(my $Line = <$HolidayFile>) {
 		$LineNo++;
 		next if $Line =~ /^\s*[:;#]/;# Ignore these lines
 		next if $Line =~ /^\s*$/;# Ignore lines with only whitespace
@@ -551,6 +551,7 @@ sub _load_and_parse {
 		$CreativeParser{name} = $HolidayName;
 		$self->{parsed}{$LineNo} = \%CreativeParser;
 	}
+	close($HolidayFile);
 }
 
 # Purpose: Create a new object and call _load_and_parse on it
@@ -585,6 +586,7 @@ sub get {
 # End of Date::HolidayParser
 1;
 
+__END__
 =head1 NAME
 
 Date::HolidayParser - Parser for .holiday-files
@@ -818,7 +820,7 @@ L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Date-HolidayParser>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
-=head1 COPYRIGHT & LICENSE
+=head1 LICENSE AND COPYRIGHT
 
 Copyright (C) 2006 Eskild Hustvedt, all rights reserved.
 
