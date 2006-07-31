@@ -599,7 +599,7 @@ sub SaveDatafile {
 	# Pulse once
 	$ProgressBar->pulse();
 	# Dump the data
-	print SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
+	print $SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
 	# Pulse once and close
 	$ProgressBar->pulse();
 	close($SAVEFILE);
