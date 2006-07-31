@@ -83,7 +83,7 @@ sub PrintHelp($$$) {
 
 # Purpose: Load the config file set in $ConfigFile
 # Usage: LoadConfig();
-sub LoadConfig () {
+sub LoadConfig {
 	%Config = ();
 	
 	# First, set some fallback defaults
@@ -120,7 +120,7 @@ sub LoadConfig () {
 
 # Purpose: Append a "0" to a number if it is only one digit.
 # Usage: my $NewNumber = AppendZero(NUMBER);
-sub AppendZero ($) {
+sub AppendZero {
 	if ($_[0] =~ /^\d$/) {
 		return("0$_[0]");
 	}
@@ -129,7 +129,7 @@ sub AppendZero ($) {
 
 # Purpose: Set the program status
 # Usage: SetStatus(STATUS);
-sub SetStatus ($) {
+sub SetStatus {
 	$0 = "dayplanner-daemon [$_[0]]";
 }
 
@@ -139,7 +139,7 @@ sub SetStatus ($) {
 
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
-sub LoadCalendar () {
+sub LoadCalendar {
 	if(DataLoadTest("$DayplannerDir/$MainEventsFile")) {
 		%CalendarContents = do("$DayplannerDir/$MainEventsFile");
 	}
@@ -156,7 +156,7 @@ sub LoadCalendar () {
 
 # Purpose: Test if a load can be successfully performed of the supplied file
 # Usage: DataLoadTest("/path/to/file");
-sub DataLoadTest () {
+sub DataLoadTest {
 	# If the calendar savefile exists
 	if (-e "$_[0]") {
 		# If it isn't readable then we warn and return
@@ -174,7 +174,7 @@ sub DataLoadTest () {
 
 # Purpose: Find out how many seconds we should sleep before performing some action
 # Usage: $SleepTime = FindSleepDuartion();
-sub FindSleepDuration () {
+sub FindSleepDuration {
 	# Get the current time/date
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	$curryear += 1900; $currmonth++;
@@ -244,7 +244,7 @@ sub FindSleepDuration () {
 
 # Purpose: Output a debugging message if needed
 # Usage: IntDebug(MESSAGE);
-sub IntDebug ($) {
+sub IntDebug {
 	if ($DebuggingOutput) {
 		IntOutputMSG("DEBUG: $_[0]\n");
 	}
@@ -252,7 +252,7 @@ sub IntDebug ($) {
 
 # Purpose: Output a message when in very verbose mode
 # IntVeryVerbose(MESSAGE);
-sub IntVeryVerbose ($) {
+sub IntVeryVerbose {
 	if ($OutputVeryVerbose) {
 		IntOutputMSG("$_[0]\n");
 	}
@@ -260,7 +260,7 @@ sub IntVeryVerbose ($) {
 
 # Purpose: Output a message when in verbose mode
 # Usage: IntVerbose(MESSAGE);
-sub IntVerbose ($) {
+sub IntVerbose {
 	if ($OutputVerbose) {
 		IntOutputMSG("$_[0]\n");
 	}
@@ -268,7 +268,7 @@ sub IntVerbose ($) {
 
 # Purpose: Output a properly formatted internal message
 # Usage: IntOutputMSG(MESSAGE);
-sub IntOutputMSG ($) {
+sub IntOutputMSG {
 	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
 	$lhour = "0$lhour" unless $lhour >= 10;
 	$lmin = "0$lmin" unless $lmin >= 10;
@@ -278,13 +278,13 @@ sub IntOutputMSG ($) {
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: IntWarn("Warning");
-sub IntWarn ($) {
+sub IntWarn {
 	warn "Warning: $_[0]\n";
 }
 
 # Purpose: Parse the configuration option set in Events_NotifyPre
 # Usage: my ($Hours, $Minutes) = ParseNotifyPre($Events_NotifyPre);
-sub ParseNotifyPre ($) {
+sub ParseNotifyPre {
 	my $Events_NotifyPre = $_[0];
 
 	my $Number = $Events_NotifyPre;
@@ -317,7 +317,7 @@ sub ParseNotifyPre ($) {
 # $PreNotificationMinutes is the minutes returned by ParseNotificationPre();
 # IS_TOMORROW is true if the time we got is for tomorrow, not the current day,
 # 	we need to process the time more if IS_TOMORROW is true
-sub GetPreNotTime ($$$$) {
+sub GetPreNotTime {
 	# The parsed prenotification hours/minutes
 	# We don't need to do any checks on them here, we just assume they are valid
 	# as ParseNotifyPre() has already validated them
@@ -417,7 +417,7 @@ sub GetPreNotTime ($$$$) {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Purpose: Start the notifier and display the alarm
 # Usage: DayplannerAlarm();
-sub DayplannerAlarm () {
+sub DayplannerAlarm {
 	IntDebug("Alarm triggered");
 	
 	my $NotifierStarted;
@@ -462,7 +462,7 @@ sub DayplannerAlarm () {
 
 # Purpose: Run the notifier itself with the correct parameters
 # Usage: RunNotifier(SUMMARY, FULLTEXT, DATE, TIME);
-sub RunNotifier ($$$$) {
+sub RunNotifier {
 	# Notifier
 	my ($Summary, $Fulltext, $Date, $Time) = @_;
 	IntDebug("Alarm! Task: $Summary at $Time on $Date");
@@ -485,7 +485,7 @@ sub RunNotifier ($$$$) {
 
 # Purpose: Handle commands
 # Usage: CommandHandler(COMMAND);
-sub CommandHandler ($) {
+sub CommandHandler {
 	SetStatus("processing");
 	$_ = $_[0];
 	my $PID = $_[0];
@@ -667,7 +667,7 @@ sub SigpipeHandler {
 
 # Purpose: Open our main communication socket
 # Usage: OpenSocket();
-sub OpenSocket () {
+sub OpenSocket {
 	if (-e $DaemonSocket) {
 		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $DaemonSocket,
 							Type	=> SOCK_STREAM
@@ -708,7 +708,7 @@ sub OpenSocket () {
 # Purpose: Start the main loop
 # Usage: MainLoop();
 # Requires: OpenSocket(); already performed
-sub MainLoop () {
+sub MainLoop {
 	# Loop for eternity
 	while (1) {
 		my $SleepTime = FindSleepDuration();
@@ -764,7 +764,7 @@ sub MainLoop () {
 
 # Purpose: Calculate todays %NotificationHash
 # Usage: CalculateNotificationHash();
-sub CalculateNotificationHash () {
+sub CalculateNotificationHash {
 	%NotificationHash = ();
 	
 	# Get the current time/date
@@ -832,7 +832,7 @@ sub CalculateNotificationHash () {
 
 # Purpose: Wrap multiline packets correctly
 # Usage: PackageMultiLine(SCALAR);
-sub PackageMultiLine ($) {
+sub PackageMultiLine {
 	my $Message = $_[0];
 	my $NewMessage = "BEGIN MULTILINE\n";
 	foreach(split(/\n/,$Message)) {

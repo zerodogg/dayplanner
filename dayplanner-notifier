@@ -64,7 +64,7 @@ if (-d "$SoftwareDir/locale/" and defined($ENV{LANG})) {
 
 # Purpose: Connect to the daemon
 # Usage: DaemonConnect();
-sub DaemonConnect () {
+sub DaemonConnect {
 	$Socket = IO::Socket::UNIX->new(Peer => $SocketName,
 					Type => SOCK_STREAM,
 					Timeout => 10 )
@@ -81,13 +81,13 @@ sub DaemonConnect () {
 
 # Purpose: Send some data to the daemon
 # Usage: Daemon_SendData(DATA);
-sub Daemon_SendData ($) {
+sub Daemon_SendData {
 	print $Socket "$$ $_[0]","\n" or DPIntWarn("Problem sending data to the daemon: $!") and return(0);
 }
 
 # Purpose: Get some data from the daemon
 # Usage: $Data = Daemon_GetData();
-sub Daemon_GetData () {
+sub Daemon_GetData {
 	my $Data = <$Socket>;
 	unless(defined($Data)) {
 		return("ERR UNABLE_TO_GET_DATA");
@@ -102,21 +102,21 @@ sub Daemon_GetData () {
 
 # Purpose: Send something to the daemon and then return the daemons reply
 # Usage: $Reply = Daemon_DataSegment(DATA);
-sub Daemon_DataSegment ($) {
+sub Daemon_DataSegment {
 	Daemon_SendData($_[0]);
 	return(Daemon_GetData());
 }
 
 # Purpose: Disconnect from the daemon
 # Usage: DaemonDisconnect();
-sub DaemonDisconnect () {
+sub DaemonDisconnect {
 	Daemon_DataSegment("BYE");
 	close($Socket);
 }
 
 # Purpose: Unwrap multiline packets correctly
 # Usage: my $Multiline = UnwrapMultiLinePacket();
-sub UnwrapMultiLinePacket () {
+sub UnwrapMultiLinePacket {
 	my $MultiLineNotEnded = 1;
 	my $NewMessage;
 	my $UnhandledLimit;
@@ -177,7 +177,7 @@ sub UnwrapMultiLinePacket () {
 
 # Purpose: Get the messages from the daemon
 # Usage: GetMessages(Message ID);
-sub GetMessages ($) {
+sub GetMessages {
 	unless(Daemon_DataSegment("NOTIFICATION VERIFY $_[0]") eq 'SET') {
 		die("The MessageID $_[0] is invalid according to the daemon\n");
 	}
@@ -202,19 +202,19 @@ sub GetMessages ($) {
 
 # Purpose: Display a nicely formatted warning
 # Usage: DPIntWarn("Warning");
-sub DPIntWarn ($) {
+sub DPIntWarn {
 	warn "*** (Day Planner notifier $Version) Warning: $_[0]\n";
 }
 
 # Purpose: Print nicely formatted help output
 # Usage: PrintHelp("-shortoption","--longoption","Description");
-sub PrintHelp ($$$) {
+sub PrintHelp {
 	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
 
 # Purpose: Test if X is available
 # Usage: if(X_Available()) { Available } else { Not available }
-sub X_Available () {
+sub X_Available {
 	# This might look a bit weird, but remember that for commandline programs 0 is true
 	# and anything else is false.
 	#
@@ -229,7 +229,7 @@ sub X_Available () {
 
 # Purpose: Find out if a command is in PATH or not
 # Usage: InPath(COMMAND);
-sub InPath ($) {
+sub InPath {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
 
@@ -240,7 +240,7 @@ sub InPath ($) {
 
 # Purpose: Find out how to notify the user and do it
 # Usage: NotifyUser();
-sub NotifyUser () {
+sub NotifyUser {
 	if(defined($ENV{DISPLAY}) and length($ENV{DISPLAY}) and X_Available()) {
 		# We have DISPLAY, use GTK
 		GtkNotifier();
@@ -251,7 +251,7 @@ sub NotifyUser () {
 
 # Purpose: Notify the user using a graphical (gtk2) dialog
 # Usage: GtkNotifier();
-sub GtkNotifier () {
+sub GtkNotifier {
 	Gtk2->init;
 	while (1) {
 		my $MainText;
@@ -325,7 +325,7 @@ sub GtkNotifier () {
 
 # Purpose: Notify the user using a nongraphical system
 # Usage: NonGUINotifier();
-sub NonGUINotifier () {
+sub NonGUINotifier {
 	my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
 	unless($sysname eq "Linux") {
 		print "*** dayplanner-notifier ($Version): Not running under GNU/Linux but attempting to use the NonGUINotifier. This might not work as expected if a non-GNU compatible who is installed\n";
@@ -355,7 +355,7 @@ sub NonGUINotifier () {
 # Usage: my $Return = WriteTo(USER, MESSAGE);
 # 	The return value is 0 if nothing was written anywhere, 1 if something was
 # 	written.
-sub WriteTo ($$) {
+sub WriteTo {
 	my ($User,$Message) = @_;
 	return(0) unless InPath("who");
 	return(0) unless InPath("write");
