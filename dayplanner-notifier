@@ -360,9 +360,9 @@ sub WriteTo {
 	return(0) unless InPath("who");
 	return(0) unless InPath("write");
 	my $Return = 0;
-	open(WHO, "who -T|");
+	open(my $WHO, "who -T|");
 	my @WritableDevs;
-	foreach(<WHO>) {
+	while(<$WHO>) {
 		next unless s/^$User\s+//;
 		chomp;
 		my $Writable;
@@ -372,11 +372,11 @@ sub WriteTo {
 			push(@WritableDevs, $_);
 		}
 	}
-	close(WHO);
+	close($WHO);
 	foreach my $Target (@WritableDevs) {
-		open(WRITE, "|write $User $Target");
-		print WRITE "$Message";
-		close(WRITE);
+		open(my $WRITE, "|write $User $Target");
+		print $WRITE "$Message";
+		close($WRITE);
 		$Return = 1;
 	}
 }
