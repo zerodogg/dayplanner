@@ -303,7 +303,7 @@ sub DaemonConnectionErrorHandler {
 						 $Gettext->get("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
 
 	$ErrorDialog->add_buttons(
-		$Gettext->get('Force') => 'reject',
+		$Gettext->get('_Force') => 'reject',
 		'gtk-ok' => 'accept',
 	);
 	
