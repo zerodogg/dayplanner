@@ -37,7 +37,7 @@ our $BeSilent;
 # Usage: $EasterYDay = EasterCalc(YEAR);
 # 
 # YEAR should be absolute and not relative to 1900
-sub EasterCalc ($) {
+sub EasterCalc {
 	my $year = $_[0];
 
 	my $c;
@@ -77,7 +77,7 @@ sub EasterCalc ($) {
 
 # Purpose: Calculate a NumericYDay
 # Usage: $CreativeParser{FinalYDay} = _HCalc_NumericYDay($CreativeParser{NumericYDay}, $CreativeParser{AddDays}, $CreativeParser{SubtDays});
-sub _HCalc_NumericYDay ($$$) {
+sub _HCalc_NumericYDay {
 	my ($DAY, $ADD_DAYS, $SUBTRACT_DAYS) = @_;
 	if(defined($ADD_DAYS)) {
 		$DAY += $ADD_DAYS;
@@ -93,7 +93,7 @@ sub _HCalc_NumericYDay ($$$) {
 
 # Purpose: Return the English day name of the year day supplied
 # Usage: $DayName = _Holiday_DayName(INTEGER_NUMBER, YEAR);
-sub _Holiday_DayName ($$) {
+sub _Holiday_DayName {
 	my $year = $_[1];
 	$year -= 1900;
 	
@@ -115,7 +115,7 @@ sub _Holiday_DayName ($$) {
 
 # Purpose: Return the yday of the supplied unix time
 # Usage: $YDay = _Get_YDay(UNIX_TIME);
-sub _Get_YDay ($) {
+sub _Get_YDay {
 	my $Unix_Time = $_[0];
 	warn("_Get_YDay: Invalid usage: must be numeric. Got \"$Unix_Time\"") and return(undef) if $Unix_Time =~ /\D/;
 	my ($get_sec,$get_min,$get_hour,$get_mday,$get_mon,$get_year,$get_wday,$get_yday,$get_isdst) = localtime($Unix_Time);
@@ -124,13 +124,13 @@ sub _Get_YDay ($) {
 
 # Purpose: Print a warning about some error during the holiday parsing
 # Usage: _HolidayError(LINE_NO, FILENAME, ERROR, ACTION_TAKEN);
-sub _HolidayError ($$$$) {
+sub _HolidayError {
 	_PrintError("*** Holiday parser error: $_[2] on line $_[0] in $_[1]. $_[3]\n");
 }
 
 # Purpose: Print a syntax error in a holiday file
 # Usage: _SyntaxError(LINE_NO, FILENAME, ERROR, ACTION_TAKEN);
-sub _SyntaxError ($$$$) {
+sub _SyntaxError {
 	_PrintError("*** Holiday parser: Syntax error: $_[2] on line $_[0] in $_[1]. $_[3]\n");
 }
 
@@ -144,7 +144,7 @@ sub _PrintError($) {
 
 # Purpose: Emulate the legacy syntax using the new OO-syntax
 # Usage: Parse(FILE, YEAR);
-sub Parse ($$) {
+sub Parse {
 	my ($File, $Year) = @_;
 	carp("$File does not exist") and return(undef) unless -e $File;
 	carp("$File is not readable") and return(undef) unless -r $File;
