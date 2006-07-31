@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-07-31 23:58+0200\n"
+"POT-Creation-Date: 2006-08-01 00:03+0200\n"
 "PO-Revision-Date: 2006-07-01 01:15+0200\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
@@ -88,7 +88,8 @@ msgstr ""
 "k strate èi po¹kodeniu údajov."
 
 #: dayplanner:306
-msgid "Force"
+#, fuzzy
+msgid "_Force"
 msgstr "Vynúti» ¹tart"
 
 #: dayplanner:317

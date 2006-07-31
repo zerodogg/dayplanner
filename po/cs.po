@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-07-31 23:59+0200\n"
+"POT-Creation-Date: 2006-08-01 00:03+0200\n"
 "PO-Revision-Date: 2006-07-01 01:15+0200\n"
 "Last-Translator: Vlastimil Ott <vlastimil@e-ott.info>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -86,7 +86,8 @@ msgstr ""
 "ztráta dat."
 
 #: dayplanner:306
-msgid "Force"
+#, fuzzy
+msgid "_Force"
 msgstr "Vynutit start"
 
 #: dayplanner:317
