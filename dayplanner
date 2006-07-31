@@ -361,7 +361,7 @@ sub LoadConfigFile {
 		DPError($Gettext->get(sprintf("Unable to read the configuration settings from %s: %s", $File, $!)));
 		return(0);
 	};
-	foreach(<$CONFIG>) {
+	while(<$CONFIG>) {
 		next if m/^\s*(#.*)?$/;
 		next unless m/=/;
 		chomp;
@@ -550,7 +550,7 @@ sub SaveDatafile {
 	# Pulse once
 	$ProgressBar->pulse();
 	# Open the savefile ($_[0]/$_[1]) for writing
-	open($SAVEFILE, ">", $_[0]/$_[1]") or do {
+	open($SAVEFILE, ">", "$_[0]/$_[1]") or do {
 		# EMERGENCY FALLBACK
 		
 		# Okay, we couldn't open it. This is bad.
@@ -727,7 +727,7 @@ sub GetDistVer {
 		# Darwin kernel, try to get OS X info.
 		if(InPath("sw_vers")) {
 			if(open(my $SW_VERS, "sw_vers |")) {
-				foreach(<$SW_VERS>) {
+				while(<$SW_VERS>) {
 					chomp;
 					if (s/^ProductName:\s+//gi) {
 						$DarwinName = $_;
@@ -965,7 +965,7 @@ sub RemoveAutostart {
 	if(-w "$ENV{HOME}/.fluxbox/startup") {
 		my @FluxboxStartup;
 		open(my $OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
-		push(@FluxboxStartup, $_) foreach(<$OLDFLUX>);
+		push(@FluxboxStartup, $_) while(<$OLDFLUX>);
 		close($OLDFLUX);
 		open(my $FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
 		foreach(@FluxboxStartup) {
@@ -982,7 +982,7 @@ sub RemoveAutostart {
 		my @Gnome2Session;
 		my $GNOME2SESS;
 		open($GNOME2SESS, "<", "$ENV{HOME}/.gnome2/session-manual");
-		push(@Gnome2Session, $_) foreach(<$GNOME2SESS>);
+		push(@Gnome2Session, $_) while(<$GNOME2SESS>);
 		close($GNOME2SESS);
 		my ($Last, $Has_DP, $DP_ID, $Nullout);
 		# Parse
@@ -1092,7 +1092,7 @@ sub AddAutostart {
 			$RETURN = "gnome-fail";
 			my @G2H;
 			open(my $GNOMESESS, "<", "$ENV{HOME}/.gnome2/session-manual");
-			foreach(<$GNOMESESS>) {
+			while(<$GNOMESESS>) {
 				if(s/perl -e '# Removed by day planner'/$DaemonExec/i) {
 					$RETURN = "okay";
 				}
@@ -1120,7 +1120,7 @@ sub AddAutostart {
 		push(@FluxboxStartup, "$DaemonExec &");
 		if(-e "$ENV{HOME}/.fluxbox/startup") {
 			open(my $OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
-			push(@FluxboxStartup, $_) foreach(<$OLDFLUX>);
+			push(@FluxboxStartup, $_) while(<$OLDFLUX>);
 			close($OLDFLUX);
 		}
 		open(my $FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
@@ -1142,7 +1142,7 @@ sub MilisecondsUntilMidnight {
 	# Minutes to seconds
 	$currmin = $currmin * 60;
 
-	my $SecondsInADay = 86400;
+	my $SecondsInADay = 86_400;
 	my $total = $SecondsInADay - ($currhour + ($currmin + $currsec));
 	return($total*1000);
 }
@@ -1460,8 +1460,8 @@ sub GetEventListType {
 	} elsif (defined($Summary) and length($Summary)) {
 		return('holiday')
 	} else {
-		return(0);
 		DPIntWarn("FATAL: GetEventListType: Unable to get the type of the selected event ($EventYear-$EventMonth-$EventDay-$Time/$Summary");
+		return(0);
 	}
 }
 
