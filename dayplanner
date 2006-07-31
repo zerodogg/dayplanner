@@ -142,7 +142,7 @@ $SIG{TERM} = \&DP_SigHandler;
 
 # Purpose: Initialize and connect to the daemon
 # Usage: DaemonInit();
-sub DaemonInit () {
+sub DaemonInit {
 	$DaemonInitialized = 1;
 	
 	# Handle SIGPIPE
@@ -182,14 +182,14 @@ sub StartDaemon {
 
 # Purpose: Handle SIGPIPE gracefully
 # Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
-sub DaemonSIGPIPEHandler() {
+sub DaemonSIGPIPEHandler {
 	DPIntWarn("I recieved a SIGPIPE, the daemon is probably offline");
 	StartDaemon();
 }
 
 # Purpose: Connect to the daemon
 # Usage: ConnectToDaemon(/path/to/socket, FORCE/undef);
-sub ConnectToDaemon ($$) {
+sub ConnectToDaemon {
 	my $HI = 'HI client';
 	if(defined($_[1]) and $_[1] eq 'FORCE') {
 		$HI = 'HI client FORCE';
@@ -211,7 +211,7 @@ sub ConnectToDaemon ($$) {
 
 # Purpose: Send some data to the daemon
 # Usage: Daemon_SendData(DATA);
-sub Daemon_SendData ($) {
+sub Daemon_SendData {
 	if($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
 			DPIntWarn("\$DaemonSocket is suddenly undef, attempting reconnect");
@@ -228,7 +228,7 @@ sub Daemon_SendData ($) {
 
 # Purpose: Reconnect after $DaemonSocket for some reason has gone undef
 # Usage: Daemon_AttemptReconnect();
-sub Daemon_AttemptReconnect () {
+sub Daemon_AttemptReconnect {
 	if(ConnectToDaemon("$SaveToDir/$DaemonSocketName", undef) eq 'NOHI') {
 		return(undef);
 	} else {
@@ -256,7 +256,7 @@ sub Daemon_GetData {
 
 # Purpose: Send something to the daemon and then return the daemons reply
 # Usage: $Reply = Daemon_DataSegment(DATA);
-sub Daemon_DataSegment ($) {
+sub Daemon_DataSegment {
 	if($DaemonOnline) {
 		if(Daemon_SendData($_[0])) {
 			return(Daemon_ErrorHandler(Daemon_GetData()));
@@ -268,7 +268,7 @@ sub Daemon_DataSegment ($) {
 
 # Purpose: Close the connection to the daemon
 # Usage: CloseDaemon();
-sub CloseDaemon () {
+sub CloseDaemon {
 	if ($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
 			DPIntWarn("\$DaemonSocket is suddenly undef. Doesn't matter though since we're closing the connection anyway.");
@@ -295,7 +295,7 @@ sub Daemon_ErrorHandler {
 
 # Purpose: Display an error dialog about the inability to connect to the daemon
 # Usage: DaemonConnectionErrorHandler();
-sub DaemonConnectionErrorHandler () {
+sub DaemonConnectionErrorHandler {
 	my $ErrorDialog = Gtk2::MessageDialog->new (undef,
 						'destroy-with-parent',
 						'error',
@@ -326,7 +326,7 @@ sub DaemonConnectionErrorHandler () {
 
 # Purpose: Write a configuration file
 # Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
-sub WriteConfigFile ($$$) {
+sub WriteConfigFile {
 	my ($File, $Config, $Explanations) = @_;
 
 	# Open the config for writing
@@ -354,7 +354,7 @@ sub WriteConfigFile ($$$) {
 #  or skipped completely (by replacing it by undef).
 #  If OnlyValidOptions is true it will cause LoadConfigFile to skip options not in
 #  the OptionRegexHash.
-sub LoadConfigFile ($$$$) {
+sub LoadConfigFile {
 	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
 
 	open(my $CONFIG, "<", "$File") or do {
@@ -392,7 +392,7 @@ sub LoadConfigFile ($$$$) {
 
 # Purpose: Write the state file 
 # Usage: WriteStateFile(DIRECTORY, FILENAME);
-sub WriteStateFile($$) {
+sub WriteStateFile {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
@@ -426,7 +426,7 @@ sub WriteStateFile($$) {
 
 # Purpose: Load the state file
 # Usage: LoadStateFile(DIRECTORY, FILENAME);
-sub LoadStateFile($$) {
+sub LoadStateFile {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
@@ -437,7 +437,7 @@ sub LoadStateFile($$) {
 
 # Purpose: Write the configuration file
 # Usage: WriteConfig(DIRECTORY, FILENAME);
-sub WriteConfig ($$) {
+sub WriteConfig {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
@@ -472,7 +472,7 @@ sub WriteConfig ($$) {
 
 # Purpose: Load the configuration file
 # Usage: LoadConfig(DIRECTORY, FILENAME);
-sub LoadConfig ($$) {
+sub LoadConfig {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
@@ -494,20 +494,20 @@ sub LoadConfig ($$) {
 
 # Purpose: Load the default configuration file
 # Usage: LoadDefaultConfig();
-sub LoadDefaultConfig () {
+sub LoadDefaultConfig {
 	CreateSaveDir();
 	return(LoadConfig($SaveToDir, $ConfigFile));
 }
 
 # Purpose: Save the default configuration file
 # Usage: SaveDefaultConfig();
-sub SaveDefaultConfig () {
+sub SaveDefaultConfig {
 	return(WriteConfig($SaveToDir, $ConfigFile));
 }
 
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
 # Usage: CreateSaveDir();
-sub CreateSaveDir () {
+sub CreateSaveDir {
 	unless (-e $SaveToDir) {
 		mkdir($SaveToDir) or do {
 				DPError($Gettext->get(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
@@ -520,7 +520,7 @@ sub CreateSaveDir () {
 
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
-sub SaveDatafile ($$$$) {
+sub SaveDatafile {
 	my $SAVEFILE;
 	# Create the progress window
 	my $ProgressWin = Gtk2::Window->new();
@@ -611,7 +611,7 @@ sub SaveDatafile ($$$$) {
 
 # Purpose: Save the main data files
 # Usage: SaveMainData();
-sub SaveMainData () {
+sub SaveMainData {
 	my $Return = 'OKAY';
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
 		$Return	= 'SAVE_FAILED';
@@ -634,7 +634,7 @@ sub SaveMainData () {
 
 # Purpose: Save the data file and redraw the needed windows
 # Usage: UpdatedData();
-sub UpdatedData () {
+sub UpdatedData {
 	# Save the data
 	SaveMainData();
 	# Redraw the event list
@@ -647,7 +647,7 @@ sub UpdatedData () {
 
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
-sub LoadCalendar () {
+sub LoadCalendar {
 	if(DataLoadTest("$SaveToDir/$MainEventsFile")) {
 		%CalendarContents = do("$SaveToDir/$MainEventsFile");
 	}
@@ -665,7 +665,7 @@ sub LoadCalendar () {
 
 # Purpose: Test if a load can be successfully performed of the supplied file
 # Usage: DataLoadTest("/path/to/file");
-sub DataLoadTest () {
+sub DataLoadTest {
 	# If the calendar savefile exists
 	if (-e "$_[0]") {
 		# If it isn't readable then we warn and return
@@ -691,7 +691,7 @@ sub DataLoadTest () {
 
 # Purpose: Get OS/distro version information
 # Usage: print "OS: ",GetDistVer(),"\n";
-sub GetDistVer () {
+sub GetDistVer {
 	# GNU/Linux and BSD
 	foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu lsb debian gentoo suse distro dist slackware freebsd openbsd netbsd dragonflybsd NULL/) {
 		if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
@@ -747,13 +747,13 @@ sub GetDistVer () {
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
-sub DPIntWarn ($) {
+sub DPIntWarn {
 	warn "*** (Day Planner $Version) Warning: $_[0]\n";
 }
 
 # Purpose: Delete keys from %CalendarContents, recusively if needed
 # Usage: CalendarDelete(year,month,day,time);
-sub CalendarDelete ($$$$) {
+sub CalendarDelete {
 	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
 	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
 		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
@@ -769,7 +769,7 @@ sub CalendarDelete ($$$$) {
 
 # Purpose: Delete keys from %BirthdayContents, recusively if needed
 # Usage: BirthdayDelete(month,day,name);
-sub BirthdayDelete ($$$) {
+sub BirthdayDelete {
 	my ($EventMonth,$EventDay,$Name) = @_;
 	delete($BirthdayContents{$EventMonth}{$EventDay}{$Name});
 		unless (keys(%{$BirthdayContents{$EventMonth}{$EventDay}})) {
@@ -782,7 +782,7 @@ sub BirthdayDelete ($$$) {
 
 # Purpose: Print formatted --help output
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
-sub PrintHelp($$$) {
+sub PrintHelp {
 	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
 
@@ -790,7 +790,7 @@ sub PrintHelp($$$) {
 # 		If a single test is run then invalid data might get inserted into %CalendarContents
 # 		this avoids that by doing a recursive test
 # Usage: CalendarDefined(year,month,day,time);
-sub CalendarDefined ($$$$) {
+sub CalendarDefined {
 	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
 	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
 			return(1)
@@ -802,7 +802,7 @@ sub CalendarDefined ($$$$) {
 # 		If a single test is run then invalid data might get inserted into %BirthdayContents
 # 		this avoids that by doing a recursive test
 # Usage: BirthdayDefined(month,day,summary);
-sub BirthdayDefined ($$$) {
+sub BirthdayDefined {
 	my ($EventMonth, $EventDay, $EventSummary) = @_;
 	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay}) and defined($BirthdayContents{$EventMonth}{$EventDay}{$EventSummary})) {
 			return(1)
@@ -814,7 +814,7 @@ sub BirthdayDefined ($$$) {
 # 		If a single test is run then invalid data might get inserted into %CalendarContents
 # 		this avoids that by doing a recursive test
 # Usage: CalendarDayDefined(year,month,day);
-sub CalendarDayDefined ($$$) {
+sub CalendarDayDefined {
 	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
 	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay})) {
 			return(1)
@@ -826,7 +826,7 @@ sub CalendarDayDefined ($$$) {
 # 		If a single test is run then invalid data might get inserted into %BirthdayContents
 # 		this avoids that by doing a recursive test
 # Usage: BirthdayDayDefined(month,day);
-sub BirthdayDayDefined ($$) {
+sub BirthdayDayDefined {
 	my ($EventMonth, $EventDay, $EventSummary) = @_;
 	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay})) {
 			return(1)
@@ -856,7 +856,7 @@ sub DP_SigHandler {
 
 # Purpose: Make sure we have a .holiday set up
 # Usage: HolidaySetup();
-sub HolidaySetup () {
+sub HolidaySetup {
 	# If Holiday_Setup is true and the file exists then day planner has properly set up
 	# a holiday-file.
 	#
@@ -955,7 +955,7 @@ sub HolidaySetup () {
 
 # Purpose: Remove the daemon from autostart for the various DMs/WMs
 # Usage: RemoveAutostart();
-sub RemoveAutostart () {
+sub RemoveAutostart {
 	# KDE, XDG and XFCE4 - easy
 	foreach("$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh") {
 		unlink($_) if -e $_;
@@ -1046,7 +1046,7 @@ sub RemoveAutostart () {
 # Usage: AddAutostart(OLD_GNOME?);
 # 	OLD_GNOME is either 1 or 0, defines if the GNOME version used is
 # 	older than 2.13 or not
-sub AddAutostart ($) {
+sub AddAutostart {
 	my $TryGnome = $_[0];
 	my $DaemonExec;
 	my $RETURN = "okay";
@@ -1135,7 +1135,7 @@ sub AddAutostart ($) {
 
 # Purpose: Get the number of *milli*seconds until midnight
 # Usage: my $miliseconds = MilisecondsUntilMidnight();
-sub MilisecondsUntilMidnight () {
+sub MilisecondsUntilMidnight {
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	# Convert hours to seconds
 	$currhour = $currhour * 60 * 60;
@@ -1160,7 +1160,7 @@ sub Day_Changed_Event {
 
 # Purpose: Set the day-changed timer
 # Usage: Set_DayChangeTimer();
-sub Set_DayChangeTimer () {
+sub Set_DayChangeTimer {
 	# Set the timer
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
 }
@@ -1171,7 +1171,7 @@ sub Set_DayChangeTimer () {
 
 # Purpose: Populate the upcoming events widget
 # Usage: PopulateUpcomingEvents();
-sub PopulateUpcomingEvents () {
+sub PopulateUpcomingEvents {
 	my $NewUpcoming;
 	my $HasUpcoming;
 	my %InformationHash;
@@ -1321,7 +1321,7 @@ sub PopulateUpcomingEvents () {
 # 		version of GNOME and displays an information dialog about the
 # 		inability to add a gnome autostart
 # Usage: DP_AddAutostart();
-sub DP_AddAutostart () {
+sub DP_AddAutostart {
 	my $GNOME_Version;
 	my $Old_GNOME;
 
@@ -1369,7 +1369,7 @@ sub DP_AddAutostart () {
 
 # Purpose: Wrapper around RemoveAutostart that sets the config vars
 # Usage: DP_RemoveAutostart();
-sub DP_RemoveAutostart () {
+sub DP_RemoveAutostart {
 	if(DPQuestion($Gettext->get("Are you sure you want to disable the automatic startup of the reminder?\n\nBy doing this you will not get notified about events without having started day planner at least once."))) {
 		$InternalConfig{AutostartOn} = 1;
 		return(RemoveAutostart());
@@ -1395,7 +1395,7 @@ sub DetectImage {
 # Purpose: Delete the event currently selected in the eventlist
 # Usage: DeleteEvent();
 #  (calls CalendarDelete with the correct parameters)
-sub DeleteEvent () {
+sub DeleteEvent {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
 	unless(defined($Selected)) {
@@ -1428,7 +1428,7 @@ sub DeleteEvent () {
 
 # Purpose: Get the real name of the person whose birthday it is
 # Usage: my $Name = GetRealBirthdayName(NAME);
-sub GetRealBirthdayName ($) {
+sub GetRealBirthdayName {
 	my $Name = $_[0];
 	my $BirthdayString = $Gettext->get("%s's birthday");
 	$BirthdayString =~ s/%s//;
@@ -1467,7 +1467,7 @@ sub GetEventListType() {
 
 # Purpose: Close a window when the escape key is pressed
 # Usage: $WIDGET->signal_connect("key_release_event" => \&EscapeKeyHandler);
-sub EscapeKeyHandler () {
+sub EscapeKeyHandler {
 	my ($widget, $event) = @_;
 	if ($event->keyval == $Gtk2::Gdk::Keysyms{Escape}) {
 		$widget->destroy();
@@ -1476,7 +1476,7 @@ sub EscapeKeyHandler () {
 
 # Purpose: Display an error dialog
 # Usage: DPError("Error message");
-sub DPError ($) {
+sub DPError {
 	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'error', 'ok', "$_[0]");
 	$Dialog->run();
 	$Dialog->destroy();
@@ -1484,7 +1484,7 @@ sub DPError ($) {
 
 # Purpose: Display a warning dialog
 # Usage: DPWarning("Warning");
-sub DPWarning ($) {
+sub DPWarning {
 	my $Dialog = Gtk2::MessageDialog->new_with_markup($MainWindow, "modal", 'warning', 'ok', "$_[0]");
 	$Dialog->run();
 	$Dialog->destroy();
@@ -1492,7 +1492,7 @@ sub DPWarning ($) {
 
 # Purpose: Display an information dialog
 # Usage: DPInfo("Information message");
-sub DPInfo ($) {
+sub DPInfo {
 	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'info', 'ok', "$_[0]");
 	$Dialog->run();
 	$Dialog->destroy();
@@ -1501,7 +1501,7 @@ sub DPInfo ($) {
 # Purpose: Display a question dialog
 # Usage: DPQuestion("Question");
 # 	Returns true on yes, false on anything else
-sub DPQuestion ($) {
+sub DPQuestion {
 	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', $_[0]);
 	my $Reply = $Dialog->run();
 	$Dialog->destroy();
@@ -1514,7 +1514,7 @@ sub DPQuestion ($) {
 
 # Purpose: Call save functions on exit
 # Usage: QuitSub();
-sub QuitSub () {
+sub QuitSub {
 	$MainWindow->hide();
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
@@ -1542,7 +1542,7 @@ sub QuitSub () {
 
 # Purpose: Sets the active calendar items in the $CalendarWidget
 # Usage: SetActiveCalItems(YEAR, NUMERICAL_MONTH[1-12]);
-sub SetActiveCalItems ($$) {
+sub SetActiveCalItems {
 	$CalendarWidget->clear_marks;			# Clear the current marks
 	# Calendar contents
 	if (defined($CalendarContents{$_[0]}) and defined($CalendarContents{$_[0]}{$_[1]})) {
@@ -1560,7 +1560,7 @@ sub SetActiveCalItems ($$) {
 
 # Purpose: Sets the date/time variables to the current date/time
 # Usage: GetDate();
-sub GetDate () {
+sub GetDate {
 	($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	$curryear += 1900;						# Fix the year format
 	$currmonth++;							# Fix the month format
@@ -1568,7 +1568,7 @@ sub GetDate () {
 
 # Purpose: Calls SetActiveCalItems on the current year/month displayed in the $CalendarWidget
 # Usage: CalendarChange();
-sub CalendarChange () {
+sub CalendarChange {
 	my $Month = $CalendarWidget->month;
 	$Month++;
 	SetActiveCalItems($CalendarWidget->year, $Month);
@@ -1576,7 +1576,7 @@ sub CalendarChange () {
 
 # Purpose: Get the day, month and year in a single string from a calendar
 # Usage: my $Date = Get_DateInfo($CALWIDGET);
-sub Get_DateInfo ($) {
+sub Get_DateInfo {
 	my ($year, $month, $day) = $CalendarWidget->get_date();
 	return("$year$month$day");
 }
@@ -1587,7 +1587,7 @@ sub Get_DateInfo ($) {
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
 # Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner);
-sub GetTimeFromWidgets ($$) {
+sub GetTimeFromWidgets {
 	# In the future this sub will take a third argument, which is either an AM/PM
 	# selection box, or undef - so that seamless AM/PM support is needed.
 	
@@ -1605,7 +1605,7 @@ sub GetTimeFromWidgets ($$) {
 
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox) = TimeSelection("HH:MM");
-sub TimeSelection ($) {
+sub TimeSelection {
 	my $Time = $_[0];
 	# The hour adjustment
 	my $HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
@@ -1652,7 +1652,7 @@ sub TimeSelection ($) {
 #
 # TITLE is the title of the window, LABEL is the label to display on top of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
-sub CreateEventContainerWin ($$$) {
+sub CreateEventContainerWin {
 	# Get the options passed to the sub
 	my ($WindowTitle, $EventLabel, $OkButtonType) = @_;
 	
@@ -1736,7 +1736,7 @@ sub CreateEventContainerWin ($$$) {
 
 # Purpose: Add a event. Creates the main window and calls the proper event functions
 # Usage: AddEvent();
-sub AddEvent () {
+sub AddEvent {
 	$MainWindow->set_sensitive(0);
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my $OKSignal;
@@ -1802,7 +1802,7 @@ sub AddEvent () {
 
 # Purpose: Edit the event currently selected in the eventlist
 # Usage: EditEvent ();
-sub EditEvent () {
+sub EditEvent {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
@@ -1898,7 +1898,7 @@ sub EditEvent () {
 # OK_BUTTON is the OK button widget to attach to
 # VBOX_WIDGET is the widget you want to pack our table into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
-sub NormalEventWindow ($$$$) {
+sub NormalEventWindow {
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
@@ -2006,7 +2006,7 @@ sub NormalEventWindow ($$$$) {
 # SUMMARY is the birthday you're editing or undef
 # VBOX_WIDGET is the widget you want to pack our widgets into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
-sub BirthdayEventWindow ($$$) {
+sub BirthdayEventWindow {
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
@@ -2063,7 +2063,7 @@ sub BirthdayEventWindow ($$$) {
 #
 # IS_EDITING is either true or false, false when it's a new one being added, true when it's an
 # old one being edited
-sub NormalEvent_OK ($$$$$$$) {
+sub NormalEvent_OK {
 	my ($MyWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing) = @_;
 	my $Error = 0;
 	
@@ -2122,7 +2122,7 @@ sub NormalEvent_OK ($$$$$$$) {
 #
 # IS_EDITING is either true or false, false when it's a new one being added, true when it's an
 # old one being edited
-sub BirthdayEvent_OK ($$$$) {
+sub BirthdayEvent_OK {
 	my ($MyWindow, $SummaryEntry, $TimeHash, $IsEditing) = @_;
 	my $Error = 0;
 	
@@ -2178,7 +2178,7 @@ sub BirthdayEvent_OK ($$$$) {
 
 # Purpose: Display the about dialog
 # Usage: AboutBox();
-sub AboutBox () {
+sub AboutBox {
 	$MainWindow->set_sensitive(0);
 	my $AboutDialog = Gtk2::AboutDialog->new;
 	$AboutDialog->set_transient_for($MainWindow);
@@ -2208,7 +2208,7 @@ sub AboutBox () {
 # Purpose: Draw the preferences window and allow the user to set different
 #  configuration options
 # Usage: PreferencesWindow();
-sub PreferencesWindow () {
+sub PreferencesWindow {
 	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
@@ -2424,7 +2424,7 @@ sub PreferencesWindow () {
 
 # Purpose: Draw the eventlist on the currently selected date in the calendar
 # Usage: DrawEventlist();
-sub DrawEventlist() {
+sub DrawEventlist {
 	my $Year = $CalendarWidget->year;
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
@@ -2494,7 +2494,7 @@ sub DrawEventlist() {
 
 # Purpose: Draw the main window
 # Usage: DrawMainWindow();
-sub DrawMainWindow () {
+sub DrawMainWindow {
 	# ==================================================================
 	# BUILD THE MAIN WINDOW
 	# ==================================================================
