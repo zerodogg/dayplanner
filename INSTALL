@@ -1,17 +1,26 @@
-* LOCAL INSTALL - SINGLE USER *
-You can simply run ./dayplanner from this directory (and ./devel-tools/BuildLocale first
+Installation documentation for Day Planner
+------------------------------------------
+
+Index:
+1	Local install (single user)
+2	Global install (multi user and packagers)
+2.1	Special notes concerning the Date::HolidayParser module and packaging
+
+1 - LOCAL INSTALL (SINGLE USER)
+-------------------------------
+There are two ways to install Day Planner locally. The first would be to
+simply run ./dayplanner from this directory (and ./devel-tools/BuildLocale first
 if you want localization).
 
-If you want to *install* day planner run ./devel-tools/installer/InstallLocal
+The second one properly installs day planner. Run ./devel-tools/installer/InstallLocal
 This will start the day planner installer used in the day planner packages.
 The installer runs ./devel-tools/BuildLocale for you, so if you use the installer
 you don't need to run it manually.
 
 Building the locale files requires msgfmt from gettext installed.
 
-- - -
-
-* GLOBAL INSTALL - MULTI USER and PACKAGERS *
+2 - GLOBAL INSTALL (MULTI USER and PACKAGERS)
+---------------------------------------------
 If you're a packager you may want to look at devel-tools/rpm/* and perhaps also at
 devel-tools/CreatePackages and possibly devel-tools/installer/MainInstallerPart
 
@@ -44,12 +53,16 @@ On most systems this would be: ./devel-tools/BuildLocale /usr/locale/
 or as it would be for RPM packagers:
 ./devel-tools/BuildLocale $RPM_BUILD_ROOT/usr/locale/
 
-* SPECIAL NOTES CONCERNING THE Date::HolidayParser MODULE AND PACKAGING*
+2.1 - SPECIAL NOTES CONCERNING THE Date::HolidayParser MODULE AND PACKAGING
+---------------------------------------------------------------------------
 Most likely you will want to package Date::HolidayParser seperately from
 day planner. You can do this by getting the source tarball from
 CPAN. However, if for some reason you want to package the module along
 with day planner it is contained in ./modules/Date-HolidayParser/.
 Read the README in that directory for installation instructions and
 check your distributions perl module packaging guidelines.
+
+For an example of how Date::HolidayParser is bundled inside a distribution
+package have a look at devel-tools/rpm/package.spec
 
 $Id$
