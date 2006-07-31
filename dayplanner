@@ -330,22 +330,22 @@ sub WriteConfigFile ($$$) {
 	my ($File, $Config, $Explanations) = @_;
 
 	# Open the config for writing
-	open(CONFIG, ">", "$File") or do {
+	open(my $CONFIG, ">", "$File") or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
 		DPIntWarn("Unable to save the configuration file $File: $!");
 		return(0);
 	};
 	if(defined($Explanations->{HEADER})) {
-		print CONFIG "# $Explanations->{HEADER}\n";
+		print $CONFIG "# $Explanations->{HEADER}\n";
 	}
 	foreach(sort(keys(%{$Config}))) {
 		next unless length($Config->{$_});	# Don't write empty options
 		if(defined($Explanations->{$_})) {
-			print CONFIG "\n# $Explanations->{$_}";
+			print $CONFIG "\n# $Explanations->{$_}";
 		}
-		print CONFIG "\n$_=$Config->{$_}\n";
+		print $CONFIG "\n$_=$Config->{$_}\n";
 	}
-	close(CONFIG);
+	close($CONFIG);
 }
 
 # Purpose: Load a configuration file
@@ -357,11 +357,11 @@ sub WriteConfigFile ($$$) {
 sub LoadConfigFile ($$$$) {
 	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
 
-	open(CONFIG, "<", "$File") or do {
+	open(my $CONFIG, "<", "$File") or do {
 		DPError($Gettext->get(sprintf("Unable to read the configuration settings from %s: %s", $File, $!)));
 		return(0);
 	};
-	foreach(<CONFIG>) {
+	foreach(<$CONFIG>) {
 		next if m/^\s*(#.*)?$/;
 		next unless m/=/;
 		chomp;
@@ -387,7 +387,7 @@ sub LoadConfigFile ($$$$) {
 		}
 		$ConfigHash->{$Option} = $Value;
 	}
-	close(CONFIG);
+	close($CONFIG);
 }
 
 # Purpose: Write the state file 
@@ -521,6 +521,7 @@ sub CreateSaveDir () {
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
 sub SaveDatafile ($$$$) {
+	my $SAVEFILE;
 	# Create the progress window
 	my $ProgressWin = Gtk2::Window->new();
 	$ProgressWin->set_modal(1);
@@ -549,7 +550,7 @@ sub SaveDatafile ($$$$) {
 	# Pulse once
 	$ProgressBar->pulse();
 	# Open the savefile ($_[0]/$_[1]) for writing
-	open(SAVEFILE, ">$_[0]/$_[1]") or do {
+	open($SAVEFILE, ">$_[0]/$_[1]") or do {
 		# EMERGENCY FALLBACK
 		
 		# Okay, we couldn't open it. This is bad.
@@ -574,7 +575,7 @@ sub SaveDatafile ($$$$) {
 		if ($FallbackDirectory) {
 			DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
 			$FallbackFailed = 0;
-			open(SAVEFILE, ">$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
+			open($SAVEFILE, ">$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
 		} 
 		# If FallbackDirectory failed or we didn't find one - output to STDOUT
 		if ($FallbackFailed) {
@@ -592,16 +593,16 @@ sub SaveDatafile ($$$$) {
 		$ProgressWin->show();
 	};
 	# Print this
-	print SAVEFILE "# Day Planner data file for day planner version $Version\n";
-	print SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
-	print SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
+	print $SAVEFILE "# Day Planner data file for day planner version $Version\n";
+	print $SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
+	print $SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
 	# Pulse once
 	$ProgressBar->pulse();
 	# Dump the data
 	print SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
 	# Pulse once and close
 	$ProgressBar->pulse();
-	close(SAVEFILE);
+	close($SAVEFILE);
 	# Destroy the progress bar window
 	$ProgressWin->destroy();
 	# We successfully saved the data
@@ -694,25 +695,26 @@ sub GetDistVer () {
 	# GNU/Linux and BSD
 	foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu lsb debian gentoo suse distro dist slackware freebsd openbsd netbsd dragonflybsd NULL/) {
 		if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
-			my ($DistVer, $File);
+			my ($DistVer, $File, $VERSION_FILE);
 			if(-e "/etc/$_-release") {
 				$File = "$_-release";
-				open(VERSION_FILE, "<", "/etc/$_-release");
-				$DistVer = <VERSION_FILE>;
+				open($VERSION_FILE, "<", "/etc/$_-release");
+				$DistVer = <$VERSION_FILE>;
 			} elsif (-e "/etc/$_-version") {
 				$File = "$_-version";
-				open(VERSION_FILE, "<", "/etc/$_-release");
-				$DistVer = <VERSION_FILE>;
+				open($VERSION_FILE, "<", "/etc/$_-release");
+				$DistVer = <$VERSION_FILE>;
 			} elsif (-e "/etc/${_}_version") {
 				$File = "${_}_version";
-				open(VERSION_FILE, "<", "/etc/${_}_version");
-				$DistVer = <VERSION_FILE>;
+				open($VERSION_FILE, "<", "/etc/${_}_version");
+				$DistVer = <$VERSION_FILE>;
 			} elsif ($_ eq "NULL") {
 				last unless -e "/etc/version";
 				$File = 'version';
-				open(VERSION_FILE, "<", "/etc/version");
-				$DistVer = <VERSION_FILE>;
+				open($VERSION_FILE, "<", "/etc/version");
+				$DistVer = <$VERSION_FILE>;
 			}
+			close($VERSION_FILE);
 			chomp($DistVer);
 			return("/etc/$File: $DistVer");
 		}
@@ -724,8 +726,8 @@ sub GetDistVer () {
 		my $DarwinOSVer;
 		# Darwin kernel, try to get OS X info.
 		if(InPath("sw_vers")) {
-			if(open(SW_VERS, "sw_vers |")) {
-				foreach(<SW_VERS>) {
+			if(open(my $SW_VERS, "sw_vers |")) {
+				foreach(<$SW_VERS>) {
 					chomp;
 					if (s/^ProductName:\s+//gi) {
 						$DarwinName = $_;
@@ -733,6 +735,7 @@ sub GetDistVer () {
 						$DarwinOSVer = $_;
 					}
 				}
+				close($SW_VERS);
 			}
 		}
 		if(defined($DarwinOSVer) and defined($DarwinName)) {
@@ -938,13 +941,13 @@ sub HolidaySetup () {
 			DPIntWarn("Couldn't detect a .holiday file for $LocationDetect. Maybe you would like to write one?");
 		}
 	}
-	open(DUMMY_FILE, ">$HolidayFile");
-	print DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
-	print DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
-	print DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
-	print DUMMY_FILE ":  of the day planner distribution for examples of the syntax).\n";
-	print DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run day planner";
-	close(DUMMY_FILE);
+	open(my $DUMMY_FILE, ">$HolidayFile");
+	print $DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
+	print $DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
+	print $DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
+	print $DUMMY_FILE ":  of the day planner distribution for examples of the syntax).\n";
+	print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run day planner";
+	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
 	$InternalConfig{Holiday_Attempted} = $Version;
 	return(0);
@@ -961,25 +964,26 @@ sub RemoveAutostart () {
 	# Fluxbox
 	if(-w "$ENV{HOME}/.fluxbox/startup") {
 		my @FluxboxStartup;
-		open(OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
-		push(@FluxboxStartup, $_) foreach(<OLDFLUX>);
-		close(OLDFLUX);
-		open(FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
+		open(my $OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
+		push(@FluxboxStartup, $_) foreach(<$OLDFLUX>);
+		close($OLDFLUX);
+		open(my $FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
 		foreach(@FluxboxStartup) {
 			unless(/$DaemonName/) {
 				chomp;
-				print FLUXSTART "$_\n";
+				print $FLUXSTART "$_\n";
 			}
 		}
-		close(FLUXSTART);
+		close($FLUXSTART);
 	}
 	# GNOME 2 versions 2.12 and older.
 	#  This solution is very very hacky and unreliable, but it will have to do.
 	if(-w "$ENV{HOME}/.gnome2/session-manual") {
 		my @Gnome2Session;
-		open(GNOME2SESS, "<", "$ENV{HOME}/.gnome2/session-manual");
-		push(@Gnome2Session, $_) foreach(<GNOME2SESS>);
-		close(GNOME2SESS);
+		my $GNOME2SESS;
+		open($GNOME2SESS, "<", "$ENV{HOME}/.gnome2/session-manual");
+		push(@Gnome2Session, $_) foreach(<$GNOME2SESS>);
+		close($GNOME2SESS);
 		my ($Last, $Has_DP, $DP_ID, $Nullout);
 		# Parse
 		foreach(@Gnome2Session) {
@@ -1008,30 +1012,30 @@ sub RemoveAutostart () {
 		if($Has_DP) {
 			if($Last == 0) {
 				# Wee, LAST is 0, just 0 out the file
-				open(GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
-				close(GNOME2SESS);
+				open($GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				close($GNOME2SESS);
 			} elsif($Nullout) {
 				DPIntWarn("Unable to properly remove the GNOME2 day planner entry from $ENV{HOME}/.gnome2/session-manual. A workaround to disable the daemon startup has been applied but you may want to use the GNOME2 session manager to remove it completely.");
 				foreach(@Gnome2Session) {
 					s/=.*$DaemonName.*/perl -e '# Removed by day planner'/;
 				}
-				open(GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				open($GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
 				foreach(@Gnome2Session) {
-					print GNOME2SESS $_;
+					print $GNOME2SESS $_;
 				}
-				close(GNOME2SESS);
+				close($GNOME2SESS);
 			} else {
 				my $NumClients = $Last + 1;
 				# Write out changes
-				open(GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				open($GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
 				foreach(@Gnome2Session) {
 					chomp;
 					s/^num_clients=\d+/num_clients=$Last/;
 					s/^$Last,/$DP_ID,/;
 					next if /^$DP_ID,/;
-					print "$_\n";
+					print $GNOME2SESS "$_\n";
 				}
-				close(GNOME2SESS);
+				close($GNOME2SESS);
 			}
 		}
 	}
@@ -1057,74 +1061,74 @@ sub AddAutostart ($) {
 	# KDE - this is easy
 	if(-d "$ENV{HOME}/.kde/") {
 		mkdir("$ENV{HOME}/.kde/Autostart/") unless -e "$ENV{HOME}/.kde/Autostart/";
-		open(KDESCRIPT, ">", "$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh");
-		print KDESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
-		print KDESCRIPT "$DaemonExec\n";
-		close(KDESCRIPT);
+		open(my $KDESCRIPT, ">", "$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh");
+		print $KDESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
+		print $KDESCRIPT "$DaemonExec\n";
+		close($KDESCRIPT);
 	}
 	# Freedesktop spec - this is easy too
 	if(-d "$ENV{HOME}/.config/") {
 		mkdir("$ENV{HOME}/.config/autostart/") unless -e "$ENV{HOME}/.config/autostart";
-		open(XDGSTART, ">", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop");
-		print XDGSTART "# Autogenerated startup desktop file written by day planner\n";
-		print XDGSTART "[DESKTOP ENTRY]\n";
-		print XDGSTART "Type=Application\n";
-		print XDGSTART "Name=Day planner daemon autostart\n";
-		print XDGSTART "Comment=Automatically start the day planner daemon on session startup\n";
-		print XDGSTART "Exec=$DaemonExec\n";
-		print XDGSTART "StartupNotify=false\n";
-		print XDGSTART "StartupWMClass=fales\n";
-		close(XDGSTART);
+		open(my $XDGSTART, ">", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop");
+		print $XDGSTART "# Autogenerated startup desktop file written by day planner\n";
+		print $XDGSTART "[DESKTOP ENTRY]\n";
+		print $XDGSTART "Type=Application\n";
+		print $XDGSTART "Name=Day planner daemon autostart\n";
+		print $XDGSTART "Comment=Automatically start the day planner daemon on session startup\n";
+		print $XDGSTART "Exec=$DaemonExec\n";
+		print $XDGSTART "StartupNotify=false\n";
+		print $XDGSTART "StartupWMClass=fales\n";
+		close($XDGSTART);
 	}
 	# GNOME - this is harder. No real common spec or easy way to do it. 2.14 or so
 	#  supports the freedesktop spec, older however - does not.
 	if(-d "$ENV{HOME}/.gnome2/" and $TryGnome) {
 		# If it doesn't exist then we just write it
 		unless(-e "$ENV{HOME}/.gnome2/session-manual") {
-			open(GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
-			print GNOMESESS "[Default]\nnum_clients=1\n0,RestartStyleHint=3\n0,Priority=50\n0,RestartCommand=$DaemonExec\n0,Program=$DaemonExec";
-			close(GNOMESESS);
+			open(my $GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+			print $GNOMESESS "[Default]\nnum_clients=1\n0,RestartStyleHint=3\n0,Priority=50\n0,RestartCommand=$DaemonExec\n0,Program=$DaemonExec";
+			close($GNOMESESS);
 		} else {
 			$RETURN = "gnome-fail";
 			my @G2H;
-			open(GNOMESESS, "<", "$ENV{HOME}/.gnome2/session-manual");
-			foreach(<GNOMESESS>) {
+			open(my $GNOMESESS, "<", "$ENV{HOME}/.gnome2/session-manual");
+			foreach(<$GNOMESESS>) {
 				if(s/perl -e '# Removed by day planner'/$DaemonExec/i) {
 					$RETURN = "okay";
 				}
 				push(@G2H, $_);
 			}
-			close(GNOMESESS);
+			close($GNOMESESS);
 			if($RETURN eq "okay") {
-				open(GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
-				print GNOMESESS $_ foreach(@G2H);
-				close(GNOMESESS);
+				open($GNOMESESS, ">", "$ENV{HOME}/.gnome2/session-manual");
+				print $GNOMESESS $_ foreach(@G2H);
+				close($GNOMESESS);
 			}
 		}
 	}
 	# XFce 4
 	if(-d "$ENV{HOME}/.config/xfce4/" and -d "$ENV{HOME}/Desktop/") {
 		mkdir("$ENV{HOME}/Desktop/Autostart") unless -e "$ENV{HOME}/Desktop/Autostart";
-		open(XFCESCRIPT, ">", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh");
-		print XFCESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
-		print XFCESCRIPT "$DaemonExec\n";
-		close(XFCESCRIPT);
+		open(my $XFCESCRIPT, ">", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh");
+		print $XFCESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
+		print $XFCESCRIPT "$DaemonExec\n";
+		close($XFCESCRIPT);
 	}
 	# Fluxbox
 	if(-d "$ENV{HOME}/.fluxbox") {
 		my @FluxboxStartup;
 		push(@FluxboxStartup, "$DaemonExec &");
 		if(-e "$ENV{HOME}/.fluxbox/startup") {
-			open(OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
-			push(@FluxboxStartup, $_) foreach(<OLDFLUX>);
-			close(OLDFLUX);
+			open(my $OLDFLUX, "<", "$ENV{HOME}/.fluxbox/startup");
+			push(@FluxboxStartup, $_) foreach(<$OLDFLUX>);
+			close($OLDFLUX);
 		}
-		open(FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
+		open(my $FLUXSTART, ">", "$ENV{HOME}/.fluxbox/startup");
 		foreach(@FluxboxStartup) {
 			chomp;
-			print FLUXSTART "$_\n";
+			print $FLUXSTART "$_\n";
 		}
-		close(FLUXSTART);
+		close($FLUXSTART);
 	}
 	return($RETURN);
 }
