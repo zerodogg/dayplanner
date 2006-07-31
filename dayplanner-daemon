@@ -77,7 +77,7 @@ my %AccessStatus = (
 
 # Purpose: Print formatted --help output
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
-sub PrintHelp($$$) {
+sub PrintHelp {
 	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
 
@@ -90,8 +90,8 @@ sub LoadConfig {
 	$Config{Events_NotifyPre} = '45min';
 	$Config{Events_DayNotify} = '0';
 	
-	if(-e "$DayplannerDir/$ConfigFile" and open(CONFIG, "<$DayplannerDir/$ConfigFile")) {
-		foreach(<CONFIG>) {
+	if(-e "$DayplannerDir/$ConfigFile" and open(my $ConfigFile, "<", "$DayplannerDir/$ConfigFile")) {
+		while(<$ConfigFile>) {
 			next if m/^\s*#/;
 			next unless m/=/;
 			chomp;
@@ -112,6 +112,7 @@ sub LoadConfig {
 				$Config{Events_DayNotify} = $Value;
 			}
 		}
+		close($ConfigFile);
 	} else {
 		IntVerbose("Unable to load configuration file: $DayplannerDir/$ConfigFile: $!\n");
 	}
@@ -798,7 +799,7 @@ sub CalculateNotificationHash {
 	#  this so that in case there's an event tomorrow that has a PerNotTime that would be
 	#  *today* it does pop up. This will probably be rare, but we need to handle it
 	#  none-the-less.
-	my ($tomorrowsec,$tomorrowmin,$tomorrowhour,$tomorrowmday,$tomorrowmonth,$tomorrowyear,$tomorrowwday,$tomorrowyday,$tomorrowisdst) = localtime(time+86400);
+	my ($tomorrowsec,$tomorrowmin,$tomorrowhour,$tomorrowmday,$tomorrowmonth,$tomorrowyear,$tomorrowwday,$tomorrowyday,$tomorrowisdst) = localtime(time+86_400);
 	$tomorrowyear += 1900; $tomorrowmonth++;
 	if (defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday})) {
 		foreach my $Time (keys(%{$CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}})) {
@@ -930,9 +931,9 @@ LoadConfig();
 LoadCalendar();
 
 unless($NoFork) {
-	open(STDIN, "</dev/null") or IntWarn("Couldn't reopen STDIN to /dev/null: $!");
-	open(STDOUT, ">>$Logfile") or IntWarn("Couldn't reopen STDOUT to $Logfile: $!");
-	open(STDERR, ">>$Logfile") or IntWarn("Couldn't reopen STDERR to $Logfile: $!");
+	open(STDIN, "<", "/dev/null") or IntWarn("Couldn't reopen STDIN to /dev/null: $!");
+	open(STDOUT, ">>", $Logfile) or IntWarn("Couldn't reopen STDOUT to $Logfile: $!");
+	open(STDERR, ">>", $Logfile) or IntWarn("Couldn't reopen STDERR to $Logfile: $!");
 }
 
 MainLoop();
