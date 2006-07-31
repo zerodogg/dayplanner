@@ -550,7 +550,7 @@ sub SaveDatafile {
 	# Pulse once
 	$ProgressBar->pulse();
 	# Open the savefile ($_[0]/$_[1]) for writing
-	open($SAVEFILE, ">$_[0]/$_[1]") or do {
+	open($SAVEFILE, ">", $_[0]/$_[1]") or do {
 		# EMERGENCY FALLBACK
 		
 		# Okay, we couldn't open it. This is bad.
@@ -575,7 +575,7 @@ sub SaveDatafile {
 		if ($FallbackDirectory) {
 			DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
 			$FallbackFailed = 0;
-			open($SAVEFILE, ">$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
+			open($SAVEFILE, ">", "$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
 		} 
 		# If FallbackDirectory failed or we didn't find one - output to STDOUT
 		if ($FallbackFailed) {
@@ -941,7 +941,7 @@ sub HolidaySetup {
 			DPIntWarn("Couldn't detect a .holiday file for $LocationDetect. Maybe you would like to write one?");
 		}
 	}
-	open(my $DUMMY_FILE, ">$HolidayFile");
+	open(my $DUMMY_FILE, ">", "$HolidayFile");
 	print $DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
 	print $DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
 	print $DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
@@ -1438,7 +1438,7 @@ sub GetRealBirthdayName {
 
 # Purpose: Detect which kind of event is selected in the eventlist
 # Usage: my $Type = GetEventListType();
-sub GetEventListType() {
+sub GetEventListType {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
