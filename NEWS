@@ -20,6 +20,7 @@ Version 0.2 (Unreleased)
 - Changed the name of the "summary" field to "description"
 - Switched to more generalized configuration loading/writing functions
 - Added a summary of the upcoming week
+- Some code cleanup
 
 * Daemon (dayplanner-daemon)
 - Now sets the process status (as shown in ps aux)
