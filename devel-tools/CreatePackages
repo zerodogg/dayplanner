@@ -24,6 +24,7 @@ use File::Temp;
 use Cwd qw/realpath getcwd/;
 use File::Basename qw/dirname/;
 use File::Find;
+use File::Path qw/mkpath/
 
 my $DPVersion = "0.2";
 my $BuildRPM = 1;
@@ -85,7 +86,7 @@ foreach (@RequiredComponents) {
 print "okay\n";
 print " Created temporary directory $tempdir\n";
 unless(-e "$OrigDir/packages") {
-	mkdir("$OrigDir/packages");
+	mkpath("$OrigDir/packages");
 	print " Created directory $OrigDir/packages\n";
 } else {
 	print " Cleaning $OrigDir/packages/...";
