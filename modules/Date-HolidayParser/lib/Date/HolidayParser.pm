@@ -264,7 +264,7 @@ sub _interperate_year {
 				my $PosixTime = POSIX::mktime(0, 0, 0, $CreativeParser->{DateNumeric}, $MonthMapping{$CreativeParser->{IsMonth}}, $PosixYear);
 				$NumericYDay = _Get_YDay($PosixTime);
 			} elsif (defined($CreativeParser->{IsMonth})) {
-				_SynaxError($LineNo, $File, "There is a month defined but no way to find out which day of the month it is referring to", "Ignoring this line.");
+				_SyntaxError($LineNo, $File, "There is a month defined but no way to find out which day of the month it is referring to", "Ignoring this line.");
 				next;
 			}
 	
