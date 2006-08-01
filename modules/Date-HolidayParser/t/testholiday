@@ -1,0 +1,22 @@
+:
+: holiday file for testing Date::HolidayParser.
+: This file is not useful for things other than testing
+:
+: Easter
+"Easter" on easter
+: Some calculation
+"Easter plus 35" on easter plus 35 days
+: Formatting of the calculation
+red "Easter plus 35 - formatted" weekend on easter plus 35 days
+: Testing various dates
+"17th of may" on 17.5
+"Also 17th of may" on 5/17
+"Again the 17th of may" on 17 may
+: Test the last keyword
+weekend "Last sunday in april" on last sunday in april
+: Now try the first keyword
+weekend "First sunday in april" on first sunday in april
+: Long one
+"Sunday before 24th minus 7 days" on sunday before 24 december minus 7 days
+: Every second monday in march
+"Monday" on every second monday in march
