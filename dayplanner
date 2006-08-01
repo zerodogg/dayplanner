@@ -548,11 +548,11 @@ sub SaveDatafile {
 	# Set the indentation
 	$Data::Dumper::Indent = 1;
 	# Pulse once
-	$ProgressBar->pulse();
+	PulsateProgressbar($ProgressBar);
 	# Create the save directory
 	CreateSaveDir();
 	# Pulse once
-	$ProgressBar->pulse();
+	PulsateProgressbar($ProgressBar);
 	# Open the savefile ($_[0]/$_[1]) for writing
 	open($SAVEFILE, ">", "$_[0]/$_[1]") or do {
 		# EMERGENCY FALLBACK
@@ -564,7 +564,7 @@ sub SaveDatafile {
 		my $FallbackFailed = 1;
 		# Try to find a directory we can use
 		foreach my $Fallback (@SaveFallbackDirs) {
-			$ProgressBar->pulse();
+			PulsateProgressbar($ProgressBar);
 			if (-e $Fallback and -w $Fallback) {
 				if (-e "$Fallback/$_[1]" and ! -w "$Fallback/$_[1]") {
 					next;
@@ -601,11 +601,11 @@ sub SaveDatafile {
 	print $SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
 	print $SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
 	# Pulse once
-	$ProgressBar->pulse();
+	PulsateProgressbar($ProgressBar);
 	# Dump the data
 	print $SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
 	# Pulse once and close
-	$ProgressBar->pulse();
+	PulsateProgressbar($ProgressBar);
 	close($SAVEFILE);
 	# Destroy the progress bar window
 	$ProgressWin->destroy();
@@ -1177,6 +1177,214 @@ sub Set_DayChangeTimer {
 # Plan migration functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Repair a conflict between two plan events
+# Usage: my $NewTime = PlanConvert_RepairConflict(YEAR, MONTH, DAY, TIME, \%PlanConvertHash);
+sub PlanConvert_RepairConflict {
+	my ($Year, $Month, $Day, $Time, $PlanConvertHash) = @_;
+	my ($Hour, $Minute) = split(/:/, $Time);
+	
+	# If the summaries and fulltexts are identical we just ignore the conflict because it doesn't matter one bit
+	if ($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"}{summary} eq $PlanConvertHash->{Summary}) {
+		if (defined($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"}{summary}) and defined($PlanConvertHash->{Fulltext})) {
+			if ($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"}{fulltext} eq $PlanConvertHash->{Fulltext}) {
+				return($Time);
+			}
+		} else {
+			return($Time);
+		}
+	}
+	
+	while(defined($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"})) {
+		$Hour =~ s/^0(.*)/$1/;
+		$Minute =~ s/^0(.*)/$1/;
+		$Minute++;
+		if ($Minute > 59) {
+			if ($Hour >= 23) {
+				warn "Unable to resolve conflicting events on $PlanConvertHash->{Day}-$PlanConvertHash->{Month}-$PlanConvertHash->{Year} at $PlanConvertHash->{Time}: \"$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{summary}\" and \"$PlanConvertHash->{Summary}\". Data will be lost! You may want to resolve it manually after the migration has finished.\n";
+				return($Time);
+			}
+			$Minute = 0;
+			$Hour++;
+		}
+		if ($Hour <= 9) {
+			$Hour = "0$Hour";
+		}
+		if ($Minute <= 9) {
+			$Minute = "0$Minute";
+		}
+	}
+	return("$Hour:$Minute");
+}
+
+# Purpose: Purge the current %PlanConvertHash-> buffer and put it into %CalendarContents
+# Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
+sub PlanConvert_PurgeBuffer {
+	my $PlanConvertHash = $_[0];
+	if(defined($PlanConvertHash->{Day})) {
+		if ($PlanConvertHash->{Type} eq 'normal') {
+			# Check for conflicts
+			if (defined($CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}})) {
+				# Okay, it conflicts, call a verbosity check to see if we should print the warning
+				# Try to fix it
+				$PlanConvertHash->{Time} = PlanConvert_RepairConflict($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time}, $PlanConvertHash);
+			}
+			if (defined($PlanConvertHash->{Summary})) {
+				$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{summary} = $PlanConvertHash->{Summary};
+				delete($PlanConvertHash->{Summary});
+			}
+			if (defined($PlanConvertHash->{Fulltext})) {
+				$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{fulltext} = $PlanConvertHash->{Fulltext};
+				delete($PlanConvertHash->{Fulltext});
+			}
+			delete($PlanConvertHash->{Day});
+			delete($PlanConvertHash->{Month});
+			delete($PlanConvertHash->{Year});
+			delete($PlanConvertHash->{Time});
+		} elsif ($PlanConvertHash->{Type} eq 'bday') {
+			if (defined($PlanConvertHash->{Summary})) {
+				$BirthdayContents{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Summary}} = 1;
+				delete($PlanConvertHash->{Summary});
+			}
+			delete($PlanConvertHash->{Day});
+			delete($PlanConvertHash->{Month});
+			delete($PlanConvertHash->{Year});
+			delete($PlanConvertHash->{Time});
+			delete($PlanConvertHash->{Fulltext});
+		} else {
+			DPIntWarn("BUG!!! Invalid type: $PlanConvertHash->{Type}. This could result in dangerous errors.");
+		}
+		$PlanConvertHash->{Type} = 'normal';
+	}
+}
+
+# Purpose: Convert the file supplied
+# Usage: PlanConvert_PurgeBuffer(/path/to/file,\%PlanConvertHash, $ProgressBar);
+sub PlanConvert_ProcessFile {
+	my $PlanConvertHash = $_[1]; 
+	my $ProgressBar = $_[2];
+	$PlanConvertHash->{Type} = 'normal';
+
+	open(PLAN_FILE,$_[0]) or do {
+		DPIntWarn("Unable to open $_[0]: $!");
+		return(0);
+	};
+	my $LineNo = 0;
+	while(<PLAN_FILE>) {
+		$LineNo++;
+		next if /^\s*(O|o|t|e|l|a|y|P|p|m|L|u|E)/;	# These are Plan specific stuff, just ignore them
+		chomp;
+		if (/^\s*(N)/) {		# Entry equalent to the dayplanner summary
+			my $Summary = $_;
+			$Summary =~ s#^\s*N\s+(.*)#$1#;
+			$PlanConvertHash->{Summary} = $Summary;
+		} elsif (/^\s*(M)/) {		# Entry equalent to the dayplanner fulltext
+			my $Fulltext = $_;
+			$Fulltext =~ s#^\s*M\s+(.*)#$1#;
+			if(defined($PlanConvertHash->{Fulltext})) {
+				$PlanConvertHash->{Fulltext} = "$PlanConvertHash->{Fulltext} $Fulltext";
+			} else {
+				$PlanConvertHash->{Fulltext} = $Fulltext;
+			}
+		} elsif (/^\s*(R)/) {		# These we just skip but might parse at some point
+			if (/^\s*R\s+0\s+0\s+0\s+0\s+1/) {
+				$PlanConvertHash->{Type} = 'bday';
+			} else {
+				next;
+			}
+		} elsif (/^\s*\d/) {		# Okay, it starts with a digit, it's a new date
+			PlanConvert_PurgeBuffer($PlanConvertHash);
+			my ($Day,$Month,$Year,$Time) = ($_,$_,$_,$_);
+			# Get the day
+			$Day =~ s#^\s*\d+/(\d+)/.*#$1#;
+			# Get the month
+			$Month =~ s#^\s*(\d+)/\d+/.*#$1#;
+			# Get the year
+			$Year =~ s#^\s*\d+/\d+/(\d+)\s+.*#$1#;
+			# Get the time
+			$Time =~ s#\s*\d+/\d+/\d+\s+(\d+:\d+):\d+\s+.*#$1#;
+			# Convert the time to a more dayplannerish format
+			$Time = "00:00" if $Time eq '99:99';
+			if ($Time =~ /^\d+:\d$/) {
+				$Time = $Time . 0;
+			}
+			if ($Time =~ /^\d:\d*$/) {
+				$Time = 0 . $Time;
+			}
+			# Set the variables in the hash
+			$PlanConvertHash->{Day} = $Day;
+			$PlanConvertHash->{Month} = $Month;
+			$PlanConvertHash->{Year} = $Year;
+			$PlanConvertHash->{Time} = $Time;
+		} else {
+			DPIntWarn("WARNING: Unrecognized line (please report this): $_[0]:$LineNo: $_");
+			next;
+		}
+		PulsateProgressbar($ProgressBar);
+	}
+	return(1);
+}
+
+# Purpose: Start converting plan
+# Usage: MigratePlan();
+sub MigratePlan {
+	my $IsFirstTest = $_[0];
+	my @MigrateFiles;
+	
+	my $ProgressWin = Gtk2::Window->new();
+	$ProgressWin->set_modal(1);
+	$ProgressWin->set_border_width(5);
+	$ProgressWin->set_skip_taskbar_hint(1);
+	$ProgressWin->set_skip_pager_hint(1);
+	if(defined($MainWindow)) {
+		$ProgressWin->set_transient_for($MainWindow);
+		$ProgressWin->set_position('center-on-parent');
+	}
+	$ProgressWin->set_title($Gettext->get("Migrating..."));
+	$ProgressWin->set_resizable(0);
+
+	# Create the HBox and label
+	my $ProgVBox = Gtk2::VBox->new();
+	my $ProgLabel = Gtk2::Label->new($Gettext->get("Migrating plan to day planner..."));
+	$ProgVBox->pack_start($ProgLabel,0,0,0);
+	$ProgressWin->add($ProgVBox);
+
+	# Create the progress bar
+	my $ProgressBar = Gtk2::ProgressBar->new();
+	$ProgressBar->{activity_mode} = 0;
+	$ProgressBar->set_fraction(0.0);
+	$ProgVBox->pack_end($ProgressBar,0,0,0);
+	
+	# Show it
+	$ProgVBox->show();
+	$ProgLabel->show();
+	$ProgressBar->show();
+	$ProgressWin->show();
+	Gtk2->main_iteration while Gtk2->events_pending;
+	
+	foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
+		if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
+			foreach my $File (<$Dir/*>) {
+				next if $File =~ /(lock\.pland|pland|holiday)$/;
+				push(@MigrateFiles, $File);
+			}
+		}
+	}
+	if(@MigrateFiles) {
+		foreach my $File (@MigrateFiles) {
+			my %PlanConvertHash;
+			if(PlanConvert_ProcessFile($File,\%PlanConvertHash, $ProgressBar)) {
+				PlanConvert_PurgeBuffer(\%PlanConvertHash);
+			}
+			PulsateProgressbar($ProgressBar);
+		} 
+		$ProgressWin->destroy();
+		DPInfo($Gettext->get("Your plan data has been successfully migrated to day planner."));
+	} else {
+		$ProgressWin->destroy();
+		DPError($Gettext->get("Day planner was unable to detect any plan data-files.")) unless $IsFirstTest;
+	}
+}
+
 # =============================================================================
 # GUI CODE
 # =============================================================================
@@ -1184,6 +1392,14 @@ sub Set_DayChangeTimer {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Pulsate a progressbar
+# Usage: PulsateProgressbar($Progressbar);
+sub PulsateProgressbar {
+	my $Progressbar = $_[0];
+	$Progressbar->pulse();
+	Gtk2->main_iteration while Gtk2->events_pending;
+}
 
 # Purpose: Populate the upcoming events widget
 # Usage: PopulateUpcomingEvents();
@@ -2689,6 +2905,8 @@ sub DrawMainWindow {
 # Initialization
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+my $MigratePlan;	# TODO: Remove
+
 # Get commandline options
 GetOptions (
 	'help|h' => sub {
@@ -2728,6 +2946,7 @@ GetOptions (
 		}
 		$SaveToDir = $_[1];
 	},
+	'm|migrate' => \$MigratePlan,	# TODO: Remove
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
@@ -2771,6 +2990,7 @@ unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutosta
 # Set the redraw timer and populate the upcoming events widget
 PopulateUpcomingEvents();
 Set_DayChangeTimer();
+MigratePlan() if $MigratePlan;
 
 # Rest in the Gtk2 main loop
 Gtk2->main;
