@@ -27,6 +27,7 @@ use Getopt::Long;
 my %PlanConvertHash;
 my %CalendarContents;
 my %BirthdayContents;
+my %InternalConfig;
 my $DayplannerDataDir = "$ENV{HOME}/.dayplanner";
 my $DPD_Short = "~/.dayplanner";
 my $MainEventsFile = "events.dpd";                      # The filename to save the events to
