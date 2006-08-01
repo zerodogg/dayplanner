@@ -2,10 +2,11 @@ $Id$
 
 TODO file for Day Planner.
 An up to date version of this file can always be found in the day planner
-subversion repository.
+subversion repository. The version information are only approximates and
+may be subject to change.
 ===========================================================================
 
-* Version 0.2
+* Version 0.3
 - - - - - - -
 - Add support for am/pm
 	- This will be "emulated" in the sense that the internal clock and
@@ -13,11 +14,6 @@ subversion repository.
 	it from 24H to AM/PM before displaying it to the user. Should not
 	require too much extra work. Perhaps the use of AM/PM can be detected
 	using strftime?
-- Have a third party look over all strings (in the pot-file) and try to
-	simplify those too technical
-
-* Version 0.3
-- - - - - - -
 - Add export and import of iCalendar files. See http://en.wikipedia.org/wiki/RFC2445_Syntax_Reference
 	for the standard reference
 - Add export-to-html support
