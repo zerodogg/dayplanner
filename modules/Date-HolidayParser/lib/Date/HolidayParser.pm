@@ -593,7 +593,7 @@ Date::HolidayParser - Parser for .holiday-files
 
 =head1 VERSION
 
-0.1
+0.3
 
 =head1 SYNOPSIS
 
