@@ -2848,21 +2848,32 @@ sub DrawMainWindow {
 	# ==================================================================
 	# MENUBAR
 	# ==================================================================
+	
+	# Get stock values
+	my $EditStock = Gtk2::Stock->lookup('gtk-edit')->{label};
+	my $QuitStock = Gtk2::Stock->lookup('gtk-quit')->{label};
+	my $PrefsStock = Gtk2::Stock->lookup('gtk-preferences')->{label};
+	my $AboutStock = Gtk2::Stock->lookup('gtk-about')->{label};
+	my $HelpStock = Gtk2::Stock->lookup('gtk-help')->{label};
+
 	# The menu items
 	my @MenuItems = (
 		# Calendar menu
 		[ "/" . $Gettext->get("_Calendar"),						undef,			undef,			0,	"<Branch>"],
-		[ "/" . $Gettext->get("_Calendar") . "/tearoff",				undef,			undef,			0,	"<Tearoff>"],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Add an event"),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
-		[ "/" . $Gettext->get("_Calendar") . "/sep1",					undef,			undef,			4,	"<Separator>"],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Preferences"),		undef,			\&PreferencesWindow,		5, 	'<StockItem>', 'gtk-preferences' ],
-		[ "/" . $Gettext->get("_Calendar") . "/sep2",					undef,			undef,			6,	'<Separator>'],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Quit"),		"<control>Q",		\&QuitSub,		0,	"<StockItem>",	'gtk-quit'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Import"),		"<control>Q",		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Export"),		"<control>Q",		sub { DPInfo("Not implemented"); },		1,	"<StockItem>",	'gtk-save-as'],
+		[ "/" . $Gettext->get("_Calendar") . "/sep",					undef,			undef,			2,	'<Separator>'],
+		[ "/" . $Gettext->get("_Calendar") . "/$QuitStock",		"<control>Q",		\&QuitSub,		3,	"<StockItem>",	'gtk-quit'],
+		# Edit menu
+		[ "/$EditStock", undef,			undef,			0,	"<Branch>"],
+		[ "/$EditStock/" . $Gettext->get("_Add an event"),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
+		[ "/$EditStock/" . $Gettext->get("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
+		[ "/$EditStock/" . $Gettext->get("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
+		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
+		[ "/$EditStock/$PrefsStock" , undef,			\&PreferencesWindow,		1, 	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
-		[ "/" . $Gettext->get("_Help"),						undef,			undef,			0,	"<Branch>" ],
-		[ "/" . $Gettext->get("_Help") . "/" . $Gettext->get("_About"),			undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
+		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
+		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
 	);
 	# The accelgroup to use for the menuitems
 	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
@@ -2877,11 +2888,11 @@ sub DrawMainWindow {
 	$Menu_ItemFactory->get_widget("<main>")->show();
 	
 	# Create two widget objects for the edit/delete menu entries
-	my $Get = "/". $Gettext->get("_Calendar") . "/" . $Gettext->get("_Edit this event");
+	my $Get = "/$EditStock/" . $Gettext->get("_Edit this event");
 	$Get =~ s/_//g;
 	$MenuEditEntry = $Menu_ItemFactory->get_widget($Get);
 
-	$Get = "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Delete this event");
+	$Get = "/$EditStock/" . $Gettext->get("_Delete this event");
 	$Get =~ s/_//g;
 	$MenuDeleteEntry = $Menu_ItemFactory->get_widget($Get);
 
