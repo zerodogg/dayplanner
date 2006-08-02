@@ -1,12 +1,3 @@
-This README covers the plan migration script that comes with day planner.
-
-The script converts your current plan data found at ~/.plan or ~/.plan.dir
-(don't worry, it ignores ~/.plan if it isn't a directory) into the data format
-day planner uses. See ./plan-migration for more information. Run ./plan-migration -m
-to start the migration, note that you will need to have run day planner at least
-once before running the migration. Your current day planner events are kept intact.
-
-NOTE:
 The conversion between the plan data format and the day planner data format is lossy.
 This means that you can loose data. The current limitations are:
 - It doesn't accept recurring appointments. That means that "repeat until", "repeat forever" and
