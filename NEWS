@@ -4,6 +4,8 @@ Day planner version history
 Version 0.3 (Unreleased)
 ------------------------
 * Client (dayplanner)
+- Builtin import support of plan
+- Will now prompt the user to migrate plan data on first run
 
 * Daemon (dayplanner-daemon)
 
