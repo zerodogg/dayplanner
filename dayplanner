@@ -1409,6 +1409,69 @@ sub MigratePlan {
 	}
 }
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# GUI dialogs
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+sub ImportData {
+	$MainWindow->set_sensitive(0);
+	# Create the window and VBox
+	my $ImportWindow = Gtk2::Window->new();
+	$ImportWindow->set_modal(1);
+	$ImportWindow->set_transient_for($MainWindow);
+	$ImportWindow->set_position('center-on-parent');
+	$ImportWindow->set_title($Gettext->get("Import data"));
+	$ImportWindow->set_resizable(0);
+	$ImportWindow->set_border_width(12);
+	$ImportWindow->set_skip_taskbar_hint(1);
+	$ImportWindow->set_skip_pager_hint(1);
+	my $ImportVBox = Gtk2::VBox->new();
+	$ImportWindow->add($ImportVBox);
+
+	# Create the initial text
+	my $ImportLabel = Gtk2::Label->new($Gettext->get("Please select the source you wish to import from."));
+	$ImportVBox->pack_start($ImportLabel,0,0,0);
+
+	# Create the radio buttons for selection and pack them onto the VBox
+	my $DayplannerButton = Gtk2::RadioButton->new (undef, $Gettext->get('Day planner data file'));
+	my $PlanButton = Gtk2::RadioButton->new ($DayplannerButton, $Gettext->get('Plan'));
+	$ImportVBox->pack_start($DayplannerButton,0,0,0);
+	$ImportVBox->pack_start($PlanButton,0,0,0);
+
+	# Add the buttons
+	my $ButtonHBox = Gtk2::HBox->new();
+	$ButtonHBox->show();
+	$ImportVBox->pack_end($ButtonHBox,0,0,0);
+
+	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
+	$OKButton->show();
+	$ButtonHBox->pack_end($OKButton,0,0,0);
+
+	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
+	$CancelButton->show();
+	$ButtonHBox->pack_end($CancelButton,0,0,0);
+	$CancelButton->signal_connect("clicked" => sub {
+			$ImportWindow->destroy();
+			$MainWindow->set_sensitive(1);
+		});
+
+	# Add tooltips
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->set_tip($DayplannerButton, $Gettext->get("Import data from a day planner data file"));
+	$Tooltips->set_tip($PlanButton, $Gettext->get("Import data from the \"plan\" program."));
+	$Tooltips->set_tip($CancelButton, $Gettext->get('Cancel importing and return to day planner'));
+	$Tooltips->set_tip($OKButton, $Gettext->get('Import the selected data'));
+
+	# Show it all
+	$Tooltips->enable();
+	$DayplannerButton->show();
+	$PlanButton->show();
+	$ImportLabel->show();
+	$ImportVBox->show();
+	$ImportWindow->show();
+}
+
 # =============================================================================
 # GUI CODE
 # =============================================================================
