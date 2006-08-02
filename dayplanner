@@ -2929,8 +2929,6 @@ sub DrawMainWindow {
 # Initialization
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-my $MigratePlan;	# TODO: Remove
-
 # Get commandline options
 GetOptions (
 	'help|h' => sub {
@@ -2970,7 +2968,6 @@ GetOptions (
 		}
 		$SaveToDir = $_[1];
 	},
-	'm|migrate' => \$MigratePlan,	# TODO: Remove
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
@@ -3016,7 +3013,6 @@ unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutosta
 # Set the redraw timer and populate the upcoming events widget
 PopulateUpcomingEvents();
 Set_DayChangeTimer();
-MigratePlan() if $MigratePlan;
 
 # Rest in the Gtk2 main loop
 Gtk2->main;
