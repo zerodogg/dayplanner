@@ -1411,7 +1411,7 @@ sub MigratePlan {
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# GUI dialogs
+# GUI import/export dialogs
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 sub ImportData {
@@ -1446,6 +1446,26 @@ sub ImportData {
 
 	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
 	$OKButton->show();
+	$OKButton->signal_connect("clicked" => sub {
+			$ImportWindow->destroy();
+			$MainWindow->set_sensitive(1);
+			my $WasActive = 0;
+			foreach(@{$PlanButton->get_group}) {
+				print $_->get_active(),"\n";
+				if($_->get_active()) {
+					$WasActive = 1;
+					my $name = $_->get_label();
+					if($name eq $Gettext->get('Day planner data file')) {
+						DPInfo("Not implemented");
+					} elsif ($name eq $Gettext->get('Plan')) {
+						PlanMigrate();
+					} else {
+						DPIntWarn("Unknown name got from buttons in ImportData: $name");
+					}
+				}
+			}
+			DPIntWarn("No active button?!") unless $WasActive;
+		});
 	$ButtonHBox->pack_end($OKButton,0,0,0);
 
 	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
@@ -2855,6 +2875,7 @@ sub DrawMainWindow {
 	my $PrefsStock = Gtk2::Stock->lookup('gtk-preferences')->{label};
 	my $AboutStock = Gtk2::Stock->lookup('gtk-about')->{label};
 	my $HelpStock = Gtk2::Stock->lookup('gtk-help')->{label};
+	my $DeleteStock = Gtk2::Stock->lookup('gtk-delete')->{label};
 
 	# The menu items
 	my @MenuItems = (
@@ -2904,10 +2925,20 @@ sub DrawMainWindow {
 	$Toolbar->show();
 
 	# Edit button
-	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
+	$ToolbarEditButton = Gtk2::MenuToolButton->new_from_stock('gtk-edit');
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
 	$ToolbarEditButton->show();
+
+	my @EditMenuItems = (
+		[ "/$DeleteStock",	undef,		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
+	);
+		
+	my $EditMenuIF = Gtk2::ItemFactory->new ("Gtk2::Menu","<main>");
+	$EditMenuIF->create_items (undef, @EditMenuItems);
+	my $EditMenuWidget = $EditMenuIF->get_widget("<main>");
+	$EditMenuWidget->show();
+	$ToolbarEditButton->set_menu($EditMenuWidget);
 	
 	# Add button
 	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
