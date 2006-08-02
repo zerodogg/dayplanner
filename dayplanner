@@ -1747,7 +1747,7 @@ sub DPQuestion {
 # Purpose: Call save functions on exit
 # Usage: QuitSub();
 sub QuitSub {
-	$MainWindow->hide();
+	$MainWindow->set_sensitive(0);
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
 		unless(DPQuestion($Gettext->get("Some files could not be saved correctly. Are you sure you want to quit?"))) {
