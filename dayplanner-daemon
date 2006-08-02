@@ -745,6 +745,13 @@ sub MainLoop {
 				}
 			}
 		}
+		# Get the current time/date
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		$curryear += 1900; $currmonth++;
+		# Recalculate our notification hash if needed
+		unless($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday") {
+			CalculateNotificationHash();
+		}
 		if ($Timeout) {
 			DayplannerAlarm();
 		}
@@ -752,13 +759,6 @@ sub MainLoop {
 			IntVerbose($Shutdown);
 			unlink($DaemonSocket);
 			exit(0);
-		}
-		# Get the current time/date
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		$curryear += 1900; $currmonth++;
-		# Recalculate our notification hash if needed
-		unless($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday") {
-			CalculateNotificationHash();
 		}
 	}
 }
