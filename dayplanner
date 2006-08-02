@@ -1403,7 +1403,7 @@ sub MigratePlan {
 			PulsateProgressbar($ProgressBar);
 		} 
 		$ProgressWin->destroy();
-		DPInfo($Gettext->get("Your plan data has been successfully migrated to day planner."));
+		DPInfo($Gettext->get("Your plan data has been successfully migrated to day planner.\n\nPlease note that not all of plans advanced features are supported in day planner so some settings (namely repeating appointments and scripts) may not have been completely migrated."));
 	} else {
 		DPError($Gettext->get("Day planner was unable to detect any plan data-files.")) unless $IsFirstTest;
 	}
