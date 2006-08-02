@@ -499,7 +499,7 @@ sub LoadConfig {
 # Purpose: Load the default configuration file
 # Usage: LoadDefaultConfig();
 sub LoadDefaultConfig {
-	CreateSaveDir();
+	#CreateSaveDir();
 	return(LoadConfig($SaveToDir, $ConfigFile));
 }
 
@@ -521,6 +521,15 @@ sub CreateSaveDir {
 			}
 	}
 }
+
+# Purpose: Perform certain commands on first startup
+# Usage: FirstStartup();
+sub FirstStartup {
+	# First create the savedir
+	CreateSaveDir();
+	# Now try to migrate plan data
+	MigratePlan(1);
+}	
 
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
@@ -1325,41 +1334,11 @@ sub PlanConvert_ProcessFile {
 }
 
 # Purpose: Start converting plan
-# Usage: MigratePlan();
+# Usage: MigratePlan(IS_FIRST_TEST?);
 sub MigratePlan {
 	my $IsFirstTest = $_[0];
 	my @MigrateFiles;
 	
-	my $ProgressWin = Gtk2::Window->new();
-	$ProgressWin->set_modal(1);
-	$ProgressWin->set_border_width(5);
-	$ProgressWin->set_skip_taskbar_hint(1);
-	$ProgressWin->set_skip_pager_hint(1);
-	if(defined($MainWindow)) {
-		$ProgressWin->set_transient_for($MainWindow);
-		$ProgressWin->set_position('center-on-parent');
-	}
-	$ProgressWin->set_title($Gettext->get("Migrating..."));
-	$ProgressWin->set_resizable(0);
-
-	# Create the HBox and label
-	my $ProgVBox = Gtk2::VBox->new();
-	my $ProgLabel = Gtk2::Label->new($Gettext->get("Migrating plan to day planner..."));
-	$ProgVBox->pack_start($ProgLabel,0,0,0);
-	$ProgressWin->add($ProgVBox);
-
-	# Create the progress bar
-	my $ProgressBar = Gtk2::ProgressBar->new();
-	$ProgressBar->{activity_mode} = 0;
-	$ProgressBar->set_fraction(0.0);
-	$ProgVBox->pack_end($ProgressBar,0,0,0);
-	
-	# Show it
-	$ProgVBox->show();
-	$ProgLabel->show();
-	$ProgressBar->show();
-	$ProgressWin->show();
-	Gtk2->main_iteration while Gtk2->events_pending;
 	
 	foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
 		if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
@@ -1369,7 +1348,53 @@ sub MigratePlan {
 			}
 		}
 	}
+
+	# Perform some specific magic on first run
+	if($IsFirstTest) {
+		if(@MigrateFiles) {
+			unless(DPQuestion($Gettext->get("Welcome to day planner.\n\nDay planner has detected that you have existing calendar data from \"plan\". Do you want day planner to import this data? The plan data will still be left intact."))) {
+				return(1);
+			}
+		} else {
+			return(1);
+		}
+	}
+
 	if(@MigrateFiles) {
+		my $ProgressWin = Gtk2::Window->new();
+		$ProgressWin->set_modal(1);
+		$ProgressWin->set_border_width(5);
+		$ProgressWin->set_skip_taskbar_hint(1);
+		$ProgressWin->set_skip_pager_hint(1);
+		if(defined($MainWindow)) {
+			$ProgressWin->set_transient_for($MainWindow);
+			$ProgressWin->set_position('center-on-parent');
+		} else {
+			$ProgressWin->set_position("center");
+		}
+		$ProgressWin->set_title($Gettext->get("Migrating..."));
+		$ProgressWin->set_resizable(0);
+	
+		# Create the HBox and label
+		my $ProgVBox = Gtk2::VBox->new();
+		my $ProgLabel = Gtk2::Label->new($Gettext->get("Migrating plan to day planner..."));
+		$ProgVBox->pack_start($ProgLabel,0,0,0);
+		$ProgressWin->add($ProgVBox);
+	
+		# Create the progress bar
+		my $ProgressBar = Gtk2::ProgressBar->new();
+		$ProgressBar->{activity_mode} = 0;
+		$ProgressBar->set_fraction(0.0);
+		$ProgVBox->pack_end($ProgressBar,0,0,0);
+		
+		# Show it
+		$ProgVBox->show();
+		$ProgLabel->show();
+		$ProgressBar->show();
+		$ProgressWin->show();
+		Gtk2->main_iteration while Gtk2->events_pending;
+
+		# Loop through the data and convert it
 		foreach my $File (@MigrateFiles) {
 			my %PlanConvertHash;
 			if(PlanConvert_ProcessFile($File,\%PlanConvertHash, $ProgressBar)) {
@@ -1380,7 +1405,6 @@ sub MigratePlan {
 		$ProgressWin->destroy();
 		DPInfo($Gettext->get("Your plan data has been successfully migrated to day planner."));
 	} else {
-		$ProgressWin->destroy();
 		DPError($Gettext->get("Day planner was unable to detect any plan data-files.")) unless $IsFirstTest;
 	}
 }
@@ -2968,6 +2992,8 @@ Gtk2->init;
 # Set SaveToDir and HolidayFile
 $SaveToDir = "$ENV{HOME}/.dayplanner" unless(defined($SaveToDir));	# The configuration and eventlist directory
 $HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
+
+FirstStartup() unless -d $SaveToDir;
 
 # Load the configuration file
 LoadDefaultConfig();
