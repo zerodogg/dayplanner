@@ -37,7 +37,6 @@ Requires: dayplanner
 %description tools
 This package contains various tools for use with day planner:
 
-dayplanner-plan-migration: Migrates plan data to day planner data
 dayplanner-commander     : Send raw commands to the day planner daemon
 
 %prep
@@ -54,7 +53,6 @@ for a in dayplanner dayplanner-daemon dayplanner-notifier; do
 	ln -s %{_datadir}/%name/$a $RPM_BUILD_ROOT%{_bindir}/
 done
 install -m755 ./tools/commander $RPM_BUILD_ROOT%{_bindir}/dayplanner-commander
-install -m755 ./tools/plan-migration $RPM_BUILD_ROOT%{_bindir}/dayplanner-plan-migration
 
 install -m644 ./art/dayplanner-about.png $RPM_BUILD_ROOT%{_datadir}/%name/
 
@@ -114,4 +112,3 @@ rm -rf $RPM_BUILD_ROOT
 
 %files tools
 %{_bindir}/dayplanner-commander
-%{_bindir}/dayplanner-plan-migration
