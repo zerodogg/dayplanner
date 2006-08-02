@@ -2933,7 +2933,7 @@ GetOptions (
 	},
 	'test|t' => sub {
 		print "*** (Day Planner $Version) Running in test mode\n";
-		$SaveToDir = "$ENV{HOME}/debug";
+		$SaveToDir = "$ENV{HOME}/.dayplanner/debug";
 	},
 	'confdir=s' => sub {
 		if (-e $_[1]) {
