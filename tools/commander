@@ -188,6 +188,7 @@ GetOptions(
 		PrintHelp("-h", "--help", "Display this help screen");
 		PrintHelp("-s", "--socket", "Select an alternate socket");
 		PrintHelp("-v", "--version", "Print RCS revision and exit");
+		PrintHelp("-t", "--test", "Control the daemon of a \"dayplanner --test\" session");
 		print "All commandline arguments are optional.\n\n";
 		print "For help about the commands the daemon accepts enter the command !HELP\n";
 		exit(0);
@@ -196,7 +197,11 @@ GetOptions(
 	'r|v|version' => sub {
 		print "Day planner commander $RCSRev\n";
 		exit(0);
-	}
+	},
+	't|test' => sub {
+		$SocketName = "$ENV{HOME}/.dayplanner/debug/dayplannerd";
+	},
+
 ) or die "See --help for more information\n";
 
 # If there is something left in @ARGV then we are running in non-interactive mode
