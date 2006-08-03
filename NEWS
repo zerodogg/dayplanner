@@ -7,6 +7,7 @@ Version 0.3 (Unreleased)
 - Builtin import support of plan
 - Will now prompt the user to migrate plan data on first run
 - Reorganization of the menus
+- More agressive use of gtk2 stock items to reduce translator load
 
 * Daemon (dayplanner-daemon)
 
