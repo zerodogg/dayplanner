@@ -32,6 +32,7 @@ use File::Basename;             # We meed dirname to help Cwd::Realpath finding 
 use IO::Socket;			# Network layer to communicate with the daemon
 use File::Copy;			# We need to copy the holiday file
 use FindBin;			# So that we can detect module dirs during runtime
+use MIME::Base64;		# Used when exporting
 # So that we can use a local Date::HolidayParser
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/";
@@ -1409,6 +1410,65 @@ sub MigratePlan {
 	}
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Encryption/decryption functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+sub EncryptData {
+	my $Data = $_[0];
+	my $Key = $_[1] ? $_[1] : 1234;		# FIXME: Remove. This is in for devel purposes
+	unless(eval('use Crypt::CBC;1;')) {
+		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::CBC"));
+		return($_[0]);
+	}
+	unless(eval('use Crypt::Blowfish; 1')) {
+		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::Blowfish"));
+		return($_[0]);
+	}
+	my $Encrypt = Crypt::CBC->new({
+			key => $Key,
+			cipher => "Blowfish",
+			salt => 1,
+		});
+	return($Encrypt->encrypt($_[0]));
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Day planner data format functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+sub WriteDayplannerDataFile {
+	my $FormatVersion = 1;
+	my $OnlyBirthdays = $_[1] ? 1 : 0;
+	my $DPEncrypt = $_[2] ? 1 : 0;
+	my $EncryptionKey = $_[2] ? $_[3] : undef;
+	my $File = $_[0];
+	open(my $Target, ">", $File) or do {
+		DPWarn("Unable to open $File for writing: $!");
+		return(0);
+	};
+
+	print $Target "# Content-type: text/x-dayplanner\n\n# Day planner data file. Written on " . scalar(localtime) . "\n";
+	print $Target "# Make changes to this file at your own risk\n";
+	print $Target "# --- BEGIN DAY PLANNER DATA HEADER ---\n";
+	print $Target "\$DP_FormatVersion = $FormatVersion;\n\$DP_OnlyBirthdays = $OnlyBirthdays;\n\$DP_Exportedby = $Version;\n\$DP_Crypt = $DPEncrypt;\n";
+	print $Target "# --- END DAY PLANNER DATA HEADER ---\n";
+	print $Target "# --- BEGIN MAIN DAY PLANNER DATA ---\n";
+	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
+	$Data::Dumper::Purity = 1;
+	# Sort the keys
+	$Data::Dumper::Sortkeys = 1;
+	# Set the indentation (none in this case)
+	$Data::Dumper::Indent = 0;
+	my $Data = Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]) . "\n" . Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayCalendarContent"]);
+	if($DPEncrypt) {
+		$Data = EncryptData($Data,$EncryptionKey);
+	}
+	print $Target "\$ContainedData = '";
+	print $Target encode_base64($Data);
+	print $Target "'\n# --- END MAIN DAY PLANNER DATA ---\n";
+	close($Target);
+}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI import/export dialogs
@@ -1456,7 +1516,7 @@ sub ImportData {
 	$OKButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
 			if($DayplannerButton->get_active) {
-				DPInfo("This function has yet to be implemented, sorry");
+				WriteDayplannerDataFile("$ENV{HOME}/.dayplanner/testmigration",0,1);
 			} elsif ($PlanButton->get_active) {
 				MigratePlan(0);
 			} else {
