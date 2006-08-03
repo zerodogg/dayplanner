@@ -1426,6 +1426,9 @@ sub ImportData {
 	$ImportWindow->set_border_width(12);
 	$ImportWindow->set_skip_taskbar_hint(1);
 	$ImportWindow->set_skip_pager_hint(1);
+	$ImportWindow->signal_connect("destroy" => sub {
+			$MainWindow->set_sensitive(1);
+		});
 	my $ImportVBox = Gtk2::VBox->new();
 	$ImportWindow->add($ImportVBox);
 
@@ -1446,11 +1449,12 @@ sub ImportData {
 	$ButtonHBox->show();
 	$ImportVBox->pack_end($ButtonHBox,0,0,0);
 
+	# Ok button
 	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
 	$OKButton->show();
+	# Signal callback (starts a function depending on the radio button selected)
 	$OKButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
-			$MainWindow->set_sensitive(1);
 			if($DayplannerButton->get_active) {
 				DPInfo("This function has yet to be implemented, sorry");
 			} elsif ($PlanButton->get_active) {
@@ -1461,12 +1465,13 @@ sub ImportData {
 		});
 	$ButtonHBox->pack_end($OKButton,0,0,0);
 
+	# Cancel button
 	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
 	$CancelButton->show();
 	$ButtonHBox->pack_end($CancelButton,0,0,0);
+	# Signal callback (destroys the window)
 	$CancelButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
-			$MainWindow->set_sensitive(1);
 		});
 
 	# Add tooltips
