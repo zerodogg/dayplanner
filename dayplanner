@@ -3078,8 +3078,8 @@ sub DrawMainWindow {
 	my @MenuItems = (
 		# Calendar menu
 		[ "/" . $Gettext->get("_Calendar"),						undef,			undef,			0,	"<Branch>"],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Import"),		"<control>Q",		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Export"),		"<control>Q",		\&ExportData,		1,	"<StockItem>",	'gtk-save-as'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Import"),		undef,		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Export"),		undef,		\&ExportData,		1,	"<StockItem>",	'gtk-save-as'],
 		[ "/" . $Gettext->get("_Calendar") . "/sep",					undef,			undef,			2,	'<Separator>'],
 		[ "/" . $Gettext->get("_Calendar") . "/$QuitStock",		"<control>Q",		\&QuitSub,		3,	"<StockItem>",	'gtk-quit'],
 		# Edit menu
