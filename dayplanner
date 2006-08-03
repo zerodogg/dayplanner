@@ -1416,9 +1416,10 @@ sub MigratePlan {
 # Encryption/decryption functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Encrypt the supplied data
+# Usage: my $EncryptedData = EncryptData(DATA);
 sub EncryptData {
 	my $Data = $_[0];
-	my $Key = $_[1] ? $_[1] : 1234;		# FIXME: Remove. This is in for devel purposes
 	unless(eval('use Crypt::CBC;1;')) {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::CBC"));
 		return($_[0]);
@@ -1427,6 +1428,7 @@ sub EncryptData {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::Blowfish"));
 		return($_[0]);
 	}
+	my $Key = GetEncryptionKey();
 	my $Encrypt = Crypt::CBC->new({
 			key => $Key,
 			cipher => "Blowfish",
@@ -1435,15 +1437,83 @@ sub EncryptData {
 	return($Encrypt->encrypt($_[0]));
 }
 
+# Purpose: Graphically prompt the user for the encryption key
+# Usage: my $Key = GetEncryptionKey();
+sub GetEncryptionKey {
+	my $Password;
+
+	# Create the indow
+	my $PasswdDialog = Gtk2::Dialog->new($Gettext->get("Password"), $MainWindow, 'modal',
+	'gtk-ok' => 'ok');
+	$PasswdDialog->set_resizable(0);
+	$PasswdDialog->set_border_width(5);
+	$PasswdDialog->set_default_response ('ok');
+	
+	# Create the top lbel
+	my $Label = Gtk2::Label->new($Gettext->get('Please enter the password you wish to use.'));
+	$Label->show();
+	$PasswdDialog->vbox->pack_start($Label,0,0,0);
+
+	# Create the first input boxes
+	my $FirstInputHBox = Gtk2::HBox->new();
+	my $FirstInputLabel = Gtk2::Label->new($Gettext->get('Password:'));
+	my $FirstInputEntry = Gtk2::Entry->new();
+	$FirstInputHBox->pack_start($FirstInputLabel,0,0,0);
+	$FirstInputEntry->set_editable(1);
+	$FirstInputEntry->set_visibility(0);
+	$FirstInputEntry->set_activates_default(1);
+	$FirstInputHBox->pack_end($FirstInputEntry,0,0,0);
+	$FirstInputHBox->show();
+	$FirstInputEntry->show();
+	$FirstInputLabel->show();
+
+	# Create the second input boxes
+	my $SecondInputHBox = Gtk2::HBox->new();
+	my $SecondInputLabel = Gtk2::Label->new($Gettext->get('Repeat the password:'));
+	my $SecondInputEntry = Gtk2::Entry->new();
+	$SecondInputEntry->set_editable(1);
+	$SecondInputEntry->set_visibility(0);
+	$SecondInputEntry->set_activates_default(1);
+	$SecondInputEntry->show();
+	$SecondInputHBox->pack_end($SecondInputEntry,0,0,0);
+	$SecondInputHBox->pack_start($SecondInputLabel,0,0,0);
+	$SecondInputHBox->show();
+	$SecondInputLabel->show();
+
+	# Pack The HBoxes onto the window widget
+	$PasswdDialog->vbox->pack_start($FirstInputHBox,0,0,0);
+	$PasswdDialog->vbox->pack_start($SecondInputHBox,0,0,0);
+
+	# Run it
+	while(1) {
+		my $Response = $PasswdDialog->run();
+		my $FirstPWD = $FirstInputEntry->get_text();
+		my $SecondPWD = $SecondInputEntry->get_text();
+		if($FirstPWD eq $SecondPWD) {
+			if(length($FirstPWD) < 6) {
+				$Label->set_label($Gettext->get("The password must be at least 6 characters long.") . "\n" . $Gettext->get('Please enter the password you wish to use.'));
+			} else {
+				$Password = $FirstPWD;
+				last;
+			}
+		} else {
+			$Label->set_label($Gettext->get("The passwords doesn't match.") . "\n" . $Gettext->get('Please enter the password you wish to use.'));
+		}
+	}
+	$PasswdDialog->destroy();
+	return($Password);
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Day planner data format functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Write the day planner data format
+# Usage: WriteDayplannerDataFile(FILE, ONLY_BIRTHDAYS?, ENCRYPT?);
 sub WriteDayplannerDataFile {
 	my $FormatVersion = 1;
 	my $OnlyBirthdays = $_[1] ? 1 : 0;
 	my $DPEncrypt = $_[2] ? 1 : 0;
-	my $EncryptionKey = $_[2] ? $_[3] : undef;
 	my $File = $_[0];
 	open(my $Target, ">", $File) or do {
 		DPWarn("Unable to open $File for writing: $!");
@@ -1468,7 +1538,7 @@ sub WriteDayplannerDataFile {
 		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
 	}
 	if($DPEncrypt) {
-		$Data = EncryptData($Data,$EncryptionKey);
+		$Data = EncryptData($Data);
 	}
 	print $Target "\$ContainedData = '";
 	print $Target encode_base64($Data);
@@ -1479,7 +1549,8 @@ sub WriteDayplannerDataFile {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI import/export dialogs
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+# Purpose: Pop up a graphical dialog for importing data
+# Usage: ImportData();
 sub ImportData {
 	$MainWindow->set_sensitive(0);
 	# Create the window and VBox
@@ -1522,7 +1593,7 @@ sub ImportData {
 	$OKButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
 			if($DayplannerButton->get_active) {
-				WriteDayplannerDataFile("$ENV{HOME}/.dayplanner/testmigration",0,0);
+				DPInfo("Not implemented yet");
 			} elsif ($PlanButton->get_active) {
 				MigratePlan(0);
 			} else {
@@ -1554,6 +1625,68 @@ sub ImportData {
 	$ImportLabel->show();
 	$ImportVBox->show();
 	$ImportWindow->show();
+}
+
+# Purpose: Pop up a graphical dialog for exporting data
+# Usage: ExportData();
+sub ExportData {
+	# Create the main window
+	my $ExportWindow = Gtk2::FileChooserDialog->new("Export data to file", $MainWindow, 'save',
+	'gtk-cancel' => 'reject',
+	'gtk-save' => 'accept',);
+	$ExportWindow->set_current_name("My_dayplanner");
+	$ExportWindow->set_local_only(1);
+
+	# Create the file format selection part
+	my $ExportHBox = Gtk2::HBox->new();
+	$ExportHBox->show();
+	my $ExportVBox = Gtk2::VBox->new();
+	$ExportVBox->show();
+	$ExportWindow->set_extra_widget($ExportVBox);
+	$ExportVBox->pack_start($ExportHBox,0,0,0);
+
+	# Encryption checkbox
+	my $EncryptionCheckbox = Gtk2::CheckButton->new("Password protect the file (encryption)");
+	$EncryptionCheckbox->show();
+	$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
+
+	# Label
+	my $ActiveIndex;
+	my $FiletypeLabel = Gtk2::Label->new("Save as filetype:");
+	$FiletypeLabel->set_justify('left');
+	$FiletypeLabel->show();
+	$ExportHBox->pack_start($FiletypeLabel,0,0,0);
+	# Combo selector
+	my $Export_Combo = Gtk2::ComboBox->new_text;
+	$Export_Combo->insert_text(0, sprintf('Day planner data format (%s)', '*.dpf'));
+	$Export_Combo->insert_text(1, sprintf('iCalendar (%s)', '*.ics'));
+	$ExportHBox->pack_end($Export_Combo,0,0,0);
+	$Export_Combo->show();
+
+	# Handle changed values in the combo box
+	$Export_Combo->signal_connect('changed' => sub {
+		$ActiveIndex = $Export_Combo->get_active();
+		unless($ActiveIndex == 0) {
+			$EncryptionCheckbox->set_sensitive(0);
+		} else {
+			$EncryptionCheckbox->set_sensitive(1);
+		}
+	});
+	$Export_Combo->set_active(0);
+
+	my $Response = $ExportWindow->run();
+	my $Filename = $ExportWindow->get_filename();
+	if($Response eq 'accept') {
+		if($ActiveIndex == 0) {
+			my $Encrypt = $EncryptionCheckbox->get_active();
+			WriteDayplannerDataFile("$Filename.dpf",0,$Encrypt);
+		} elsif ($ActiveIndex == 1) {
+			DPInfo("The iCalendar format is not yet supported.");
+		} else {
+			DPIntWarn("Unknown activeindex: $ActiveIndex");
+		}
+	}
+	$ExportWindow->destroy();
 }
 
 # =============================================================================
@@ -2946,7 +3079,7 @@ sub DrawMainWindow {
 		# Calendar menu
 		[ "/" . $Gettext->get("_Calendar"),						undef,			undef,			0,	"<Branch>"],
 		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Import"),		"<control>Q",		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Export"),		"<control>Q",		sub { DPInfo("Not implemented"); },		1,	"<StockItem>",	'gtk-save-as'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Export"),		"<control>Q",		\&ExportData,		1,	"<StockItem>",	'gtk-save-as'],
 		[ "/" . $Gettext->get("_Calendar") . "/sep",					undef,			undef,			2,	'<Separator>'],
 		[ "/" . $Gettext->get("_Calendar") . "/$QuitStock",		"<control>Q",		\&QuitSub,		3,	"<StockItem>",	'gtk-quit'],
 		# Edit menu
