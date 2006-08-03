@@ -1434,6 +1434,8 @@ sub ImportData {
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
 
 	# Create the radio buttons for selection and pack them onto the VBox
+	my %StateHash;
+	my $ActiveButton = "dayplanner";
 	my $DayplannerButton = Gtk2::RadioButton->new (undef, $Gettext->get('Day planner data file'));
 	my $PlanButton = Gtk2::RadioButton->new ($DayplannerButton, $Gettext->get('Plan'));
 	$ImportVBox->pack_start($DayplannerButton,0,0,0);
@@ -1449,22 +1451,13 @@ sub ImportData {
 	$OKButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
 			$MainWindow->set_sensitive(1);
-			my $WasActive = 0;
-			foreach(@{$PlanButton->get_group}) {
-				print $_->get_active(),"\n";
-				if($_->get_active()) {
-					$WasActive = 1;
-					my $name = $_->get_label();
-					if($name eq $Gettext->get('Day planner data file')) {
-						DPInfo("Not implemented");
-					} elsif ($name eq $Gettext->get('Plan')) {
-						PlanMigrate();
-					} else {
-						DPIntWarn("Unknown name got from buttons in ImportData: $name");
-					}
-				}
+			if($DayplannerButton->get_active) {
+				DPInfo("This function has yet to be implemented, sorry");
+			} elsif ($PlanButton->get_active) {
+				MigratePlan(0);
+			} else {
+				DPIntWarn("Unknown active button!\n");
 			}
-			DPIntWarn("No active button?!") unless $WasActive;
 		});
 	$ButtonHBox->pack_end($OKButton,0,0,0);
 
