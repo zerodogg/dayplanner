@@ -1615,13 +1615,16 @@ sub LoadDayplannerDataFile {
 		}
 	}
 	close(READFILE);
-	$ContainedData = decode_base64($ContainedData);
+	$ContainedData = decode_base64($ContainedData) . "1;";
 	if($DP_Crypt) {
 		DPIntWarn("Encrypted *.dpf attempted to be loaded - this is not yet supported. Aborting.");
 		return(undef);
 	}
 	my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
-	eval($ContainedData);
+	eval($ContainedData) or do {
+		DPIntWarn("FAILED to parse data!");
+		return(undef);
+	};
 	print Dumper(\%BirthdayCalendarContent);
 	unless($DP_OnlyBirthdays) {
 		print Dumper(\%MainCalendarContent);
