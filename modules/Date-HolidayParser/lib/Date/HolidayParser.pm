@@ -660,7 +660,7 @@ YEAR must be a full year (ie. 2006) not a year relative to 1900 (ie. 106).
 
 It returns the day of easter of the year supplied.
 
-NOTE: The day returned begins on 0. This means that the days returns
+NOTE: The day returned begins on 0. This means that the days returned
 are 0-364 instead of 1-365.
 
 =head2 Date::HolidayParser::Parse
