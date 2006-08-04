@@ -1616,10 +1616,16 @@ sub LoadDayplannerDataFile {
 	}
 	close(READFILE);
 	$ContainedData = decode_base64($ContainedData);
+	if($DP_Crypt) {
+		DPIntWarn("Encrypted *.dpf attempted to be loaded - this is not yet supported. Aborting.");
+		return(undef);
+	}
 	my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
 	eval($ContainedData);
 	print Dumper(\%BirthdayCalendarContent);
-	print Dumper(\%MainCalendarContent);
+	unless($DP_OnlyBirthdays) {
+		print Dumper(\%MainCalendarContent);
+	}
 	print "$DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt\n";
 }
 
@@ -1647,14 +1653,14 @@ sub ImportData {
 	$ImportWindow->add($ImportVBox);
 
 	# Create the initial text
-	my $ImportLabel = Gtk2::Label->new($Gettext->get("Please select the source you wish to import from."));
+	my $ImportLabel = Gtk2::Label->new($Gettext->get('Where do you want to import from?'));
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
 
 	# Create the radio buttons for selection and pack them onto the VBox
 	my %StateHash;
 	my $ActiveButton = "dayplanner";
-	my $DayplannerButton = Gtk2::RadioButton->new (undef, $Gettext->get('Day planner data file'));
-	my $PlanButton = Gtk2::RadioButton->new ($DayplannerButton, $Gettext->get('Plan'));
+	my $DayplannerButton = Gtk2::RadioButton->new (undef, $Gettext->get('From a file (day planner or iCalendar)'));
+	my $PlanButton = Gtk2::RadioButton->new ($DayplannerButton, $Gettext->get('From the "plan" software'));
 	$ImportVBox->pack_start($DayplannerButton,0,0,0);
 	$ImportVBox->pack_start($PlanButton,0,0,0);
 
@@ -1670,7 +1676,7 @@ sub ImportData {
 	$OKButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
 			if($DayplannerButton->get_active) {
-				DPInfo("Not implemented yet");
+				ImportDataFromFile();
 			} elsif ($PlanButton->get_active) {
 				MigratePlan(0);
 			} else {
@@ -1702,6 +1708,37 @@ sub ImportData {
 	$ImportLabel->show();
 	$ImportVBox->show();
 	$ImportWindow->show();
+}
+
+# Purpose: Pop up a file picker to find the file to import
+# Usage: ImportDataFromFile();
+sub ImportDataFromFile {
+	# NOTE: We currently rely upon file extensions. This might actually be fine
+	# but this note is left as a little heads up. As we filter on filenames anyway
+	# the only case would be a file named *.ics which should be *.dpf or the other
+	# way around.
+	# Create the main window
+	my $ImportWindow = Gtk2::FileChooserDialog->new("Import data from file", $MainWindow, 'open',
+	'gtk-cancel' => 'reject',
+	'gtk-open' => 'accept',);
+	$ImportWindow->set_local_only(1);
+	my $filter = Gtk2::FileFilter->new;
+	$filter->add_pattern('*.dpf');
+	$filter->add_pattern('*.ics');
+	$filter->set_name($Gettext->get('All supported file formats'));
+	$ImportWindow->add_filter($filter);
+	my $Response = $ImportWindow->run();
+	if($Response eq 'accept') {
+		my $Filename = $ImportWindow->get_filename();
+		if($Filename =~ /\.dpf$/i) {
+			LoadDayplannerDataFile($Filename);
+		} elsif($Filename =~ /\.ics$/i) {
+			DPInfo("iCalendar is not supported yet");
+		} else {
+			DPIntWarn("Unknown filetype: $Filename");
+		}
+	}
+	$ImportWindow->destroy();
 }
 
 # Purpose: Pop up a graphical dialog for exporting data
@@ -3155,7 +3192,7 @@ sub DrawMainWindow {
 	my @MenuItems = (
 		# Calendar menu
 		[ "/" . $Gettext->get("_Calendar"),						undef,			undef,			0,	"<Branch>"],
-		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Import"),		undef,		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
+		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Import"),		"",		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
 		[ "/" . $Gettext->get("_Calendar") . "/" . $Gettext->get("_Export"),		undef,		\&ExportData,		1,	"<StockItem>",	'gtk-save-as'],
 		[ "/" . $Gettext->get("_Calendar") . "/sep",					undef,			undef,			2,	'<Separator>'],
 		[ "/" . $Gettext->get("_Calendar") . "/$QuitStock",		"<control>Q",		\&QuitSub,		3,	"<StockItem>",	'gtk-quit'],
