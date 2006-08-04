@@ -1690,12 +1690,6 @@ sub DPF_ResolveConflict {
 		my $Min = $Time;
 		$Hour =~ s/^(\d+):.*$/$1/;
 		$Min =~ s/^\d+:(\d+)$/$1/;
-		if($Min eq '59') {
-			$Conflict = 1;
-			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would require hour switching.");
-			$Time = undef;
-			last;
-		}
 		if($Attempts > 19) {
 			$Time = undef;
 			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would move the event more than 20 minutes.");
@@ -1713,8 +1707,17 @@ sub DPF_ResolveConflict {
 		}
 		if($ThisConflicted) {
 			$Min++;
+			if($Min > 59) {
+				$Conflict = 1;
+				DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would require hour switching.");
+				$Time = undef;
+				last;
+			}
 			$Conflict = 1;
 			$Time = "$Hour:" . AppendZero($Min);
+		} else {
+			# If it didn't conflict that must mean it worked out.
+			last;
 		}
 	}
 	if($Conflict) {
