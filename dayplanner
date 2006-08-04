@@ -705,6 +705,15 @@ sub DataLoadTest {
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Append a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = AppendZero(NUMBER);
+sub AppendZero {
+	if ($_[0] =~ /^\d$/) {
+		return("0$_[0]");
+	}
+	return($_[0]);
+}
+
 # Purpose: Get OS/distro version information
 # Usage: print "OS: ",GetDistVer(),"\n";
 sub GetDistVer {
@@ -1643,36 +1652,79 @@ sub LoadDayplannerDataFile {
 					foreach my $Time(keys(%{$MainCalendarContent{$Year}{$Month}{$Day}})) {
 						my $summary = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{summary};
 						my $fulltext = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{fulltext};
-						if(CalendarDefined($Year, $Month, $Day, $Time)) {
-							my $Conflict;
-							if($summary eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) {
-								if(defined($fulltext)) {
-									unless($fulltext eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) {
-										$Conflict = 1;
-									}
-								} elsif (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-									$Conflict = 1;
-								}
-							} else {
-								$Conflict = 1;
-							}
-							my $OrigTime = $Time;
-							if($Conflict) {
-								DPIntWarn("Conflict detected. Unable to resolve");
-								$Time = undef;
-							}
-						}
+						my $ConflictText;
+						($ConflictText,$Time) = DPF_ResolveConflict($Year,$Month,$Day,$Time,$summary,$fulltext);
 						if($Time) {
 							$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $summary;
 							$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $fulltext;
+						}
+						if($ConflictText) {
+							push(@Conflicts,$ConflictText);
 						}
 					}
 				}
 			}
 		}
+		if(@Conflicts) {
+			my $Message;
+			foreach(@Conflicts) {
+				$Message .= "$_\n";
+			}
+			DPInfo($Gettext->get("Some conflicts was detected. Day planner has attempted to resolve the conflicts as well as it can.\n\nHowever, some of the data may be incorrect or not imported at all. See the details below for information about the conflicting events."), $Message);
+		}
 	}
 	# The internal data has been updated.
 	UpdatedData();
+}
+
+# Purpose: Resolve a conflict during an import
+# Usage: my (message, newtime) = DPF_ResolveConflict(Year,Month,Day,Time,summary,fulltext);
+sub DPF_ResolveConflict {
+	my($Year,$Month,$Day,$Time,$summary,$fulltext) = @_;
+	my($Attempts,$ConflictMessage,$Conflict);
+	my $OrigTime = $Time;
+	while(CalendarDefined($Year, $Month, $Day, $Time)) {
+		my $ThisConflicted;
+		$Attempts++;
+		my $Hour = $Time;
+		my $Min = $Time;
+		$Hour =~ s/^(\d+):.*$/$1/;
+		$Min =~ s/^\d+:(\d+)$/$1/;
+		if($Min eq '59') {
+			$Conflict = 1;
+			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would require hour switching.");
+			$Time = undef;
+			last;
+		}
+		if($Attempts > 19) {
+			$Time = undef;
+			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would move the event more than 20 minutes.");
+			$Conflict = 1;
+			last;
+		}
+		if($summary eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) {
+			if(defined($fulltext) and defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
+				unless($fulltext eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) {
+					$ThisConflicted = 1;
+				}
+			}
+		} else {
+			$ThisConflicted = 1;
+		}
+		if($ThisConflicted) {
+			$Min++;
+			$Conflict = 1;
+			$Time = "$Hour:" . AppendZero($Min);
+		}
+	}
+	if($Conflict) {
+		if(defined($Time)) {
+			$ConflictMessage = sprintf($Gettext->get('"%s" at %s has been moved to %s'),$summary,"$Day.$Month.$Year $OrigTime", $Time);
+		} else {
+			$ConflictMessage = sprintf($Gettext->get('"%s" at %s did not get imported'),$summary,"$Day.$Month.$Year $OrigTime");
+		}
+	}
+	return($ConflictMessage,$Time);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2186,10 +2238,32 @@ sub DPWarning {
 	$Dialog->destroy();
 }
 
-# Purpose: Display an information dialog
-# Usage: DPInfo("Information message");
+# Purpose: Display an information dialog (with optional details)
+# Usage: DPInfo("Information message", details?);
 sub DPInfo {
 	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'info', 'ok', "$_[0]");
+	if($_[1]) {
+		# The expander
+		my $FT_Expander = Gtk2::Expander->new($Gettext->get("Details"));
+		$FT_Expander->show();
+		$Dialog->vbox->add($FT_Expander);
+		# The textview field
+		my $FulltextView = Gtk2::TextView->new();
+		$FulltextView->set_editable(0);
+		$FulltextView->set_wrap_mode("word-char");
+		$FulltextView->show();
+		# Add the text to it
+		my $FulltextBuffer = Gtk2::TextBuffer->new();
+		$FulltextBuffer->set_text($_[1]);
+		$FulltextView->set_buffer($FulltextBuffer);
+		# Create a scrollable window to use
+		my $FulltextWindow = Gtk2::ScrolledWindow->new;
+		$FulltextWindow->set_policy('automatic', 'automatic');
+		$FulltextWindow->add($FulltextView);
+		$FulltextWindow->show();
+		# Add it to the expander
+		$FT_Expander->add($FulltextWindow);
+	}
 	$Dialog->run();
 	$Dialog->destroy();
 }
