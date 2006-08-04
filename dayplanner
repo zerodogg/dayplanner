@@ -1625,11 +1625,54 @@ sub LoadDayplannerDataFile {
 		DPIntWarn("FAILED to parse data!");
 		return(undef);
 	};
-	print Dumper(\%BirthdayCalendarContent);
+	# First insert the birthdays. We do this mindlessly as there won't be any
+	# conflicts anyway
+	foreach my $Month (keys(%BirthdayCalendarContent)) {
+		foreach my $Day (keys(%{$BirthdayCalendarContent{$Month}})) {
+				foreach my $Name (keys(%{$BirthdayCalendarContent{$Month}{$Day}})) {
+					$CalendarContents{$Month}{$Day}{$Name} = 1;
+				}
+			}
+		}
 	unless($DP_OnlyBirthdays) {
-		print Dumper(\%MainCalendarContent);
+		# Process the main calendar content. Here conflicts may arise.
+		my @Conflicts;
+		foreach my $Year (keys(%MainCalendarContent)) {
+			foreach my $Month (keys(%{$MainCalendarContent{$Year}})) {
+				foreach my $Day (keys(%{$MainCalendarContent{$Year}{$Month}})) {
+					foreach my $Time(keys(%{$MainCalendarContent{$Year}{$Month}{$Day}})) {
+						my $summary = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{summary};
+						my $fulltext = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{fulltext};
+						if(CalendarDefined($Year, $Month, $Day, $Time)) {
+							my $Conflict;
+							if($summary eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) {
+								if(defined($fulltext)) {
+									unless($fulltext eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) {
+										$Conflict = 1;
+									}
+								} elsif (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
+									$Conflict = 1;
+								}
+							} else {
+								$Conflict = 1;
+							}
+							my $OrigTime = $Time;
+							if($Conflict) {
+								DPIntWarn("Conflict detected. Unable to resolve");
+								$Time = undef;
+							}
+						}
+						if($Time) {
+							$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $summary;
+							$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $fulltext;
+						}
+					}
+				}
+			}
+		}
 	}
-	print "$DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt\n";
+	# The internal data has been updated.
+	UpdatedData();
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
