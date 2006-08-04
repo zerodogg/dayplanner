@@ -1456,7 +1456,7 @@ sub GetEncryptionKey {
 
 	# Create the first input boxes
 	my $FirstInputHBox = Gtk2::HBox->new();
-	my $FirstInputLabel = Gtk2::Label->new($Gettext->get('Password:'));
+	my $FirstInputLabel = Gtk2::Label->new($Gettext->get('Password') . ":");
 	my $FirstInputEntry = Gtk2::Entry->new();
 	$FirstInputHBox->pack_start($FirstInputLabel,0,0,0);
 	$FirstInputEntry->set_editable(1);
@@ -1511,6 +1511,7 @@ sub GetEncryptionKey {
 # Purpose: Write the day planner data format
 # Usage: WriteDayplannerDataFile(FILE, ONLY_BIRTHDAYS?, ENCRYPT?);
 sub WriteDayplannerDataFile {
+	# NOTE: This function MUST be able to work without the GUI initialized (exluding the encryption part)
 	my $FormatVersion = 1;
 	my $OnlyBirthdays = $_[1] ? 1 : 0;
 	my $DPEncrypt = $_[2] ? 1 : 0;
@@ -1528,22 +1529,98 @@ sub WriteDayplannerDataFile {
 	print $Target "# --- BEGIN MAIN DAY PLANNER DATA ---\n";
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
-	# Sort the keys
-	$Data::Dumper::Sortkeys = 1;
+	# Nevermind sorting
+	$Data::Dumper::Sortkeys = 0;
 	# Set the indentation (none in this case)
 	$Data::Dumper::Indent = 0;
-	my $Data = "\$DP_OnlyBirthdays = $OnlyBirthdays;\n\$DP_Exportedby = $Version;\n\$DP_ExportedAt = " . localtime() . ";\n";
+	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n\$DP_Exportedby = '$Version';\n\$DP_ExportedAt = '" . time() . "';\n";
 	$Data .= Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayCalendarContent"]);
 	unless($OnlyBirthdays) {
+		$Data .= "\n";
 		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
 	}
 	if($DPEncrypt) {
 		$Data = EncryptData($Data);
 	}
-	print $Target "\$ContainedData = '";
+	print $Target "\$ContainedData = ";
 	print $Target encode_base64($Data);
-	print $Target "'\n# --- END MAIN DAY PLANNER DATA ---\n";
+	print $Target "# --- END MAIN DAY PLANNER DATA ---\n";
 	close($Target);
+}
+
+# Purpose: Import data from a day planner data file
+# Usage: LoadDayplannerDataFile(FILE);
+sub LoadDayplannerDataFile {
+	# NOTE: This function MUST be able to work without the GUI initialized
+	my $File = $_[0];
+	
+	# Identify it
+	open(READFILE, "<", $File) or do {
+		DPIntWarn("Unable to open $File for writing: $!");
+		if($MainWindow) {
+			DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
+		}
+		return(undef);
+	};
+	while(<READFILE>) {	# Don't know how to otherwise read only *one* line.
+		if($_ =~ /^# Content-type: text\/x-dayplanner$/ ) {
+			last;
+		} else {
+			DPIntWarn("$File does not seem to be a day planner data file");
+			if($MainWindow) {
+				DPError(sprintf($Gettext->get("%s does not seem to be a day planner data file"), $File));
+			}
+			return(undef);
+		}
+	}
+	# Data strings
+	my($DP_FormatVersion, $DP_Crypt, $ContainedData, $ContainerMode, $PossibleCorruption);
+
+	# Parse the entire thing
+	while(<READFILE>) {
+		next unless /\S/;
+		chomp;
+		unless($ContainerMode) {
+			next if /^\s*#/;
+			next unless /^\$/;
+			next unless m/=/;
+			# Get the values
+			my $Name = $_;
+			$Name =~ s/^\$(\w+)\s*=.*$/$1/;
+			s/^\$\w+\s*=\s*//;
+			s/;$//;
+			if($Name eq 'ContainedData') {
+				$ContainedData = $_;
+				$ContainerMode = 1;
+			} elsif ($Name eq 'DP_FormatVersion') {
+				unless($_ =~ /^\s*1\s*$/) {
+					DPIntWarn("$File contains version $_ of the day planner data format. This version only supports version 1");
+					if($MainWindow) {
+						DPError(sprintf($Gettext->get("%s contains version %s of the day planner data format. This version of day planner only supports version 1"), $File, $_));
+					}
+					return(undef);
+				}
+			} elsif ($Name eq 'DP_Crypt') {
+				$DP_Crypt = $_;
+			} else {
+				DPIntWarn("Unknown setting in data file: $Name (=$_). This might be bad.");
+				$PossibleCorruption = 1;
+			}
+		} else {
+			if(/^#/) {
+				$ContainerMode = 0;
+			} else {
+				$ContainedData .= $_;
+			}
+		}
+	}
+	close(READFILE);
+	$ContainedData = decode_base64($ContainedData);
+	my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
+	eval($ContainedData);
+	print Dumper(\%BirthdayCalendarContent);
+	print Dumper(\%MainCalendarContent);
+	print "$DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt\n";
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
