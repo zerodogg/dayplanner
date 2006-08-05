@@ -1196,6 +1196,63 @@ sub Set_DayChangeTimer {
 # =============================================================================
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Various utility functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Resolve a conflict during an import
+# Usage: my (message, newtime) = Import_ResolveConflict(Year,Month,Day,Time,summary,fulltext);
+sub Import_ResolveConflict {
+	my($Year,$Month,$Day,$Time,$summary,$fulltext) = @_;
+	my($Attempts,$ConflictMessage,$Conflict);
+	my $OrigTime = $Time;
+	while(CalendarDefined($Year, $Month, $Day, $Time)) {
+		my $ThisConflicted;
+		$Attempts++;
+		my $Hour = $Time;
+		my $Min = $Time;
+		$Hour =~ s/^(\d+):.*$/$1/;
+		$Min =~ s/^\d+:(\d+)$/$1/;
+		if($Attempts > 19) {
+			$Time = undef;
+			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would move the event more than 20 minutes.");
+			$Conflict = 1;
+			last;
+		}
+		if($summary eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) {
+			if(defined($fulltext) and defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
+				unless($fulltext eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) {
+					$ThisConflicted = 1;
+				}
+			}
+		} else {
+			$ThisConflicted = 1;
+		}
+		if($ThisConflicted) {
+			$Min++;
+			if($Min > 59) {
+				$Conflict = 1;
+				DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would require hour switching.");
+				$Time = undef;
+				last;
+			}
+			$Conflict = 1;
+			$Time = "$Hour:" . AppendZero($Min);
+		} else {
+			# If it didn't conflict that must mean it worked out.
+			last;
+		}
+	}
+	if($Conflict) {
+		if(defined($Time)) {
+			$ConflictMessage = sprintf($Gettext->get('"%s" at %s has been moved to %s'),$summary,"$Day.$Month.$Year $OrigTime", $Time);
+		} else {
+			$ConflictMessage = sprintf($Gettext->get('"%s" at %s did not get imported'),$summary,"$Day.$Month.$Year $OrigTime");
+		}
+	}
+	return($ConflictMessage,$Time);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Plan migration functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -1677,6 +1734,128 @@ sub iCal_Exporter {
 	close($TARGET);
 }
 
+# Purpose: Loads an iCalendar file and returns a simple data structure. Returns
+# 	undef on failure.
+# Usage: my $iCalendar = iCal_LoadFile(FILE);
+sub iCal_LoadFile {
+	my $File = $_[0];
+	my @iCalendarStructures;
+	my $LastStructure;
+	my $LastName = undef;
+	my $CurrentStructure;
+	open(my $ICALENDAR, "<", $File);
+
+	while(<$ICALENDAR>) {
+		s/\r//;
+		chomp;
+		if (s/^\s//) {
+			$iCalendarStructures[$CurrentStructure]{$LastName} .= $_;
+		} elsif(/^END/) {
+			next;
+		} else {
+			my $Name = $_;
+			my $Value = $_;
+			$Name =~ s/(.+):(.*)$/$1/;
+			$Value =~ s/(.+):(.*)$/$2/;
+			if($Name =~ /^BEGIN/) {
+				$CurrentStructure++;
+				$Name = "X-PARSER_ENTRYTYPE";
+			}
+			$LastName = $Name;
+			$iCalendarStructures[$CurrentStructure]{$Name} = iCal_UnSafe($Value);
+		}
+	}
+	close($ICALENDAR);
+	return(\@iCalendarStructures);
+}
+
+# Purpose: Removes escaping of iCalendar entries
+# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
+sub iCal_UnSafe {
+	my $Data = $_[0];
+	$Data =~ s/\\\\/\\/g;
+	$Data =~ s/\\,/,/g;
+	$Data =~ s/\\;/;/g;
+	$Data =~ s/\\n/\n/g;
+	return($Data);
+}
+
+# Purpose: Imports files in the iCalendar format into day planner
+# Usage: iCal_ImportFile(FILE);
+sub iCal_ImportFile {
+	my $Data = iCal_LoadFile($_[0]);
+	return(undef) unless(defined($Data));
+	foreach(0..scalar(@{$Data})) {
+		my $Current = $Data->[$_];
+		my ($Summary, $Fulltext);
+		# First make sure we've got everything we need. Skip entries
+		# missing some things.
+		next unless(defined($Current->{"X-PARSER_ENTRYTYPE"}));
+		next unless($Current->{"X-PARSER_ENTRYTYPE"} eq 'VEVENT');
+		next unless(defined($Current->{'DTSTART'}));
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
+		next unless(defined($Year));
+		if($Current->{RRULE}) {
+			if($Current->{RRULE} =~ /YEARLY/) {
+				# Birthday?
+				if($Current->{"X-BIRTHDAY"} eq "TRUE") {
+					if(defined($Current->{"X-BIRTHDAYNAME"})) {
+						$Summary = $Current->{"X-BIRTHDAYNAME"};
+					} else {
+						$Summary = $Current->{"SUMMARY"};
+					}
+				} else {
+					if(defined($Current->{"SUMMARY"})) {
+						$Summary = $Current->{"SUMMARY"};
+					} else {
+						next;
+					}
+				}
+				$BirthdayContents{$Month}{$Day}{$Summary} = 1;
+				next unless defined($Current->{DESCRIPTION});
+			} else {
+				next unless defined($Current->{DESCRIPTION});
+			}
+		}
+		if(defined($Current->{DESCRIPTION})) {
+			$Fulltext = $Current->{DESCRIPTION};
+		}
+		unless(defined($Summary)) {
+			if(defined($Current->{SUMMARY})) {
+				$Summary = $Current->{SUMMARY};
+			} else {
+				$Summary = "Unknown";
+			}
+		}
+		my $ConflictText;
+		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
+		if($Time) {
+			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
+			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
+		}
+	}
+}
+
+# Purpose: Parse an iCalendar date-time
+# Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
+sub iCal_ParseDateTime {
+	my $Year = $_[0];
+	my $Month = $_[0];
+	my $Day = $_[0];
+	my $Hour = $_[0];
+	my $Minutes = $_[0];
+
+	$Year =~ s/^(\d\d\d\d).*$/$1/;
+	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
+	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
+
+	$Hour =~ s/^.+T//;
+	$Hour =~ s/^(\d\d).*$/$1/;
+	$Minutes =~ s/^.+T//;
+	$Minutes =~ s/^\d\d(\d\d)\d*$/$1/;
+	return($Year,$Month,$Day,AppendZero($Hour) . ":" . AppendZero($Minutes));
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Day planner data format functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1837,7 +2016,7 @@ sub LoadDayplannerDataFile {
 						my $summary = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{summary};
 						my $fulltext = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{fulltext};
 						my $ConflictText;
-						($ConflictText,$Time) = DPF_ResolveConflict($Year,$Month,$Day,$Time,$summary,$fulltext);
+						($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$summary,$fulltext);
 						if($Time) {
 							$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $summary;
 							$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $fulltext;
@@ -1861,58 +2040,6 @@ sub LoadDayplannerDataFile {
 	UpdatedData();
 }
 
-# Purpose: Resolve a conflict during an import
-# Usage: my (message, newtime) = DPF_ResolveConflict(Year,Month,Day,Time,summary,fulltext);
-sub DPF_ResolveConflict {
-	my($Year,$Month,$Day,$Time,$summary,$fulltext) = @_;
-	my($Attempts,$ConflictMessage,$Conflict);
-	my $OrigTime = $Time;
-	while(CalendarDefined($Year, $Month, $Day, $Time)) {
-		my $ThisConflicted;
-		$Attempts++;
-		my $Hour = $Time;
-		my $Min = $Time;
-		$Hour =~ s/^(\d+):.*$/$1/;
-		$Min =~ s/^\d+:(\d+)$/$1/;
-		if($Attempts > 19) {
-			$Time = undef;
-			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would move the event more than 20 minutes.");
-			$Conflict = 1;
-			last;
-		}
-		if($summary eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) {
-			if(defined($fulltext) and defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-				unless($fulltext eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) {
-					$ThisConflicted = 1;
-				}
-			}
-		} else {
-			$ThisConflicted = 1;
-		}
-		if($ThisConflicted) {
-			$Min++;
-			if($Min > 59) {
-				$Conflict = 1;
-				DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would require hour switching.");
-				$Time = undef;
-				last;
-			}
-			$Conflict = 1;
-			$Time = "$Hour:" . AppendZero($Min);
-		} else {
-			# If it didn't conflict that must mean it worked out.
-			last;
-		}
-	}
-	if($Conflict) {
-		if(defined($Time)) {
-			$ConflictMessage = sprintf($Gettext->get('"%s" at %s has been moved to %s'),$summary,"$Day.$Month.$Year $OrigTime", $Time);
-		} else {
-			$ConflictMessage = sprintf($Gettext->get('"%s" at %s did not get imported'),$summary,"$Day.$Month.$Year $OrigTime");
-		}
-	}
-	return($ConflictMessage,$Time);
-}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI import/export dialogs
@@ -2021,7 +2148,9 @@ sub ImportDataFromFile {
 		if($Filename =~ /\.dpf$/i) {
 			LoadDayplannerDataFile($Filename);
 		} elsif($Filename =~ /\.ics$/i) {
-			DPInfo("iCalendar is not supported yet");
+			iCal_ImportFile($Filename);
+			UpdatedData();
+			DPInfo($Gettext->get("Day planner has imported the iCalendar data as well as it can.\n\nNote however that day planner does not support all functions present in the iCalendar format so some data may have been lost."));
 		} else {
 			DPIntWarn("Unknown filetype: $Filename");
 		}
