@@ -14,7 +14,6 @@ may be subject to change.
 	it from 24H to AM/PM before displaying it to the user. Should not
 	require too much extra work. Perhaps the use of AM/PM can be detected
 	using strftime?
-- Add import of iCalendar files
 - Add export-to-html support
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
