@@ -1443,7 +1443,7 @@ sub EncryptData {
 			cipher => "Blowfish",
 			salt => 1,
 		});
-	return($Encrypt->encrypt($_[0]));
+	return($Encrypt->encrypt("dayplanner"), $Encrypt->encrypt($_[0]));
 }
 
 # Purpose: Graphically prompt the user for the encryption key
@@ -1513,6 +1513,30 @@ sub GetEncryptionKey {
 	return($Password);
 }
 
+# Purpose: Graphically prompt the user for the encryption key and decrypt the
+# 		supplied data
+# Usage: my $Response = DecryptData(DATA);
+#	Returns undef on "cancel".
+sub DecryptData {
+	my $Data = $_[0];
+	# Verify deps
+	unless(eval('use Crypt::CBC;1;')) {
+		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::CBC"));
+		return(undef);
+	}
+	unless(eval('use Crypt::Blowfish; 1')) {
+		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::Blowfish"));
+		return($_[0]);
+	}
+	my $Key;
+	# Decryption function
+	my $Encrypt = Crypt::CBC->new({
+			key => $Key,
+			cipher => "Blowfish",
+			salt => 1,
+		});
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Day planner data format functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1530,12 +1554,8 @@ sub WriteDayplannerDataFile {
 		return(0);
 	};
 
-	print $Target "# Content-type: text/x-dayplanner\n\n# Day planner data file.\n";
-	print $Target "# Make changes to this file at your own risk\n";
-	print $Target "# --- BEGIN DAY PLANNER DATA HEADER ---\n";
-	print $Target "\$DP_FormatVersion = $FormatVersion;\n\$DP_Crypt = $DPEncrypt;\n";
-	print $Target "# --- END DAY PLANNER DATA HEADER ---\n";
-	print $Target "# --- BEGIN MAIN DAY PLANNER DATA ---\n";
+	print $Target "# Content-type: text/x-dayplanner\n# Day planner data file.\n";
+	print $Target "DP_FormatVersion = $FormatVersion;\nDP_Crypt = $DPEncrypt;\n";
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
 	# Nevermind sorting
@@ -1544,16 +1564,21 @@ sub WriteDayplannerDataFile {
 	$Data::Dumper::Indent = 0;
 	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n\$DP_Exportedby = '$Version';\n\$DP_ExportedAt = '" . time() . "';\n";
 	$Data .= Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayCalendarContent"]);
+
 	unless($OnlyBirthdays) {
 		$Data .= "\n";
 		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
 	}
 	if($DPEncrypt) {
-		$Data = EncryptData($Data);
+		my $EncryptedHeader;
+		($EncryptedHeader, $Data) = EncryptData($Data);
+		if(defined($EncryptedHeader)) {
+			print "DP_EncryptHead = $EncryptedHeader;\n";
+		}
 	}
-	print $Target "\$ContainedData = ";
+	print $Target "ContainedData = ";
 	print $Target encode_base64($Data);
-	print $Target "# --- END MAIN DAY PLANNER DATA ---\n";
+	print $Target "# END";
 	close($Target);
 }
 
@@ -1591,12 +1616,11 @@ sub LoadDayplannerDataFile {
 		chomp;
 		unless($ContainerMode) {
 			next if /^\s*#/;
-			next unless /^\$/;
 			next unless m/=/;
 			# Get the values
 			my $Name = $_;
-			$Name =~ s/^\$(\w+)\s*=.*$/$1/;
-			s/^\$\w+\s*=\s*//;
+			$Name =~ s/^(\w+)\s*=.*$/$1/;
+			s/^\w+\s*=\s*//;
 			s/;$//;
 			if($Name eq 'ContainedData') {
 				$ContainedData = $_;
@@ -1611,8 +1635,11 @@ sub LoadDayplannerDataFile {
 				}
 			} elsif ($Name eq 'DP_Crypt') {
 				$DP_Crypt = $_;
-			} else {
+			} elsif ($Name) {
 				DPIntWarn("Unknown setting in data file: $Name (=$_). This might be bad.");
+				$PossibleCorruption = 1;
+			} else {
+				DPIntWarn("Unknown line in data file: $_. This might be bad.");
 				$PossibleCorruption = 1;
 			}
 		} else {
@@ -1624,6 +1651,10 @@ sub LoadDayplannerDataFile {
 		}
 	}
 	close(READFILE);
+	unless(defined($ContainedData)) {
+		DPIntWarn("\$ContainedData turned out undef! Corrupt input data?");
+		return(undef);
+	}
 	$ContainedData = decode_base64($ContainedData) . "1;";
 	if($DP_Crypt) {
 		DPIntWarn("Encrypted *.dpf attempted to be loaded - this is not yet supported. Aborting.");
@@ -1639,7 +1670,7 @@ sub LoadDayplannerDataFile {
 	foreach my $Month (keys(%BirthdayCalendarContent)) {
 		foreach my $Day (keys(%{$BirthdayCalendarContent{$Month}})) {
 				foreach my $Name (keys(%{$BirthdayCalendarContent{$Month}{$Day}})) {
-					$CalendarContents{$Month}{$Day}{$Name} = 1;
+					$BirthdayContents{$Month}{$Day}{$Name} = 1;
 				}
 			}
 		}
@@ -1773,6 +1804,8 @@ sub ImportData {
 	# Ok button
 	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
 	$OKButton->show();
+	$OKButton->can_default(1);
+	$ImportWindow->set_default($OKButton);
 	# Signal callback (starts a function depending on the radio button selected)
 	$OKButton->signal_connect("clicked" => sub {
 			$ImportWindow->destroy();
@@ -1849,7 +1882,7 @@ sub ExportData {
 	my $ExportWindow = Gtk2::FileChooserDialog->new("Export data to file", $MainWindow, 'save',
 	'gtk-cancel' => 'reject',
 	'gtk-save' => 'accept',);
-	$ExportWindow->set_current_name("My_dayplanner");
+	$ExportWindow->set_current_name($Gettext->get("My_dayplanner"));
 	$ExportWindow->set_local_only(1);
 
 	# Create the file format selection part
