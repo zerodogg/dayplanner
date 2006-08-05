@@ -1756,7 +1756,7 @@ sub LoadDayplannerDataFile {
 			foreach(@Conflicts) {
 				$Message .= "$_\n";
 			}
-			DPInfo($Gettext->get("Some conflicts was detected. Day planner has attempted to resolve the conflicts as well as it can.\n\nHowever, some of the data may be incorrect or not imported at all. See the details below for information about the conflicting events."), $Message);
+			DPInfo($Gettext->get("Conflicting events were detected. Day planner has attempted to resolve the conflicts.\n\nHowever, some of the data may be incorrect or not imported. See the details below for information about the conflicting events."), $Message);
 		}
 	}
 	# The internal data has been updated.
