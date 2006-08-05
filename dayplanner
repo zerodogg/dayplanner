@@ -2001,7 +2001,7 @@ sub ExportData {
 					last;
 				}
 			} elsif ($ActiveIndex == 2) {
-				if(PromptOverWrite($Filename, 1)) {
+				if(PromptOverwrite($Filename, 1)) {
 					DPInfo("XHTML support is not yet implemented.");
 					last;
 				}
