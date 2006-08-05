@@ -1593,7 +1593,8 @@ sub WriteDayplannerDataFile {
 	my $DPEncrypt = $_[2] ? 1 : 0;
 	my $File = $_[0];
 	open(my $Target, ">", $File) or do {
-		DPWarn("Unable to open $File for writing: $!");
+		DPIntWarn("Unable to open $File for writing: $!");
+		DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
 		return(0);
 	};
 
@@ -2034,17 +2035,23 @@ sub PromptOverwrite {
 		} else {
 			return(1);
 		}
-	} elsif(-e $File) {
-		if(-d $File) {
-			DPInfo(sprintf($Gettext->get("\"%s\" is a directory.")));
-			return(undef);
-		} elsif(DPQuestion(sprintf($Gettext->get("\"%s\" already exists. Do you want to overwrite it?"), $File))) {
-			return(1);
-		} else {
+	} else {
+		unless(-w dirname($File)) {
+			DPInfo(sprintf($Gettext->get("You don't have write permission to \"%s\""), dirname($File)));
 			return(undef);
 		}
-	} else {
-		return(1);
+		if(-e $File) {
+			if(-d $File) {
+				DPInfo(sprintf($Gettext->get("\"%s\" is a directory.")));
+				return(undef);
+			} elsif(DPQuestion(sprintf($Gettext->get("\"%s\" already exists. Do you want to overwrite it?"), $File))) {
+				return(1);
+			} else {
+				return(undef);
+			}
+		} else {
+			return(1);
+		}
 	}
 }
 
