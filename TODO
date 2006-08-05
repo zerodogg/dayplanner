@@ -17,8 +17,6 @@ may be subject to change.
 - Add export and import of iCalendar files. See http://en.wikipedia.org/wiki/RFC2445_Syntax_Reference
 	for the standard reference
 - Add export-to-html support
-- Add export and import of day planner data files
-	(including the ability to only export birthdays)
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
