@@ -1794,6 +1794,9 @@ sub iCal_ImportFile {
 		next unless($Current->{"X-PARSER_ENTRYTYPE"} eq 'VEVENT');
 		next unless(defined($Current->{'DTSTART'}));
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
+		$Year =~ s/^0*//;
+		$Month =~ s/^0*//;
+		$Day =~ s/^0*//;
 		next unless(defined($Year));
 		if($Current->{RRULE}) {
 			if($Current->{RRULE} =~ /YEARLY/) {
