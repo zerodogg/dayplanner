@@ -34,7 +34,8 @@ use File::Basename;             # We meed dirname to help Cwd::Realpath finding 
 use IO::Socket;			# Network layer to communicate with the daemon
 use File::Copy;			# We need to copy the holiday file
 use FindBin;			# So that we can detect module dirs during runtime
-use MIME::Base64;		# Used when exporting
+use MIME::Base64;		# Used for import/export
+use Digest::MD5 qw(md5_base64);	# Used for import/export
 # So that we can use a local Date::HolidayParser
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/";
@@ -1443,7 +1444,7 @@ sub EncryptData {
 			cipher => "Blowfish",
 			salt => 1,
 		});
-	return($Encrypt->encrypt("dayplanner"), $Encrypt->encrypt($_[0]));
+	return($Encrypt->encrypt($_[0]));
 }
 
 # Purpose: Graphically prompt the user for the encryption key
@@ -1569,12 +1570,10 @@ sub WriteDayplannerDataFile {
 		$Data .= "\n";
 		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
 	}
+	my $DataMD5 = md5_base64($Data);
+	print $Target "DP_DataMD5 = $DataMD5\n";
 	if($DPEncrypt) {
-		my $EncryptedHeader;
-		($EncryptedHeader, $Data) = EncryptData($Data);
-		if(defined($EncryptedHeader)) {
-			print "DP_EncryptHead = $EncryptedHeader;\n";
-		}
+		$Data = EncryptData($Data);
 	}
 	print $Target "ContainedData = ";
 	print $Target encode_base64($Data);
