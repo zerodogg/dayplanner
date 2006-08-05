@@ -1792,7 +1792,16 @@ sub iCal_ImportFile {
 		# missing some things.
 		next unless(defined($Current->{"X-PARSER_ENTRYTYPE"}));
 		next unless($Current->{"X-PARSER_ENTRYTYPE"} eq 'VEVENT');
-		next unless(defined($Current->{'DTSTART'}));
+		unless(defined($Current->{'DTSTART'})) {
+			# Detect an alternate dstart
+			foreach(keys(%{$Current})) {
+				if(/^DTSTART/) {
+					$Current->{'DTSTART'} = $Current->{$_};
+					last;
+				}
+			}
+			next unless(defined($Current->{'DTSTART'}));
+		}
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
@@ -1803,13 +1812,13 @@ sub iCal_ImportFile {
 				# Birthday?
 				if($Current->{"X-BIRTHDAY"} eq "TRUE") {
 					if(defined($Current->{"X-BIRTHDAYNAME"})) {
-						$Summary = $Current->{"X-BIRTHDAYNAME"};
+						$Summary = iCal_UnSafe($Current->{"X-BIRTHDAYNAME"});
 					} else {
-						$Summary = $Current->{"SUMMARY"};
+						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
 					}
 				} else {
 					if(defined($Current->{"SUMMARY"})) {
-						$Summary = $Current->{"SUMMARY"};
+						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
 					} else {
 						next;
 					}
@@ -1821,13 +1830,13 @@ sub iCal_ImportFile {
 			}
 		}
 		if(defined($Current->{DESCRIPTION})) {
-			$Fulltext = $Current->{DESCRIPTION};
+			$Fulltext = iCal_UnSafe($Current->{DESCRIPTION});
 		}
 		unless(defined($Summary)) {
 			if(defined($Current->{SUMMARY})) {
-				$Summary = $Current->{SUMMARY};
+				$Summary = iCal_UnSafe($Current->{SUMMARY});
 			} else {
-				$Summary = "Unknown";
+				$Summary = $Gettext->get("Unknown");
 			}
 		}
 		my $ConflictText;
