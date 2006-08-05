@@ -1531,7 +1531,8 @@ sub DecryptData {
 	}
 	# Create the indow
 	my $PasswdDialog = Gtk2::Dialog->new($Gettext->get("Password"), $MainWindow, 'modal',
-	'gtk-ok' => 'ok');
+		'gtk-cancel' => 'cancel',
+		'gtk-ok' => 'ok');
 	$PasswdDialog->set_resizable(0);
 	$PasswdDialog->set_border_width(5);
 	$PasswdDialog->set_default_response ('ok');
@@ -1556,7 +1557,11 @@ sub DecryptData {
 	$InputLabel->show();
 	$PasswdDialog->vbox->pack_start($InputHBox,0,0,0);
 	while (1) {
-		$PasswdDialog->run();
+		my $Reply = $PasswdDialog->run();
+		unless($Reply eq 'ok') {
+			$PasswdDialog->destroy();
+			return(undef);
+		}
 		my $Key = $InputEntry->get_text;
 		# Decryption function
 		my $Encrypt = Crypt::CBC->new({
@@ -1696,6 +1701,10 @@ sub LoadDayplannerDataFile {
 	$ContainedData = decode_base64($ContainedData);
 	if($DP_Crypt) {
 		$ContainedData = DecryptData($ContainedData, $DP_DataMD5);
+		# If the returned data is undef then the user pressed cancel.
+		unless(defined($ContainedData)) {
+			return(undef);
+		}
 	} else {
 		# Verify the md5 sum (the decryption function does that for us, so it's not needed
 		#  for encrypted files).
