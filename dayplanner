@@ -1516,10 +1516,10 @@ sub GetEncryptionKey {
 
 # Purpose: Graphically prompt the user for the encryption key and decrypt the
 # 		supplied data
-# Usage: my $Response = DecryptData(DATA);
+# Usage: my $Response = DecryptData(DATA,MD5);
 #	Returns undef on "cancel".
 sub DecryptData {
-	my $Data = $_[0];
+	my ($Data,$MD5) = @_;
 	# Verify deps
 	unless(eval('use Crypt::CBC;1;')) {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::CBC"));
@@ -1607,7 +1607,7 @@ sub LoadDayplannerDataFile {
 		}
 	}
 	# Data strings
-	my($DP_FormatVersion, $DP_Crypt, $ContainedData, $ContainerMode, $PossibleCorruption);
+	my($DP_FormatVersion, $DP_Crypt, $DP_DataMD5, $ContainedData, $ContainerMode, $PossibleCorruption);
 
 	# Parse the entire thing
 	while(<READFILE>) {
@@ -1634,6 +1634,8 @@ sub LoadDayplannerDataFile {
 				}
 			} elsif ($Name eq 'DP_Crypt') {
 				$DP_Crypt = $_;
+			} elsif ($Name eq 'DP_DataMD5') {
+				$DP_DataMD5 = $_;
 			} elsif ($Name) {
 				DPIntWarn("Unknown setting in data file: $Name (=$_). This might be bad.");
 				$PossibleCorruption = 1;
