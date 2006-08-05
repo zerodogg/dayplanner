@@ -1935,7 +1935,7 @@ sub ImportDataFromFile {
 # Usage: ExportData();
 sub ExportData {
 	# Create the main window
-	my $ExportWindow = Gtk2::FileChooserDialog->new("Export data to file", $MainWindow, 'save',
+	my $ExportWindow = Gtk2::FileChooserDialog->new($Gettext->get("Export data to file"), $MainWindow, 'save',
 	'gtk-cancel' => 'reject',
 	'gtk-save' => 'accept',);
 	$ExportWindow->set_current_name($Gettext->get("My_dayplanner"));
@@ -1950,20 +1950,24 @@ sub ExportData {
 	$ExportVBox->pack_start($ExportHBox,0,0,0);
 
 	# Encryption checkbox
-	my $EncryptionCheckbox = Gtk2::CheckButton->new("Password protect the file (encryption)");
+	my $EncryptionCheckbox = Gtk2::CheckButton->new($Gettext->get("Password protect the file (encryption)"));
 	$EncryptionCheckbox->show();
 	$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
+	# Only birthdays checkbox
+	my $BirthdaysOnlyCheckbox = Gtk2::CheckButton->new($Gettext->get("Only export birthdays"));
+	$BirthdaysOnlyCheckbox->show();
+	$ExportVBox->pack_end($BirthdaysOnlyCheckbox,0,0,0);
 
 	# Label
 	my $ActiveIndex;
-	my $FiletypeLabel = Gtk2::Label->new("Save as filetype:");
+	my $FiletypeLabel = Gtk2::Label->new($Gettext->get("Save as filetype:"));
 	$FiletypeLabel->set_justify('left');
 	$FiletypeLabel->show();
 	$ExportHBox->pack_start($FiletypeLabel,0,0,0);
 	# Combo selector
 	my $Export_Combo = Gtk2::ComboBox->new_text;
-	$Export_Combo->insert_text(0, sprintf('Day planner data format (%s)', '*.dpf'));
-	$Export_Combo->insert_text(1, sprintf('iCalendar (%s)', '*.ics'));
+	$Export_Combo->insert_text(0, sprintf($Gettext->get('Day planner data format (%s)'), '*.dpf'));
+	$Export_Combo->insert_text(1, sprintf($Gettext->get('iCalendar (%s)'), '*.ics'));
 	$ExportHBox->pack_end($Export_Combo,0,0,0);
 	$Export_Combo->show();
 
@@ -1981,9 +1985,10 @@ sub ExportData {
 	my $Response = $ExportWindow->run();
 	my $Filename = $ExportWindow->get_filename();
 	if($Response eq 'accept') {
+		my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
 		if($ActiveIndex == 0) {
 			my $Encrypt = $EncryptionCheckbox->get_active();
-			WriteDayplannerDataFile("$Filename.dpf",0,$Encrypt);
+			WriteDayplannerDataFile("$Filename.dpf",$OnlyBirthdays,$Encrypt);
 		} elsif ($ActiveIndex == 1) {
 			DPInfo("The iCalendar format is not yet supported.");
 		} else {
