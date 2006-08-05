@@ -1529,13 +1529,50 @@ sub DecryptData {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::Blowfish"));
 		return($_[0]);
 	}
-	my $Key;
-	# Decryption function
-	my $Encrypt = Crypt::CBC->new({
-			key => $Key,
-			cipher => "Blowfish",
-			salt => 1,
-		});
+	# Create the indow
+	my $PasswdDialog = Gtk2::Dialog->new($Gettext->get("Password"), $MainWindow, 'modal',
+	'gtk-ok' => 'ok');
+	$PasswdDialog->set_resizable(0);
+	$PasswdDialog->set_border_width(5);
+	$PasswdDialog->set_default_response ('ok');
+	
+	# Create the top lbel
+	my $Label = Gtk2::Label->new($Gettext->get('This file is password protected.'));
+	$Label->show();
+	$Label->set_justify('left');
+	$PasswdDialog->vbox->pack_start($Label,1,1,0);
+
+	# Create the first input boxes
+	my $InputHBox = Gtk2::HBox->new();
+	my $InputLabel = Gtk2::Label->new($Gettext->get('Password') . ":");
+	my $InputEntry = Gtk2::Entry->new();
+	$InputHBox->pack_start($InputLabel,0,0,0);
+	$InputEntry->set_editable(1);
+	$InputEntry->set_visibility(0);
+	$InputEntry->set_activates_default(1);
+	$InputHBox->pack_end($InputEntry,0,0,0);
+	$InputHBox->show();
+	$InputEntry->show();
+	$InputLabel->show();
+	$PasswdDialog->vbox->pack_start($InputHBox,0,0,0);
+	while (1) {
+		$PasswdDialog->run();
+		my $Key = $InputEntry->get_text;
+		# Decryption function
+		my $Encrypt = Crypt::CBC->new({
+				key => $Key,
+				cipher => "Blowfish",
+				salt => 1,
+			});
+		my $Decrypted = $Encrypt->decrypt($Data);
+		my $DecryptedMD5 = md5_base64($Decrypted);
+		if($DecryptedMD5 eq $MD5) {
+			$PasswdDialog->destroy();
+			return($Decrypted);
+		}
+		$Label->set_text($Gettext->get("Invalid password.") . "\n" . $Gettext->get('This file is password protected.'));
+		$InputEntry->set_text('');
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1656,11 +1693,19 @@ sub LoadDayplannerDataFile {
 		DPIntWarn("\$ContainedData turned out undef! Corrupt input data?");
 		return(undef);
 	}
-	$ContainedData = decode_base64($ContainedData) . "1;";
+	$ContainedData = decode_base64($ContainedData);
 	if($DP_Crypt) {
-		DPIntWarn("Encrypted *.dpf attempted to be loaded - this is not yet supported. Aborting.");
-		return(undef);
+		$ContainedData = DecryptData($ContainedData, $DP_DataMD5);
+	} else {
+		# Verify the md5 sum (the decryption function does that for us, so it's not needed
+		#  for encrypted files).
+		my $ContainedMD5 = md5_base64($ContainedData);
+		unless($ContainedMD5 eq $DP_DataMD5) {
+			DPIntWarn("Checksumming failed! The input data is almost certainly corrupt!");
+			$PossibleCorruption = 1;
+		}
 	}
+	$ContainedData .= "1;";
 	my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
 	eval($ContainedData) or do {
 		DPIntWarn("FAILED to parse data!");
