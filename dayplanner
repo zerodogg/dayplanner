@@ -1968,6 +1968,7 @@ sub ExportData {
 	my $Export_Combo = Gtk2::ComboBox->new_text;
 	$Export_Combo->insert_text(0, sprintf($Gettext->get('Day planner data format (%s)'), '*.dpf'));
 	$Export_Combo->insert_text(1, sprintf($Gettext->get('iCalendar (%s)'), '*.ics'));
+	$Export_Combo->insert_text(2,         $Gettext->get('XHTML (exports to a directory)'));
 	$ExportHBox->pack_end($Export_Combo,0,0,0);
 	$Export_Combo->show();
 
@@ -1982,20 +1983,69 @@ sub ExportData {
 	});
 	$Export_Combo->set_active(0);
 
-	my $Response = $ExportWindow->run();
-	my $Filename = $ExportWindow->get_filename();
-	if($Response eq 'accept') {
-		my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
-		if($ActiveIndex == 0) {
-			my $Encrypt = $EncryptionCheckbox->get_active();
-			WriteDayplannerDataFile("$Filename.dpf",$OnlyBirthdays,$Encrypt);
-		} elsif ($ActiveIndex == 1) {
-			DPInfo("The iCalendar format is not yet supported.");
+	while (1) {
+		my $Response = $ExportWindow->run();
+		my $Filename = $ExportWindow->get_filename();
+		if($Response eq 'accept') {
+			my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
+			if($ActiveIndex == 0) {
+				if(PromptOverwrite("$Filename.dpf")) {
+					my $Encrypt = $EncryptionCheckbox->get_active();
+					WriteDayplannerDataFile("$Filename.dpf",$OnlyBirthdays,$Encrypt);
+					last;
+				}
+			} elsif ($ActiveIndex == 1) {
+				if(PromptOverwrite("$Filename.ics")) {
+					DPInfo("The iCalendar format is not yet supported.");
+					last;
+				}
+			} elsif ($ActiveIndex == 2) {
+				if(PromptOverWrite($Filename, 1)) {
+					DPInfo("XHTML support is not yet implemented.");
+					last;
+				}
+			} else {
+				DPIntWarn("Unknown activeindex: $ActiveIndex");
+			}
 		} else {
-			DPIntWarn("Unknown activeindex: $ActiveIndex");
+			last;
 		}
 	}
 	$ExportWindow->destroy();
+}
+
+# Purpose: Prompt the user to overwrite data
+# Usage: PromptOverwrite(PATH, DIR?);
+# 	Returns undef on "don't overwrite". Otherwise true.
+sub PromptOverwrite {
+	my ($File, $Dir) = @_;
+	if($Dir) {
+		if(-e $File) {
+			if(-d $File) {
+				if(DPQuestion(sprintf($Gettext->get("The directory \"%s\" already exists. If you continue any existing exported day planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
+					return(1);
+				} else {
+					return(undef);
+				}
+			} else {
+				DPInfo(sprintf($Gettext->get("\"%s\" already exists and is not a directory."), $File));
+				return(undef);
+			}
+		} else {
+			return(1);
+		}
+	} elsif(-e $File) {
+		if(-d $File) {
+			DPInfo(sprintf($Gettext->get("\"%s\" is a directory.")));
+			return(undef);
+		} elsif(DPQuestion(sprintf($Gettext->get("\"%s\" already exists. Do you want to overwrite it?"), $File))) {
+			return(1);
+		} else {
+			return(undef);
+		}
+	} else {
+		return(1);
+	}
 }
 
 # =============================================================================
