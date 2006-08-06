@@ -127,12 +127,6 @@ my (
 	$currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst
 );
 
-# Configuration options
-#my (
-#	$UserConfig{EditorVerboseDefault},	$UserConfig{Events_NotifyPre},
-#	$UserConfig{Events_NotifyDay},	$UserConfig{Events_DayNotify}
-#);
-
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
 
@@ -528,12 +522,12 @@ sub CreateSaveDir {
 }
 
 # Purpose: Perform certain commands on first startup
-# Usage: FirstStartup();
+# Usage: FirstStartup(MIGRATE?);
 sub FirstStartup {
 	# First create the savedir
 	CreateSaveDir();
 	# Now try to migrate plan data
-	MigratePlan(1);
+	MigratePlan(1) unless $_[0];
 }	
 
 # Purpose: Save the datafile
@@ -1192,6 +1186,26 @@ sub Set_DayChangeTimer {
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
 }
 
+# Purpose: Call the main initialization functions
+# Usage: MainInit();
+sub MainInit {
+	my $NoGui = $_[0];
+	# Set SaveToDir and HolidayFile
+	$SaveToDir = "$ENV{HOME}/.dayplanner" unless(defined($SaveToDir));	# The configuration and eventlist directory
+	$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
+
+	FirstStartup($NoGui) unless -d $SaveToDir;
+
+	# Load the configuration file
+	LoadDefaultConfig();
+	# Load the internal state file
+	LoadStateFile($SaveToDir, "state.conf");
+	# Load the calendar
+	LoadCalendar();
+	# Set up holidays
+	HolidaySetup();
+}
+
 # =============================================================================
 # IMPORT/EXPORT
 # =============================================================================
@@ -1251,6 +1265,47 @@ sub Import_ResolveConflict {
 		}
 	}
 	return($ConflictMessage,$Time);
+}
+
+# Purpose: Commandline wrapper around the export functions
+# Usage: 'x|yzx' => \&CLI_Export,
+sub CLI_Export {
+	my($Type,$Target) = @_;
+	MainInit();
+	if($Type =~ /(ical|dpf)/) {
+		unless(-w dirname($Target)) {
+			die("Unable to write to " . dirname($Target) . "\n");
+		}
+		if(-d $Target) {
+			die("$Target: is a directory\n");
+		}
+		if($Type =~ /ical/) {
+			if(iCal_Exporter($Target)) {
+				print "iCalendar data written to $Target\n";
+			}
+		} elsif($Type =~ /dpf/) {
+			if(WriteDayplannerDataFile($Target)) {
+				print "Day planner data file ($Target) written\n";
+			}
+		}
+	} elsif($Type =~ /html/) {
+		unless(-e $Target) {
+			eval("mkpath $Target");
+			die("mkpath $Target failed: $@\n") if $@;
+		}
+		unless(-w $Target) {
+			die("I don't have write permission to $Target\n");
+		}
+		unless(-d $Target) {
+			die("$Target: is not a directory\n");
+		}
+		if(HTML_Export($Target)) {
+			print "HTML written to $Target\n";
+		}
+	} else {
+		die("Unknown type given as argument to CLI_Export: $Type\n");
+	}
+	exit(0);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4151,6 +4206,12 @@ GetOptions (
 		PrintHelp("-v","--version", "Display version information and exit");
 		PrintHelp("-t","--test","Use a seperate debug/ configuration directory");
 		PrintHelp("", "--confdir", "Use the directory supplied as configuration directory");
+		PrintHelp("", "--exportical", "Export the day planner data in the iCalendar format");
+		PrintHelp("", "", "to the filename supplied");
+		PrintHelp("", "--exportdpf", "Export the day planner data in the day planner data");
+		PrintHelp("", "", "format to the filename supplied");
+		PrintHelp("", "--exporthtml", "Export the day planner data in the HTML format to the");
+		PrintHelp("", "", "directory supplied");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
@@ -4182,6 +4243,9 @@ GetOptions (
 		}
 		$SaveToDir = $_[1];
 	},
+	'exportical=s' => \&CLI_Export,
+	'exportdpf=s' => \&CLI_Export,
+	'exporthtml=s' => \&CLI_Export,
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
@@ -4199,21 +4263,9 @@ unless(-e $ENV{HOME} and -d $ENV{HOME}) {
 	DPError(sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME"));
 	die("\n");
 }
+
 Gtk2->init;
-# Set SaveToDir and HolidayFile
-$SaveToDir = "$ENV{HOME}/.dayplanner" unless(defined($SaveToDir));	# The configuration and eventlist directory
-$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
-
-FirstStartup() unless -d $SaveToDir;
-
-# Load the configuration file
-LoadDefaultConfig();
-# Load the internal state file
-LoadStateFile($SaveToDir, "state.conf");
-# Load the calendar
-LoadCalendar();
-# Set up holidays
-HolidaySetup();
+MainInit();
 # Draw the main window
 DrawMainWindow();
 Gtk2->main_iteration while Gtk2->events_pending;
