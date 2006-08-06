@@ -24,7 +24,7 @@ use File::Temp;
 use Cwd qw/realpath getcwd/;
 use File::Basename qw/dirname/;
 use File::Find;
-use File::Path qw/mkpath/;
+use File::Path qw/mkpath rmtree/;
 
 my $DPVersion = "0.2";
 my $BuildRPM = 1;
@@ -109,16 +109,27 @@ print "done\n";
 
 # Remove SVN files
 print "Removing files not present in SVN...";
+my @RMDirs;
 find(sub {
 	# Skip SVN files
 	return if $File::Find::name =~ m#/\.svn#;
-	return if -d $File::Find::name;
+	if(-d $File::Find::name) {
+		return if $File::Find::name eq $tempdir;
+		unless(-d "$File::Find::name/.svn") {
+			push(@RMDirs, $File::Find::name);
+		}
+	} else {
 
-	unless(-e "./.svn/text-base/$_.svn-base") {
-		print ".";
-		unlink($_);
+		unless(-e "./.svn/text-base/$_.svn-base") {
+			print ".";
+			unlink($_);
+		}
 	}
 }, $tempdir);
+foreach(@RMDirs) {
+	rmtree($_);
+	print ".";
+}
 print "done\n";
 
 # Clean up the archive
