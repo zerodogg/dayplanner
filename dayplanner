@@ -2490,7 +2490,7 @@ sub PromptOverwrite {
 		if(-e $File) {
 			if(-d $File) {
 				foreach(<$File/*>) {
-					unless($_ =~ /^./) {
+					unless($_ =~ /^\./) {
 						if(DPQuestion(sprintf($Gettext->get("There are already files in the directory \"%s\". If you continue any existing exported day planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
 							return(1);
 						} else {
