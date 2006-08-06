@@ -1455,7 +1455,7 @@ sub HTML_YearList {
 	};
 	print $FILE HTML_Header("", "Day planner", "M");
 	print $FILE $Gettext->get("Please select the year you wish to view:") . "<br />\n";
-	foreach(sort(keys(%CalendarContents))) {
+	foreach(sort { $b <=> $a } keys(%CalendarContents)) {
 		print $FILE "<a href='$_.html'>$_</a><br />\n";
 	}
 	print $FILE HTML_Footer();
