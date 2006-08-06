@@ -1449,11 +1449,14 @@ sub HTML_Export {
 		12 => "december"
 	);
 	my $Dir = $_[0];
-	mkpath($Dir) or do {
-		DPIntWarn("Unable to mkpath($Dir): $!");
-		DPError(sprintf($Gettext->get("Unable to create the directory %s: %s", $Dir, $!)));
-		return(undef);
-	};
+	unless(-d $Dir) {
+		eval("mkpath($Dir)");
+		if($@) {
+			DPIntWarn("Unable to mkpath($Dir): $@");
+			DPError(sprintf($Gettext->get("Unable to create the directory %s: %s", $Dir, $@)));
+			return(undef);
+		}
+	}
 	foreach my $Year (keys(%CalendarContents)) {
 		HTML_YearHtml($Year,$Dir);
 		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
@@ -1899,6 +1902,7 @@ sub iCal_Exporter {
 					# The unix epoch starts in 1970 so we put that in here as the start time
 					# for the event (we have no idea when a person was born)
 					print $TARGET "DTSTART:1970$Month${Day}T000000\r\n";
+					print $TARGET "DTEND:1970$Month${Day}T235959\r\n";
 					# Day planner-style recurrance
 					print $TARGET "RRULE:FREQ=YEARLY\r\n";
 					# The summary is the name +'s birthday (localized).
@@ -1936,6 +1940,7 @@ sub iCal_Exporter {
 						
 						print $TARGET "BEGIN:VEVENT\r\n";
 						print $TARGET "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
+						print $TARGET "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
 						print $TARGET "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
 						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
 							print $TARGET "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
@@ -2390,7 +2395,7 @@ sub ImportDataFromFile {
 # Usage: ExportData();
 sub ExportData {
 	# Create the main window
-	my $ExportWindow = Gtk2::FileChooserDialog->new($Gettext->get("Export data to file"), $MainWindow, 'save',
+	my $ExportWindow = Gtk2::FileChooserDialog->new($Gettext->get("Export data"), $MainWindow, 'save',
 	'gtk-cancel' => 'reject',
 	'gtk-save' => 'accept',);
 	$ExportWindow->set_current_name($Gettext->get("My_dayplanner"));
@@ -2437,8 +2442,10 @@ sub ExportData {
 		}
 		if($ActiveIndex == 2) {
 			$BirthdaysOnlyCheckbox->set_sensitive(0);
+			$ExportWindow->set_action('select-folder');
 		} else {
 			$BirthdaysOnlyCheckbox->set_sensitive(1);
+			$ExportWindow->set_action('save');
 		}
 	});
 	$Export_Combo->set_active(0);
@@ -2482,11 +2489,16 @@ sub PromptOverwrite {
 	if($Dir) {
 		if(-e $File) {
 			if(-d $File) {
-				if(DPQuestion(sprintf($Gettext->get("The directory \"%s\" already exists. If you continue any existing exported day planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
-					return(1);
-				} else {
-					return(undef);
+				foreach(<$File/*>) {
+					unless($_ =~ /^./) {
+						if(DPQuestion(sprintf($Gettext->get("There are already files in the directory \"%s\". If you continue any existing exported day planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
+							return(1);
+						} else {
+							return(undef);
+						}
+					}
 				}
+				return(1);
 			} else {
 				DPInfo(sprintf($Gettext->get("\"%s\" already exists and is not a directory."), $File));
 				return(undef);
