@@ -13,12 +13,12 @@ msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-08-01 00:03+0200\n"
-"PO-Revision-Date: 2006-07-01 01:15+0200\n"
+"PO-Revision-Date: 2006-08-06 16:37+0200\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-2\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: 8bit"
 
 #: dayplanner:50 dayplanner-notifier:31
 msgid "dayplanner"
@@ -88,9 +88,8 @@ msgstr ""
 "k strate èi po¹kodeniu údajov."
 
 #: dayplanner:306
-#, fuzzy
 msgid "_Force"
-msgstr "Vynúti» ¹tart"
+msgstr "_Vynúti»"
 
 #: dayplanner:317
 msgid ""
@@ -150,43 +149,40 @@ msgstr ""
 
 #: dayplanner:1179
 msgid "Sunday"
-msgstr ""
+msgstr "nedeµa"
 
 #: dayplanner:1180
-#, fuzzy
 msgid "Monday"
-msgstr "máj"
+msgstr "pondelok"
 
 #: dayplanner:1181
 msgid "Tuesday"
-msgstr ""
+msgstr "utorok"
 
 #: dayplanner:1182
 msgid "Wednesday"
-msgstr ""
+msgstr "streda"
 
 #: dayplanner:1183
 msgid "Thursday"
-msgstr ""
+msgstr "¹tvrtok"
 
 #: dayplanner:1184
 msgid "Friday"
-msgstr ""
+msgstr "piatok"
 
 #: dayplanner:1185
 msgid "Saturday"
-msgstr ""
+msgstr "sobota"
 
 #: dayplanner:1214
-#, fuzzy
 msgid "Tomorrow"
 msgstr ""
-"Zajtra o %s:\n"
-"%s"
+"Zajtra"
 
 #: dayplanner:1228
 msgid "At"
-msgstr ""
+msgstr "o"
 
 #: dayplanner:1234 dayplanner:1433 dayplanner:1452 dayplanner:2472
 #, perl-format
@@ -195,15 +191,15 @@ msgstr "%s má narodeniny"
 
 #: dayplanner:1238 dayplanner:1307
 msgid "(nothing)"
-msgstr ""
+msgstr "(niè)"
 
 #: dayplanner:1246
 msgid "You have no upcoming events the next seven days"
-msgstr ""
+msgstr "Na nasledujúcich sedem dní nemáte naplánované nijaké udalosti"
 
 #: dayplanner:1299 dayplanner:1302
 msgid "and"
-msgstr ""
+msgstr "a"
 
 #: dayplanner:1362
 msgid ""
@@ -214,7 +210,9 @@ msgid ""
 "> settings -> sessions. From there select \"Startup Programs\", click \"Add"
 "\". Type \"dayplanner-daemon\" in the field \"Startup Command\" and press "
 "\"OK\". It is now set up."
-msgstr ""
+msgstr "Pri nastavovaní automatického spú¹»ania pripomienok plánovaèa do¹lo k problému. \n"
+"\n"
+"Budete ho zrejme musie» nastavi» manuálne. Postup je nasledovný: zvoµte menu -> pracovná plocha -> nastavenia -> sedenia. Do programov, ktoré sa spú¹»ajú pri ¹tarte, potom pridajte polo¾ku \"dayplanner-daemon\" a potvrïte túto voµbu. Automatické pripomienky sú týmto nastavené."
 
 #: dayplanner:1373
 msgid ""
@@ -222,7 +220,9 @@ msgid ""
 "\n"
 "By doing this you will not get notified about events without having started "
 "day planner at least once."
-msgstr ""
+msgstr "Ste si istí, ¾e chcete vypnú» automatické spú¹»anie pripomienok plánovaèa?\n"
+"\n"
+"Ak to urobíte, plánovaè vám nebude môc» pripomína» naplánované úlohy, pokiaµ ho v danom sedení aspoò raz sami nespustíte."
 
 #: dayplanner:1521
 msgid "Some files could not be saved correctly. Are you sure you want to quit?"
@@ -294,7 +294,9 @@ msgid ""
 "\n"
 "If you really want to edit this file you can do so by pointing a text editor "
 "to %s"
-msgstr ""
+msgstr "Táto udalos» je \"oficiálny\" sviatok. To znamená, ¾e je to preddefinovaná udalos», ktorú plánovaè získal zo ¹peciálneho súboru, ktorý tieto sviatky obsahuje. Informácie o sviatkoch sa preto nedajú priamo v plánovaèi upravova».\n"
+"\n"
+"Ak chcete súbor so sviatkami z nejakého dôvodu upravi», otvorte %s v textovom editore, ktorý vám najviac vyhovuje."
 
 #: dayplanner:1887
 msgid "Discard changes"
@@ -310,10 +312,9 @@ msgstr "Èas:"
 
 #: dayplanner:1954
 msgid "Description:"
-msgstr ""
+msgstr "Popis:"
 
 #: dayplanner:1966
-#, fuzzy
 msgid "Enter a description of the event here"
 msgstr "Sem zadajte struèné zhrnutie toho, o akú udalos» ide"
 
@@ -377,7 +378,7 @@ msgid "Expand \"%s\" by default"
 msgstr "©tandardne expandova» \"%s\""
 
 #: dayplanner:2266
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "Check this if you want the \"%s\" to be expanded by default in the add and "
 "edit event dialog"
@@ -391,12 +392,12 @@ msgstr "V¹eobecné udalosti"
 
 #: dayplanner:2314
 msgid "Start the day planner reminder automatically when logging in"
-msgstr ""
+msgstr "Pri prihlasovaní u¾ívateµa automaticky spusti» pripomienky plánovaèa"
 
 #: dayplanner:2317
 msgid ""
 "If you want the day planner reminder to start automatically when you log in"
-msgstr ""
+msgstr "Ak chcete, aby sa pripomienky plánovaèa pri va¹om prihlásení do systému spustili automaticky"
 
 #: dayplanner:2330
 msgid "Use notifications before events"
@@ -528,7 +529,7 @@ msgid "Postpone"
 msgstr "Odlo¾i» na neskôr"
 
 #~ msgid "Unable to save the configuration settings to %s: %s"
-#~ msgstr "Nepodarilo sa ulo¾i» nastavenia do %s: %s"
+#~ msgstr "Nepodarilo sa uloÅ¾iÅ¥ nastavenia do %s: %s"
 
 #~ msgid "Summary:"
 #~ msgstr "Zhrnutie:"
