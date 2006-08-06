@@ -1462,6 +1462,27 @@ sub HTML_YearList {
 	print $FILE HTML_Footer();
 }
 
+# Purpose: Output a php file that adds autodetection of todays date to
+# 	day planner HTML exports
+# Usage: HTML_PHPIndex(DIRECTORY);
+sub HTML_PHPIndex {
+	my ($Directory) = @_;
+	open(my $FILE, ">", "$Directory/index.php") or do {
+		DPIntWarn("Unable to open $Directory/index.php for writing: $!");
+		DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), "$Directory/index.php", $!));
+		return(undef);
+	};
+	print $FILE "<?php\n// This is a simple script written by day planner to add autodetection of\n// the current day to exported day planner HTML sites. Only useful on\n// webservers with php support.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as day planer\n";
+	print $FILE '$Year = date("Y");' . "\n";
+	print $FILE '$Month = date("n");' . "\n";
+	print $FILE '$Day = date("j");' . "\n";
+	print $FILE 'if(file_exists("./dp_$Year$Month$Day.html")) {' . "\n";
+	print $FILE "\t" . 'include("./dp_$Year$Month$Day.html");' . "\n";
+	print $FILE "} else {\n";
+	print $FILE "\t" . 'include("./index.html");' . "\n";
+	print $FILE "}\n?>";
+}
+
 # Purpose: Export day planner data to HTML
 # Usage: HTML_Export(DIRECTORY);
 sub HTML_Export {
@@ -1500,6 +1521,7 @@ sub HTML_Export {
 		}
 	}
 	HTML_YearList($Dir);
+	HTML_PHPIndex($Dir);
 	HTML_BirthdayList($Dir);
 }
 
