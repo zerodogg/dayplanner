@@ -1308,7 +1308,7 @@ sub HTML_DayToHtml {
 	print $FILE "<tbody><tr><td>" . $Gettext->get("Time") . "</td><td>" . $Gettext->get("Description") . "</td></tr>\n";
 	if(BirthdayDayDefined($Month,$Day)) {
 		foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
-			print $FILE "<tr><td></td><td>${Name}'s birthday</td></tr>\n";
+			print $FILE "<tr><td></td><td>" . sprintf($Gettext->get("%s's birthday"), $Name) . "</td></tr>\n";
 		}
 	}
 	foreach my $Time (sort(keys(%{$CalendarContents{$Year}{$Month}{$Day}}))) {
@@ -1357,10 +1357,10 @@ sub HTML_MonthToHtml {
 		}
 	}
 	unless($HadContent) {
-		print $FILE $Gettext->get("<i>You have no events this month</i>");
+		print $FILE "<i>" . $Gettext->get("You have no events this month") . "</i>";
 	}
 	if(keys(%BirthdayContents) and keys(%{$BirthdayContents{$Month}})) {
-		print $FILE '<br /><h3>Birthdays this month:</h3>';
+		print $FILE '<br /><h3>' . $Gettext->get("Birthdays this month:") . "</h3>";
 		print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
 		print $FILE "<tbody><tr><td>" . $Gettext->get("Date") . "</td><td>" . $Gettext->get("Name") . "</td></tr>\n";
 		foreach my $Day (sort {$a <=> $b} keys(%{$BirthdayContents{$Month}})) {
