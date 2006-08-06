@@ -1379,7 +1379,7 @@ sub HTML_MonthToHtml {
 		print $FILE "<tbody><tr><td>" . $Gettext->get("Date") . "</td><td>" . $Gettext->get("Name") . "</td></tr>\n";
 		foreach my $Day (sort {$a <=> $b} keys(%{$BirthdayContents{$Month}})) {
 			foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
-				print $FILE "<tr><td>$Day $MonthNames{$Month}</td><td>$Name</td></tr>\n";
+				print $FILE "<tr><td>$Day. $MonthNames{$Month}</td><td>$Name</td></tr>\n";
 			}
 		}
 		print $FILE '</tbody></table>';
