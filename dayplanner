@@ -1296,7 +1296,11 @@ sub HTML_Footer {
 # Usage: HTML_DayToHtml(YEAR,MONTH,DAY,DIRECTORY);
 sub HTML_DayToHtml {
 	my ($Year,$Month,$Day,$Directory) = @_;
-	open(my $FILE, ">", "$Directory/dp_$Year$Month$Day.html");
+	open(my $FILE, ">", "$Directory/dp_$Year$Month$Day.html") or do {
+		DPIntWarn("Unable to open $Directory/dp_$Year$Month$Day.html for writing: $!");
+		DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), "$Directory/dp_$Year$Month$Day.html", $!));
+		return(undef);
+	};
 	# Header
 	print $FILE HTML_Header($Year,"$Day-$Month-$Year");
 	print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
@@ -1338,7 +1342,11 @@ sub HTML_MonthToHtml {
 		11 => "november",
 		12 => "december"
 	);
-	open(my $FILE, ">", "$Directory/$RawMonthNames{$Month}-$Year.html");
+	open(my $FILE, ">", "$Directory/$RawMonthNames{$Month}-$Year.html") or do {
+		DPIntWarn("Unable to open $Directory/$RawMonthNames{$Month}-$Year.html for writing: $!");
+		DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), "$RawMonthNames{$Month}-$Year.html", $!));
+		return(undef);
+	};
 	print $FILE HTML_Header($Year, "$MonthNames{$Month} $Year");
 	my $HadContent;
 	if(defined($CalendarContents{$Year}{$Month})) {
@@ -1369,7 +1377,11 @@ sub HTML_MonthToHtml {
 # Usage: HTML_BirthdayList(DIRECTORY);
 sub HTML_BirthdayList {
 	my($Directory) = @_;
-	open(my $FILE, ">", "$Directory/birthdays.html");
+	open(my $FILE, ">", "$Directory/birthdays.html") or do {
+		DPIntWarn("Unable to open $Directory/birthdays.html for writing: $!");
+		DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), "$Directory/birthdays.html", $!));
+		return(undef);
+	};
 	print $FILE HTML_Header(undef,"Birthdays",1);
 	if(keys(%BirthdayContents)) {
 		print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
@@ -1392,7 +1404,11 @@ sub HTML_BirthdayList {
 # Usage: HTML_YearHtml(YEAR,DIRECTORY);
 sub HTML_YearHtml {
 	my ($Year, $Directory) = @_;
-	open(my $FILE, ">", "$Directory/$Year.html");
+	open(my $FILE, ">", "$Directory/$Year.html") or do {
+		DPIntWarn("Unable to open $Directory/$Year.html for writing: $!");
+		DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), "$Directory/$Year.html", $!));
+		return(undef);
+	};
 	print $FILE HTML_Header($Year, $Year, 0);
 	print $FILE "Select the month you wish to view in the list above<br />\n";
 	print $FILE HTML_Footer();
@@ -1402,7 +1418,11 @@ sub HTML_YearHtml {
 # Usage: HTML_YearList(DIRECTORY);
 sub HTML_YearList {
 	my ($Directory) = @_;
-	open(my $FILE, ">", "$Directory/index.html");
+	open(my $FILE, ">", "$Directory/index.html") or do {
+		DPIntWarn("Unable to open $Directory/index.html for writing: $!");
+		DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), "$Directory/index.html", $!));
+		return(undef);
+	};
 	print $FILE HTML_Header("", "Day planner", "M");
 	print $FILE "Please select the year you wish to view:<br />\n";
 	foreach(sort(keys(%CalendarContents))) {
@@ -1429,7 +1449,11 @@ sub HTML_Export {
 		12 => "december"
 	);
 	my $Dir = $_[0];
-	mkpath($Dir) or die("Unable to mkpath");
+	mkpath($Dir) or do {
+		DPIntWarn("Unable to mkpath($Dir): $!");
+		DPError(sprintf($Gettext->get("Unable to create the directory %s: %s", $Dir, $!)));
+		return(undef);
+	};
 	foreach my $Year (keys(%CalendarContents)) {
 		HTML_YearHtml($Year,$Dir);
 		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
