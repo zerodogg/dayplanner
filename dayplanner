@@ -1308,6 +1308,35 @@ sub CLI_Export {
 	exit(0);
 }
 
+# Purpose: Commandline wrapper around the import functions
+# Usage: 'x|yzx' => \&CLI_Import,
+sub CLI_Import {
+	my($Type,$Source) = @_;
+	MainInit();
+	die("$Source: does not exist\n") unless(-e $Source);
+	die("$Source: is not readable by me\n") unless(-r $Source);
+	# Initialize the daemon (we need it)
+	DaemonInit() or die();
+	if($Type =~ /ical/) {
+		if(iCal_ImportFile($Source)) {
+			print "Imported iCalendar data from $Source\n";
+		} else {
+			print "Importing failed.\n";
+		}
+	} elsif ($Type =~ /dpf/) {
+		if(LoadDayplannerDataFile($Source)) {
+			print "Imported day planner data from $Source\n";
+		} else {
+			print "Importing failed.\n";
+		}
+	}
+	# Save the data
+	SaveMainData();
+	# Close the daemon connection
+	CloseDaemon();
+}
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # HTML export functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4213,6 +4242,8 @@ GetOptions (
 		PrintHelp("", "", "format to the filename supplied");
 		PrintHelp("", "--exporthtml", "Export the day planner data in the HTML format to the");
 		PrintHelp("", "", "directory supplied");
+		#PrintHelp("", "--importical", "Import data from the iCalendar file specified");
+		#PrintHelp("", "--importdpf", "Import data from the day planner data file specified");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
@@ -4247,6 +4278,8 @@ GetOptions (
 	'exportical=s' => \&CLI_Export,
 	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
+	#'importical=s' => \&CLI_Import,
+	#'importdpf=s' => \&CLI_Import,
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
