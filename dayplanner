@@ -1290,7 +1290,7 @@ sub CLI_Export {
 		}
 	} elsif($Type =~ /html/) {
 		unless(-e $Target) {
-			eval("mkpath $Target");
+			eval("mkpath(\"$Target\");1");
 			die("mkpath $Target failed: $@\n") if $@;
 		}
 		unless(-w $Target) {
