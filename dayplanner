@@ -2044,13 +2044,13 @@ sub iCal_Exporter {
 					print $TARGET "RRULE:FREQ=YEARLY\r\n";
 					# The summary is the name +'s birthday (localized).
 					print $TARGET "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
-					# X-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
-					print $TARGET "X-BIRTHDAY:TRUE\r\n";
-					# If X-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
-					# X-BIRTHDAYNAME instead.
-					print $TARGET "X-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
+					# X-DP-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
+					print $TARGET "X-DP-BIRTHDAY:TRUE\r\n";
+					# If X-DP-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
+					# X-DP-BIRTHDAYNAME instead.
+					print $TARGET "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
 
-					# Most (maybe all) other calendars will happily ignore X-BIRTHDAY*. It will be
+					# Most (maybe all) other calendars will happily ignore X-DP-BIRTHDAY*. It will be
 					# useful for day planner importing though.
 
 					# Get a unique identifier
@@ -2169,9 +2169,9 @@ sub iCal_ImportFile {
 		if($Current->{RRULE}) {
 			if($Current->{RRULE} =~ /YEARLY/) {
 				# Birthday?
-				if($Current->{"X-BIRTHDAY"} eq "TRUE") {
-					if(defined($Current->{"X-BIRTHDAYNAME"})) {
-						$Summary = iCal_UnSafe($Current->{"X-BIRTHDAYNAME"});
+				if($Current->{"X-DP-BIRTHDAY"} eq "TRUE") {
+					if(defined($Current->{"X-DP-BIRTHDAYNAME"})) {
+						$Summary = iCal_UnSafe($Current->{"X-DP-BIRTHDAYNAME"});
 					} else {
 						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
 					}
