@@ -3705,6 +3705,7 @@ sub AboutBox {
 		$AboutDialog->set_translator_credits($Gettext->get("THE NAMES OF THE TRANSLATORS"));
 	}
 	$AboutDialog->run;
+	$AboutDialog->destroy();
 	$MainWindow->set_sensitive(1);
 }
 
