@@ -1,5 +1,7 @@
-%define include_holidayparser 0
+%define include_holidayparser	0
+%define old_menu		0
 %{?_with_holidayparser: %{expand: %%global include_holidayparser 1}}
+%{?_with_oldmenu: %{expand: %%global old_menu 1}}
 
 %define	name	dayplanner
 %define	version [DAYPLANNER_VERSION]
@@ -37,7 +39,6 @@ Requires: dayplanner
 %description tools
 This package contains various tools for use with day planner:
 
-dayplanner-plan-migration: Migrates plan data to day planner data
 dayplanner-commander     : Send raw commands to the day planner daemon
 
 %prep
@@ -54,7 +55,6 @@ for a in dayplanner dayplanner-daemon dayplanner-notifier; do
 	ln -s %{_datadir}/%name/$a $RPM_BUILD_ROOT%{_bindir}/
 done
 install -m755 ./tools/commander $RPM_BUILD_ROOT%{_bindir}/dayplanner-commander
-install -m755 ./tools/plan-migration $RPM_BUILD_ROOT%{_bindir}/dayplanner-plan-migration
 
 install -m644 ./art/dayplanner-about.png $RPM_BUILD_ROOT%{_datadir}/%name/
 
@@ -75,6 +75,7 @@ install -m644 ./art/dayplanner_HC48.png -D $RPM_BUILD_ROOT%{_liconsdir}/dayplann
 
 # Menu
 mkdir -p $RPM_BUILD_ROOT%{_menudir}
+%if %old_menu
 cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 ?package(%{name}):command="%{_bindir}/dayplanner" \
 	icon="dayplanner.png" \
@@ -83,6 +84,30 @@ cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 	title="Day planner" \
 	longtitle="An easy to use graphical day planner"
 EOF
+%else
+cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
+?package(%{name}):command="%{_bindir}/dayplanner" \
+	icon="dayplanner.png" \
+	needs="x11" \
+	section="Office/Time Management" \
+	title="Day planner" \
+	longtitle="An easy to use graphical day planner" \
+	xdg="true"
+EOF
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/applications
+cat << EOF > $RPM_BUILD_ROOT%{_datadir}/applications/%{name}.desktop
+[DESKTOP ENTRY]
+Name=Day planner
+Name[nb]=Dagsplanlegger
+Name[no]=Dagsplanlegger
+Name[nn]=Dagsplanleggar
+StartupNotify=true
+Terminal=False
+Type=Application
+Exec=%{_bindir}/dayplanner
+Categories=X-MandrivaLinux-Office-TimeManagement;Office;Calendar;GTK;GNOME;
+EOF
+%endif
 
 ./devel-tools/BuildLocale $RPM_BUILD_ROOT/%{_datadir}/locale/
 
@@ -110,8 +135,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_iconsdir}/dayplanner*.png
 %{_miconsdir}/dayplanner*.png
 %{_liconsdir}/dayplanner*.png
+%if %old_menu
 %{_menudir}/%{name}
+%else
+%{_menudir}/%{name}
+%{_datadir}/applications/%{name}.desktop
+%endif
 
 %files tools
 %{_bindir}/dayplanner-commander
-%{_bindir}/dayplanner-plan-migration
