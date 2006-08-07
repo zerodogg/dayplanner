@@ -1,6 +1,13 @@
 Day planner version history
 **************************
 
+Version 0.2.1 (Unreleased)
+--------------------------
+* Client (dayplanner)
+- Now destroys the about window correctly
+- Fixed a bug that caused the "upcoming events" not to be redrawn
+  when you deleted an event.
+
 Version 0.2 (Released on the 6th of August 2006)
 ------------------------------------------------
 * Client (dayplanner)
