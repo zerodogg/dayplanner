@@ -2920,16 +2920,12 @@ sub DeleteEvent {
 	if($Type eq 'normal') {
 		if (defined($EventTime)) {
 			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-			DrawEventlist();
-			CalendarChange();
-			SaveMainData();
+			UpdatedData();
 		}
 	} elsif ($Type eq 'bday') {
 		if (defined($EventSummary)) {
 			BirthdayDelete($EventMonth, $EventDay, GetRealBirthdayName($EventSummary));
-			DrawEventlist();
-			CalendarChange();
-			SaveMainData();
+			UpdatedData();
 		}
 	} else {
 		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
