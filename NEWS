@@ -10,6 +10,7 @@ Version 0.3 (Unreleased)
 - More agressive use of gtk2 stock items to reduce translator load
 - Can now import and export the day planner data format (dpf)
 - Can now export and import the iCalendar format
+- Can now export to HTML
 
 * Daemon (dayplanner-daemon)
 
