@@ -875,6 +875,7 @@ sub HolidaySetup {
 		"en_US" => "us",	# USA
 		"us" => "us",		# USA
 		"en_UK" => "uk",	# The UK
+		"en_GB" => "uk",	# The UK
 		"uk" => "uk",		# The UK
 		"sv" => "swedish",	# Sweden
 		"fr" => "french",	# France
@@ -1410,16 +1411,12 @@ sub DeleteEvent {
 	if($Type eq 'normal') {
 		if (defined($EventTime)) {
 			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
-			DrawEventlist();
-			CalendarChange();
-			SaveMainData();
+			UpdatedData();
 		}
 	} elsif ($Type eq 'bday') {
 		if (defined($EventSummary)) {
 			BirthdayDelete($EventMonth, $EventDay, GetRealBirthdayName($EventSummary));
-			DrawEventlist();
-			CalendarChange();
-			SaveMainData();
+			UpdatedData();
 		}
 	} else {
 		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
@@ -2202,6 +2199,7 @@ sub AboutBox {
 		$AboutDialog->set_translator_credits($Gettext->get("THE NAMES OF THE TRANSLATORS"));
 	}
 	$AboutDialog->run;
+	$AboutDialog->destroy();
 	$MainWindow->set_sensitive(1);
 }
 
