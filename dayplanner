@@ -1998,7 +1998,7 @@ sub iCal_Exporter {
 		return(0);
 	};
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
-	print $TARGET "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner//EN\r\nCALSCALE:GREGORIAN\r\n";
+	print $TARGET "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
 
 	# Begin exporting birthdays
 	foreach my $Month (keys(%BirthdayContents)) {
