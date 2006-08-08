@@ -120,7 +120,8 @@ my (
 	$UpcomingEventsBuffer,	$UpcomingEventsWidget,
 );	# Gtk objects
 
-my $HolidayParser; # The Date::HolidayParser object
+my $HolidayParser;	# The Date::HolidayParser object
+my $Gtk2Init;		# Info about if gtk2 is initialized or not
 
 # Global date variables
 my (
@@ -298,27 +299,31 @@ sub Daemon_ErrorHandler {
 # Purpose: Display an error dialog about the inability to connect to the daemon
 # Usage: DaemonConnectionErrorHandler();
 sub DaemonConnectionErrorHandler {
-	my $ErrorDialog = Gtk2::MessageDialog->new (undef,
+	if($Gtk2Init) {
+		my $ErrorDialog = Gtk2::MessageDialog->new (undef,
 						'destroy-with-parent',
 						'error',
 						'none',
 						 $Gettext->get("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
 
-	$ErrorDialog->add_buttons(
-		$Gettext->get('_Force') => 'reject',
-		'gtk-ok' => 'accept',
-	);
+		$ErrorDialog->add_buttons(
+			$Gettext->get('_Force') => 'reject',
+			'gtk-ok' => 'accept',
+		);
 	
-	$ErrorDialog->set_default_response('accept');
-	if($ErrorDialog->run eq 'accept') {
-		$ErrorDialog->destroy;
-		exit(0)
+		$ErrorDialog->set_default_response('accept');
+		if($ErrorDialog->run eq 'accept') {
+			$ErrorDialog->destroy;
+			exit(0)
+		} else {
+			$ErrorDialog->destroy;
+			unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
+					DPError($Gettext->get("Unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
+					exit(1);
+				}
+		}
 	} else {
-		$ErrorDialog->destroy;
-		unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-				DPError($Gettext->get("Unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
-				exit(1);
-			}
+		die("Another instance of day planner appears to be running, unable to continue\n");
 	}
 }
 
@@ -533,22 +538,8 @@ sub FirstStartup {
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
 sub SaveDatafile {
+	my($Directory, $Filename, $SaveHash, $HashName, $ProgressBar) = @_;
 	my $SAVEFILE;
-	# Create the progress window
-	my $ProgressWin = Gtk2::Window->new();
-	$ProgressWin->set_modal(1);
-	$ProgressWin->set_transient_for($MainWindow);
-	$ProgressWin->set_position('center-on-parent');
-	$ProgressWin->set_title($Gettext->get("Saving..."));
-	$ProgressWin->set_resizable(0);
-	# Create the progress bar
-	my $ProgressBar = Gtk2::ProgressBar->new();
-	$ProgressBar->{activity_mode} = 0;
-	$ProgressBar->set_fraction(0.0);
-	# Add the bar to the window and show them
-	$ProgressWin->add($ProgressBar);
-	$ProgressBar->show();
-	$ProgressWin->show();
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
 	# Sort the keys
@@ -581,8 +572,6 @@ sub SaveDatafile {
 				last;
 			}
 		}
-		# Hide the progress window
-		$ProgressWin->hide();
 		# If $FallbackDirectory is true then display the error and try to open the fallback
 		if ($FallbackDirectory) {
 			DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
@@ -601,8 +590,6 @@ sub SaveDatafile {
 			# might not want to quit if that's what we're doing.
 			return(0);
 		}
-		# Show the progress window again
-		$ProgressWin->show();
 	};
 	# Print this
 	print $SAVEFILE "# Day Planner data file for day planner version $Version\n";
@@ -615,8 +602,6 @@ sub SaveDatafile {
 	# Pulse once and close
 	PulsateProgressbar($ProgressBar);
 	close($SAVEFILE);
-	# Destroy the progress bar window
-	$ProgressWin->destroy();
 	# We successfully saved the data
 	return(1);
 }
@@ -624,19 +609,43 @@ sub SaveDatafile {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
+	my($ProgressWin, $ProgressBar);
+	if($Gtk2Init) {
+		# Create the progress window
+		$ProgressWin = Gtk2::Window->new();
+		$ProgressWin->set_modal(1);
+		$ProgressWin->set_transient_for($MainWindow);
+		$ProgressWin->set_position('center-on-parent');
+		$ProgressWin->set_title($Gettext->get("Saving..."));
+		$ProgressWin->set_resizable(0);
+		# Create the progress bar
+		$ProgressBar = Gtk2::ProgressBar->new();
+		$ProgressBar->{activity_mode} = 0;
+		$ProgressBar->set_fraction(0.0);
+			# Add the bar to the window and show them
+		$ProgressWin->add($ProgressBar);
+		$ProgressBar->show();
+		$ProgressWin->show();
+	}
+
 	my $Return = 'OKAY';
-	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
+	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
 		$Return	= 'SAVE_FAILED';
 	}
-	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents")) {
+	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
-	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents")) {
+	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
+	$ProgressWin->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
-		DPWarning($Gettext->get("<b><big>Day planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of day planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
+		if($Gtk2Init) {
+			DPWarning($Gettext->get("<b><big>Day planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of day planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
+		} else {
+			DPWarning("Unable to tell the daemon to reload its data. This *could* be bad.");
+		}
 		if ($Return eq 'OKAY') {
 			$Return = 'DAEMON_RELOAD_FAILURE';
 		}
@@ -1334,6 +1343,8 @@ sub CLI_Import {
 	SaveMainData();
 	# Close the daemon connection
 	CloseDaemon();
+	# Exit peacefully
+	exit(0);
 }
 
 
@@ -1934,6 +1945,9 @@ sub GetEncryptionKey {
 #	Returns undef on "cancel".
 sub DecryptData {
 	my ($Data,$MD5) = @_;
+	unless($Gtk2Init) {
+		die("Can't decrypt encrypted data without the GUI\n");
+	}
 	# Verify deps
 	unless(eval('use Crypt::CBC;1;')) {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::CBC"));
@@ -2205,6 +2219,7 @@ sub iCal_ImportFile {
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
 		}
 	}
+	return(1);
 }
 
 # Purpose: Parse an iCalendar date-time
@@ -2407,8 +2422,7 @@ sub LoadDayplannerDataFile {
 			DPInfo($Gettext->get("Conflicting events were detected. Day planner has attempted to resolve the conflicts.\n\nHowever, some of the data may be incorrect or not imported. See the details below for information about the conflicting events."), $Message);
 		}
 	}
-	# The internal data has been updated.
-	UpdatedData();
+	return(1);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2517,6 +2531,7 @@ sub ImportDataFromFile {
 		my $Filename = $ImportWindow->get_filename();
 		if($Filename =~ /\.dpf$/i) {
 			LoadDayplannerDataFile($Filename);
+			UpdatedData();
 		} elsif($Filename =~ /\.ics$/i) {
 			iCal_ImportFile($Filename);
 			UpdatedData();
@@ -2671,12 +2686,23 @@ sub PromptOverwrite {
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Initialize gtk2
+# Usage: Gtk2Init();
+sub Gtk2Init {
+	Gtk2->init();
+	$Gtk2Init = 1;
+}
+
 # Purpose: Pulsate a progressbar
 # Usage: PulsateProgressbar($Progressbar);
 sub PulsateProgressbar {
 	my $Progressbar = $_[0];
-	$Progressbar->pulse();
-	Gtk2->main_iteration while Gtk2->events_pending;
+	if(defined($Progressbar)) {		# So that the calling function can just *assume* it has a progressbar
+						# even when it doesn't
+		$Progressbar->pulse();
+		Gtk2->main_iteration while Gtk2->events_pending;
+	}
+	return(1);
 }
 
 # Purpose: Populate the upcoming events widget
@@ -2983,47 +3009,64 @@ sub EscapeKeyHandler {
 # Purpose: Display an error dialog
 # Usage: DPError("Error message");
 sub DPError {
-	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'error', 'ok', "$_[0]");
-	$Dialog->run();
-	$Dialog->destroy();
+	if($Gtk2Init) {
+		my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'error', 'ok', "$_[0]");
+		$Dialog->run();
+		$Dialog->destroy();
+	} else {
+		warn($_[0]);
+	}
+	return(1);
 }
 
 # Purpose: Display a warning dialog
 # Usage: DPWarning("Warning");
 sub DPWarning {
-	my $Dialog = Gtk2::MessageDialog->new_with_markup($MainWindow, "modal", 'warning', 'ok', "$_[0]");
-	$Dialog->run();
-	$Dialog->destroy();
+	if($Gtk2Init) {
+		my $Dialog = Gtk2::MessageDialog->new_with_markup($MainWindow, "modal", 'warning', 'ok', "$_[0]");
+		$Dialog->run();
+		$Dialog->destroy();
+	} else {
+		warn($_[0]);
+	}
+	return(1);
 }
 
 # Purpose: Display an information dialog (with optional details)
 # Usage: DPInfo("Information message", details?);
 sub DPInfo {
-	my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'info', 'ok', "$_[0]");
-	if($_[1]) {
-		# The expander
-		my $FT_Expander = Gtk2::Expander->new($Gettext->get("Details"));
-		$FT_Expander->show();
-		$Dialog->vbox->add($FT_Expander);
-		# The textview field
-		my $FulltextView = Gtk2::TextView->new();
-		$FulltextView->set_editable(0);
-		$FulltextView->set_wrap_mode("word-char");
-		$FulltextView->show();
-		# Add the text to it
-		my $FulltextBuffer = Gtk2::TextBuffer->new();
-		$FulltextBuffer->set_text($_[1]);
-		$FulltextView->set_buffer($FulltextBuffer);
-		# Create a scrollable window to use
-		my $FulltextWindow = Gtk2::ScrolledWindow->new;
-		$FulltextWindow->set_policy('automatic', 'automatic');
-		$FulltextWindow->add($FulltextView);
-		$FulltextWindow->show();
-		# Add it to the expander
-		$FT_Expander->add($FulltextWindow);
+	if($Gtk2Init) {
+		my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'info', 'ok', "$_[0]");
+		if($_[1]) {
+			# The expander
+			my $FT_Expander = Gtk2::Expander->new($Gettext->get("Details"));
+			$FT_Expander->show();
+			$Dialog->vbox->add($FT_Expander);
+			# The textview field
+			my $FulltextView = Gtk2::TextView->new();
+			$FulltextView->set_editable(0);
+			$FulltextView->set_wrap_mode("word-char");
+			$FulltextView->show();
+			# Add the text to it
+			my $FulltextBuffer = Gtk2::TextBuffer->new();
+			$FulltextBuffer->set_text($_[1]);
+			$FulltextView->set_buffer($FulltextBuffer);
+			# Create a scrollable window to use
+			my $FulltextWindow = Gtk2::ScrolledWindow->new;
+			$FulltextWindow->set_policy('automatic', 'automatic');
+			$FulltextWindow->add($FulltextView);
+			$FulltextWindow->show();
+			# Add it to the expander
+			$FT_Expander->add($FulltextWindow);
+		}
+		$Dialog->run();
+		$Dialog->destroy();
+	} else {
+		print "$_[0]\n";
+		if(defined($_[1])) {
+			print "$_[1]\n";
+		}
 	}
-	$Dialog->run();
-	$Dialog->destroy();
 }
 
 # Purpose: Display a question dialog
@@ -4238,8 +4281,8 @@ GetOptions (
 		PrintHelp("", "", "format to the filename supplied");
 		PrintHelp("", "--exporthtml", "Export the day planner data in the HTML format to the");
 		PrintHelp("", "", "directory supplied");
-		#PrintHelp("", "--importical", "Import data from the iCalendar file specified");
-		#PrintHelp("", "--importdpf", "Import data from the day planner data file specified");
+		PrintHelp("", "--importical", "Import data from the iCalendar file specified");
+		PrintHelp("", "--importdpf", "Import data from the day planner data file specified");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
@@ -4274,27 +4317,27 @@ GetOptions (
 	'exportical=s' => \&CLI_Export,
 	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
-	#'importical=s' => \&CLI_Import,
-	#'importdpf=s' => \&CLI_Import,
+	'importical=s' => \&CLI_Import,
+	'importdpf=s' => \&CLI_Import,
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
 
 # If for some obscure reason HOME isn't set we can't continue
 unless(defined($ENV{HOME}) and $ENV{HOME}) {
-	Gtk2->init;
+	Gtk2Init();
 	DPError(sprintf($Gettext->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
 	die(sprintf($Gettext->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
 }
 # The same goes for if HOME doesn't exist or isn't a directory
 unless(-e $ENV{HOME} and -d $ENV{HOME}) {
 	printf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
-	Gtk2->init;
+	Gtk2Init();
 	DPError(sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME"));
 	die("\n");
 }
 
-Gtk2->init;
+Gtk2Init();
 MainInit();
 # Draw the main window
 DrawMainWindow();
