@@ -1324,6 +1324,7 @@ sub CLI_Import {
 	MainInit();
 	die("$Source: does not exist\n") unless(-e $Source);
 	die("$Source: is not readable by me\n") unless(-r $Source);
+	die("$Source: is a directory\n") if (-d $Source);
 	# Initialize the daemon (we need it)
 	DaemonInit() or die();
 	if($Type =~ /ical/) {
@@ -1346,7 +1347,6 @@ sub CLI_Import {
 	# Exit peacefully
 	exit(0);
 }
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # HTML export functions
