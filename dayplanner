@@ -1257,7 +1257,7 @@ sub AMPM_From24 {
 		}
 	}
 	unless(defined($Suffix)) {
-		if($Hour == 0 and $Minutes == 0) {
+		if($Hour == 0) {
 			$Hour = "12";
 		}
 		$Suffix = $AM_String;
@@ -3203,12 +3203,12 @@ sub Get_DateInfo {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
-# Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner);
+# Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner, $AMPM);
 sub GetTimeFromWidgets {
 	# In the future this sub will take a third argument, which is either an AM/PM
 	# selection box, or undef - so that seamless AM/PM support is needed.
 	
-	my ($HourSpinner, $MinuteSpinner) = @_;	
+	my ($HourSpinner, $MinuteSpinner, $AMPM) = @_;	
 	my $Hour = $HourSpinner->get_value_as_int();
 	my $Minute = $MinuteSpinner->get_value_as_int();
 	if ($Hour <= 9) {
@@ -3217,21 +3217,35 @@ sub GetTimeFromWidgets {
 	if ($Minute <= 9) {
 		$Minute = "0$Minute";
 	}
+	if(defined($AMPM)) {
+		my $Active = $AMPM->get_active();
+		if($Active == 1) {
+			if($Hour == 12) {
+				$Hour = "00";
+			}
+		}
+	}
 	return("$Hour:$Minute");
 }
 
 # Purpose: Create the widgets for selecting the time
-# Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox) = TimeSelection("HH:MM");
+# Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
 sub TimeSelection {
 	my $Time = $_[0];
-	# The hour adjustment
-	my $HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
+	my($HourAdjustment,$MinuteAdjustment, $HourSpinner,$MinuteSpinner,$AMPM);
+
+	if($ClockSystem == 24) {
+		# The hour adjustment
+		$HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
+	} else {
+		# The hour adjustment
+		$HourAdjustment = Gtk2::Adjustment->new(0.0, 1.0, 12.0, 1.0, 5.0, 0.0);
+	}
 	# The minute adjustment
-	my $MinuteAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 59.0, 1.0, 5.0, 0.0);
-	
+	$MinuteAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 59.0, 1.0, 5.0, 0.0);
 	# Create the spinners
-	my $HourSpinner = Gtk2::SpinButton->new($HourAdjustment, 0, 0);
-	my $MinuteSpinner = Gtk2::SpinButton->new($MinuteAdjustment, 0, 0);
+	$HourSpinner = Gtk2::SpinButton->new($HourAdjustment, 0, 0);
+	$MinuteSpinner = Gtk2::SpinButton->new($MinuteAdjustment, 0, 0);
 	# Show them
 	$HourSpinner->show();
 	$MinuteSpinner->show();
@@ -3244,24 +3258,51 @@ sub TimeSelection {
 	$HourSpinner->set_activates_default(1);
 	$MinuteSpinner->set_activates_default(1);
 	
-	# Get the time
-	my $HSTime = $Time;		# Hour
-	my $MSTime = $Time;		# Minute
-	$HSTime =~ s/^(\d+):\d+$/$1/;
-	$MSTime =~ s/^\d+:(\d+)$/$1/;
-	# Set the initial value
-	$HourSpinner->set_value($HSTime);
-	$MinuteSpinner->set_value($MSTime);
+	if($ClockSystem == 24) {
+		# Get the time
+		my $HSTime = $Time;		# Hour
+		my $MSTime = $Time;		# Minute
+		$HSTime =~ s/^(\d+):\d+$/$1/;
+		$MSTime =~ s/^\d+:(\d+)$/$1/;
+		# Set the initial value
+		$HourSpinner->set_value($HSTime);
+		$MinuteSpinner->set_value($MSTime);
+	} else {
+		# Get the time
+		my $HSTime = AMPM_From24($Time);
+		my $MSTime = AMPM_From24($Time);
+		my $Suffix = AMPM_From24($Time);
+		$HSTime =~ s/^(\d+):.*$/$1/;
+		$MSTime =~ s/^\d+:(\d+).*$/$1/;
+		$Suffix =~ s/^\d+:\d+\s+(.+)/$1/;
+		# Set the initial value
+		$HourSpinner->set_value($HSTime);
+		$MinuteSpinner->set_value($MSTime);
+		# Create the combo box
+		$AMPM = Gtk2::ComboBox->new_text;
+		$AMPM->insert_text(0, $AM_String);
+		$AMPM->insert_text(1, $PM_String);
+		$AMPM->show();
+		# Set the initial value
+		if($Suffix eq $AM_String) {
+			$AMPM->set_active(0);
+		} else {
+			$AMPM->set_active(1);
+		}
+	}
 	
 	# Create a HBox and pack them onto it
 	my $TimeSpinnerHBox = Gtk2::HBox->new(0,0);
 	$TimeSpinnerHBox->pack_start($HourSpinner,0,0,0);
 	$TimeSpinnerHBox->pack_start($TimeSeperatorLabel,0,0,0);
 	$TimeSpinnerHBox->pack_start($MinuteSpinner,0,0,0);
+	if(defined($AMPM)) {
+		$TimeSpinnerHBox->pack_start($AMPM,0,0,0);
+	}
 	$TimeSpinnerHBox->show();
 
 	# Return the widgets
-	return($HourSpinner, $MinuteSpinner, $TimeSpinnerHBox);
+	return($HourSpinner, $MinuteSpinner, $TimeSpinnerHBox, $AMPM);
 }
 
 # Purpose: Create the window that will contain the event editor
@@ -3388,7 +3429,7 @@ sub AddEvent {
 	$Tooltips->set_tip($CancelButton, $Gettext->get("Discard this event"));
 	
 	# Create the widgets for the normal event selection
-	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
+	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
 	my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
@@ -3400,7 +3441,7 @@ sub AddEvent {
 				$NE_MainWidget->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
+					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
 				});
 			} elsif ($ActiveIndex == 1) {
 				$NE_MainWidget->hide();
@@ -3459,10 +3500,10 @@ sub EditEvent {
 			($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($Gettext->get("Editing an event"), $Gettext->get('Editing an event on the %s. %s %s'), 'gtk-ok');
 
 			# Create the widgets for the normal event selection
-			my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($Time, $OKButton, $VBox_HBoxContainer, $Window);
+			my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($Time, $OKButton, $VBox_HBoxContainer, $Window);
 	
 			$OKButton->signal_connect('clicked' => sub {
-					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 1);
+					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 1);
 			});
 		
 			# Show the default widget (Normal event)
@@ -3563,7 +3604,7 @@ sub NormalEventWindow {
 	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
 	
 	# Time entry box
-	my ($HourSpinner, $MinuteSpinner, $TimeHBox) = TimeSelection($EventTime);
+	my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection($EventTime);
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
 	
@@ -3614,7 +3655,7 @@ sub NormalEventWindow {
 	$FulltextWindow->show();
 	$FT_Expander->add($FulltextWindow);
 	
-	return($MainVBox, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry);
+	return($MainVBox, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry);
 }
 
 # Purpose: Create the widgets for editing a birthday(birthdays.dpd) event (%BirthdayContents)
@@ -3681,11 +3722,11 @@ sub BirthdayEventWindow {
 # IS_EDITING is either true or false, false when it's a new one being added, true when it's an
 # old one being edited
 sub NormalEvent_OK {
-	my ($MyWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing) = @_;
+	my ($MyWindow, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing) = @_;
 	my $Error = 0;
 	
 	# Get the contents
-	my $Time = GetTimeFromWidgets($HourSpinner,$MinuteSpinner);
+	my $Time = GetTimeFromWidgets($HourSpinner,$MinuteSpinner, $AMPM);
 	my $Summary = $SummaryEntry->get_text;
 	my $FulltextBuff = $FulltextEntry->get_buffer;
 	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
