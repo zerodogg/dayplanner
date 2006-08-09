@@ -14,9 +14,9 @@ may be subject to change.
 	it from 24H to AM/PM before displaying it to the user. Should not
 	require too much extra work. Perhaps the use of AM/PM can be detected
 	using strftime?
+- Create a feature to choose *how* long a event lasts
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
-- Create a feature to choose *how* long a event lasts
 
 * Version 0.4
 - - - - - - -
