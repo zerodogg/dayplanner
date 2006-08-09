@@ -1622,12 +1622,12 @@ sub HTML_PHPIndex {
 	print $FILE '$Months = array(1 => "january", 2 => "february", 3 => "march", 4 => "april", 5 => "may", 6 => "june", 7 => "july", 8 =>"august", 9 =>"september", 10 => "october", 11 => "november", 12 =>"december");' . "\n";
 	print $FILE 'if(file_exists("./dp_$Year$Month$Day.html")) {' . "\n";
 	print $FILE "\t" . 'include("./dp_$Year$Month$Day.html");' . "\n";
-	print $FILE "} else {\n";
-	print $FILE "\t" . 'if(file_exists("./$Months[$Month]-$Year.html")) {' . "\n";
-	print $FILE "\t\t" . 'include("./$Months[$Month]-$Year.html");' . "\n";
-	print $FILE "\t" . "} else {" . "\n";
-	print $FILE "\t\t" . 'include("./index.html");' . "\n";
-	print $FILE "\t" . "}" . "\n";
+	print $FILE '} elseif(file_exists("./$Months[$Month]-$Year.html")) {' . "\n";
+	print $FILE "\t" . 'include("./$Months[$Month]-$Year.html");' . "\n";
+	print $FILE '} elseif(file_exists("./index.html")) {' . "\n";
+	print $FILE "\t" . 'include("./index.html");' . "\n";
+	print $FILE "} else {" . "\n";
+	print $FILE "\t" . 'print("Neither \"./dp_$Year$Month$Day.html\", \"./$Months[$Month]-$Year.html\" nor \"./index.html\" existed!\nThis export is corrupt.");' . "\n";
 	print $FILE "}\n?>";
 }
 
