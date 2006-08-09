@@ -1348,11 +1348,13 @@ sub CLI_Export {
 			}
 		}
 	} elsif($Type =~ /html/) {
-		unless(-w $Target) {
-			die("I don't have write permission to $Target\n");
-		}
-		unless(-d $Target) {
-			die("$Target: is not a directory\n");
+		if(-e $Target) {
+			unless(-w $Target) {
+				die("I don't have write permission to $Target\n");
+			}
+			unless(-d $Target) {
+				die("$Target: is not a directory\n");
+			}
 		}
 		if(HTML_Export($Target)) {
 			print "HTML written to $Target\n";
@@ -1617,10 +1619,15 @@ sub HTML_PHPIndex {
 	print $FILE '$Year = date("Y");' . "\n";
 	print $FILE '$Month = date("n");' . "\n";
 	print $FILE '$Day = date("j");' . "\n";
+	print $FILE '$Months = array(1 => "january", 2 => "february", 3 => "march", 4 => "april", 5 => "may", 6 => "june", 7 => "july", 8 =>"august", 9 =>"september", 10 => "october", 11 => "november", 12 =>"december");' . "\n";
 	print $FILE 'if(file_exists("./dp_$Year$Month$Day.html")) {' . "\n";
 	print $FILE "\t" . 'include("./dp_$Year$Month$Day.html");' . "\n";
 	print $FILE "} else {\n";
-	print $FILE "\t" . 'include("./index.html");' . "\n";
+	print $FILE "\t" . 'if(file_exists("./$Months[$Month]-$Year.html")) {' . "\n";
+	print $FILE "\t\t" . 'include("./$Months[$Month]-$Year.html");' . "\n";
+	print $FILE "\t" . "} else {" . "\n";
+	print $FILE "\t\t" . 'include("./index.html");' . "\n";
+	print $FILE "\t" . "}" . "\n";
 	print $FILE "}\n?>";
 }
 
