@@ -1298,10 +1298,6 @@ sub CLI_Export {
 			}
 		}
 	} elsif($Type =~ /html/) {
-		unless(-e $Target) {
-			eval("mkpath(\"$Target\");1");
-			die("mkpath $Target failed: $@\n") if $@;
-		}
 		unless(-w $Target) {
 			die("I don't have write permission to $Target\n");
 		}
@@ -4010,13 +4006,12 @@ sub DrawEventlist {
 	unless ($EventlistWidget) {
 		# Greate the pop-up on right-click
 		my $PopupWidget = Gtk2::Menu->new();
-		my $broken = Gtk2::MenuItem->new("I'm a broken menu! Don't use me");
 		my $delete = Gtk2::ImageMenuItem->new_from_stock('gtk-delete');
 		$delete->show();
+		$delete->signal_connect('activate' => \&DeleteEvent);
 		my $edit = Gtk2::ImageMenuItem->new_from_stock('gtk-edit');
 		$edit->show();
-		$broken->show();
-		$PopupWidget->append($broken);
+		$edit->signal_connect('activate' => \&EditEvent);
 		$PopupWidget->append($edit);
 		$PopupWidget->append($delete);
 		$PopupWidget->show();
@@ -4043,9 +4038,12 @@ sub DrawEventlist {
 				my($widget,$event) = @_;
 				my $button = $event->button;
 				if($button == 3) {
-					#DPInfo("Right click caught");
+					my($self, $event) = @_;
+					my ($path, $column, $cell_x, $cell_y) = $EventlistWidget->get_path_at_pos ($event->x, $event->y);
 					if(scalar($widget->get_selected_indices) > 0) {
-						$PopupWidget->popup(undef, undef, undef, undef, 0, 0);
+						if(defined($path)) {
+							$PopupWidget->popup(undef, undef, undef, undef, 0, 0);
+						}
 					}
 				}
 			});
