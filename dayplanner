@@ -112,6 +112,11 @@ my %MonthNames = (
 	12 => $Gettext->get("December")
 );	# Localized hash of month number => Name values
 
+# AM/PM detection
+my $AM_String = strftime('%p', 0,0,0,0,0,106,0);
+my $PM_String = strftime('%p', 0,0,12,0,0,106,0);
+my $ClockSystem = $AM_String eq '%p' ? "24" : "12";
+
 # Gtk2 objects
 my (
 	$CalendarWidget,	$EventlistWidget,	$WorkingAreaHBox,
@@ -1213,6 +1218,51 @@ sub MainInit {
 	LoadCalendar();
 	# Set up holidays
 	HolidaySetup();
+}
+
+# Purpose: Convert AM/PM to internal 24H time
+# Usage: AMPM_To24(TIME [AM|PM]);
+sub AMPM_To24 {
+	my $Time = $_[0];
+	return($Time) if $ClockSystem eq "24";
+	my $Hour = $Time;
+	my $Minutes = $Time;
+	my $Suffix = $Time;
+	$Hour =~ s/^(\d+):.*$/$1/;
+	$Minutes =~ s/^\d+:(\d+).*$/$1/;
+	$Suffix =~ s/^\d+:\d+\s+(.+)/$1/;
+	if($Suffix eq $PM_String) {
+		$Hour = $Hour+12;
+	} elsif($Suffix eq $AM_String) {
+		if($Hour == 12) {
+			$Hour = "00";
+		}
+	}
+	return("$Hour:$Minutes");
+}
+
+# Purpose: Convert internal 24H time to AM/PM
+# Usage: AM_PM_From24(TIME);
+sub AMPM_From24 {
+	my $Time = $_[0];
+	return($Time) if $ClockSystem eq "24";
+	my $Hour = $Time;
+	my $Minutes = $Time;
+	my $Suffix;
+	$Hour =~ s/^(\d+):.*$/$1/;
+	$Minutes =~ s/^\d+:(\d+).*$/$1/;
+	if($Hour >= 12) {
+		if($Minutes > 0) {
+			$Suffix = $PM_String;
+		}
+	}
+	unless(defined($Suffix)) {
+		if($Hour == 0 and $Minutes == 0) {
+			$Hour = "12";
+		}
+		$Suffix = $AM_String;
+	}
+	return("$Hour:$Minutes $Suffix");
 }
 
 # =============================================================================
@@ -2757,7 +2807,7 @@ sub PopulateUpcomingEvents {
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
 			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
 				$HasEvents = 1;
-				$h->{text} .= $Gettext->get("At") . " $_: $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
+				$h->{text} .= $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
 			}
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
@@ -3380,7 +3430,7 @@ sub EditEvent {
 	$MainWindow->set_sensitive(0);
 
 	# Initialize
-	my $Time = $EventlistWidget->{data}[$Selected][0];
+	my $Time = AMPM_To24($EventlistWidget->{data}[$Selected][0]);
 	my $Summary = $EventlistWidget->{data}[$Selected][1];
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
@@ -4057,7 +4107,7 @@ sub DrawEventlist {
 			unless (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"})) {
 				DPIntWarn("Found no summary for entry: $Time");
 			} else {
-				push (@{$EventlistWidget->{data}}, [$Time, $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
+				push (@{$EventlistWidget->{data}}, [AMPM_From24($Time), $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
 			}
 		}
 	}
