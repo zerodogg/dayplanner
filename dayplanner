@@ -1650,7 +1650,7 @@ sub HTML_Export {
 	);
 	my $Dir = $_[0];
 	unless(-d $Dir) {
-		eval("mkpath($Dir)");
+		eval("mkpath('$Dir')");
 		if($@) {
 			DPIntWarn("Unable to mkpath($Dir): $@");
 			DPError(sprintf($Gettext->get("Unable to create the directory %s: %s", $Dir, $@)));
