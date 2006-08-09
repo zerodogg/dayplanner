@@ -1232,7 +1232,9 @@ sub AMPM_To24 {
 	$Minutes =~ s/^\d+:(\d+).*$/$1/;
 	$Suffix =~ s/^\d+:\d+\s+(.+)/$1/;
 	if($Suffix eq $PM_String) {
-		$Hour = $Hour+12;
+		if($Hour > 12) {
+			$Hour = $Hour+12;
+		}
 	} elsif($Suffix eq $AM_String) {
 		if($Hour == 12) {
 			$Hour = "00";
@@ -1252,9 +1254,7 @@ sub AMPM_From24 {
 	$Hour =~ s/^(\d+):.*$/$1/;
 	$Minutes =~ s/^\d+:(\d+).*$/$1/;
 	if($Hour >= 12) {
-		if($Minutes > 0) {
-			$Suffix = $PM_String;
-		}
+		$Suffix = $PM_String;
 	}
 	unless(defined($Suffix)) {
 		if($Hour == 0) {
@@ -3218,8 +3218,7 @@ sub GetTimeFromWidgets {
 		$Minute = "0$Minute";
 	}
 	if(defined($AMPM)) {
-		my $Active = $AMPM->get_active();
-		if($Active == 1) {
+		if($AMPM->get_active() == 0) {
 			if($Hour == 12) {
 				$Hour = "00";
 			}
