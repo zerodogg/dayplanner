@@ -1267,6 +1267,7 @@ sub AMPM_From24 {
 	$Minutes =~ s/^\d+:(\d+).*$/$1/;
 	if($Hour >= 12) {
 		$Suffix = $PM_String;
+		$Hour = $Hour-12;
 	}
 	unless(defined($Suffix)) {
 		if($Hour == 0) {
