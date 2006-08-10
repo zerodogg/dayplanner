@@ -790,6 +790,10 @@ sub DPIntWarn {
 # Usage: CalendarDelete(year,month,day,time);
 sub CalendarDelete {
 	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
+	unless(CalendarDefined(@_)) {
+		DPIntWarn("CalendarDelete: Unable to find an event at $EventYear/$EventMonth/$EventDay/$EventTime");
+		return(undef);
+	}
 	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
 		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
 			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
@@ -806,6 +810,10 @@ sub CalendarDelete {
 # Usage: BirthdayDelete(month,day,name);
 sub BirthdayDelete {
 	my ($EventMonth,$EventDay,$Name) = @_;
+	unless(BirthdayDefined(@_)) {
+		DPIntWarn("BirthdayDelete: Unable to find an event at $EventMonth/$EventDay/$Name");
+		return(undef);
+	}
 	delete($BirthdayContents{$EventMonth}{$EventDay}{$Name});
 		unless (keys(%{$BirthdayContents{$EventMonth}{$EventDay}})) {
 			delete($BirthdayContents{$EventMonth}{$EventDay});
@@ -1223,7 +1231,7 @@ sub MainInit {
 # Purpose: Convert AM/PM to internal 24H time
 # Usage: AMPM_To24(TIME [AM|PM]);
 sub AMPM_To24 {
-	my $Time = $_[0];
+	my ($Time, $MultiRet) = @_;
 	return($Time) if $ClockSystem eq "24";
 	my $Hour = $Time;
 	my $Minutes = $Time;
@@ -1240,7 +1248,11 @@ sub AMPM_To24 {
 			$Hour = "00";
 		}
 	}
-	return("$Hour:$Minutes");
+	if($MultiRet) {
+		return($Hour, $Minutes);
+	} else {
+		return("$Hour:$Minutes");
+	}
 }
 
 # Purpose: Convert internal 24H time to AM/PM
@@ -2983,7 +2995,7 @@ sub DetectImage {
 
 # Purpose: Delete the event currently selected in the eventlist
 # Usage: DeleteEvent();
-#  (calls CalendarDelete with the correct parameters)
+#  (calls CalendarDelete/BirthdayDelete with the correct parameters)
 sub DeleteEvent {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
@@ -2998,7 +3010,7 @@ sub DeleteEvent {
 
 	if($Type eq 'normal') {
 		if (defined($EventTime)) {
-			CalendarDelete($EventYear,$EventMonth,$EventDay,$EventTime);
+			CalendarDelete($EventYear,$EventMonth,$EventDay,AMPM_To24($EventTime));
 			UpdatedData();
 		}
 	} elsif ($Type eq 'bday') {
@@ -3225,11 +3237,13 @@ sub GetTimeFromWidgets {
 		$Minute = "0$Minute";
 	}
 	if(defined($AMPM)) {
+		my $Prefix;
 		if($AMPM->get_active() == 0) {
-			if($Hour == 12) {
-				$Hour = "00";
-			}
+			$Prefix = $AM_String;
+		} else {
+			$Prefix = $PM_String;
 		}
+		($Hour,$Minute) = AMPM_To24("$Hour:$Minute $Prefix", 1);
 	}
 	return("$Hour:$Minute");
 }
@@ -4471,6 +4485,11 @@ unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutosta
 # Set the redraw timer and populate the upcoming events widget
 PopulateUpcomingEvents();
 Set_DayChangeTimer();
+
+my $Exception =  Glib->install_exception_handler(sub {
+		DPError("An exception occurred. This reflects a bug in the program.\nPlease save the following exception text and report this problem to the day planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
+		1;
+	});
 
 # Rest in the Gtk2 main loop
 Gtk2->main;
