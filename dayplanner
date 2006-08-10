@@ -1240,9 +1240,7 @@ sub AMPM_To24 {
 	$Minutes =~ s/^\d+:(\d+).*$/$1/;
 	$Suffix =~ s/^\d+:\d+\s+(.+)/$1/;
 	if($Suffix eq $PM_String) {
-		if($Hour > 12) {
-			$Hour = $Hour+12;
-		}
+		$Hour = $Hour+12;
 	} elsif($Suffix eq $AM_String) {
 		if($Hour == 12) {
 			$Hour = "00";
