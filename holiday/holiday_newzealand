@@ -1,0 +1,15 @@
+:
+: NZ holiday file. Copy to ~/.holiday
+:
+: Author: The Viking <brickviking@hotmail.com>
+:
+"New Years Day" red on 1/1
+"Waitangi Day" red on 2/6
+"Anzac Day" red on 4/25
+"Easter Sunday" red on easter
+"Good Friday" red on easter minus 2
+"Easter Monday" red on easter plus 1
+"Queens Birthday" red on first monday in june
+"Labour Day" red on fourth monday in october
+"Christmas Day" red on 12/25
+"Boxing Day" red on 12/26
