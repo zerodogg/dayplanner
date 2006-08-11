@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+# Tester
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use X11::GUITest qw(StartApp WaitWindowViewable SendKeys SetKeySendDelay);
+
+my $DPExec = '../dayplanner -t -s';
+
+sub SetLocaleVars {
+	my ($LC_Setting, $LANG_Setting) = @_;
+	foreach(keys(%ENV)) {
+		next unless /^(LC_|LANG)/;
+		if(/^LC_/) {
+			$ENV{$_} = $LC_Setting;
+		} elsif (/^LANGUAGE/) {
+			$ENV{$_} = $LANG_Setting;
+		}
+	}
+}
+
+sub Type {
+	SendKeys($_[0]);
+	if (WaitWindowViewable('(Feil|Error|Warning|Advarsel)', undef, 1)) {
+		die("Testing FAILED. See the GUI window for error information.\n");
+	}
+}
+
+sub EN_12H_Gui {
+	print "Running test: EN_12H_Gui\n";
+	SetLocaleVars("en_US", "en");
+	# Start dayplanner application
+	StartApp($DPExec);
+
+	# Wait for application window to come up and become viewable. 
+	my ($GEditWinId) = WaitWindowViewable('Day planner');
+	if (!$GEditWinId) {
+		die("Unable to detect the window (en)\n");
+	}
+	# Delete an existing event
+	Type("\t^(d)");
+	# Add a birthday
+	Type('^(a)');
+	Type(' {DOW} ');
+	Type("\t");
+	Type("Tester");
+	Type("\t\t");
+	Type("\n");
+	# Quit
+	Type("%(c)");
+	Type("{DOW}");
+	Type("{DOW}");
+	Type("\n");
+}
+
+sub NN_24H_Gui {
+	print "Running test: nn_NO\n";
+	SetLocaleVars("nn_NO.UTF-8", "nn:no\@nynorsk:no_NY:no:nb");
+	# Start dayplanner application
+	StartApp($DPExec);
+
+	# Wait for application window to come up and become viewable. 
+	my ($GEditWinId) = WaitWindowViewable('Dagsplanleggar');
+	if (!$GEditWinId) {
+		die("Unable to detect the window (nn)\n");
+	}
+	# Delete an existing event
+	Type("\t^(d)");
+	# Add an event
+	Type('^(a)');
+	Type("\t");
+	Type("03\t44");
+	Type("\tHeisann\t\t\t");
+	Type("\n");
+	# Edit the event
+	Type("\t\t\n");
+	Type("\t32\tTesting more\t\t\t");
+	Type("\n");
+	# Edit menu
+	Type("%(e)");
+	Type("{DOW}");
+	Type("\n");
+	# Set the expand details setting
+	Type("{SPA}");
+	Type("%(l)");
+	# Unset it
+	
+	Type("%(e)");
+	Type("{DOW}");
+	Type("\n");
+	Type("{SPA}");
+	Type("%(l)");
+	# Quit
+	Type("%(k)");
+	Type("{DOW}");
+	Type("{DOW}");
+	Type("\n");
+}
+
+SetKeySendDelay(100);
+
+# Run the available tests
+NN_24H_Gui();
+EN_12H_Gui();
+
+__END__
+=head1 NAME
+
+Tester
+
+=head1 VERSION
+
+$Id$
