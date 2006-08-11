@@ -127,6 +127,7 @@ my (
 
 my $HolidayParser;	# The Date::HolidayParser object
 my $Gtk2Init;		# Info about if gtk2 is initialized or not
+my $ShutdownDaemon;	# If we should shut down the daemon on exit
 
 # Global date variables
 my (
@@ -274,14 +275,22 @@ sub Daemon_DataSegment {
 	}
 }
 
-# Purpose: Close the connection to the daemon
+# Purpose: Close the connection to the daemon (shutdown if $ShutdownDaemon);
 # Usage: CloseDaemon();
 sub CloseDaemon {
 	if ($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
 			DPIntWarn("\$DaemonSocket is suddenly undef. Doesn't matter though since we're closing the connection anyway.");
 		} else {
-			my $GetDaemon = Daemon_DataSegment('BYE');
+			if($ShutdownDaemon) {
+				my $GetDaemon = Daemon_DataSegment('SHUTDOWN');
+				chomp($GetDaemon);
+				unless($GetDaemon eq 'okay') {
+					DPIntWarn("The daemon replied \"$GetDaemon\" to my SHUTDOWN request!");
+				}
+			} else {
+				my $GetDaemon = Daemon_DataSegment('BYE');
+			}
 			close($DaemonSocket);
 		}
 		$DaemonOnline = 0;
@@ -3011,11 +3020,15 @@ sub DeleteEvent {
 		if (defined($EventTime)) {
 			CalendarDelete($EventYear,$EventMonth,$EventDay,AMPM_To24($EventTime));
 			UpdatedData();
+		} else {
+			DPIntWarn("DeleteEvent() didn't find the event time of the event to be deleted");
 		}
 	} elsif ($Type eq 'bday') {
 		if (defined($EventSummary)) {
 			BirthdayDelete($EventMonth, $EventDay, GetRealBirthdayName($EventSummary));
 			UpdatedData();
+		} else {
+			DPIntWarn("DeleteEvent() didn't find the name of the person whose birthday it was suppose to delete");
 		}
 	} else {
 		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
@@ -4407,6 +4420,7 @@ GetOptions (
 		PrintHelp("-v","--version", "Display version information and exit");
 		PrintHelp("-t","--test","Use a seperate debug/ configuration directory");
 		PrintHelp("", "--confdir", "Use the directory supplied as configuration directory");
+		PrintHelp("-s", "--shutdaemon", "Shutdown the daemon when day planner is closed");
 		PrintHelp("", "--exportical", "Export the day planner data in the iCalendar format");
 		PrintHelp("", "", "to the filename supplied");
 		PrintHelp("", "--exportdpf", "Export the day planner data in the day planner data");
@@ -4446,6 +4460,7 @@ GetOptions (
 		}
 		$SaveToDir = $_[1];
 	},
+	's|shutdaemon' => \$ShutdownDaemon,
 	'exportical=s' => \&CLI_Export,
 	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
