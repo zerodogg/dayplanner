@@ -3,16 +3,16 @@ on the %CalendarContents hash. The syntax of the %CalendarContents hash is as
 follows:
 
 %CalendarContents = (
-	'YEAR' => {
-			'MONTH_NUMBER(1-12)' => {
-							'DAY(1-31)' => {
-								'TIME' => {
-										'summary' => 'SUMMARY',
-										'fulltext' => 'Full text'
-										# Other stuff...
-									}
-						}
-		}
+  'YEAR' => {
+    'MONTH_NUMBER(1-12)' => {
+      'DAY(1-31)' => {
+         'TIME' => {
+            'summary' => 'SUMMARY',
+            'fulltext' => 'Full text'
+            # Other stuff...
+         }
+      }
+   }
 )
 
 -	-	-	-	-
@@ -20,9 +20,9 @@ follows:
 The same for the birthday saving:
 
 %BirthdayContents = (
-	'MONTH_NUMBER(1-12)' => {
-					'DAY(1-31)' => {
-								'NAME_OF_PERSON' => 1,
-							}
-				}
+  'MONTH_NUMBER(1-12)' => {
+    'DAY(1-31)' => {
+      'NAME_OF_PERSON' => 1,
+    }
+  }
 }
