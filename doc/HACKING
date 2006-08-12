@@ -1,0 +1,142 @@
+Day Planner coding standards
+by Eskild Hustvedt
+$Id$
+----------------------------
+
+Index:
+1 - Commenting
+	1.1 Subroutines
+		1.1.1 Real world examples
+	1.2 General commenting
+2 - Subroutines
+3 - Dependencies
+4 - API changes
+
+1 - COMMENTING
+==============
+Day planner aims at having a extendible and well documented codebase.
+Commenting is an important part of this. The main rule would be that
+"it is better to comment too much than too little". And really, it's
+hard to comment code too much.
+
+1.1 - Subroutines
+-- -- -- -- -- --
+Before each subroutine decleration you should have comments describing
+the purpose and usage syntax of the subroutine. Like this:
+
+# Purpose: The purpose of the subroutine
+# Usage: Subroutine(ARG1, ARG2);
+
+1.1.1 - Real world examples
+-  -  -  -  -  -  -  -  -  -
+# Purpose: Detect which kind of event is selected in the eventlist
+# Usage: my $Type = GetEventListType();
+sub GetEventListType {
+	...
+}
+
+# Purpose: Close a window when the escape key is pressed
+# Usage: $WIDGET->signal_connect("key_release_event" => \&EscapeKeyHandler);
+sub EscapeKeyHandler  {
+	...
+}
+
+# Purpose: Display an information dialog
+# Usage: DPInfo("Information message");
+sub DPInfo ($) {
+	...
+}
+
+1.2 - General commenting
+-- -- -- -- -- -- -- -- --
+Also generally you should comment anything unless it is completely
+obvious what the code does (that the code is logical self
+documenting). If the code is longer than 10 lines then don't assume
+that the code is self documenting.
+
+An example of self documenting code:
+# Purpose: Send something to the daemon and then return the daemons reply
+# Usage: $Reply = Daemon_DataSegment(DATA);
+sub Daemon_DataSegment ($) {
+        if($DaemonOnline) {
+                if(Daemon_SendData($_[0])) {
+                        return(Daemon_ErrorHandler(Daemon_GetData()));
+                }
+        } else {
+                return("ERR NOT_ONLINE");
+        }
+}
+
+An example of code that is not completely self-documenting:
+# Purpose: Save the data file and redraw the needed windows
+# Usage: UpdatedData();
+sub UpdatedData () {
+        # Save the data
+        SaveMainData();
+        # Redraw the event list
+        DrawEventlist();
+        # Redraw the calendar
+        CalendarChange();
+}
+
+The reason is that CalendarChange() isn't obviously a subroutine that
+redraws the calendar.
+
+2 - SUBROUTINES
+===============
+If something can be a subroutine then generally it should be a
+subroutine (exceptions are the initial calling of subroutines and
+commandline parsing).
+
+Additionally the subroutines should be modular. That is that if the
+subroutine does more than one thing and one of the functions it
+provides can be performed without having to perform the latter
+functions first then it should be an own subroutine.
+An example for this is the daemon functions. In the beginning
+StartDaemon() and ConnectToDaemon() was one single subroutine. This
+became troublesome as day planner may need to reconnect to a
+disconnected daemon, thus calling that subroutine again. It would be
+useless to go through the entire process of starting a daemon when all
+you really want to do is reconnect to it.
+
+
+3 - DEPENDENCIES
+================
+Day planner has few dependencies by design. A good rule of thumb here
+is that if a dependency can be skipped then it should unless it is
+included in the base perl distribution and have been for multiple
+releases.
+
+So if a useful module is already included in the perl base
+distribution (for instance like Getopt::Long and File::Basename) or is
+included in the Gtk2 perl base distribution (for instance like
+Gtk2::Gdk::Keysyms) then by all means use it, as long as the module
+isn't brand new.
+
+Currently the non-Gtk2 and non-perl-base-distribution modules day
+planner uses are:
+Locale::gettext
+Date::HolidayParser (though, this one is bundled with day planner)
+
+4 - API changes
+===============
+This section is about changes to the APIs of day planner dependencies.
+An API should be static. The way we use File::Basename now should work
+in future versions too. However, sometimes a more powerful or useful
+function is appended to the API and some older API is deprecated.
+
+Day planner reacts to depreciation of APIs in use by it in the
+following way:
+- If the function is replaced by another module not provided alongside the
+  module we already use and not provided in the perl base distribution
+  then continue to use the old API as long as we can.
+- If the old function has been completely removed then try to rewrite
+  it to be included in the day planner source code. If this is not
+  possible then we would have to discuss how to solve this.
+- If the API is just simply deprecated but nothing more then continue
+  to use it.
+A good rule is that day planner should for now run on the following
+reference systems: Mandriva Linux 2006.0, Debian Unstable, Mandriva
+Linux Cooker, Latest official Mandriva Linux.
+
+vim: set tw=70 :
