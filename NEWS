@@ -11,7 +11,9 @@ Version 0.3 (Unreleased)
 - Can now import and export the day planner data format (dpf)
 - Can now export and import the iCalendar format
 - Can now export to HTML
+- Can now import data from "plan" (previously done by a seperate script)
 - You can now right-click on an event
+- Added AM/PM support
 
 * Daemon (dayplanner-daemon)
 
