@@ -1,5 +1,6 @@
-Thanks to the authors of the following perl modules, of which without them,
-dayplanner would not exist (or would be alot harder to write) :)
+Thanks to all the translators of day planner. Also thanks to the authors
+of the following perl modules and libraries, of which without them
+day planner would not exist (or be alot harder to write).
 - Eskild
 
 The Gtk2 perl bindings
