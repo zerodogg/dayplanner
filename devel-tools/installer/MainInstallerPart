@@ -102,7 +102,8 @@ print ".";
 my @BINDIRS = (
 	"$ENV{HOME}/bin",
 	"$ENV{HOME}/.bin",
-	"$ENV{HOME}/.local/bin"
+	"$ENV{HOME}/.local/bin",
+	"/usr/local/bin",
 );
 
 print ".";
@@ -110,7 +111,7 @@ print ".";
 my @BINLINKS;
 
 foreach(@BINDIRS) {
-	if(-e $_) {
+	if(-e $_ and -d $_ and -w $_) {
 		symlink("$InstallDirectory/dayplanner", "$_/dayplanner");
 		symlink("$InstallDirectory/dayplanner-daemon", "$_/dayplanner-daemon");
 		symlink("$InstallDirectory/dayplanner-notifier", "$_/dayplanner-notifier");
