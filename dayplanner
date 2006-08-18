@@ -1930,11 +1930,11 @@ sub EncryptData {
 	my $Data = $_[0];
 	unless(eval('use Crypt::CBC;1;')) {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::CBC"));
-		return($_[0]);
+		return($Data);
 	}
 	unless(eval('use Crypt::Blowfish; 1')) {
 		DPError(sprintf($Gettext->get("You do not have the perl module %s installed. The data will not be encrypted."),"Crypt::Blowfish"));
-		return($_[0]);
+		return($Data);
 	}
 	my $Key = GetEncryptionKey();
 	my $Encrypt = Crypt::CBC->new({
@@ -1942,7 +1942,7 @@ sub EncryptData {
 			cipher => "Blowfish",
 			salt => 1,
 		});
-	return($Encrypt->encrypt($_[0]));
+	return($Encrypt->encrypt($Data));
 }
 
 # Purpose: Graphically prompt the user for the encryption key
