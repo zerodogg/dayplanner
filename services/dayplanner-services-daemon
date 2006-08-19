@@ -22,7 +22,6 @@ use warnings;
 require 5.8.0;				# Require perl 5.8 to ensure things work smoothly
 #use IO::Socket::SSL;	TODO: Implement this instead of IO::Socket::INET
 use IO::Socket::INET;
-use Getopt::Long;
 use IO::Select;
 use Getopt::Long;
 use Digest::MD5 qw(md5_base64);
@@ -228,6 +227,7 @@ sub SendData {
 # Purpose: Recieve new data for a specific user
 # Usage: $Returned_Status = RecieveData(USER);
 sub RecieveData {
+	my $User = $_[1];
 	my $Data = $_[0];
 	my $THIS_MD5 = $_[0];
 	my $LAST_MD5 = $_[0];
@@ -335,7 +335,7 @@ sub CommandHandler {
 	if($Command =~ /^GETDATA/) {
 		return(SendData($Clients{$Handle}{User}));
 	} elsif($Command =~ s/^SENDDATA\s*//) {
-		return(RecieveData($Command));
+		return(RecieveData($Command, $Clients{$Handle}{User}));
 	}
 
 	return("ERR unknown command");
