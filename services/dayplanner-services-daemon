@@ -19,11 +19,13 @@
 
 use strict;
 use warnings;
+require 5.8.0;				# Require perl 5.8 to ensure things work smoothly
 #use IO::Socket::SSL;	TODO: Implement this instead of IO::Socket::INET
 use IO::Socket::INET;
 use Getopt::Long;
 use IO::Select;
 use Getopt::Long;
+use Digest::MD5 qw(md5_base64);
 
 my $Server;
 my $ConnectionSelect;
@@ -32,8 +34,32 @@ my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
 my $Port = 1500;
-my %Users;
+my %ActiveUsers;
 my %Clients;
+# Contains test data
+my %Users = (
+	'zerodogg' => {
+		password => "123",
+		level => 2,
+		settings => {
+			Encrypted => 0,
+			GenHTML => 1,
+		},
+	},
+	test => {
+		password => "123",
+		level => 1,
+		settings => {
+			Encrypted => 0,
+			GenHTML => 1,
+		},
+	},
+);
+# Should be loaded from another file
+my %Config = (
+	DataPath => "./userdata/",
+);
+
 my $RCSRev = '$Id$';
 my $Version = "0.3 ALPHA";
 
@@ -87,30 +113,117 @@ sub SetStatus {
 	$0 = "dayplanner-services-daemon port $Port [$_[0]]";
 }
 
+# Purpose: Write a configuration file
+# Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
+sub WriteConfigFile {
+	my ($File, $Config, $Explanations) = @_;
+
+	# Open the config for writing
+	open(my $CONFIG, ">", "$File") or do {
+		# If we can't then we error out, no need for failsafe stuff - it's just the config file
+		DPIntWarn("Unable to save the configuration file $File: $!");
+		return(0);
+	};
+	if(defined($Explanations->{HEADER})) {
+		print $CONFIG "# $Explanations->{HEADER}\n";
+	}
+	foreach(sort(keys(%{$Config}))) {
+		next unless length($Config->{$_});	# Don't write empty options
+		if(defined($Explanations->{$_})) {
+			print $CONFIG "\n# $Explanations->{$_}";
+		}
+		print $CONFIG "\n$_=$Config->{$_}\n";
+	}
+	close($CONFIG);
+}
+
+# Purpose: Load a configuration file
+# Usage: LoadConfigFile(/FILE, \%ConfigHash, \%OptionRegexHash, OnlyValidOptions?);
+#  OptionRegeXhash can be available for only a select few of the config options
+#  or skipped completely (by replacing it by undef).
+#  If OnlyValidOptions is true it will cause LoadConfigFile to skip options not in
+#  the OptionRegexHash.
+sub LoadConfigFile {
+	# TODO: Replace print's and warn's
+	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
+
+	open(my $CONFIG, "<", "$File") or do {
+		print "Unable to read config settings: $File:$!\n";
+		return(0);
+	};
+	while(<$CONFIG>) {
+		next if m/^\s*(#.*)?$/;
+		next unless m/=/;
+		chomp;
+		my $Option = $_;
+		my $Value = $_;
+		$Option =~ s/^\s*(.*)\s*=.*/$1/;
+		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		if($OnlyValidOptions) {
+			unless(defined($OptionRegex->{$Option})) {
+				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
+				next;
+			}
+		}
+		unless(defined($Value)) {
+			DPIntWarn("Empty value for option $Option in $File");
+		}
+		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
+			my $MustMatch = $OptionRegex->{$Option};
+			unless ($Value =~ /$MustMatch/) {
+				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{Option}.\n";
+				next;
+			}
+		}
+		$ConfigHash->{$Option} = $Value;
+	}
+	close($CONFIG);
+}
+
+# Purpose: Notify the admin about data corruption
+# Usage: DataCorruption(USER);
+sub DataCorruption {
+	# TODO
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# CORE DATA FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub GetData {
+	my $User = $_[0];
+	my %User_DataConfig;
+	unless(-e "$Config{DataPath}/$User/dataconfig") {
+		return("ERR NO_DATA");
+	}
+	unless(-e "$Config{DataPath}/$User/calendardata") {
+		return("ERR NO_DATA");
+	}
+
+	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+
+	open(my $User_Data, "<", "$Config{DataPath}/$User/calendardata") or return("ERR UNKNOWN: $!");
+	my $ReturnData = <$User_Data>;
+	close($User_Data);
+	my $MD5 = md5_base64($User_Data);
+	if($MD5 eq $User_DataConfig{MD5_BASE64}) {
+		return($ReturnData);
+	} else {
+		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{MD5_BASE64} but found $MD5.");
+		DataCorruption($User);
+		return("ERR MD5_FAILURE");
+	}
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE SERVER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 # Purpose: Handle commands
 # Usage: CommandHandler(COMMAND, HANDLE);
 sub CommandHandler {
 	my ($Command, $Handle) = @_;
 	chomp($Command);
-	# Authentication
-	if($Command =~ /^USER/) {
-		if(defined($Clients{$Handle}{User})) {
-			return("REFUSED Already authenticated # as $Clients{$Handle}{User}");
-		}
-		my $Username = $Command;
-		$Username =~ s/^USER\s*(.+)/$1/;
-		IntDebug("$Handle sent $Command");
-		$Clients{$Handle}{User} = $Username;
-		return("OK");
-	}
-	# Require authentication to proceed
-	unless(defined($Clients{$Handle}{User})) {
-		return("REFUSED Not authenticated");
-	}
-
+	
 	# API Level
 	if($Command =~ /^APILEVEL/) {
 		my $API = $Command;
@@ -118,11 +231,58 @@ sub CommandHandler {
 		unless($API eq "0") {
 			return("ERR Unsupported");
 		} else {
+			$Clients{$Handle}{APIOK} = 1;
 			return("OK");
 		}
-	} else {
-		return("ERR unknown command");
 	}
+	unless(defined($Clients{$Handle}{APIOK})) {
+		return("REFUSED NO_APILEVEL");
+	}
+
+	# Authentication
+	if($Command =~ /^AUTH/) {
+		if(defined($Clients{$Handle}{User})) {
+			return("REFUSED Already authenticated # as $Clients{$Handle}{User}");
+		}
+		# Get the username and password parts
+		my $Username = $Command;
+		$Username =~ s/^AUTH\s*(\w+)\s+(\w+).*$/$1/;
+		my $Password = $Command;
+		$Password =~ s/^AUTH\s*(\w+)\s+(\w+).*$/$2/;
+		
+		IntDebug("$Handle sent $Command");
+
+		# Verify supplied data
+		unless(defined($Users{$Username})) {
+			IntVeryVerbose("$Handle tried to auth as $Username, but that user doesn't exist");
+			return("FAILED");
+		}
+		unless($Users{$Username}{password} eq $Password) {
+			IntVerbose("Authentication from $Handle failed as $Username");
+			return("FAILED");
+		}
+		# Make sure it's not in use
+		if(defined($ActiveUsers{$Username}{Handle})) {	# FIXME, should try to see if $ActiveUsers{$Username} is defined first
+			IntDebug("$Handle tried to auth as $Username but $ActiveUsers{$Username}{Handle} is authenticated as that user already");
+			return("REFUSED In use");
+		}
+
+		$Clients{$Handle}{User} = $Username;
+		$ActiveUsers{$Username}{Handle} = $Handle;
+		return("OK");
+	}
+	# Require authentication to proceed
+	unless(defined($Clients{$Handle}{User})) {
+		return("REFUSED Not authenticated");
+	}
+
+	# Other commands
+	if($Command =~ /^GETDATA/) {
+		return(GetData($Clients{$Handle}{User}));
+	}
+#	if($Command =~ /^MD5IS/)  {
+
+	return("ERR unknown command");
 }
 
 # Purpose: Open our main communication socket
@@ -170,7 +330,11 @@ sub MainLoop {
 				} 
 				# If it isn't, then it closed the connection
 				else {
-					IntDebug("Connection closed");
+					IntDebug("Connection closed ($Handle)");
+					if(defined($Clients{$Handle}{User})) {
+						delete($ActiveUsers{$Clients{$Handle}{User}});
+					}
+					delete($Clients{$Handle});
 					$ConnectionSelect->remove($Handle);
 				}
 			}
