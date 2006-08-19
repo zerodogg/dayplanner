@@ -836,9 +836,14 @@ sub CalculateNotificationHash {
 sub PackageMultiLine {
 	my $Message = $_[0];
 	my $NewMessage = "BEGIN MULTILINE\n";
+	my $Lines;
 	foreach(split(/\n/,$Message)) {
+		$Lines++;
 		chomp;
 		$NewMessage = $NewMessage . "ML $_\n";
+	}
+	unless($Lines > 1) {
+		return($Message);
 	}
 	unless($Message =~ /\n$/) {
 		# The preceeding line doesn't end with \n so set a "last line didn't end with \n" option
