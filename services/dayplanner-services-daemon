@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+# dayplanner-services-daemon
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+#use IO::Socket::SSL;	TODO: Implement this instead of IO::Socket::INET
+use IO::Socket::INET;
+use Getopt::Long;
+use IO::Select;
+use Getopt::Long;
+
+my $Server;
+my $ConnectionSelect;
+my $Shutdown;
+my $OutputVeryVerbose = 1;
+my $OutputVerbose = 1;
+my $DebuggingOutput = 1;
+my $Port = 1500;
+my %Users;
+my %Clients;
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# CORE HELPER FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Output a debugging message if needed
+# Usage: IntDebug(MESSAGE);
+sub IntDebug {
+	if ($DebuggingOutput) {
+		IntOutputMSG("DEBUG: $_[0]\n");
+	}
+}
+
+# Purpose: Output a message when in very verbose mode
+# IntVeryVerbose(MESSAGE);
+sub IntVeryVerbose {
+	if ($OutputVeryVerbose) {
+		IntOutputMSG("$_[0]\n");
+	}
+}
+
+# Purpose: Output a message when in verbose mode
+# Usage: IntVerbose(MESSAGE);
+sub IntVerbose {
+	if ($OutputVerbose) {
+		IntOutputMSG("$_[0]\n");
+	}
+}
+
+# Purpose: Output a properly formatted internal message
+# Usage: IntOutputMSG(MESSAGE);
+sub IntOutputMSG {
+	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
+	$lhour = "0$lhour" unless $lhour >= 10;
+	$lmin = "0$lmin" unless $lmin >= 10;
+	$lsec = "0$lsec" unless $lsec >= 10;
+	print "[$lhour:$lmin:$lsec] $_[0]";
+}
+
+# Purpose: Print a warning to STDERR with proper output
+# Usage: IntWarn("Warning");
+sub IntWarn {
+	warn "Warning: $_[0]\n";
+}
+
+# Purpose: Set the program status
+# Usage: SetStatus(STATUS);
+sub SetStatus {
+	$0 = "dayplanner-services-daemon port $Port [$_[0]]";
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# CORE SERVER FUNCTIONS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Purpose: Handle commands
+# Usage: CommandHandler(COMMAND, HANDLE);
+sub CommandHandler {
+	my ($Command, $Handle) = @_;
+	chomp($Command);
+	# Authentication
+	if($Command =~ /^USER/) {
+		if(defined($Clients{$Handle}{User})) {
+			return("REFUSED Already authenticated # as $Clients{$Handle}{User}");
+		}
+		my $Username = $Command;
+		$Username =~ s/^USER\s*(.+)/$1/;
+		IntDebug("$Handle sent $Command");
+		$Clients{$Handle}{User} = $Username;
+		return("OK");
+	}
+	# Require authentication to proceed
+	unless(defined($Clients{$Handle}{User})) {
+		return("REFUSED Not authenticated");
+	}
+
+	# API Level
+	if($Command =~ /^APILEVEL/) {
+		my $API = $Command;
+		$API =~ s/^APILEVEL\s+(\d+).*$/$1/;
+		unless($API eq "0") {
+			return("ERR Unsupported");
+		} else {
+			return("OK");
+		}
+	} else {
+		return("ERR unknown command");
+	}
+}
+
+# Purpose: Open our main communication socket
+# Usage: OpenSocket();
+sub OpenSocket {
+	$Server = IO::Socket::INET->new(
+					LocalPort => $Port,
+					Listen	=> 5,
+			) or die "Unable to create a new socket: $@\n";
+	# Trap SIGPIPE
+	$SIG{PIPE} = \&SigpipeHandler;
+	# Create a new select handle for reading
+	$ConnectionSelect = IO::Select->new();
+	# Add the main server
+	$ConnectionSelect->add($Server);
+}
+
+# Purpose: Start the main loop
+# Usage: MainLoop();
+# Requires: OpenSocket(); already performed
+sub MainLoop {
+	# Loop for eternity
+	while (1) {
+		SetStatus("sleeping");
+		# Block until one handle is available or it times out
+		my @Ready_Handles = $ConnectionSelect->can_read();
+		SetStatus("processing");
+		# For each handle...
+		foreach my $Handle (@Ready_Handles) {
+			# If the handle is $server then it's a new connection
+			if ($Handle eq $Server) {
+				my $NewClient = $Server->accept();
+				$ConnectionSelect->add($NewClient);
+				IntDebug("New connection on $NewClient");
+			} 
+			# Handle isn't $server, it's an existing connection trying to tell us something
+			else {
+				# What is it trying to tell us?
+				my $Command = <$Handle>;
+				# If it is defined then it's a command
+				if ($Command) {
+					chomp($Command);
+					my ($Reply) = CommandHandler($Command, $Handle);
+					print $Handle "$Reply\n";
+				} 
+				# If it isn't, then it closed the connection
+				else {
+					IntDebug("Connection closed");
+					$ConnectionSelect->remove($Handle);
+				}
+			}
+		}
+		if ($Shutdown) {
+			IntVerbose($Shutdown);
+			exit(0);
+		}
+	}
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# INITIALIZATION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+GetOptions (
+	'port|p=i' => \$Port,
+) or die "See $0 --help for more information\n";
+SetStatus("starting");
+OpenSocket();
+MainLoop();
