@@ -26,6 +26,7 @@ use Getopt::Long;
 use IO::Select;
 use Getopt::Long;
 use Digest::MD5 qw(md5_base64);
+use Data::Dumper;
 
 my $Server;
 my $ConnectionSelect;
@@ -189,7 +190,14 @@ sub DataCorruption {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE DATA FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-sub GetData {
+
+# Purpose: Get the data for a specific user
+# Usage: $Returned = SendData(USER);
+# 
+# The returned data is like this:
+# MD5_BASE64 BASE64_ENCODED_DPF_DATA
+# The first part is the md5sum of the second part
+sub SendData {
 	my $User = $_[0];
 	my %User_DataConfig;
 	unless(-e "$Config{DataPath}/$User/dataconfig") {
@@ -204,14 +212,61 @@ sub GetData {
 	open(my $User_Data, "<", "$Config{DataPath}/$User/calendardata") or return("ERR UNKNOWN: $!");
 	my $ReturnData = <$User_Data>;
 	close($User_Data);
-	my $MD5 = md5_base64($User_Data);
+	unless(defined($User_DataConfig{MD5_BASE64})) {
+		return("ERR NO_MD5");
+	}
+	my $MD5 = md5_base64($ReturnData);
 	if($MD5 eq $User_DataConfig{MD5_BASE64}) {
-		return($ReturnData);
+		return("$MD5 $ReturnData");
 	} else {
 		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{MD5_BASE64} but found $MD5.");
 		DataCorruption($User);
 		return("ERR MD5_FAILURE");
 	}
+}
+
+# Purpose: Recieve new data for a specific user
+# Usage: $Returned_Status = RecieveData(USER);
+sub RecieveData {
+	my $Data = $_[0];
+	my $THIS_MD5 = $_[0];
+	my $LAST_MD5 = $_[0];
+	my $FORCE = $_[0];	# NOTE: Use of FORCE is dangerous!
+	my %User_DataConfig;
+
+	$THIS_MD5 =~ s/^(\S+)\s+.*$/$1/;
+	$LAST_MD5 =~ s/^(\S+)\s+(\S+).*$/$2/;
+	$Data =~ s/^(\S+)\s+(\S+)\s+(\S+).*$/$3/;
+	$FORCE =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*//;
+	unless(length($THIS_MD5) and length($LAST_MD5) and length($Data)) {
+		return("ERR FORMATERROR");
+	}
+
+	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+	
+	unless($FORCE) {
+		if(defined($User_DataConfig{LastMD5})) {
+			unless($User_DataConfig{LastMD5} eq $LAST_MD5) {
+				return("ERR LASTMD5_NOMATCH $User_DataConfig{LastMD5} - $LAST_MD5");
+			}
+		}
+	}
+
+	my $MD5 = md5_base64($Data);
+	unless($MD5 eq $THIS_MD5) {
+		return("ERR MD5_MISMATCH");
+	}
+
+	# We got this far, write the data
+	open(my $OutData, ">", "$Config{DataPath}/$User/calendardata") or do {
+		IntVerbose("Unable to open $Config{DataPath}/$User/calendardata for writing!: $!");
+		return("ERR WRITEFAILURE");
+	};
+	print $OutData $Data;
+	close($OutData);
+	
+	$User_DataConfig{LastMD5} = $MD5;
+	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -278,9 +333,10 @@ sub CommandHandler {
 
 	# Other commands
 	if($Command =~ /^GETDATA/) {
-		return(GetData($Clients{$Handle}{User}));
+		return(SendData($Clients{$Handle}{User}));
+	} elsif($Command =~ s/^SENDDATA\s*//) {
+		return(RecieveData($Command));
 	}
-#	if($Command =~ /^MD5IS/)  {
 
 	return("ERR unknown command");
 }
