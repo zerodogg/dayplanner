@@ -2332,9 +2332,21 @@ sub WriteDayplannerDataFile {
 		DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
 		return(0);
 	};
+	
+	my($Data, $DataMD5) = DPF_GetData($OnlyBirthdays, $DPEncrypt);
 
 	print $Target "# Content-type: text/x-dayplanner\n# Day planner data file.\n";
 	print $Target "DP_FormatVersion = $FormatVersion;\nDP_Crypt = $DPEncrypt;\n";
+	print $Target "DP_DataMD5 = $DataMD5\n";
+	print $Target "ContainedData = $Data";
+	print $Target "# END";
+	close($Target);
+}
+
+# Purpose: Get day planner data encoded in base64
+# Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?);
+sub DPF_GetData {
+	my ($OnlyBirthdays, $DPEncrypt) = @_;
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
 	# Nevermind sorting
@@ -2349,14 +2361,10 @@ sub WriteDayplannerDataFile {
 		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
 	}
 	my $DataMD5 = md5_base64($Data);
-	print $Target "DP_DataMD5 = $DataMD5\n";
 	if($DPEncrypt) {
 		$Data = EncryptData($Data);
 	}
-	print $Target "ContainedData = ";
-	print $Target encode_base64($Data);
-	print $Target "# END";
-	close($Target);
+	return(encode_base64($Data), $DataMD5);
 }
 
 # Purpose: Import data from a day planner data file
