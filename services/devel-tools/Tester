@@ -91,8 +91,11 @@ sub DPS_GetData {
 			print decode_base64($MainData);
 		}
 	} else {
-		print "Error recieveing data\n";
-		# Error...
+		if($Data =~ /^ERR NO_DATA/) {
+			print "No data found on the server\n";
+		} else {
+			print "An unknown error occurred: $Data\n";
+		}
 	}
 	DPS_Disconnect();
 	return(1);
