@@ -63,6 +63,13 @@ my %Config = (
 my $RCSRev = '$Id$';
 my $Version = "0.3 ALPHA";
 
+$SIG{INT} = sub {
+	close($Server);
+	print "Shutdown by SIG$_[0]\n";
+	exit(0);
+};
+$SIG{TERM} = $SIG{INT};
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
