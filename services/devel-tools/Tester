@@ -135,7 +135,19 @@ sub DPS_GetData {
 		unless(md5_base64($MainData) eq $MD5) {
 			print "MD5 mismatch!\n";
 		} else {
-			print decode_base64($MainData);
+			$MainData = decode_base64($MainData);
+			$ContainedData .= "1;";
+			my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
+			eval($ContainedData) or do {
+				DPIntWarn("FAILED to parse data!");
+				return(undef);
+			};
+			%BirthdayContents = %BirthdayCalendarContent;
+			%BirthdayCalendarContent = ();
+			unless($DP_OnlyBirthdays) {
+				%CalendarContents = %MainCalendarContent;
+				%MainCalendarContent = ();
+			}
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
