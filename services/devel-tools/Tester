@@ -25,7 +25,36 @@ use Digest::MD5 qw(md5_base64);
 use Data::Dumper;
 use MIME::Base64;
 
+my %CalendarContents = do("$ENV{HOME}/.dayplanner/events.dpd");
+my %BirthdayContents = do("$ENV{HOME}/.dayplanner/birthdays.dpd");
+
 my %DPServices;
+my $Version = '$Id$';
+
+# Purpose: Get day planner data encoded in base64
+# Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?);
+sub DPF_GetData {
+	my ($OnlyBirthdays, $DPEncrypt) = @_;
+	$OnlyBirthdays = $OnlyBirthdays ? 1 : 0;
+	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
+	$Data::Dumper::Purity = 1;
+	# Nevermind sorting
+	$Data::Dumper::Sortkeys = 0;
+	# Set the indentation (none in this case)
+	$Data::Dumper::Indent = 0;
+	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n\$DP_Exportedby = '$Version';\n \$DP_ExportedAt = '" . time() . "';\n";
+	$Data .= Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayCalendarContent"]);
+
+	unless($OnlyBirthdays) {
+		$Data .= "\n";
+		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
+	}
+	my $DataMD5 = md5_base64($Data);
+	if($DPEncrypt) {
+		$Data = EncryptData($Data);
+	}
+	return(encode_base64($Data), $DataMD5);
+}
 
 # Purpose: Connect to a day planner services server. Returns 
 sub DPS_Connect {
@@ -69,14 +98,7 @@ sub DPS_DataSegment {
 }
 
 sub DPS_GetData {
-	my $CONReply = DPS_Connect("localhost", 1500, "zerodogg", "123");
-	if($CONReply eq "APIERROR") {
-		# Api ERROR message
-		return(undef);
-	} elsif($CONReply eq "AUTHERROR") {
-		# Auth error message
-		return(undef);
-	}
+	return unless DPS_ConnectHandler();
 	my $Data = DPS_DataSegment("GETDATA");
 	if($Data =~ /^OK/) {
 		my $Initial = $Data;
@@ -101,4 +123,25 @@ sub DPS_GetData {
 	return(1);
 }
 
-DPS_GetData();
+sub DPS_ConnectHandler {
+	my $CONReply = DPS_Connect("localhost", 1500, "zerodogg", "123");
+	if($CONReply eq "APIERROR") {
+		# Api ERROR message
+		return(undef);
+	} elsif($CONReply eq "AUTHERROR") {
+		# Auth error message
+		return(undef);
+	}
+	return(1);
+}
+
+sub DPS_SendData {
+	return unless DPS_ConnectHandler();
+	my $SendData = DPF_GetData();
+	chomp($SendData);
+	my $MD5 = md5_base64($SendData);
+	my $Reply = DPS_DataSegment("SENDDATA $MD5 undef $SendData 1");
+	print "$Reply\n";
+}
+
+DPS_SendData();
