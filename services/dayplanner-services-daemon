@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # dayplanner-services-daemon
+# $Id$
 # Copyright (C) Eskild Hustvedt 2006
 #
 # This program is free software; you can redistribute it and/or
@@ -33,6 +34,8 @@ my $DebuggingOutput = 1;
 my $Port = 1500;
 my %Users;
 my %Clients;
+my $RCSRev = '$Id';
+my $Version = "0.3 ALPHA";
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE HELPER FUNCTIONS
@@ -143,7 +146,7 @@ sub OpenSocket {
 sub MainLoop {
 	# Loop for eternity
 	while (1) {
-		SetStatus("sleeping");
+		SetStatus("waiting for connections");
 		# Block until one handle is available or it times out
 		my @Ready_Handles = $ConnectionSelect->can_read();
 		SetStatus("processing");
@@ -186,6 +189,9 @@ sub MainLoop {
 GetOptions (
 	'port|p=i' => \$Port,
 ) or die "See $0 --help for more information\n";
+
+print "WARNING: This is alpha software. Use at your own risk. See README for more information\n\n";
+
 SetStatus("starting");
 OpenSocket();
 MainLoop();
