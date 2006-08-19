@@ -34,7 +34,7 @@ my $DebuggingOutput = 1;
 my $Port = 1500;
 my %Users;
 my %Clients;
-my $RCSRev = '$Id';
+my $RCSRev = '$Id$';
 my $Version = "0.3 ALPHA";
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
