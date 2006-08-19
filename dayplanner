@@ -2347,6 +2347,7 @@ sub WriteDayplannerDataFile {
 # Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?);
 sub DPF_GetData {
 	my ($OnlyBirthdays, $DPEncrypt) = @_;
+	$OnlyBirthdays = $OnlyBirthdays ? 1 : 0;
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
 	# Nevermind sorting
