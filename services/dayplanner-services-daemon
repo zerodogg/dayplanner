@@ -216,7 +216,7 @@ sub SendData {
 	}
 	my $MD5 = md5_base64($ReturnData);
 	if($MD5 eq $User_DataConfig{MD5_BASE64}) {
-		return("$MD5 $ReturnData");
+		return("OK $MD5 $ReturnData");
 	} else {
 		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{MD5_BASE64} but found $MD5.");
 		DataCorruption($User);
@@ -225,7 +225,7 @@ sub SendData {
 }
 
 # Purpose: Recieve new data for a specific user
-# Usage: $Returned_Status = RecieveData(USER);
+# Usage: $Returned_Status = RecieveData(DATA,USER);
 sub RecieveData {
 	my $User = $_[1];
 	my $Data = $_[0];
@@ -267,6 +267,7 @@ sub RecieveData {
 	
 	$User_DataConfig{LastMD5} = $MD5;
 	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+	return("OK");
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
