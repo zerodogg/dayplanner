@@ -56,7 +56,9 @@ sub DPF_GetData {
 	return(encode_base64($Data), $DataMD5);
 }
 
-# Purpose: Connect to a day planner services server. Returns 
+# Purpose: Connect to a day planner services server.
+# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
+# 	This shouldn't be called directly. Use DPS_ConnectHandler
 sub DPS_Connect {
 	my ($Host, $Port, $User, $Password) = @_;
 	# Connect
@@ -72,6 +74,23 @@ sub DPS_Connect {
 	return("OK");
 }
 
+# Purpose: Call DPS_Connect and handle errors
+# Usage: DPS_ConnectHandler();
+sub DPS_ConnectHandler {
+	my $CONReply = DPS_Connect("localhost", 1500, "zerodogg", "123");
+	if($CONReply eq "APIERROR") {
+		# Api ERROR message
+		return(undef);
+	} elsif($CONReply eq "AUTHERROR") {
+		# Auth error message
+		return(undef);
+	}
+	return(1);
+}
+
+# Purpose: Do something when an error has occurred
+# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
+# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
 sub DPS_ErrorIfNeeded {
 	my ($Expected, $Recieved, $ErrorSub) = @_;
 	unless($Expected eq $Recieved) {
@@ -82,6 +101,8 @@ sub DPS_ErrorIfNeeded {
 	}
 }
 
+# Purpose: Disconnect from a day planner services daemon
+# Usage: DPS_Disconnect();
 sub DPS_Disconnect {
 	my $Socket = $DPServices{socket};
 	close($Socket);
@@ -89,6 +110,8 @@ sub DPS_Disconnect {
 	return(1);
 }
 
+# Purpose: Send data to a day planner services daemon and get the reply
+# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
 sub DPS_DataSegment {
 	my $Socket = $DPServices{socket};
 	print $Socket "$_[0]\n";
@@ -97,6 +120,8 @@ sub DPS_DataSegment {
 	return($Data);
 }
 
+# Purpose: Get day planner data from a services server
+# Usage: DPS_GetData();
 sub DPS_GetData {
 	return unless DPS_ConnectHandler();
 	my $Data = DPS_DataSegment("GETDATA");
@@ -123,18 +148,8 @@ sub DPS_GetData {
 	return(1);
 }
 
-sub DPS_ConnectHandler {
-	my $CONReply = DPS_Connect("localhost", 1500, "zerodogg", "123");
-	if($CONReply eq "APIERROR") {
-		# Api ERROR message
-		return(undef);
-	} elsif($CONReply eq "AUTHERROR") {
-		# Auth error message
-		return(undef);
-	}
-	return(1);
-}
-
+# Purpose: Send data to a services server
+# Usage: DPS_SendData();
 sub DPS_SendData {
 	return unless DPS_ConnectHandler();
 	my $SendData = DPF_GetData();
