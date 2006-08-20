@@ -33,7 +33,7 @@ my $Shutdown;
 my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
-my $Port = 1500;
+my $Port = 4435;
 my %ActiveUsers;
 my %Clients;
 # Contains test data
@@ -275,7 +275,7 @@ sub RecieveData {
 
 	my $MD5 = md5_base64($Data);
 	unless($MD5 eq $THIS_MD5) {
-		return("ERR MD5_MISMATCH");
+		return("ERR MD5_MISMATCH # $MD5 - $THIS_MD5");
 	}
 
 	# We got this far, write the data
