@@ -372,6 +372,7 @@ sub AdminCommands {
 	my ($Command, $Handle) = @_;
 	if($Command =~ /^VERSION/) {
 		return("$Version - $RCSRev");
+	} elsif ($Command =~ /^RELOAD_USERLIST/) {
 	}
 	return("ERR unknown command");
 }
@@ -407,7 +408,7 @@ sub MainLoop {
 			if ($Handle eq $Server) {
 				my $NewClient = $Server->accept();
 				$ConnectionSelect->add($NewClient);
-				IntDebug("New connection on $NewClient");
+				IntDebug("New connection from " . $NewClient->peerhost . " on $NewClient");
 			} 
 			# Handle isn't $server, it's an existing connection trying to tell us something
 			else {
