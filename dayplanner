@@ -2498,8 +2498,9 @@ sub WriteDayplannerDataFile {
 # Purpose: Get day planner data encoded in base64
 # Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?);
 sub DPF_GetData {
-	my ($OnlyBirthdays, $DPEncrypt) = @_;
+	my ($OnlyBirthdays, $DPEncrypt, $Base64_NoEOL) = @_;
 	$OnlyBirthdays = $OnlyBirthdays ? 1 : 0;
+	$Base64_NoEOL = $Base64_NoEOL ? "" : "\n";
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
 	# Nevermind sorting
@@ -2517,7 +2518,7 @@ sub DPF_GetData {
 	if($DPEncrypt) {
 		$Data = EncryptData($Data);
 	}
-	return(encode_base64($Data), $DataMD5);
+	return(encode_base64($Data, $Base64_NoEOL), $DataMD5);
 }
 
 # Purpose: Import data from a day planner data file
