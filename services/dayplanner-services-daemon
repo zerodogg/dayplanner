@@ -40,7 +40,7 @@ my %Clients;
 my %Users = (
 	'zerodogg' => {
 		password => "123",
-		level => 2,
+		level => 4,
 		settings => {
 			Encrypted => 0,
 			GenHTML => 1,
@@ -48,13 +48,21 @@ my %Users = (
 	},
 	test => {
 		password => "123",
-		level => 1,
+		level => 2,
 		settings => {
 			Encrypted => 0,
 			GenHTML => 1,
 		},
 	},
 );
+
+# TODO: userlevels
+# level 0 = EXPIRED - no access at all
+# level 1 = EXPIRED - read-only access
+# level 2 = ACTIVE - rw access
+# level 3 = ACTIVE - rw access
+# level 4 = ADMIN - rw access and ADMIN command access
+
 # Should be loaded from another file
 my %Config = (
 	DataPath => "./userdata/",
@@ -330,6 +338,11 @@ sub CommandHandler {
 			return("REFUSED In use");
 		}
 
+		# If the user's level is 0 then the user account is expired and we refuse the login.
+		if($Users{$Username}{level} eq "0") {
+			return("EXPIRED");
+		}
+
 		$Clients{$Handle}{User} = $Username;
 		$ActiveUsers{$Username}{Handle} = $Handle;
 		return("OK");
@@ -345,7 +358,6 @@ sub CommandHandler {
 	} elsif($Command =~ s/^SENDDATA\s*//) {
 		return(RecieveData($Command, $Clients{$Handle}{User}));
 	}
-
 	return("ERR unknown command");
 }
 
