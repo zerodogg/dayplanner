@@ -355,7 +355,10 @@ sub DPS_Connect {
 	$DPServices{socket} = IO::Socket::INET->new(
 					PeerAddr => $Host,
 					PeerPort => $Port,
-			) or die "Unable to connect to $Host:$Port: $@\n";
+			) or do {
+			       DPIntWarn("Unable to connect to $Host:$Port: $@");
+			       return("CONNERR");
+		       };
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
 	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { print "APIERROR\n"; DPS_Disconnect(); });
@@ -376,8 +379,16 @@ sub DPS_ConnectHandler {
 		# Auth error message
 		print "Authentication error\n";
 		return(undef);
+	} elsif($CONReply eq "CONNERR") {
+		# Connection error
+		return(undef);
+	} elsif($CONReply eq "OK") {
+		# Ok
+		return(1);
+	} else {
+		print "Unknown error: $CONReply\n";
+		return(undef);
 	}
-	return(1);
 }
 
 # Purpose: Do something when an error has occurred
