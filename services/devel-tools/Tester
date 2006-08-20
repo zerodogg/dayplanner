@@ -38,10 +38,6 @@ my $Version = '$Id$';
 
 my %InternalConfig;
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Services layer
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Purpose: Get day planner data encoded in base64
 # Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?, NO_EOL?);
 sub DPF_GetData {
@@ -67,6 +63,10 @@ sub DPF_GetData {
 	}
 	return(encode_base64($Data,$Base64_NoEOL), $DataMD5);
 }
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Services layer
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Connect to a day planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
