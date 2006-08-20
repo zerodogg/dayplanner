@@ -155,14 +155,67 @@ sub ChangeUserSettings {
 sub ChangeUserLevels {
 }
 
+sub DeleteUser {
+	system("clear");
+	print "Which user do you want to delete?\n";
+	my $User = GetValidUsername();
+	delete($Users{$User});
+	print "User deleted. The data directory for this user is still left intact!\n";
+	WaitContinue();
+}
+
+sub PrintUserList {
+	printf "%-20s %-20s %s\n", $_[0], $_[1], $_[2];
+}
+
+sub WaitContinue {
+	$| = 1;
+	print "Press enter to continue";
+	<STDIN>;
+}
+
+sub UserList {
+	system("clear");
+	PrintUserList("Username:", "Level:", "Access:");
+	foreach my $User (sort(keys(%Users))) {
+		my $Level = $Users{$User}{level};
+		my $LevelInfo;
+		my $Access;
+		if($Level == 0) {
+			$LevelInfo = "$Level (EXPIRED)";
+			$Access = "none";
+		} elsif($Level == 1) {
+			$LevelInfo = "$Level (EXPIRED)";
+			$Access = "ro";
+		} elsif($Level == 2 or $Level == 3) {
+			$LevelInfo = "$Level (ACTIVE)";
+			$Access = "rw";
+		} elsif($Level == 4) {
+			$LevelInfo = "$Level (ADMIN)";
+			$Access = "rw/admin";
+		} else {
+			$LevelInfo = "$Level (UNKNOWN)";
+			$Access = "UNKNOWN";
+		}
+		PrintUserList($User, $LevelInfo, $Access);
+	}
+	print "\n";
+	WaitContinue();
+}
+
+# Purpose: Display the main menu. Also takes care of calling LoadData(); and WriteData();
+# Usage: MainMenu();
 sub MainMenu {
 	LoadData();
 	while(1) {
 		system("clear");
 		print "Welcome to the day planner services user management console\n\n";
 		print "Menu:\n";
-		print "1 - Add a new user\n2 - Delete a user\nQ - Quit\n";
-		my $Input = GetInput("Selection: ", "12Q");
+		print "1 - Add a new user\n2 - Delete a user\n";
+		print "3 - Edit...\n";
+		print "4 - View the user list\n";
+		print "Q - Quit\n";
+		my $Input = GetInput("Selection: ", "1234Q");
 		if($Input =~ /q/i) {
 			WriteData();
 			exit(0);
@@ -170,7 +223,10 @@ sub MainMenu {
 			AddUser();
 		} elsif ($Input eq "2") {
 			DeleteUser();
+		} elsif ($Input eq "4") {
+			UserList();
 		}
 	}
 }
+
 MainMenu();
