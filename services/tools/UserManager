@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+# UserManager
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+require 5.8.0;
+use strict;
+use warnings;
+use Term::ReadLine;
+use Data::Dumper;
+use File::Path qw/mkpath rmtree/;
+
+my %Users;
+my $DataDir = "./dpservices/";
+
+# Purpose: Load the data
+# Usage: LoadData();
+sub LoadData {
+	unless(-e "$DataDir/users.conf") {
+		die("$DataDir/users.conf does not exist");
+	}
+	%Users = do("$DataDir/users.conf");
+	return(1);
+}
+
+# Purpose: Print prompt, get input and validate the input
+# Usage: my $Input = GetInput("PROMPT", "VALID_INPUT");
+# VALID_INPUT can be [NUMERIC] for nunmeric, a list of characters (not seperated)
+# or simply "" for "anything as long as it's not empty"
+sub GetInput ($$) {
+	my ($Message, $Commands) = @_;
+	while (1) {
+		print "$Message";
+		my $Input = <STDIN>;
+		chomp($Input);
+		if(length($Input) and $Input =~ /\S/) {
+			if(length($Commands)) {
+				if ($Commands eq '[NUMERIC]') {
+					if ($Input =~ /^\d+$/) {
+						return($Input);
+					} else {
+						print "Kun tall er tillatt\n";
+					}
+				} else {
+					foreach(split(//, $Commands)) {
+						if($Input =~ /^$_$/i) {
+							return($Input);
+						}
+					}
+					print "Invalid response\n";
+				}
+			} else {
+				return($Input);
+			}
+		}
+	}
+}
+
+# Purpose: Add a user
+# Usage: AddUser();
+sub AddUser {
+	system("clear");
+	print "Adding a user\n\n";
+	my $Username = GetInput("Username: ", "");
+	while(defined($Users{$Username})) {
+		print " That user already exists\n";
+		$Username = GetInput("Username: ", "");
+	}
+	my $Password = GetInput("Password: ", "");
+	my $Encrypted = GetInput("Should the users data be treated as encrypted? [YN] ", "yn");
+	my $GenHTML = 0;
+	unless($Encrypted =~ /y/i) {
+		$GenHTML = GetInput("Does the user want HTML generated? [YN] ", "yn");
+	} else {
+		print "Warning: encryption is NOT implemented\n";
+	}
+	print "\n";
+	my $Level = SetUserLevel();
+	$| = 1;
+	print "Adding...";
+	$Users{$Username}{password} = $Password;
+	$Users{$Username}{level} = $Level;
+	$Users{$Username}{settings}{Encrypted} = $Encrypted =~ /y/i ? 1 : 0;
+	$Users{$Username}{settings}{GenHTML} = $GenHTML =~ /y/ ? 1 : 0;
+	mkpath("$DataDir/$Username/") or warn("FAILED to mkpath($DataDir/$Username/): $!\n");
+	print "done\n";
+	print "Press enter to continue";
+	<STDIN>;
+}
+
+# Purpose: Display formatted user level information
+# Usage: UserLevelInfo(LEVEL, STATE, INFORMATION);
+sub UserLevelInfo {
+	printf "%-2s %-15s %s\n", $_[0], $_[1], $_[2];
+
+}
+
+# Purpose: Set the user level of a user
+# Usage: $Level = SetUserLevel();
+sub SetUserLevel {
+	print "User levels:\n";
+	UserLevelInfo(0, "EXPIRED", "Account expired - no access");
+	UserLevelInfo(1, "EXPIRED", "Account expired - read only access");
+	UserLevelInfo(2, "ACTIVE", "Account active - read/write access");
+	UserLevelInfo(3, "ACTIVE", "Account active - read/write access");
+	UserLevelInfo(4, "ADMIN", "Account is an admin - read/write access plus admin commands");
+	my $Level = GetInput("User level: [01234] ", "01234");
+	return($Level);
+}
+
+# Purpose: Get a valid user name present in the DB
+# Usage: $Name = GetValidUsername();
+sub GetValidUsername {
+	while(1) {
+		my $Username = GetInput("Username: ", "");
+		if(defined($Users{$Username})) {
+			return($Username);
+		}
+		print "No user with that username exists\n";
+	}
+}
+
+sub ChangeUserSettings {
+}
+
+sub ChangeUserLevels {
+}
+
+sub MainMenu {
+}
+
+LoadData();
+AddUser();
+print Dumper(\%Users);
