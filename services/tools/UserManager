@@ -152,6 +152,43 @@ sub GetValidUsername {
 # Purpose: Change settings for a user
 # Usage: ChangeUserSettings();
 sub ChangeUserSettings {
+	system("clear");
+	print "Which user do you want to change settings for?\n";
+	my $User = GetValidUsername();
+	$Data::Dumper::Purity = 1;
+	$Data::Dumper::Sortkeys = 1;
+	$Data::Dumper::Indent = 1;
+	my $Hashref = $Users{$User}{settings};
+	print Data::Dumper->Dump([$Hashref], ["*current settings"]);
+	while(1) {
+		my $ChangeSetting = GetInput("Which setting do you want to set? ", "");
+		if(defined($Users{$User}{settings}{$ChangeSetting})) {
+				print "Current value: $ChangeSetting=$Users{$User}{settings}{$ChangeSetting}\n";
+			} else {
+				print "Current value: $ChangeSetting=NOT_SET\n";
+			}
+		my $ChangeTo = GetInput("What do you want to change it to? ", "");
+		print "Will set the following setting:\n$ChangeSetting=$ChangeTo\n";
+		my $OK = GetInput("OK? ", "YN");
+		if($OK =~ /y/i) {
+			$Users{$User}{settings}{$ChangeSetting} = $ChangeTo;
+		} else {
+			print "Change cancelled\n";
+		}
+		WaitContinue();
+		return(1);
+	}
+}
+
+# Purpose: Change the level of a user
+# Usage: ChangeUserLevel();
+sub ChangeUserLevel {
+	system("clear");
+	my $User = GetValidUsername();
+	my $Level = SetUserLevel();
+	$Users{$User}{level} = $Level;
+	print "User level of $User set to $Level\n";
+	WaitContinue();
 }
 
 # Purpose: Delete a user
@@ -219,10 +256,11 @@ sub MainMenu {
 		print "Welcome to the day planner services user management console\n\n";
 		print "Menu:\n";
 		print "1 - Add a new user\n2 - Delete a user\n";
-		print "3 - Edit...\n";
-		print "4 - View the user list\n";
+		print "3 - Edit a user\n";
+		print "4 - Change the level of a user\n";
+		print "5 - View the user list\n";
 		print "Q - Quit\n";
-		my $Input = GetInput("Selection: ", "1234Q");
+		my $Input = GetInput("Selection: ", "12345Q");
 		if($Input =~ /q/i) {
 			WriteData();
 			exit(0);
@@ -230,7 +268,11 @@ sub MainMenu {
 			AddUser();
 		} elsif ($Input eq "2") {
 			DeleteUser();
+		} elsif ($Input eq "3") {
+			ChangeUserSettings();
 		} elsif ($Input eq "4") {
+			ChangeUserLevel();
+		} elsif ($Input eq "5") {
 			UserList();
 		}
 	}
