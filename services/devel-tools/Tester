@@ -31,6 +31,8 @@ my %BirthdayContents = do("$ENV{HOME}/.dayplanner/birthdays.dpd");
 my %DPServices;
 my $Version = '$Id$';
 
+my %InternalConfig;
+
 # Purpose: Get day planner data encoded in base64
 # Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?, NO_EOL?);
 sub DPF_GetData {
@@ -148,6 +150,7 @@ sub DPS_GetData {
 				%CalendarContents = %MainCalendarContent;
 				%MainCalendarContent = ();
 			}
+			$InternalConfig{DPS_LastMD5} = $MD5;
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
@@ -168,7 +171,8 @@ sub DPS_SendData {
 	my ($SendData, $RawMD5) = DPF_GetData(0,0,1);
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
-	my $Reply = DPS_DataSegment("SENDDATA $MD5 undef $SendData $Force");
+	my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
+	my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
 	DPS_Disconnect();
 	unless($Reply eq "OK") {
 		# ... Failed
@@ -177,4 +181,5 @@ sub DPS_SendData {
 	}
 }
 
-DPS_SendData(1);
+DPS_GetData();
+DPS_SendData();
