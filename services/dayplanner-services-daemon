@@ -37,24 +37,7 @@ my $Port = 4435;
 my %ActiveUsers;
 my %Clients;
 # Contains test data
-my %Users = (
-	'zerodogg' => {
-		password => "123",
-		level => 4,
-		settings => {
-			Encrypted => 0,
-			GenHTML => 1,
-		},
-	},
-	test => {
-		password => "123",
-		level => 2,
-		settings => {
-			Encrypted => 0,
-			GenHTML => 1,
-		},
-	},
-);
+my %Users;
 
 # TODO: userlevels
 # level 0 = EXPIRED - no access at all
@@ -210,6 +193,16 @@ sub DataCorruption {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE DATA FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Load the data
+# Usage: LoadData();
+sub LoadData {
+	unless(-e "$Config{DataPath}/users.conf") {
+		die("$Config{DataPath}/users.conf does not exist");
+	}
+	%Users = do("$Config{DataPath}/users.conf");
+	return(1);
+}
 
 # Purpose: Get the data for a specific user
 # Usage: $Returned = SendData(USER);
@@ -375,6 +368,7 @@ sub CommandHandler {
 			return(AdminCommands($Command));
 		}
 	}
+	IntVeryVerbose("Unknown command from " . $Handle->peerhost() . " ($Handle): $Command");
 	return("ERR unknown command");
 }
 
@@ -477,8 +471,6 @@ GetOptions (
 		$OutputVerbose = 1;
 		$OutputVeryVerbose = 1;
 	},
-#	'n|nofork' => \$NoFork,
-#	'f|force-fork' => \$ForceFork,
 	'version' => sub {
 		print "Day planner services daemon version $Version\n";
 		print "RCS revision: $RCSRev\n";
@@ -489,5 +481,6 @@ GetOptions (
 print "WARNING: This is alpha software. Use at your own risk. See README for more information\n\n";
 
 SetStatus("starting");
+LoadData();
 OpenSocket();
 MainLoop();
