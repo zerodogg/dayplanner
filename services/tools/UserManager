@@ -149,12 +149,13 @@ sub GetValidUsername {
 	}
 }
 
+# Purpose: Change settings for a user
+# Usage: ChangeUserSettings();
 sub ChangeUserSettings {
 }
 
-sub ChangeUserLevels {
-}
-
+# Purpose: Delete a user
+# Usage: DeleteUser();
 sub DeleteUser {
 	system("clear");
 	print "Which user do you want to delete?\n";
@@ -164,16 +165,22 @@ sub DeleteUser {
 	WaitContinue();
 }
 
+# Purpose: Print nicely formatted user list info
+# Usage: PrintUserList(USERNAME, LEVEL, ACCESS);
 sub PrintUserList {
 	printf "%-20s %-20s %s\n", $_[0], $_[1], $_[2];
 }
 
+# Purpose: Wait until the user presses enter
+# Usage: WaitContinue();
 sub WaitContinue {
 	$| = 1;
 	print "Press enter to continue";
 	<STDIN>;
 }
 
+# Purpose: Print the user list
+# Usage: UserList();
 sub UserList {
 	system("clear");
 	PrintUserList("Username:", "Level:", "Access:");
