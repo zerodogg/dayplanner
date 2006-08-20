@@ -65,7 +65,7 @@ my %Users = (
 
 # Should be loaded from another file
 my %Config = (
-	DataPath => "./userdata/",
+	DataPath => "./dpservices/",
 );
 
 my $RCSRev = '$Id$';
