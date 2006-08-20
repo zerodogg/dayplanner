@@ -136,9 +136,8 @@ sub DPS_GetData {
 			print "MD5 mismatch!\n";
 		} else {
 			$MainData = decode_base64($MainData);
-			$ContainedData .= "1;";
 			my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
-			eval($ContainedData) or do {
+			eval($MainData) or do {
 				DPIntWarn("FAILED to parse data!");
 				return(undef);
 			};
