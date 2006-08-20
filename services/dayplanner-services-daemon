@@ -379,6 +379,8 @@ sub AdminCommands {
 	if($Command =~ /^VERSION/) {
 		return("$Version - $RCSRev");
 	} elsif ($Command =~ /^RELOAD_USERLIST/) {
+		LoadData();
+		return("DONE");
 	}
 	return("ERR unknown command");
 }
