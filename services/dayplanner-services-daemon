@@ -327,8 +327,6 @@ sub CommandHandler {
 		my $Password = $Command;
 		$Password =~ s/^AUTH\s*(\w+)\s+(\w+).*$/$2/;
 		
-		IntDebug("$Handle sent $Command");
-
 		# Verify supplied data
 		unless(defined($Users{$Username})) {
 			IntVeryVerbose("$Handle tried to auth as $Username, but that user doesn't exist");
@@ -348,9 +346,9 @@ sub CommandHandler {
 		if($Users{$Username}{level} eq "0") {
 			return("EXPIRED");
 		}
-
 		$Clients{$Handle}{User} = $Username;
 		$ActiveUsers{$Username}{Handle} = $Handle;
+		IntVerbose("$Handle authenticated as $Username");
 		return("OK");
 	}
 	# Require authentication to proceed
