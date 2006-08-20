@@ -32,10 +32,11 @@ my %DPServices;
 my $Version = '$Id$';
 
 # Purpose: Get day planner data encoded in base64
-# Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?);
+# Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?, NO_EOL?);
 sub DPF_GetData {
-	my ($OnlyBirthdays, $DPEncrypt) = @_;
+	my ($OnlyBirthdays, $DPEncrypt, $Base64_NoEOL) = @_;
 	$OnlyBirthdays = $OnlyBirthdays ? 1 : 0;
+	$Base64_NoEOL = $Base64_NoEOL ? "" : "\n";
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
 	# Nevermind sorting
@@ -53,7 +54,7 @@ sub DPF_GetData {
 	if($DPEncrypt) {
 		$Data = EncryptData($Data);
 	}
-	return(encode_base64($Data), $DataMD5);
+	return(encode_base64($Data,$Base64_NoEOL), $DataMD5);
 }
 
 # Purpose: Connect to a day planner services server.
@@ -162,17 +163,18 @@ sub DPS_GetData {
 # Purpose: Send data to a services server
 # Usage: DPS_SendData();
 sub DPS_SendData {
+	my $Force = $_[0] ? 1 : 0;
 	return unless DPS_ConnectHandler();
-	my $SendData = DPF_GetData();
+	my ($SendData, $RawMD5) = DPF_GetData(0,0,1);
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
-	my $Reply = DPS_DataSegment("SENDDATA $MD5 undef $SendData 1");
+	my $Reply = DPS_DataSegment("SENDDATA $MD5 undef $SendData $Force");
+	DPS_Disconnect();
 	unless($Reply eq "OK") {
 		# ... Failed
 		print "Sending data failed: $Reply\n";
 		return(undef);
 	}
-	DPS_Disconnect();
 }
 
-DPS_SendData();
+DPS_SendData(1);
