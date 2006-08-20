@@ -232,14 +232,14 @@ sub SendData {
 	open(my $User_Data, "<", "$Config{DataPath}/$User/calendardata") or return("ERR UNKNOWN: $!");
 	my $ReturnData = <$User_Data>;
 	close($User_Data);
-	unless(defined($User_DataConfig{MD5_BASE64})) {
+	unless(defined($User_DataConfig{LastMD5})) {
 		return("ERR NO_MD5");
 	}
 	my $MD5 = md5_base64($ReturnData);
-	if($MD5 eq $User_DataConfig{MD5_BASE64}) {
+	if($MD5 eq $User_DataConfig{LastMD5}) {
 		return("OK $MD5 $ReturnData");
 	} else {
-		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{MD5_BASE64} but found $MD5.");
+		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{LastMD5} but found $MD5.");
 		DataCorruption($User);
 		return("ERR MD5_FAILURE");
 	}
@@ -287,7 +287,13 @@ sub RecieveData {
 	close($OutData);
 	
 	$User_DataConfig{LastMD5} = $MD5;
-	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+
+	my %ConfigInfo = (
+		LastMD5 => "The MD5 sum of the last data transmitted to the server for this user",
+		HEADER => "Data information for $User",
+	);
+
+	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig, \%ConfigInfo);
 	return("OK");
 }
 
