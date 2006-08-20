@@ -470,6 +470,31 @@ sub DPS_SendData {
 	}
 }
 
+# Purpose: Wrapper around DPS functions setting stuff up correctly
+# Usage: DPS_Perform(FUNCTION)
+# 	Function can be one of:
+# 	GET	- Get data from the server
+# 	SEND	- Send data to the server
+sub DPS_Perform {
+	my $Function = $_[0];
+	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
+	# Verify that options are set
+	foreach my $Option (qw(host port user pass)) {
+		unless(defined($InternalConfig{"DPS_$Option"}) and length($InternalConfig{"DPS_$Option"})) {
+			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. DPS will not be used.");
+			return(undef);
+		} else {
+			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
+		}
+	}
+	if($Function eq "GET") {
+		DPS_GetData();
+	} elsif ($Function eq "SEND") {
+		DPS_SendData();
+	}
+}
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4623,6 +4648,8 @@ unless(-e $ENV{HOME} and -d $ENV{HOME}) {
 
 Gtk2Init();
 MainInit();
+# Connect to a DPS server and sync the local data with it if it's enabled
+DPS_Perform("GET");
 # Draw the main window
 DrawMainWindow();
 Gtk2->main_iteration while Gtk2->events_pending;
