@@ -36,6 +36,22 @@ sub LoadData {
 	return(1);
 }
 
+# Purpose: Write the data
+# Usage: WriteData();
+sub WriteData {
+	my $WriteTo;
+	open($WriteTo, ">", "$DataDir/users.conf") or do {
+		print "WARNING: Unable to write data to $DataDir/users.conf!\n";
+		return(undef);
+	};
+	print $WriteTo "# Day planner services user configuration file\n";
+	$Data::Dumper::Purity = 1;
+	$Data::Dumper::Sortkeys = 1;
+	$Data::Dumper::Indent = 1;
+	print $WriteTo Data::Dumper->Dump([\%Users], ["*Users"]);
+	close($WriteTo);
+}
+
 # Purpose: Print prompt, get input and validate the input
 # Usage: my $Input = GetInput("PROMPT", "VALID_INPUT");
 # VALID_INPUT can be [NUMERIC] for nunmeric, a list of characters (not seperated)
@@ -140,8 +156,21 @@ sub ChangeUserLevels {
 }
 
 sub MainMenu {
+	LoadData();
+	while(1) {
+		system("clear");
+		print "Welcome to the day planner services user management console\n\n";
+		print "Menu:\n";
+		print "1 - Add a new user\n2 - Delete a user\nQ - Quit\n";
+		my $Input = GetInput("Selection: ", "12Q");
+		if($Input =~ /q/i) {
+			WriteData();
+			exit(0);
+		} elsif ($Input eq "1") {
+			AddUser();
+		} elsif ($Input eq "2") {
+			DeleteUser();
+		}
+	}
 }
-
-LoadData();
-AddUser();
-print Dumper(\%Users);
+MainMenu();
