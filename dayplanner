@@ -93,6 +93,7 @@ my %AllDayEvents;		# The contents of the all-day events file
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
+my %DPServices;			# Day planner services hash
 
 # The reason we do not use strftime() or I18N::Langinfo is that these return
 # values in random encodings. By using Gettext->get() we get values
@@ -146,7 +147,7 @@ $SIG{TERM} = \&DP_SigHandler;
 # =============================================================================
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Networking functions
+# Daemon communication functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Initialize and connect to the daemon
@@ -341,6 +342,133 @@ sub DaemonConnectionErrorHandler {
 	}
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Services layer
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Connect to a day planner services server.
+# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
+# 	This shouldn't be called directly. Use DPS_ConnectHandler
+sub DPS_Connect {
+	my ($Host, $Port, $User, $Password) = @_;
+	# Connect
+	$DPServices{socket} = IO::Socket::INET->new(
+					PeerAddr => $Host,
+					PeerPort => $Port,
+			) or die "Unable to connect to $Host:$Port: $@\n";
+	# Authenticate
+	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
+	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { print "APIERROR\n"; DPS_Disconnect(); });
+	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
+	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { print "AUTHERROR\n"; DPS_Disconnect(); });
+	return("OK");
+}
+
+# Purpose: Call DPS_Connect and handle errors
+# Usage: DPS_ConnectHandler();
+sub DPS_ConnectHandler {
+	my $CONReply = DPS_Connect($DPServices{host}, $DPServices{port}, $DPServices{user}, $DPServices{pass});
+	if($CONReply eq "APIERROR") {
+		# Api ERROR message
+		print "API Error\n";
+		return(undef);
+	} elsif($CONReply eq "AUTHERROR") {
+		# Auth error message
+		print "Authentication error\n";
+		return(undef);
+	}
+	return(1);
+}
+
+# Purpose: Do something when an error has occurred
+# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
+# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
+sub DPS_ErrorIfNeeded {
+	my ($Expected, $Recieved, $ErrorSub) = @_;
+	unless($Expected eq $Recieved) {
+		$ErrorSub->($Recieved);
+		return(1);
+	} else {
+		return(0);
+	}
+}
+
+# Purpose: Disconnect from a day planner services daemon
+# Usage: DPS_Disconnect();
+sub DPS_Disconnect {
+	my $Socket = $DPServices{socket};
+	close($Socket);
+	delete($DPServices{socket});
+	return(1);
+}
+
+# Purpose: Send data to a day planner services daemon and get the reply
+# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
+sub DPS_DataSegment {
+	my $Socket = $DPServices{socket};
+	print $Socket "$_[0]\n";
+	my $Data = <$Socket>;
+	chomp($Data);
+	return($Data);
+}
+
+# Purpose: Get day planner data from a services server
+# Usage: DPS_GetData();
+sub DPS_GetData {
+	return unless DPS_ConnectHandler();
+	my $Data = DPS_DataSegment("GETDATA");
+	if($Data =~ /^OK/) {
+		my $Initial = $Data;
+		my $MD5 = $Data;
+		my $MainData = $Data;
+		$Initial =~ s/^(\S+)\s+.*$/$1/;
+		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
+		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
+		unless(md5_base64($MainData) eq $MD5) {
+			print "MD5 mismatch!\n";
+		} else {
+			$MainData = decode_base64($MainData);
+			my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
+			eval($MainData) or do {
+				DPIntWarn("FAILED to parse data!");
+				return(undef);
+			};
+			%BirthdayContents = %BirthdayCalendarContent;
+			%BirthdayCalendarContent = ();
+			unless($DP_OnlyBirthdays) {
+				%CalendarContents = %MainCalendarContent;
+				%MainCalendarContent = ();
+			}
+			$InternalConfig{DPS_LastMD5} = $MD5;
+		}
+	} else {
+		if($Data =~ /^ERR NO_DATA/) {
+			print "No data found on the server\n";
+		} else {
+			print "An unknown error occurred: $Data\n";
+		}
+	}
+	DPS_Disconnect();
+	return(1);
+}
+
+# Purpose: Send data to a services server
+# Usage: DPS_SendData();
+sub DPS_SendData {
+	my $Force = $_[0] ? 1 : 0;
+	return unless DPS_ConnectHandler();
+	my ($SendData, $RawMD5) = DPF_GetData(0,0,1);
+	chomp($SendData);
+	my $MD5 = md5_base64($SendData);
+	my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
+	my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
+	DPS_Disconnect();
+	unless($Reply eq "OK") {
+		# ... Failed
+		print "Sending data failed: $Reply\n";
+		return(undef);
+	}
+}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
