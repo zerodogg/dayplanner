@@ -358,6 +358,21 @@ sub CommandHandler {
 	} elsif($Command =~ s/^SENDDATA\s*//) {
 		return(RecieveData($Command, $Clients{$Handle}{User}));
 	}
+	if($Users{$Clients{$Handle}{User}}{level} == 4) {
+		if($Command =~ s/^ADMIN\s+//) {
+			return(AdminCommands($Command));
+		}
+	}
+	return("ERR unknown command");
+}
+
+# Purpose: Handle ADMIN commands
+# Usage: AdminCommands(COMMAND, HANDLE);
+sub AdminCommands {
+	my ($Command, $Handle) = @_;
+	if($Command =~ /^VERSION/) {
+		return("$Version - $RCSRev");
+	}
 	return("ERR unknown command");
 }
 
