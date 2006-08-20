@@ -167,7 +167,12 @@ sub DPS_SendData {
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
 	my $Reply = DPS_DataSegment("SENDDATA $MD5 undef $SendData 1");
-	print "$Reply\n";
+	unless($Reply eq "OK") {
+		# ... Failed
+		print "Sending data failed: $Reply\n";
+		return(undef);
+	}
+	DPS_Disconnect();
 }
 
 DPS_SendData();
