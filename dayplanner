@@ -435,6 +435,7 @@ sub DPS_GetData {
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
+		return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
 		unless(md5_base64($MainData) eq $MD5) {
 			print "MD5 mismatch!\n";
 		} else {
