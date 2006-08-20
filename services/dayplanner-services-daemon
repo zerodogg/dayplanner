@@ -237,6 +237,7 @@ sub SendData {
 	}
 	my $MD5 = md5_base64($ReturnData);
 	if($MD5 eq $User_DataConfig{LastMD5}) {
+		IntVerbose("Data for user $User sent");
 		return("OK $MD5 $ReturnData");
 	} else {
 		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{LastMD5} but found $MD5.");
@@ -294,6 +295,7 @@ sub RecieveData {
 	);
 
 	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig, \%ConfigInfo);
+	IntVerbose("New data for user $User recieved");
 	return("OK");
 }
 
