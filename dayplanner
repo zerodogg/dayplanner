@@ -352,6 +352,7 @@ sub DaemonConnectionErrorHandler {
 sub DPS_Connect {
 	my ($Host, $Port, $User, $Password) = @_;
 	# Connect
+	DPS_Status("Connecting",0);
 	$DPServices{socket} = IO::Socket::INET->new(
 					PeerAddr => $Host,
 					PeerPort => $Port,
@@ -362,7 +363,9 @@ sub DPS_Connect {
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
 	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { print "APIERROR\n"; DPS_Disconnect(); });
+	DPS_Status("Connecting",0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
+	DPS_Status("Connecting",0.4);
 	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { print "AUTHERROR\n"; DPS_Disconnect(); });
 	return("OK");
 }
@@ -427,6 +430,7 @@ sub DPS_DataSegment {
 # Usage: DPS_GetData();
 sub DPS_GetData {
 	return unless DPS_ConnectHandler();
+	DPS_Status("Downloading data",0.5);
 	my $Data = DPS_DataSegment("GETDATA");
 	if($Data =~ /^OK/) {
 		my $Initial = $Data;
@@ -461,6 +465,7 @@ sub DPS_GetData {
 		}
 	}
 	DPS_Disconnect();
+	DPS_Status("Downloaded data",1);
 	return(1);
 }
 
@@ -469,6 +474,7 @@ sub DPS_GetData {
 sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
 	return unless DPS_ConnectHandler();
+	DPS_Status("Sending data",0.5);
 	my ($SendData, $RawMD5) = DPF_GetData(0,0,1);
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
@@ -480,6 +486,7 @@ sub DPS_SendData {
 		print "Sending data failed: $Reply\n";
 		return(undef);
 	}
+	DPS_Status("Data sent",1);
 }
 
 # Purpose: Wrapper around DPS functions setting stuff up correctly
@@ -503,7 +510,50 @@ sub DPS_Perform {
 		DPS_GetData();
 	} elsif ($Function eq "SEND") {
 		DPS_SendData();
+	} else {
+		DPIntWarn("Invalid option to DPS_Perform: $Function. Ignoring");
 	}
+}
+
+# Purpose: Wrapper around DPS_Perform that creates the GUI widgets
+# Usage: DPS_GUIPerform(FUNCTION)
+# 	The FUNCTION argument is identical to DPS_Perform's FUNCTION argument
+sub DPS_GUIPerform {
+	my $Function = $_[0];
+	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
+
+	# Create the widgets
+	my $DPSWindow = Gtk2::Window->new();
+	$DPSWindow->set_title("Day planner services");
+	$DPSWindow->set_transient_for($MainWindow);
+	$DPServices{ProgressBar} = Gtk2::ProgressBar->new();
+	$DPSWindow->add($DPServices{ProgressBar});
+	$DPSWindow->set_modal(1);
+	$DPSWindow->set_position('center-on-parent');
+	$DPSWindow->set_resizable(0);
+	$DPServices{ProgressBar}->set_text("Initializing");
+	$DPServices{ProgressBar}->show();
+	$DPSWindow->show();
+	Gtk2->main_iteration while Gtk2->events_pending;
+
+	DPS_Perform($Function);
+	$DPSWindow->destroy();
+	if(defined($DPServices{Error})) {
+		DP_Error("$DPServices{Error}");
+	}
+}
+
+# Purpose: Set the status in the DPS GUI Window
+# Usage: DPS_Status(TEXT, COMPLETED);
+# 	COMPLETED is a number between 0 and 1
+# 	0 = 0%
+# 	1 = 100%
+sub DPS_Status {
+	my ($Text, $Completed) = @_;
+	return unless($Gtk2Init);
+	$DPServices{ProgressBar}->set_fraction($Completed);
+	$DPServices{ProgressBar}->set_text($Text);
+	Gtk2->main_iteration while Gtk2->events_pending;
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3338,7 +3388,7 @@ sub DPQuestion {
 # Usage: QuitSub();
 sub QuitSub {
 	$MainWindow->set_sensitive(0);
-	DPS_Perform("SEND");
+	DPS_GUIPerform("SEND");
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
 		unless(DPQuestion($Gettext->get("Some files could not be saved correctly. Are you sure you want to quit?"))) {
@@ -4661,11 +4711,11 @@ unless(-e $ENV{HOME} and -d $ENV{HOME}) {
 
 Gtk2Init();
 MainInit();
-# Connect to a DPS server and sync the local data with it if it's enabled
-DPS_Perform("GET");
 # Draw the main window
 DrawMainWindow();
 Gtk2->main_iteration while Gtk2->events_pending;
+# Connect to a DPS server and sync the local data with it if it's enabled
+DPS_GUIPerform("GET");
 # Initialize the daemon
 DaemonInit() or die();
 # Add autostart if needed
