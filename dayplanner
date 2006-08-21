@@ -551,7 +551,7 @@ sub DPS_GUIPerform {
 	my $Return = DPS_Perform($Function);
 	$DPSWindow->destroy();
 	if(defined($DPServices{Error})) {
-		DP_Error("An error ocurred with the day planner services:\n\n$DPServices{Error}");
+		DPError("An error ocurred with the day planner services:\n\n$DPServices{Error}");
 		delete($DPServices{Error});
 	}
 	delete($DPServices{ProgressBar});
