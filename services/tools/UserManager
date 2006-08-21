@@ -26,6 +26,73 @@ use File::Path qw/mkpath rmtree/;
 my %Users;
 my $DataDir = "./dpservices/";
 
+
+# Purpose: Connect to a day planner services server.
+# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
+# 	This shouldn't be called directly. Use DPS_ConnectHandler
+sub DPS_Connect {
+	my ($Host, $Port, $User, $Password) = @_;
+	# Connect
+	$DPServices{socket} = IO::Socket::INET->new(
+					PeerAddr => $Host,
+					PeerPort => $Port,
+			) or die "Unable to connect to $Host:$Port: $@\n";
+	# Authenticate
+	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
+	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { print "APIERROR\n"; DPS_Disconnect(); });
+	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
+	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { print "AUTHERROR\n"; DPS_Disconnect(); });
+	return("OK");
+}
+
+# Purpose: Call DPS_Connect and handle errors
+# Usage: DPS_ConnectHandler();
+sub DPS_ConnectHandler {
+	my $CONReply = DPS_Connect($DPServices{host}, $DPServices{port}, $DPServices{user}, $DPServices{pass});
+	if($CONReply eq "APIERROR") {
+		# Api ERROR message
+		print "API Error\n";
+		return(undef);
+	} elsif($CONReply eq "AUTHERROR") {
+		# Auth error message
+		print "Authentication error\n";
+		return(undef);
+	}
+	return(1);
+}
+
+# Purpose: Do something when an error has occurred
+# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
+# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
+sub DPS_ErrorIfNeeded {
+	my ($Expected, $Recieved, $ErrorSub) = @_;
+	unless($Expected eq $Recieved) {
+		$ErrorSub->($Recieved);
+		return(1);
+	} else {
+		return(0);
+	}
+}
+
+# Purpose: Disconnect from a day planner services daemon
+# Usage: DPS_Disconnect();
+sub DPS_Disconnect {
+	my $Socket = $DPServices{socket};
+	close($Socket);
+	delete($DPServices{socket});
+	return(1);
+}
+
+# Purpose: Send data to a day planner services daemon and get the reply
+# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
+sub DPS_DataSegment {
+	my $Socket = $DPServices{socket};
+	print $Socket "$_[0]\n";
+	my $Data = <$Socket>;
+	chomp($Data);
+	return($Data);
+}
+
 # Purpose: Load the data
 # Usage: LoadData();
 sub LoadData {
