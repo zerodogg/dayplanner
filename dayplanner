@@ -357,16 +357,16 @@ sub DPS_Connect {
 					PeerAddr => $Host,
 					PeerPort => $Port,
 			) or do {
-			       DPIntWarn("Unable to connect to $Host:$Port: $@");
-			       return("CONNERR");
+				DPS_Error("Unable to connect to the day planner services server ($Host:$Port). If this problem persists please contact your service provider.", "Unable to connect to $Host on port $Port: $@");
+				return("CONNERR");
 		       };
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
-	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { print "APIERROR\n"; DPS_Disconnect(); });
+	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect(); });
 	DPS_Status("Connecting",0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	DPS_Status("Connecting",0.4);
-	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { print "AUTHERROR\n"; DPS_Disconnect(); });
+	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); });
 	return("OK");
 }
 
@@ -377,10 +377,11 @@ sub DPS_ConnectHandler {
 	if($CONReply eq "APIERROR") {
 		# Api ERROR message
 		print "API Error\n";
+		DPS_Error("The day planner services server you are connecting to does not support this version of day planner ($Version).", "API error received from the server.");
 		return(undef);
 	} elsif($CONReply eq "AUTHERROR") {
 		# Auth error message
-		print "Authentication error\n";
+		DPS_Error("The username and/or password is incorrect.","Authentication error");
 		return(undef);
 	} elsif($CONReply eq "CONNERR") {
 		# Connection error
@@ -389,7 +390,7 @@ sub DPS_ConnectHandler {
 		# Ok
 		return(1);
 	} else {
-		print "Unknown error: $CONReply\n";
+		DPS_Error("An unknown error occurred (the server replied $CONReply)", "Unknown error: $CONReply");
 		return(undef);
 	}
 }
@@ -441,12 +442,12 @@ sub DPS_GetData {
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
 		return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
 		unless(md5_base64($MainData) eq $MD5) {
-			print "MD5 mismatch!\n";
+			DPS_Error("The data corrupted itself during download. You may want to attempt to synchronize again.","MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
 			$MainData = decode_base64($MainData);
 			my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
 			eval($MainData) or do {
-				DPIntWarn("FAILED to parse data!");
+				DPSError("Failed to parse the data recieved. Please contact your service provider","Data parse error: $@");
 				return(undef);
 			};
 			%BirthdayContents = %BirthdayCalendarContent;
@@ -459,9 +460,9 @@ sub DPS_GetData {
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
-			print "No data found on the server\n";
+			# No data found on the server, this is fine.
 		} else {
-			print "An unknown error occurred: $Data\n";
+			DPS_Error("An unknown error occurred (the server replied $Data)", "Unknown error: $Data");
 		}
 	}
 	DPS_Disconnect();
@@ -483,10 +484,20 @@ sub DPS_SendData {
 	DPS_Disconnect();
 	unless($Reply eq "OK") {
 		# ... Failed
-		print "Sending data failed: $Reply\n";
+		DPS_Error("The server did not accept my uploaded data", "Sending data failed: $Reply");
 		return(undef);
 	}
 	DPS_Status("Data sent",1);
+}
+
+# Purpose: Output an error occurring with DPS
+# Usage: DPS_Error(User_Error, Technical_Error)
+# 	User_Error is displayed as a pop-up error dialog.
+# 	Technical_Error is DPIntWarn()ed
+sub DPS_Error {
+	my ($user_error, $tech_error) = @_;
+	DPIntWarn("DPS: $tech_error");
+	$DPServices{Error} = $user_error;
 }
 
 # Purpose: Wrapper around DPS functions setting stuff up correctly
@@ -523,6 +534,7 @@ sub DPS_GUIPerform {
 	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
 
 	# Create the widgets
+	$MainWindow->set_sensitive(0);
 	my $DPSWindow = Gtk2::Window->new();
 	$DPSWindow->set_title("Day planner services");
 	$DPSWindow->set_transient_for($MainWindow);
@@ -536,11 +548,15 @@ sub DPS_GUIPerform {
 	$DPSWindow->show();
 	Gtk2->main_iteration while Gtk2->events_pending;
 
-	DPS_Perform($Function);
+	my $Return = DPS_Perform($Function);
 	$DPSWindow->destroy();
 	if(defined($DPServices{Error})) {
-		DP_Error("$DPServices{Error}");
+		DP_Error("An error ocurred with the day planner services:\n\n$DPServices{Error}");
+		delete($DPServices{Error});
 	}
+	delete($DPServices{ProgressBar});
+	$MainWindow->set_sensitive(1);
+	return($Return);
 }
 
 # Purpose: Set the status in the DPS GUI Window
