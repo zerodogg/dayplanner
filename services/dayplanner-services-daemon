@@ -363,9 +363,11 @@ sub CommandHandler {
 	} elsif($Command =~ s/^SENDDATA\s*//) {
 		return(RecieveData($Command, $Clients{$Handle}{User}));
 	}
-	if($Users{$Clients{$Handle}{User}}{level} == 4) {
-		if($Command =~ s/^ADMIN\s+//) {
+	if($Command =~ s/^ADMIN\s+//) {
+		if($Users{$Clients{$Handle}{User}}{level} == 4) {
 			return(AdminCommands($Command));
+		} else {
+			return("REFUSED");
 		}
 	}
 	IntVeryVerbose("Unknown command from " . $Handle->peerhost() . " ($Handle): $Command");
