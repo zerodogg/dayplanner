@@ -20,10 +20,13 @@ require 5.8.0;
 use strict;
 use warnings;
 use Term::ReadLine;
+use Term::ReadKey;
 use Data::Dumper;
+use IO::Socket::INET;
 use File::Path qw/mkpath rmtree/;
 
 my %Users;
+my %DPServices;
 my $DataDir = "./dpservices/";
 
 
@@ -39,9 +42,9 @@ sub DPS_Connect {
 			) or die "Unable to connect to $Host:$Port: $@\n";
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
-	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { print "APIERROR\n"; DPS_Disconnect(); });
+	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect(); });
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
-	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { print "AUTHERROR\n"; DPS_Disconnect(); });
+	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); });
 	return("OK");
 }
 
@@ -51,11 +54,11 @@ sub DPS_ConnectHandler {
 	my $CONReply = DPS_Connect($DPServices{host}, $DPServices{port}, $DPServices{user}, $DPServices{pass});
 	if($CONReply eq "APIERROR") {
 		# Api ERROR message
-		print "API Error\n";
+		print "API Error: This UserManager is too old\n";
 		return(undef);
 	} elsif($CONReply eq "AUTHERROR") {
 		# Auth error message
-		print "Authentication error\n";
+		print "Authentication error: Invalid username or password\n";
 		return(undef);
 	}
 	return(1);
@@ -119,10 +122,35 @@ sub WriteData {
 	close($WriteTo);
 }
 
+# Purpose: Tell the daemon to reload its user list
+# Usage: DaemonReloadUsers();
+sub DaemonReloadUsers {
+	my $Username = GetInput("Username: ","");
+	my $Password = GetPassword();
+	$DPServices{host} = "localhost";
+	$DPServices{port} = 4435;
+	$DPServices{user} = $Username;
+	$DPServices{pass} = $Password;
+	if(DPS_ConnectHandler()) {
+		my $Reply = DPS_DataSegment("ADMIN RELOAD_USERLIST");
+		DPS_Disconnect();
+		if($Reply eq "DONE") {
+			print "The daemon has reloaded the data\n";
+		} else {
+			if($Reply eq "REFUSED") {
+				print "Permission denied. This user does not have admin access\n";
+			} else {
+				print "Failed: $Reply\n";
+			}
+		}
+	}
+	WaitContinue();
+}
+
 # Purpose: Print prompt, get input and validate the input
 # Usage: my $Input = GetInput("PROMPT", "VALID_INPUT");
-# VALID_INPUT can be [NUMERIC] for nunmeric, a list of characters (not seperated)
-# or simply "" for "anything as long as it's not empty"
+# 	VALID_INPUT can be [NUMERIC] for nunmeric, a list of characters (not seperated)
+# 	or simply "" for "anything as long as it's not empty"
 sub GetInput ($$) {
 	my ($Message, $Commands) = @_;
 	while (1) {
@@ -150,6 +178,18 @@ sub GetInput ($$) {
 			}
 		}
 	}
+}
+
+# Purpose: Get a password
+# Usage: GetPassword();
+sub GetPassword {
+	print "Password: ";
+	ReadMode(2);
+	my $key = <STDIN>;
+	ReadMode(0);
+	print "\n";
+	chomp($key);
+	return($key);
 }
 
 # Purpose: Add a user
@@ -328,8 +368,9 @@ sub MainMenu {
 		print "3 - Edit a user\n";
 		print "4 - Change the level of a user\n";
 		print "5 - View the user list\n";
+		print "R - Tell the day planner services daemon to reload the userlist\n";
 		print "Q - Quit\n";
-		my $Input = GetInput("Selection: ", "12345Q");
+		my $Input = GetInput("Selection: ", "12345QR");
 		if($Input =~ /q/i) {
 			WriteData();
 			exit(0);
@@ -343,6 +384,8 @@ sub MainMenu {
 			ChangeUserLevel();
 		} elsif ($Input eq "5") {
 			UserList();
+		} elsif ($Input =~ /r/i) {
+			DaemonReloadUsers();
 		}
 	}
 }
