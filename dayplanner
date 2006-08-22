@@ -432,6 +432,13 @@ sub DPS_DataSegment {
 sub DPS_GetData {
 	return unless DPS_ConnectHandler();
 	DPS_Status("Downloading data",0.5);
+	my $ServerMD5 = DPS_DataSegment("GET_MD5");
+	# If the MD5 on the server is identical to ours we don't need to download the data
+	if(not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+		DPS_Disconnect();
+		DPS_Status("Done", 1);
+		return(1);
+	}
 	my $Data = DPS_DataSegment("GETDATA");
 	if($Data =~ /^OK/) {
 		my $Initial = $Data;
@@ -476,18 +483,25 @@ sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
 	return unless DPS_ConnectHandler();
 	DPS_Status("Sending data",0.5);
-	my ($SendData, $RawMD5) = DPF_GetData(0,0,1);
+	my ($SendData, $RawMD5) = DPF_GetData(0,0,1,1,1);
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
-	my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
-	my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
-	DPS_Disconnect();
-	unless($Reply eq "OK") {
-		# ... Failed
-		DPS_Error("The server did not accept my uploaded data", "Sending data failed: $Reply");
-		return(undef);
+	my $ServerMD5 = DPS_DataSegment("GET_MD5");
+	# Don't send the data if the checksums match
+	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
+		DPS_Disconnect();
+	} else {
+		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
+		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
+		DPS_Disconnect();
+		unless($Reply eq "OK") {
+			# Sending the data failed
+			DPS_Error("The server did not accept my uploaded data", "Sending data failed: $Reply");
+			return(undef);
+		}
 	}
 	DPS_Status("Data sent",1);
+	return(1);
 }
 
 # Purpose: Output an error occurring with DPS
@@ -2574,21 +2588,26 @@ sub WriteDayplannerDataFile {
 }
 
 # Purpose: Get day planner data encoded in base64
-# Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?);
+# Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?, INCLUDE_NEWLINES_IN_BASE64?, SORT_KEYS?, EXCLUDE_METADATA?);
 sub DPF_GetData {
-	my ($OnlyBirthdays, $DPEncrypt, $Base64_NoEOL) = @_;
+	my ($OnlyBirthdays, $DPEncrypt, $Base64_NoEOL, $SortKeys, $ExcludeMeta) = @_;
 	$OnlyBirthdays = $OnlyBirthdays ? 1 : 0;
+	$SortKeys = $SortKeys ? 1 : 0;
+	$ExcludeMeta = $ExcludeMeta ? 1 : 0;
 	$Base64_NoEOL = $Base64_NoEOL ? "" : "\n";
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
-	# Nevermind sorting
-	$Data::Dumper::Sortkeys = 0;
+	# Set sort setting
+	$Data::Dumper::Sortkeys = $SortKeys;
 	# Set the indentation (none in this case)
 	$Data::Dumper::Indent = 0;
-	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n\$DP_Exportedby = '$Version';\n\$DP_ExportedAt = '" . time() . "';\n";
+	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n";;
+       	if (not $ExcludeMeta) {
+		$Data .= "\$DP_Exportedby = '$Version';\n\$DP_ExportedAt = '" . time() . "';\n";
+	}
 	$Data .= Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayCalendarContent"]);
 
-	unless($OnlyBirthdays) {
+	if(not $OnlyBirthdays) {
 		$Data .= "\n";
 		$Data .= Data::Dumper->Dump([\%CalendarContents], ["*MainCalendarContent"]);
 	}
