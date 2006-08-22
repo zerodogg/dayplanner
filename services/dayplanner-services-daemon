@@ -377,7 +377,7 @@ sub CommandHandler {
 	} elsif($Command =~ s/^SENDDATA\s*//) {
 		return(RecieveData($Command, $Clients{$Handle}{User}));
 	} elsif($Command =~ /^GET_MD5/) {
-		return(GetMD5($Clients{$Handle}{User});
+		return(GetMD5($Clients{$Handle}{User}));
 	} elsif($Command =~ s/^ADMIN\s+//) {
 		if($Users{$Clients{$Handle}{User}}{level} == 4) {
 			return(AdminCommands($Command));
