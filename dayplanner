@@ -454,7 +454,7 @@ sub DPS_GetData {
 			$MainData = decode_base64($MainData);
 			my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
 			eval($MainData) or do {
-				DPSError("Failed to parse the data recieved. Please contact your service provider","Data parse error: $@");
+				DPSError("Failed to parse the data recieved. This is a fatal error. Please contact your service provider","Data parse error: $@");
 				return(undef);
 			};
 			%BirthdayContents = %BirthdayCalendarContent;
@@ -490,13 +490,20 @@ sub DPS_SendData {
 	# Don't send the data if the checksums match
 	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
 		DPS_Disconnect();
+	} # Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
+	elsif (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+		DPS_Error("Data is out of synchronization. The Day Planner services server has one version of the data, and this day planner has one.\n\nUnable to repair this error (yet). Data WILL be lost.","Sending data failed due to an md5 mismatch");
 	} else {
 		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
 		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
 		DPS_Disconnect();
 		unless($Reply eq "OK") {
-			# Sending the data failed
-			DPS_Error("The server did not accept my uploaded data", "Sending data failed: $Reply");
+			if($Reply =~ s/^ERR\s+//) {
+				DPS_Error("An error ocurred during uploading of the data", "Sending data failed: $Reply");
+			} else {
+				# Sending the data failed
+				DPS_Error("The server did not accept my uploaded data and replied with an unknwown value: $Reply", "Sending data failed: $Reply");
+			}
 			return(undef);
 		}
 	}
