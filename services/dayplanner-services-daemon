@@ -292,6 +292,20 @@ sub RecieveData {
 	return("OK");
 }
 
+# Purpose: Get the MD5 sum of a users data
+# Usage: $Returned = GetMD5(USER);
+sub GetMD5 {
+	my $User = $_[0];
+	my %User_DataConfig;
+	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+	if(defined($User_DataConfig{LastMD5})) {
+		return($User_DataConfig{LastMD5});
+	} else {
+		return("[NONE]");
+	}
+}
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE SERVER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -362,8 +376,9 @@ sub CommandHandler {
 		return(SendData($Clients{$Handle}{User}));
 	} elsif($Command =~ s/^SENDDATA\s*//) {
 		return(RecieveData($Command, $Clients{$Handle}{User}));
-	}
-	if($Command =~ s/^ADMIN\s+//) {
+	} elsif($Command =~ /^GET_MD5/) {
+		return(GetMD5($Clients{$Handle}{User});
+	} elsif($Command =~ s/^ADMIN\s+//) {
 		if($Users{$Clients{$Handle}{User}}{level} == 4) {
 			return(AdminCommands($Command));
 		} else {
