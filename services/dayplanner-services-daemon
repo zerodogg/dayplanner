@@ -28,6 +28,7 @@ use Digest::MD5 qw(md5_base64);
 use Data::Dumper;
 use Mail::Sendmail;
 use Sys::Hostname;
+use POSIX qw/cuserid/;
 
 my $Server;
 my $ConnectionSelect;
@@ -190,14 +191,17 @@ sub LoadConfigFile {
 # Purpose: Notify the admin about data corruption
 # Usage: DataCorruption(USER);
 sub DataCorruption {
-	my $User = @_;
-	sendmail({
+	my $User = $_[0];
+	my %Message = (
 			To => $Config{AdminMail},
-			From => "Day planner services daemon",
-			Subject => "Data corruption for user $User!",
+			From => "Day planner services daemon <" . cuserid . '@' . hostname() .">",
+			Subject => "[DPS] Data corruption for user $User!",
 			Message => "The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
 			"X-Mailer" => "dayplanner-services-daemon",
-		});
+		);
+	sendmail(%Message) or do {
+		print "WARNING!!!: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Mail::Sendmail::error\n";
+	};
 
 }
 
