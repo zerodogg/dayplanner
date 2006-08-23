@@ -468,6 +468,8 @@ sub DPS_GetData {
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
 			# No data found on the server, this is fine.
+		} elsif($Data =~ /^ERR MD5_FAILURE/) {
+			DPS_Error("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider", "MD5 failure on server");
 		} else {
 			DPS_Error("An unknown error occurred (the server replied $Data)", "Unknown error: $Data");
 		}
