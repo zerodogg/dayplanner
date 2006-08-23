@@ -49,7 +49,7 @@ my %Users;
 # level 3 = ACTIVE - rw access
 # level 4 = ADMIN - rw access and ADMIN command access
 
-# Should be loaded from another file
+# TODO: Should be loaded from another file
 my %Config = (
 	DataPath => "./dpservices/",
 	AdminMail => 'zerodogg@skolelinux.no',
@@ -366,7 +366,7 @@ sub CommandHandler {
 			return("FAILED");
 		}
 		# Make sure it's not in use
-		if(defined($ActiveUsers{$Username}{Handle})) {	# FIXME, should try to see if $ActiveUsers{$Username} is defined first
+		if(defined($ActiveUsers{$Username}) and defined($ActiveUsers{$Username}{Handle})) {
 			IntDebug("$Handle tried to auth as $Username but $ActiveUsers{$Username}{Handle} is authenticated as that user already");
 			return("REFUSED In use");
 		}
@@ -382,7 +382,7 @@ sub CommandHandler {
 	}
 	# Require authentication to proceed
 	unless(defined($Clients{$Handle}{User})) {
-		return("REFUSED Not authenticated");
+		return("REFUSED AUTHFIRST");
 	}
 
 	# Other commands
@@ -404,7 +404,7 @@ sub CommandHandler {
 		}
 	}
 	IntVeryVerbose("Unknown command from " . $Handle->peerhost() . " ($Handle): $Command");
-	return("ERR unknown command");
+	return("ERR UNKNOWN_COMMAND");
 }
 
 # Purpose: Handle ADMIN commands
@@ -417,7 +417,7 @@ sub AdminCommands {
 		LoadData();
 		return("DONE");
 	}
-	return("ERR unknown command");
+	return("ERR UNKNOWN_COMMAND");
 }
 
 # Purpose: Open our main communication socket
@@ -465,7 +465,7 @@ sub MainLoop {
 				} 
 				# If it isn't, then it closed the connection
 				else {
-					IntDebug("Connection closed ($Handle)");
+					IntDebug("Connection closed for user $Clients{$Handle}{User} ($Handle)");
 					if(defined($Clients{$Handle}{User})) {
 						delete($ActiveUsers{$Clients{$Handle}{User}});
 					}
