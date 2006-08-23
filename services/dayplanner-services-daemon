@@ -26,6 +26,8 @@ use IO::Select;
 use Getopt::Long;
 use Digest::MD5 qw(md5_base64);
 use Data::Dumper;
+use Mail::Sendmail;
+use Sys::Hostname;
 
 my $Server;
 my $ConnectionSelect;
@@ -49,6 +51,7 @@ my %Users;
 # Should be loaded from another file
 my %Config = (
 	DataPath => "./dpservices/",
+	AdminMail => 'zerodogg@skolelinux.no',
 );
 
 my $RCSRev = '$Id$';
@@ -187,7 +190,15 @@ sub LoadConfigFile {
 # Purpose: Notify the admin about data corruption
 # Usage: DataCorruption(USER);
 sub DataCorruption {
-	# TODO
+	my $User = @_;
+	sendmail({
+			To => $Config{AdminMail},
+			From => "Day planner services daemon",
+			Subject => "Data corruption for user $User!",
+			Message => "The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
+			"X-Mailer" => "dayplanner-services-daemon",
+		});
+
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
