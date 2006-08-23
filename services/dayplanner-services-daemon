@@ -389,7 +389,11 @@ sub CommandHandler {
 	if($Command =~ /^GETDATA/) {
 		return(SendData($Clients{$Handle}{User}));
 	} elsif($Command =~ s/^SENDDATA\s*//) {
-		return(RecieveData($Command, $Clients{$Handle}{User}));
+		if($Users{$Username}{level} > 1) {
+			return(RecieveData($Command, $Clients{$Handle}{User}));
+		} else {
+			return("EXPIRED");
+		}
 	} elsif($Command =~ /^GET_MD5/) {
 		return(GetMD5($Clients{$Handle}{User}));
 	} elsif($Command =~ s/^ADMIN\s+//) {
