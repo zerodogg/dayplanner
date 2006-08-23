@@ -102,6 +102,8 @@ you really want to do is reconnect to it.
 
 3 - DEPENDENCIES
 ================
+NOTE: The dayplanner-services-daemon is excempt from this policy.
+
 Day planner has few dependencies by design. A good rule of thumb here
 is that if a dependency can be skipped then it should unless it is
 included in the base perl distribution and have been for multiple
