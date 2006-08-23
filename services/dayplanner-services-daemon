@@ -389,7 +389,7 @@ sub CommandHandler {
 	if($Command =~ /^GETDATA/) {
 		return(SendData($Clients{$Handle}{User}));
 	} elsif($Command =~ s/^SENDDATA\s*//) {
-		if($Users{$Username}{level} > 1) {
+		if($Users{$Clients{$Handle}{User}}{level} > 1) {
 			return(RecieveData($Command, $Clients{$Handle}{User}));
 		} else {
 			return("EXPIRED");
