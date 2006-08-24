@@ -3018,12 +3018,12 @@ sub Gtk2Init {
 }
 
 # Purpose: Create a progresswindow
-# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT);
+# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
 # 	Returns a hashref with the following keys:
 # 		Window = The window
 # 		ProgressBar = The progress bar
 sub DPCreateProgressWin {
-	my ($Name, $Text) = @_;
+	my ($Name, $Text, $PulsateMode) = @_;
 	my %ProgressHash;
 	$ProgressHash{Window} = Gtk2::Window->new();
 	if(defined($Name)) {
@@ -3041,6 +3041,9 @@ sub DPCreateProgressWin {
 	$ProgressHash{Window}->set_resizable(0);
 	if(defined($Text)) {
 		$ProgressHash{ProgressBar}->set_text($Text);
+	}
+	if($PulsateMode) {
+		$ProgressHash{ProgressBar}->{activity_mode} = 0;
 	}
 	$ProgressHash{ProgressBar}->show();
 	$ProgressHash{Window}->show();
