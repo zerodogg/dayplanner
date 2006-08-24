@@ -430,6 +430,8 @@ sub DPS_DataSegment {
 # Purpose: Get day planner data from a services server
 # Usage: DPS_GetData();
 sub DPS_GetData {
+	my $Raw = $_[0];
+	my $MainData;
 	return unless DPS_ConnectHandler();
 	DPS_Status("Downloading data",0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
@@ -443,7 +445,7 @@ sub DPS_GetData {
 	if($Data =~ /^OK/) {
 		my $Initial = $Data;
 		my $MD5 = $Data;
-		my $MainData = $Data;
+		$MainData = $Data;
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
@@ -452,18 +454,20 @@ sub DPS_GetData {
 			DPS_Error("The data corrupted itself during download. You may want to attempt to synchronize again.","MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
 			$MainData = decode_base64($MainData);
-			my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
-			eval($MainData) or do {
-				DPSError("Failed to parse the data recieved. This is a fatal error. Please contact your service provider","Data parse error: $@");
-				return(undef);
-			};
-			%BirthdayContents = %BirthdayCalendarContent;
-			%BirthdayCalendarContent = ();
-			unless($DP_OnlyBirthdays) {
-				%CalendarContents = %MainCalendarContent;
-				%MainCalendarContent = ();
+			unless($Raw) {
+				my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
+				eval($MainData) or do {
+					DPSError("Failed to parse the data recieved. This is a fatal error. Please contact your service provider","Data parse error: $@");
+					return(undef);
+				};
+				%BirthdayContents = %BirthdayCalendarContent;
+				%BirthdayCalendarContent = ();
+				unless($DP_OnlyBirthdays) {
+					%CalendarContents = %MainCalendarContent;
+					%MainCalendarContent = ();
+				}
+				$InternalConfig{DPS_LastMD5} = $MD5;
 			}
-			$InternalConfig{DPS_LastMD5} = $MD5;
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
@@ -476,7 +480,15 @@ sub DPS_GetData {
 	}
 	DPS_Disconnect();
 	DPS_Status("Downloaded data",1);
-	return(1);
+	if($Raw) {
+		if (defined($MainData) and length($MainData)) {
+			return($MainData);
+		} else {
+			return(undef);
+		}
+	} else {
+		return(1);
+	}
 }
 
 # Purpose: Send data to a services server
@@ -541,11 +553,14 @@ sub DPS_Perform {
 		}
 	}
 	if($Function eq "GET") {
-		DPS_GetData();
+		return(DPS_GetData());
 	} elsif ($Function eq "SEND") {
-		DPS_SendData();
+		return(DPS_SendData());
+	} elsif ($Function eq "GET_RAW") {
+		return(DPS_GetData(1));
 	} else {
 		DPIntWarn("Invalid option to DPS_Perform: $Function. Ignoring");
+		return(undef);
 	}
 }
 
