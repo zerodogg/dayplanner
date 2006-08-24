@@ -428,7 +428,7 @@ sub DPS_DataSegment {
 }
 
 # Purpose: Get day planner data from a services server
-# Usage: DPS_GetData();
+# Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
 	my $Raw = $_[0];
 	my $MainData;
@@ -504,10 +504,17 @@ sub DPS_SendData {
 	# Don't send the data if the checksums match
 	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
 		DPS_Disconnect();
-	} # Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
-	elsif (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
-		DPS_Error("Data is out of synchronization. The Day Planner services server has one version of the data, and this day planner has one.\n\nUnable to repair this error (yet). Data WILL be lost.","Sending data failed due to an md5 mismatch");
 	} else {
+	       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
+		if ($ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+			DPS_Disconnect();
+			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
+				my $RawData = DPS_Perform("GET_RAW");
+			} else {
+				DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
+				return(0);
+			}
+		}
 		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
 		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
 		DPS_Disconnect();
@@ -571,28 +578,17 @@ sub DPS_GUIPerform {
 	my $Function = $_[0];
 	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
 
-	# Create the widgets
+	# Create the progress window
 	$MainWindow->set_sensitive(0);
-	my $DPSWindow = Gtk2::Window->new();
-	$DPSWindow->set_title("Day planner services");
-	$DPSWindow->set_transient_for($MainWindow);
-	$DPServices{ProgressBar} = Gtk2::ProgressBar->new();
-	$DPSWindow->add($DPServices{ProgressBar});
-	$DPSWindow->set_modal(1);
-	$DPSWindow->set_position('center-on-parent');
-	$DPSWindow->set_resizable(0);
-	$DPServices{ProgressBar}->set_text("Initializing");
-	$DPServices{ProgressBar}->show();
-	$DPSWindow->show();
-	Gtk2->main_iteration while Gtk2->events_pending;
+	$DPServices{ProgressWin} = DPCreateProgressWin("Day planner services", "Initializing");
 
 	my $Return = DPS_Perform($Function);
-	$DPSWindow->destroy();
+	$DPServices{ProgressWin}->{Window}->destroy();
 	if(defined($DPServices{Error})) {
 		DPError("An error ocurred with the day planner services:\n\n$DPServices{Error}");
 		delete($DPServices{Error});
 	}
-	delete($DPServices{ProgressBar});
+	delete($DPServices{ProgressWar});
 	$MainWindow->set_sensitive(1);
 	return($Return);
 }
@@ -605,9 +601,11 @@ sub DPS_GUIPerform {
 sub DPS_Status {
 	my ($Text, $Completed) = @_;
 	return unless($Gtk2Init);
-	$DPServices{ProgressBar}->set_fraction($Completed);
-	$DPServices{ProgressBar}->set_text($Text);
-	Gtk2->main_iteration while Gtk2->events_pending;
+	if(defined($DPServices{ProgressWin})) {
+		$DPServices{ProgressWin}->{ProgressBar}->set_fraction($Completed);
+		$DPServices{ProgressWin}->{ProgressBar}->set_text($Text);
+		Gtk2->main_iteration while Gtk2->events_pending;
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3017,6 +3015,37 @@ sub PromptOverwrite {
 sub Gtk2Init {
 	Gtk2->init();
 	$Gtk2Init = 1;
+}
+
+# Purpose: Create a progresswindow
+# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT);
+# 	Returns a hashref with the following keys:
+# 		Window = The window
+# 		ProgressBar = The progress bar
+sub DPCreateProgressWin {
+	my ($Name, $Text) = @_;
+	my %ProgressHash;
+	$ProgressHash{Window} = Gtk2::Window->new();
+	if(defined($Name)) {
+		$ProgressHash{Window}->set_title($Name);
+	}
+	if(defined($MainWindow)) {
+		$ProgressHash{Window}->set_transient_for($MainWindow);
+		$ProgressHash{Window}->set_position('center-on-parent');
+	} else {
+		$ProgressHash{Window}->set_position('center');
+	}
+	$ProgressHash{ProgressBar} = Gtk2::ProgressBar->new();
+	$ProgressHash{Window}->add($ProgressHash{ProgressBar});
+	$ProgressHash{Window}->set_modal(1);
+	$ProgressHash{Window}->set_resizable(0);
+	if(defined($Text)) {
+		$ProgressHash{ProgressBar}->set_text($Text);
+	}
+	$ProgressHash{ProgressBar}->show();
+	$ProgressHash{Window}->show();
+	Gtk2->main_iteration while Gtk2->events_pending;
+	return(\%ProgressHash);
 }
 
 # Purpose: Pulsate a progressbar
