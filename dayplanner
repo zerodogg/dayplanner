@@ -891,7 +891,6 @@ sub SaveDatafile {
 sub SaveMainData {
 	my($ProgressWin, $ProgressBar);
 	if($Gtk2Init) {
-		# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
 		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 1);
 		$ProgressWin = $ProgressBarWin->{Window};
 		$ProgressBar = $ProgressBarWin->{ProgressBar};
