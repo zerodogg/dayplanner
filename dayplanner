@@ -891,21 +891,10 @@ sub SaveDatafile {
 sub SaveMainData {
 	my($ProgressWin, $ProgressBar);
 	if($Gtk2Init) {
-		# Create the progress window
-		$ProgressWin = Gtk2::Window->new();
-		$ProgressWin->set_modal(1);
-		$ProgressWin->set_transient_for($MainWindow);
-		$ProgressWin->set_position('center-on-parent');
-		$ProgressWin->set_title($Gettext->get("Saving..."));
-		$ProgressWin->set_resizable(0);
-		# Create the progress bar
-		$ProgressBar = Gtk2::ProgressBar->new();
-		$ProgressBar->{activity_mode} = 0;
-		$ProgressBar->set_fraction(0.0);
-			# Add the bar to the window and show them
-		$ProgressWin->add($ProgressBar);
-		$ProgressBar->show();
-		$ProgressWin->show();
+		# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
+		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 1);
+		$ProgressWin = $ProgressBarWin->{Window};
+		$ProgressBar = $ProgressBarWin->{ProgressBar};
 	}
 
 	my $Return = 'OKAY';
