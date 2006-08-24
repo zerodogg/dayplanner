@@ -427,6 +427,26 @@ sub DPS_DataSegment {
 	return($Data);
 }
 
+# Purpose: Repair a checksum mismatch
+# Usage: DPS_RepairData();
+# 	returns true on success, false on failure
+sub DPS_RepairData {
+	my $ProgressWin = DPCreateProgressWin("Repairing","Getting data",0);
+	my $RawData = DPS_Perform("GET_RAW");
+	if(defined($RawData)) {
+		$ProgressWin->{ProgressBar}->set_fraction(0.4);
+		$ProgressWin->{ProgressBar}->set_text("Parsing and repairing");
+		my ($PossibleCorruption,@Conflicts) = DPF_ParseData($RawData);
+		$ProgressWin->{ProgressBar}->set_fraction(1);
+		$ProgressWin->{Window}->destroy();
+		# TODO: Process conflicts
+		return(1);
+	} else {
+		DPError("A fatal error occurred while attempting repair");
+		return(0);
+	}
+}
+
 # Purpose: Get day planner data from a services server
 # Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
@@ -509,21 +529,8 @@ sub DPS_SendData {
 		if ($ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
 			DPS_Disconnect();
 			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
-				# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
-				my $ProgressWin = DPCreateProgressWin("Repairing","Getting data",0);
-				my $RawData = DPS_Perform("GET_RAW");
-				if(defined($RawData)) {
-					$ProgressWin->{ProgressBar}->set_fraction(0.4);
-					$ProgressWin->{ProgressBar}->set_text("Parsing and repairing");
-					my ($PossibleCorruption,@Conflicts) = DPF_ParseData($RawData);
-					$ProgressWin->{ProgressBar}->set_fraction(1);
-					$ProgressWin->{Window}->destroy();
-					# TODO: Process conflicts
-					return unless DPS_ConnectHandler();
-				} else {
-					DPError("A fatal error occurred while attempting repair");
-					return(0);
-				}
+				return unless DPS_RepairData();
+				return unless DPS_ConnectHandler();
 			} else {
 				DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
 				return(0);
