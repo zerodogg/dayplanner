@@ -114,8 +114,10 @@ my %MonthNames = (
 );	# Localized hash of month number => Name values
 
 # AM/PM detection
-my $AM_String = strftime('%p', 0,0,0,0,0,106,0);
-my $PM_String = strftime('%p', 0,0,12,0,0,106,0);
+#my $AM_String = strftime('%p', 0,0,0,0,0,106,0);
+#my $PM_String = strftime('%p', 0,0,12,0,0,106,0);
+my $AM_String = undef;
+my $PM_String = undef;
 my $ClockSystem = $AM_String eq '%p' ? "24" : "12";
 
 # Gtk2 objects
