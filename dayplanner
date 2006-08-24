@@ -1950,56 +1950,17 @@ sub HTML_Export {
 # Plan migration functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Repair a conflict between two plan events
-# Usage: my $NewTime = PlanConvert_RepairConflict(YEAR, MONTH, DAY, TIME, \%PlanConvertHash);
-sub PlanConvert_RepairConflict {
-	my ($Year, $Month, $Day, $Time, $PlanConvertHash) = @_;
-	my ($Hour, $Minute) = split(/:/, $Time);
-	
-	# If the summaries and fulltexts are identical we just ignore the conflict because it doesn't matter one bit
-	if ($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"}{summary} eq $PlanConvertHash->{Summary}) {
-		if (defined($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"}{summary}) and defined($PlanConvertHash->{Fulltext})) {
-			if ($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"}{fulltext} eq $PlanConvertHash->{Fulltext}) {
-				return($Time);
-			}
-		} else {
-			return($Time);
-		}
-	}
-	
-	while(defined($CalendarContents{$Year}{$Month}{$Day}{"$Hour:$Minute"})) {
-		$Hour =~ s/^0(.*)/$1/;
-		$Minute =~ s/^0(.*)/$1/;
-		$Minute++;
-		if ($Minute > 59) {
-			if ($Hour >= 23) {
-				warn "Unable to resolve conflicting events on $PlanConvertHash->{Day}-$PlanConvertHash->{Month}-$PlanConvertHash->{Year} at $PlanConvertHash->{Time}: \"$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{summary}\" and \"$PlanConvertHash->{Summary}\". Data will be lost! You may want to resolve it manually after the migration has finished.\n";
-				return($Time);
-			}
-			$Minute = 0;
-			$Hour++;
-		}
-		if ($Hour <= 9) {
-			$Hour = "0$Hour";
-		}
-		if ($Minute <= 9) {
-			$Minute = "0$Minute";
-		}
-	}
-	return("$Hour:$Minute");
-}
-
-# Purpose: Purge the current %PlanConvertHash-> buffer and put it into %CalendarContents
+# Purpose: Purge the current $PlanConvertHash-> buffer and put it into %CalendarContents
 # Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
 sub PlanConvert_PurgeBuffer {
 	my $PlanConvertHash = $_[0];
+	my $ErrorMessage;
 	if(defined($PlanConvertHash->{Day})) {
 		if ($PlanConvertHash->{Type} eq 'normal') {
 			# Check for conflicts
 			if (defined($CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}})) {
-				# Okay, it conflicts, call a verbosity check to see if we should print the warning
 				# Try to fix it
-				$PlanConvertHash->{Time} = PlanConvert_RepairConflict($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time}, $PlanConvertHash);
+				($ErrorMessage, $PlanConvertHash->{Time}) = Import_ResolveConflict($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time}, $PlanConvertHash->{Summary}, $PlanConvertHash->{Fulltext});
 			}
 			if (defined($PlanConvertHash->{Summary})) {
 				$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{summary} = $PlanConvertHash->{Summary};
