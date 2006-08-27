@@ -348,53 +348,85 @@ sub DaemonConnectionErrorHandler {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Return better errors than IO::Socket::INET does.
+# Usage: my $ERROR = IO_Socket_INET_Errors($@);
+# 	Errors:
+#		OFFLINE = Network is unreachable
+#		REFUSED = Connection refused
+#		BADHOST = Bad hostname (should often be handled as OFFLINE)
+#		* = Anything else simply returns $@
+sub IO_Socket_INET_Errors {
+	my $Error = shift;
+	# TODO: There are probably quite a few unhandled errors. At least timeout.
+	if($Error =~ /Network is unreachable/) {
+		return("OFFLINE");
+	} elsif ($Error =~ /Bad hostname/) {
+		return("BADHOST");
+	} elsif ($Error =~ /Connection refused/) {
+		return("REFUSED");
+	} else {
+		return($Error);
+	}
+}
+
+
 # Purpose: Connect to a day planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
-# 	This shouldn't be called directly. Use DPS_ConnectHandler
+# 		The arguments are optional and will be read from %DPServices if not supplied
 sub DPS_Connect {
 	my ($Host, $Port, $User, $Password) = @_;
+	$Host = $Host ? $Host : $DPServices{host};
+	$Port = $Port ? $Port : $DPServices{port};
+	$User = $User ? $User : $DPServices{user};
+	$Password = $Password ? $Password : $DPServices{pass};
+	my $Error;
 	# Connect
 	DPS_Status("Connecting",0);
+	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
 	$DPServices{socket} = IO::Socket::INET->new(
 					PeerAddr => $Host,
 					PeerPort => $Port,
-			) or do {
-				DPS_Error("Unable to connect to the day planner services server ($Host:$Port). If this problem persists please contact your service provider.", "Unable to connect to $Host on port $Port: $@");
-				return("CONNERR");
-		       };
+					Timeout => 30,
+			) or do { $Error = $@; };
+			
+	setlocale(LC_ALL, $OLDLocale);	# Reset the locale
+	# Process errors if any occurred
+	if($Error) {
+		# If we have already displayed an error to the user this session, don't do it again
+		if(defined($DPServices{Offline}) and $DPServices{Offline} eq 1) {
+			DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
+			return(undef);
+		}
+
+		$Error = IO_Socket_INET_Errors($Error);	# Get errors that are easier to process
+
+			# Process network unreachable and bad hostname
+		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
+			$DPServices{Offline} = 1;
+			DPS_Error("Unable to connect to the Day Planner services server ($Host:$Port). You're probably not connected to the internet", "Unable to connect to $Host on port $Port: $@ ($Error)");
+		}
+			# Process connection refused
+		elsif($Error eq "REFUSED") {
+			DPS_Error("Unable to connect to the Day Planner services server ($Host:$Port). The connection was refused by the server. Please verify your Day Planner services settings.\n\nIf this problem persists, please contact your service provider", "Unable to connect to $Host on port $Port: $@ ($Error)");
+		} 
+			# Process unknown errors
+		else {
+			DPS_Error("Unable to connect to the day planner services server ($Host:$Port). If this problem persists please contact your service provider.", "Unable to connect to $Host on port $Port: $@");
+		}
+		return(undef);
+	}
+
+	# The connection didn't fail, so delete $DPServices{Offline} if it exists
+	delete($DPServices{Offline});
+
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
-	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect(); });
+	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error("The day planner services server you are connecting to does not support this version of day planner ($Version).", "API error received from the server.");});
 	DPS_Status("Connecting",0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	DPS_Status("Connecting",0.4);
-	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); });
+	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error("The username and/or password is incorrect.","Authentication error");});
 	return("OK");
-}
-
-# Purpose: Call DPS_Connect and handle errors
-# Usage: DPS_ConnectHandler();
-sub DPS_ConnectHandler {
-	my $CONReply = DPS_Connect($DPServices{host}, $DPServices{port}, $DPServices{user}, $DPServices{pass});
-	if($CONReply eq "APIERROR") {
-		# Api ERROR message
-		print "API Error\n";
-		DPS_Error("The day planner services server you are connecting to does not support this version of day planner ($Version).", "API error received from the server.");
-		return(undef);
-	} elsif($CONReply eq "AUTHERROR") {
-		# Auth error message
-		DPS_Error("The username and/or password is incorrect.","Authentication error");
-		return(undef);
-	} elsif($CONReply eq "CONNERR") {
-		# Connection error
-		return(undef);
-	} elsif($CONReply eq "OK") {
-		# Ok
-		return(1);
-	} else {
-		DPS_Error("An unknown error occurred (the server replied $CONReply)", "Unknown error: $CONReply");
-		return(undef);
-	}
 }
 
 # Purpose: Do something when an error has occurred
@@ -454,7 +486,7 @@ sub DPS_RepairData {
 sub DPS_GetData {
 	my $Raw = $_[0];
 	my $MainData;
-	return unless DPS_ConnectHandler();
+	return unless DPS_Connect();
 	DPS_Status("Downloading data",0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# If the MD5 on the server is identical to ours we don't need to download the data
@@ -517,7 +549,7 @@ sub DPS_GetData {
 # Usage: DPS_SendData();
 sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
-	return unless DPS_ConnectHandler();
+	return unless DPS_Connect();
 	DPS_Status("Sending data",0.5);
 	my ($SendData, $RawMD5) = DPF_GetData(0,0,1,1,1);
 	chomp($SendData);
@@ -532,7 +564,7 @@ sub DPS_SendData {
 			DPS_Disconnect();
 			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
 				return(0) unless DPS_RepairData();
-				return(0) unless DPS_ConnectHandler();
+				return(0) unless DPS_Connect();
 			} else {
 				DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
 				return(0);
@@ -562,7 +594,9 @@ sub DPS_SendData {
 sub DPS_Error {
 	my ($user_error, $tech_error) = @_;
 	DPIntWarn("DPS: $tech_error");
-	$DPServices{Error} = $user_error;
+	if(defined($user_error)) {
+		$DPServices{Error} = $user_error;
+	}
 }
 
 # Purpose: Wrapper around DPS functions setting stuff up correctly
@@ -715,9 +749,15 @@ sub WriteStateFile {
 		MainWin_Width => "The width of the main window",
 		MainWin_Height => "The height of the main window",
 		AutostartOn => "If the preferences setting for autostarting the daemon on login is on or not",
-		AddedAutostart => "If day planner has (automatically) set the daemon to start on login (this ONLY sets if it has been automatically added or not. It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
+		AddedAutostart => "If day planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
 		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
 		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
+		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
+		DPS_LastMD5 => "The MD5 sum of the last data downloaded from the DPS server (base64 encoded)",
+		DPS_host => "The DPS host to connect to",
+		DPS_pass => "The password",
+		DPS_port => "The port to connect to on the DPS server",
+		DPS_user => "The username",
 		HEADER => "This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually",
 	);
 
@@ -799,14 +839,13 @@ sub LoadConfig {
 			Events_DayNotify => '^\d+$',
 		);
 
-	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash, undef);
+	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash);
 	return(1);
 }
 
 # Purpose: Load the default configuration file
 # Usage: LoadDefaultConfig();
 sub LoadDefaultConfig {
-	#CreateSaveDir();
 	return(LoadConfig($SaveToDir, $ConfigFile));
 }
 
