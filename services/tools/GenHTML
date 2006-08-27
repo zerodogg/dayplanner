@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+# GenHTML
+# Copyright (C) Eskild Hustvedt 2006
+# $Id$
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Cwd qw/realpath/;
+use Digest::MD5 qw/md5_base64/;
+use MIME::Base64;
+
+my $PID = fork;
+exit if $PID;
+die "Unable to fork: $!\n" unless defined($PID);
+
+my $Dir;
+my $User;
+my $Password;
+my $DPFSource;
+
+GetOptions (
+	'dir=s' => \$Dir,
+	'user=s' => \$User,
+	'pass=s' => \$Password,
+	'dpfsource=s' => \$DPFSource,
+) or die;
+# TODO: Properly verify commandline parameters
+
+# TODO: mkpath
+die("$Dir doesn't exist") unless -d $Dir;
+
+$Dir = realpath($Dir);
+
+# Create the htaccess file
+my $HtAccess;
+open($HtAccess, ">", "$Dir/.htaccess");
+print $HtAccess "AuthType Basic\nAuthName 'Day planner for $User'\nAuthUserFile $Dir/.htpasswd\nRequire user $User";
+close($HtAccess);
+my $HtPasswd;
+open($HtPasswd, ">", "$Dir/.htpasswd");
+print $HtPasswd "$User:" . crypt($Password,"123");	# TODO: Proper salt
+close($HtPasswd);
+
+# Create the temp dir
+system("mkdir -p $Dir/.tmp/");		# TODO: Don't use mkdir
+
+# Create the DPF
+my $DPF_SRCFILE;
+open($DPF_SRCFILE, "<", $DPFSource);
+my $DPF_Content = <$DPF_SRCFILE>;	# Slurp
+close($DPF_Content);
+my $DPF_Target;
+open($DPF_Target, ">", "$Dir/.tmp/file.dpf");
+print $DPF_Target "# Content-type: text/x-dayplanner\nDP_FormatVersion=1\nDP_Crypt=0\nDP_DataMD5=" . md5_base64($DPF_Content) . "\n";
+print $DPF_Target "ContainedData=$DPF_Content";
+close($DPF_Target);
+
+# Run day planner to generate the html
+system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --importdpf $Dir/.tmp/file.dpf");
+system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --exporthtml $Dir/");
+system("rm -rf $Dir/.tmp");
