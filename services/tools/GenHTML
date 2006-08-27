@@ -29,6 +29,10 @@ use MIME::Base64;
 my $PID = fork;
 exit if $PID;
 die "Unable to fork: $!\n" unless defined($PID);
+my $Logfile = "/dev/null";	# We don't need to log anything at this point
+open(STDIN, "<", "/dev/null") or warn("Couldn't reopen STDIN to /dev/null: $!");
+open(STDOUT, ">>", $Logfile) or warn("Couldn't reopen STDOUT to $Logfile: $!");
+open(STDERR, ">>", $Logfile) or warn("Couldn't reopen STDERR to $Logfile: $!");
 
 my $Dir;
 my $User;
