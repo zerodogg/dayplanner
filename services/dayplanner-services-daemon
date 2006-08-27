@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 # dayplanner-services-daemon
 # $Id$
 # Copyright (C) Eskild Hustvedt 2006
@@ -19,7 +19,8 @@
 
 use strict;
 use warnings;
-require 5.8.0;				# Require perl 5.8 to ensure things work smoothly
+require 5.8.1;				# Require perl 5.8 to ensure things work smoothly
+					# (5.8.1 introduced some security enhancements we need)
 #use IO::Socket::SSL;	TODO: Implement this instead of IO::Socket::INET
 use IO::Socket::INET;
 use IO::Select;
@@ -39,10 +40,9 @@ my $DebuggingOutput = 1;
 my $Port = 4435;
 my %ActiveUsers;
 my %Clients;
-# Contains test data
 my %Users;
 
-# TODO: userlevels
+# TODO: Not all user levels are fully functional
 # level 0 = EXPIRED - no access at all
 # level 1 = EXPIRED - read-only access
 # level 2 = ACTIVE - rw access
@@ -129,7 +129,7 @@ sub WriteConfigFile {
 	# Open the config for writing
 	open(my $CONFIG, ">", "$File") or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPIntWarn("Unable to save the configuration file $File: $!");
+		IntVerbose("Unable to save the configuration file $File: $!");
 		return(0);
 	};
 	if(defined($Explanations->{HEADER})) {
@@ -152,7 +152,6 @@ sub WriteConfigFile {
 #  If OnlyValidOptions is true it will cause LoadConfigFile to skip options not in
 #  the OptionRegexHash.
 sub LoadConfigFile {
-	# TODO: Replace print's and warn's
 	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
 
 	open(my $CONFIG, "<", "$File") or do {
@@ -169,12 +168,12 @@ sub LoadConfigFile {
 		$Value =~ s/^.*=\s*(.*)\s*/$1/;
 		if($OnlyValidOptions) {
 			unless(defined($OptionRegex->{$Option})) {
-				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
+				IntVerbose("Unknown configuration option \"$Option\" in $File: Ignored.");
 				next;
 			}
 		}
 		unless(defined($Value)) {
-			DPIntWarn("Empty value for option $Option in $File");
+			IntVerbose("Empty value for option $Option in $File");
 		}
 		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
 			my $MustMatch = $OptionRegex->{$Option};
@@ -188,21 +187,35 @@ sub LoadConfigFile {
 	close($CONFIG);
 }
 
+# Purpose: Send an e-mail (sendmail() wrapper)
+# Usage: SendMail(TO, SUBJECT, MESSAGE);
+# 	Returns an error message on failure. undef otherwise
+sub SendMail {
+	my($To, $Subject, $Message) = @_;
+	my %Message = (
+		To => $To,
+		From => "Day Planner services daemon <" . cuserid() . '@' . hostname() . ">",
+		Subject => "[DPS] " . $Subject,
+		Message => $Message,
+		"X-Mailer" => "dayplanner-services-daemon//Mail::SendMail",
+	);
+	sendmail(%Message) or return($Mail::Sendmail::error);
+	return(undef);
+}
+
 # Purpose: Notify the admin about data corruption
 # Usage: DataCorruption(USER);
 sub DataCorruption {
 	my $User = $_[0];
-	my %Message = (
-			To => $Config{AdminMail},
-			From => "Day planner services daemon <" . cuserid . '@' . hostname() .">",
-			Subject => "[DPS] Data corruption for user $User!",
-			Message => "The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
-			"X-Mailer" => "dayplanner-services-daemon",
-		);
-	sendmail(%Message) or do {
-		print "WARNING!!!: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Mail::Sendmail::error\n";
-	};
 
+	my $Error = SendMail(
+		$Config{AdminMail},
+		"Data corruption for user $User!",
+		"The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ":$Port.\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
+	);
+	if($Error) {
+		IntVerbose("WARNING: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Error");
+	};
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,16 +241,13 @@ sub LoadData {
 sub SendData {
 	my $User = $_[0];
 	my %User_DataConfig;
-	unless(-e "$Config{DataPath}/$User/dataconfig") {
-		return("ERR NO_DATA");
-	}
-	unless(-e "$Config{DataPath}/$User/calendardata") {
+	unless(-e "$Config{DataPath}/$User/dataconfig" and -e "$Config{DataPath}/$User/calendardata") {
 		return("ERR NO_DATA");
 	}
 
 	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
 
-	open(my $User_Data, "<", "$Config{DataPath}/$User/calendardata") or return("ERR UNKNOWN: $!");
+	open(my $User_Data, "<", "$Config{DataPath}/$User/calendardata") or return("ERR READFAIL $!");
 	my $ReturnData = <$User_Data>;
 	close($User_Data);
 	unless(defined($User_DataConfig{LastMD5})) {
@@ -348,7 +358,7 @@ sub CommandHandler {
 	# Authentication
 	if($Command =~ /^AUTH/) {
 		if(defined($Clients{$Handle}{User})) {
-			return("REFUSED Already authenticated # as $Clients{$Handle}{User}");
+			return("REFUSED ALREADY_AUTHED $Clients{$Handle}{User}");
 		}
 		# Get the username and password parts
 		my $Username = $Command;
@@ -368,7 +378,7 @@ sub CommandHandler {
 		# Make sure it's not in use
 		if(defined($ActiveUsers{$Username}) and defined($ActiveUsers{$Username}{Handle})) {
 			IntDebug("$Handle tried to auth as $Username but $ActiveUsers{$Username}{Handle} is authenticated as that user already");
-			return("REFUSED In use");
+			return("REFUSED IN_USE");
 		}
 
 		# If the user's level is 0 then the user account is expired and we refuse the login.
@@ -426,6 +436,7 @@ sub OpenSocket {
 	$Server = IO::Socket::INET->new(
 					LocalPort => $Port,
 					Listen	=> 5,
+					Timeout => 15,		# We can't really wait longer as other users might want to connect
 			) or die "Unable to create a new socket: $@\n";
 	# Trap SIGPIPE
 	$SIG{PIPE} = \&SigpipeHandler;
