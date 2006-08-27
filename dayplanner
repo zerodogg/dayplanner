@@ -425,7 +425,7 @@ sub DPS_Connect {
 	DPS_Status("Connecting",0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	DPS_Status("Connecting",0.4);
-	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error("The username and/or password is incorrect.","Authentication error");});
+	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error("The username and/or password is incorrect.","Authentication error");});
 	return("OK");
 }
 
