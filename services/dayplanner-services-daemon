@@ -53,6 +53,8 @@ my %Users;
 my %Config = (
 	DataPath => "./dpservices/",
 	AdminMail => 'zerodogg@skolelinux.no',
+	HTMLBase => "./public_html/",
+	HTMLScript => "./GenHTML",
 );
 
 my $RCSRev = '$Id$';
@@ -314,6 +316,7 @@ sub RecieveData {
 
 	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig, \%ConfigInfo);
 	IntVerbose("New data for user $User recieved");
+	GenHTML($User);
 	return("OK");
 }
 
@@ -328,6 +331,23 @@ sub GetMD5 {
 	} else {
 		return("[NONE]");
 	}
+}
+
+# Purpose: Generate HTML of a users data if needed
+# Usage: GenHTML(USER);
+sub GenHTML {
+	my $User = shift;
+	unless($Config{$User}{settings}{GenHTML}) {
+		return(1);
+	}
+	unless(-d $Config{HTMLBase}) {
+		return(undef);
+	}
+	unless(-x $Config{HTMLScript}) {
+		return(undef);
+	}
+	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/$User/calendardata'");
+	return(1);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
