@@ -560,7 +560,7 @@ sub DPS_SendData {
 		DPS_Disconnect();
 	} else {
 	       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
-		if ($ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+		if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
 			DPS_Disconnect();
 			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
 				return(0) unless DPS_RepairData();
