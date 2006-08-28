@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 # dayplanner-services-daemon
 # $Id$
 # Copyright (C) Eskild Hustvedt 2006
@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+# TODO: Maybe we should get -T enabled
 
 use strict;
 use warnings;
@@ -337,16 +339,19 @@ sub GetMD5 {
 # Usage: GenHTML(USER);
 sub GenHTML {
 	my $User = shift;
-	unless($Config{$User}{settings}{GenHTML}) {
+	unless($Users{$User}{settings}{GenHTML}) {
 		return(1);
 	}
 	unless(-d $Config{HTMLBase}) {
+		IntDebug("\$Config{HTMLBase} is not set");
 		return(undef);
 	}
 	unless(-x $Config{HTMLScript}) {
+		IntDebug("\$Config{HTMLScript} is not valid");
 		return(undef);
 	}
 	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/$User/calendardata'");
+	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/$User/calendardata'");
 	return(1);
 }
 
@@ -496,9 +501,11 @@ sub MainLoop {
 				} 
 				# If it isn't, then it closed the connection
 				else {
-					IntDebug("Connection closed for user $Clients{$Handle}{User} ($Handle)");
 					if(defined($Clients{$Handle}{User})) {
+						IntDebug("Connection closed for user $Clients{$Handle}{User} ($Handle)");
 						delete($ActiveUsers{$Clients{$Handle}{User}});
+					} else {
+						IntDebug("Connection closed for $Handle");
 					}
 					delete($Clients{$Handle});
 					$ConnectionSelect->remove($Handle);

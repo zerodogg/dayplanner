@@ -48,6 +48,7 @@ GetOptions (
 # TODO: Properly verify commandline parameters
 
 # TODO: mkpath
+system("mkdir -p $Dir");
 die("$Dir doesn't exist") unless -d $Dir;
 
 $Dir = realpath($Dir);
