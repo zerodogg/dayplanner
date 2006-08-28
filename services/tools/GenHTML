@@ -79,5 +79,6 @@ close($DPF_Target);
 
 # Run day planner to generate the html
 system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --importdpf $Dir/.tmp/file.dpf");
+system("rm -f $Dir/*.html");
 system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --exporthtml $Dir/");
 system("rm -rf $Dir/.tmp");
