@@ -449,6 +449,7 @@ sub AdminCommands {
 	if($Command =~ /^VERSION/) {
 		return("$Version - $RCSRev");
 	} elsif ($Command =~ /^RELOAD_USERLIST/) {
+		IntVerbose("Userlist reloaded");
 		LoadData();
 		return("DONE");
 	}
