@@ -38,14 +38,51 @@ my $Dir;
 my $User;
 my $Password;
 my $DPFSource;
+my $Language;
+
+my %LanguageHash = (
+	nn => {
+		LANGUAGE => 'nn:no@nynorsk:no_NY:no:nb',
+		LC => 'nn_NO',
+	},
+	nb => {
+		LANGUAGE => 'nb:no:nn:no:no_NO:no_NY',
+		LC => 'nb_NO',
+	},
+	en => {
+		LANGUAGE => 'en_US',
+		LC => 'en_US',
+	},
+	cs => {
+		LANGUAGE => 'cs',
+		LC => 'cs',
+	},
+	sk => {
+		LANGUAGE => 'sk',
+		LC => 'sk',
+	},
+);
 
 GetOptions (
 	'dir=s' => \$Dir,
 	'user=s' => \$User,
 	'pass=s' => \$Password,
 	'dpfsource=s' => \$DPFSource,
+	'lang=s' => \$Language,
 ) or die;
 # TODO: Properly verify commandline parameters
+
+if(defined($Language)) {
+	if(not defined($LanguageHash{$Language})) {
+		$Language = 'en';
+	}
+	foreach(keys(%ENV)) {
+		if(/^LC_/) {
+			$ENV{$_} = $LanguageHash{$Language}{LC};
+		}
+		$ENV{LANGUAGE} = $LanguageHash{$Language}{LANGUAGE};
+	}
+}
 
 # TODO: mkpath
 system("mkdir -p $Dir");
