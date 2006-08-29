@@ -389,7 +389,7 @@ sub DPS_Connect {
 					Timeout => 30,
 			) or do { $Error = $@; };
 			
-	setlocale(LC_ALL, $OLDLocale);	# Reset the locale
+	setlocale(LC_ALL, ""); #, $OLDLocale);	# Reset the locale
 	# Process errors if any occurred
 	if($Error) {
 		# If we have already displayed an error to the user this session, don't do it again
@@ -2458,6 +2458,7 @@ sub iCal_Exporter {
 						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
 							print $TARGET "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
 						}
+						print $TARGET iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
 						print $TARGET "END:VEVENT\r\n";
 
 					}
@@ -2537,6 +2538,7 @@ sub iCal_ImportFile {
 			}
 			next unless(defined($Current->{'DTSTART'}));
 		}
+		# FIXME: Don't blindly assume $Time is set.
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
@@ -2586,6 +2588,8 @@ sub iCal_ImportFile {
 
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
+# TODO: Handle VALUE=DATE:YYYYMMDD once full day events are available
+# FIXME: YYYYMMDD is actually valid. So we'll need to check for that.
 sub iCal_ParseDateTime {
 	my $Year = $_[0];
 	my $Month = $_[0];
@@ -4811,10 +4815,10 @@ GetOptions (
 		$SaveToDir = $_[1];
 	},
 	's|shutdaemon' => \$ShutdownDaemon,
-	'exportical=s' => \&CLI_Export,
+	'exportical|exportics=s' => \&CLI_Export,
 	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
-	'importical=s' => \&CLI_Import,
+	'importical|importics=s' => \&CLI_Import,
 	'importdpf=s' => \&CLI_Import,
 ) or die "Run $0 --help for more information\n";
 
@@ -4839,10 +4843,10 @@ MainInit();
 # Draw the main window
 DrawMainWindow();
 Gtk2->main_iteration while Gtk2->events_pending;
-# Connect to a DPS server and sync the local data with it if it's enabled
-DPS_GUIPerform("GET");
 # Initialize the daemon
 DaemonInit() or die();
+# Connect to a DPS server and sync the local data with it if it's enabled
+DPS_GUIPerform("GET");
 # Add autostart if needed
 unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 	DP_AddAutostart();
