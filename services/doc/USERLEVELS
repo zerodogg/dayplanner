@@ -1,0 +1,27 @@
+REFERNCE LIST OF DAY PLANNER SERVICES USER LEVELS
+-------------------------------------------------
+
+Contents:
+1 - Quick information
+2 - Full reference list
+
+1 - Quick information
+- - - - - - - - - - -
+Userlevel:      Explanation:
+0               Expired, no access at all
+1               Expired, read-only access
+2               Active, rw access
+3               Active, rw access
+4               Active, rw access and ADMIN command access
+
+
+2 - Full reference list
+- - - - - - - - - - - -
+
+                        0       1       2       3       4
+Read data                       X       X       X       X
+Write data                              X       X       X
+ADMIN command access                                    X
+
+$Id$
+vim: set expandtab tabstop=8 :
