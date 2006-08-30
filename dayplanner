@@ -564,6 +564,7 @@ sub DPS_SendData {
 			DPS_Disconnect();
 			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
 				return(0) unless DPS_RepairData();
+				$InternalConfig{DPS_LastMD5} = $ServerMD5;
 				return(0) unless DPS_Connect();
 			} else {
 				DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
