@@ -19,6 +19,7 @@ Userlevel:      Explanation:
 - - - - - - - - - - - -
 
                         0       1       2       3       4
+Login                           X       X       X       X
 Read data                       X       X       X       X
 Write data                              X       X       X
 ADMIN command access                                    X
