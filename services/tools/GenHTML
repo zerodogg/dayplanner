@@ -71,17 +71,15 @@ GetOptions (
 	'lang=s' => \$Language,
 ) or die;
 # TODO: Properly verify commandline parameters
-
-if(defined($Language)) {
-	if(not defined($LanguageHash{$Language})) {
-		$Language = 'en';
+$Language = $Language ? $Language : "en";
+if(not defined($LanguageHash{$Language})) {
+	$Language = 'en';
+}
+foreach(keys(%ENV)) {
+	if(/^LC_/) {
+		$ENV{$_} = $LanguageHash{$Language}{LC};
 	}
-	foreach(keys(%ENV)) {
-		if(/^LC_/) {
-			$ENV{$_} = $LanguageHash{$Language}{LC};
-		}
-		$ENV{LANGUAGE} = $LanguageHash{$Language}{LANGUAGE};
-	}
+	$ENV{LANGUAGE} = $LanguageHash{$Language}{LANGUAGE};
 }
 
 # TODO: mkpath
