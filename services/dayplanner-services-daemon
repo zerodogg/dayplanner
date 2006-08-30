@@ -339,6 +339,7 @@ sub GetMD5 {
 # Usage: GenHTML(USER);
 sub GenHTML {
 	my $User = shift;
+	my $Language;
 	unless($Users{$User}{settings}{GenHTML}) {
 		return(1);
 	}
@@ -350,7 +351,12 @@ sub GenHTML {
 		IntDebug("\$Config{HTMLScript} is not valid");
 		return(undef);
 	}
-	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/$User/calendardata'");
+	if(defined($Users{$User}{settings}{language})) {
+		$Language = $Users{$User}{settings}{language};
+	} else {
+		$Language = "en";
+	}
+	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/$User/calendardata' --language $Language");
 	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/$User/calendardata'");
 	return(1);
 }
