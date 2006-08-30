@@ -357,7 +357,7 @@ sub GenHTML {
 		$Language = "en";
 	}
 	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/$User/calendardata' --language $Language");
-	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/$User/calendardata'");
+	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/$User/calendardata' --language $Language");
 	return(1);
 }
 
