@@ -371,7 +371,7 @@ sub MainMenu {
 		print "4 - Change the level of a user\n";
 		print "5 - View the user list\n";
 		print "R - Tell the day planner services daemon to reload the userlist\n";
-		print "Q - Quit\n";
+		print "Q - Quit and save\n";
 		my $Input = GetInput("Selection: ", "12345QR");
 		if($Input =~ /q/i) {
 			WriteData();
