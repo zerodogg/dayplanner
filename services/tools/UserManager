@@ -211,6 +211,7 @@ sub AddUser {
 		print "Warning: encryption is NOT implemented\n";
 	}
 	print "\n";
+	my $Language = GetInput("Language: ", "");
 	my $Level = SetUserLevel();
 	$| = 1;
 	print "Adding...";
@@ -218,6 +219,7 @@ sub AddUser {
 	$Users{$Username}{level} = $Level;
 	$Users{$Username}{settings}{Encrypted} = $Encrypted =~ /y/i ? 1 : 0;
 	$Users{$Username}{settings}{GenHTML} = $GenHTML =~ /y/ ? 1 : 0;
+	$Users{$Username}{settings}{language} = $Language;
 	unless (-d "$DataDir/$Username/") {
 		mkpath("$DataDir/$Username/") or warn("FAILED to mkpath($DataDir/$Username/): $!\n");
 	}
