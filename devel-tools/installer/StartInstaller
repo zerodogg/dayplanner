@@ -89,7 +89,7 @@ done
 echo -n "."
 
 if [ "$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR" != "" ]; then
-	if [ -e "$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR" ]; then
+	if [ -d "$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR" ]; then
 		DATADIR="$DAYPLANNER_INSTALLER_OVERRIDE_DATADIR"
 	else
 		echo "Error: the directory in the environment variable DAYPLANNER_INSTALLER_OVERRIDE_DATADIR does not exist. Using default: $DEFAULT_DATADIR"
@@ -103,7 +103,7 @@ echo "done"
 if [ "`which perl`" != "/usr/bin/perl" ]; then
 	RealPerl="`which perl`"
 	echo "Nonstandard perl installation detected. Perl is at $RealPerl"
-	echo -n "Repairing day planner files..."
+	echo -n "Repairing core Day Planner files..."
 	for file in ./MainInstallerPart ./dayplanner-data/dayplanner ./dayplanner-data/dayplanner-notifier ./dayplanner-data/dayplanner-daemon ./dayplanner-data/tools/plan-migration ./dayplanner-data/devel-tools/commander; do
 		echo -n "."
 		perl -pi -e "s#/usr/bin/perl#$RealPerl#g" $file
