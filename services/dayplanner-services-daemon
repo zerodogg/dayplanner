@@ -36,13 +36,18 @@ use POSIX qw/cuserid/;
 my $Server;
 my $ConnectionSelect;
 my $Shutdown;
+
 my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
-my $Port = 4435;
-my %ActiveUsers;
-my %Clients;
-my %Users;
+my $Port = 4435;	# The port we listen to. TODO: Add to the config
+
+my %ActiveUsers;	# Currently active users
+my %Clients;		# Hash of current network clients
+my %Users;		# User list
+my %Security;		# Security specific stuff. For now only handles banning
+			# of specific IP adresses.
+			# TODO: Should be cleaned once every day.
 
 # TODO: Not all user levels are fully functional
 # level 0 = EXPIRED - no access at all
@@ -220,6 +225,19 @@ sub DataCorruption {
 	if($Error) {
 		IntVerbose("WARNING: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Error");
 	};
+}
+
+# Purpose: Perform specific functions on login failure
+# Usage: LoginFailure(IP);
+# 	Returns the REFUSED string
+sub LoginFailure {
+	my $IP = shift;
+	$Security{LoginFailures}{$IP}++;
+	if($Security{LoginFailures}{$IP} > 9) {
+		$Security{Banned}{$IP} = 1;
+		delete($Security{LoginFailures}{$IP});
+	}
+	return("REFUSED");
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -400,11 +418,11 @@ sub CommandHandler {
 		# Verify supplied data
 		unless(defined($Users{$Username})) {
 			IntVeryVerbose("$Handle tried to auth as $Username, but that user doesn't exist");
-			return("FAILED");
+			return(LoginFailure($Handle->peerhost));
 		}
 		unless($Users{$Username}{password} eq $Password) {
 			IntVerbose("Authentication from $Handle failed as $Username");
-			return("FAILED");
+			return(LoginFailure($Handle->peerhost));
 		}
 		# Make sure it's not in use
 		if(defined($ActiveUsers{$Username}) and defined($ActiveUsers{$Username}{Handle})) {
@@ -494,7 +512,13 @@ sub MainLoop {
 			if ($Handle eq $Server) {
 				my $NewClient = $Server->accept();
 				$ConnectionSelect->add($NewClient);
-				IntDebug("New connection from " . $NewClient->peerhost . " on $NewClient");
+				if ($Security{Banned}{$NewClient->peerhost}) {
+					IntDebug("New connection from " . $NewClient->peerhost  . "refused: banned");
+					print $NewClient "BANNED\n";
+					$ConnectionSelect->remove($NewClient);
+				} else {
+					IntDebug("New connection from " . $NewClient->peerhost . " on $NewClient");
+				}
 			} 
 			# Handle isn't $server, it's an existing connection trying to tell us something
 			else {
