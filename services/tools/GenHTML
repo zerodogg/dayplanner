@@ -19,6 +19,8 @@
 
 $0 = "GenHTML";
 
+# TODO: Lockfile
+
 use strict;
 use warnings;
 use Getopt::Long;
