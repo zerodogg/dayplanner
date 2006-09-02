@@ -638,7 +638,7 @@ sub DPS_GUIPerform {
 
 	# Create the progress window
 	$MainWindow->set_sensitive(0);
-	$DPServices{ProgressWin} = DPCreateProgressWin("Day planner services", "Initializing");
+	$DPServices{ProgressWin} = DPCreateProgressWin("Services", "Initializing");
 
 	my $Return = DPS_Perform($Function);
 	$DPServices{ProgressWin}->{Window}->destroy();
