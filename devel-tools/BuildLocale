@@ -125,10 +125,12 @@ print "Putting mo-files into place:";
 foreach my $MO (<*.mo>) {
 	unless(defined($MoToDirHash{$MO}) and length($MoToDirHash{$MO})) {
 		warn("\nThe file $MO has no entry in \%MoToDirHash - ignoring\n");
+		unlink($MO);
 		next;
 	}
 	unless(-d "$LocaleDir/$MoToDirHash{$MO}/LC_MESSAGES/") {
 		warn("\nThe file $MO has an invalid directory entry in the \%MoToDirHash (or the dir might be missing from the \%LocaleDirHash). Ignoring\n");
+		unlink($MO);
 		next;
 	}
 	system("mv $MO $LocaleDir/$MoToDirHash{$MO}/LC_MESSAGES/dayplanner.mo");
