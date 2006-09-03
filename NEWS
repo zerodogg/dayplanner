@@ -15,6 +15,9 @@ Version 0.3 (Unreleased)
 - You can now right-click on an event
 - Added AM/PM support
 - Added Swedish translation by Daniel Nylander
+- Now destroys the about window correctly
+- Fixed a bug that caused the "upcoming events" not to be redrawn
+  when you deleted an event.
 
 * Daemon (dayplanner-daemon)
 
