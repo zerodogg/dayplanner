@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-09-03 20:35+0200\n"
-"PO-Revision-Date: 2006-09-03 20:44+0200\n"
+"POT-Creation-Date: 2006-09-04 08:39+0200\n"
+"PO-Revision-Date: 2006-09-04 08:51+0200\n"
 "Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
 "Language-Team: Norsk nynorsk <i18n-no@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -224,8 +224,8 @@ msgid "%s's birthday"
 msgstr "%ss bursdag"
 
 #: dayplanner:1869
-msgid "You have no events this month"
-msgstr "Du har ingen hendingar denne måneden"
+msgid "There are no events this month"
+msgstr "Det er ingen hendingar denne månaden"
 
 #: dayplanner:1872
 msgid "Birthdays this month:"
@@ -248,16 +248,16 @@ msgid "Birthdays"
 msgstr "Bursdagar"
 
 #: dayplanner:1923
-msgid "You haven't defined any birthdays"
-msgstr "Du har ikkje definert nokon bursdagar"
+msgid "No birthdays are defined."
+msgstr "Ingen bursdagar er angitt."
 
 #: dayplanner:1938
-msgid "Select the month you wish to view in the list above"
-msgstr "Vel månaden du vil visa i lista ovanfor"
+msgid "Select the month to view in the list above"
+msgstr "Vel månaden som skal visast i lista ovanfor"
 
 #: dayplanner:1952
-msgid "Please select the year you wish to view:"
-msgstr "Vel året du vil se:"
+msgid "Select the year to view:"
+msgstr "Vel året som skal visast:"
 
 #: dayplanner:2007
 #, perl-format
@@ -268,13 +268,12 @@ msgstr "Klarte ikkje oppretta mappa %s: %s"
 msgid ""
 "Welcome to day planner.\n"
 "\n"
-"Day planner has detected that you have existing calendar data from \"plan\". "
-"Do you want day planner to import this data? The plan data will still be "
-"left intact."
+"Day Planner has detected existing calendar data from \"plan\". Do you want "
+"Day Planner to import this data? The plan data will still be left intact."
 msgstr ""
 "Velkommen til dagsplanleggaren!\n"
 "\n"
-"Dagsplanleggaren har oppdaga at du har eksisterande kalenderdata frå «plan». "
+"Dagsplanleggaren har oppdaga eksisterande kalenderdata frå «plan». "
 "Vil du at dagsplanleggaren skal importera denne dataen? Eksisterande «plan» "
 "data vil forbli intakt."
 
@@ -288,13 +287,13 @@ msgstr "Importerar til dagsplanleggaren ..."
 
 #: dayplanner:2209
 msgid ""
-"Your plan data has been successfully migrated to day planner.\n"
+"The plan data has been successfully migrated to Day Planner.\n"
 "\n"
 "Please note that not all of plans advanced features are supported in day "
 "planner so some settings (namely repeating appointments and scripts) may not "
 "have been completely migrated."
 msgstr ""
-"Dataen din frå «plan» har blitt importert til dagsplanleggaren.\n"
+"Data frå «plan» har blitt importert til dagsplanleggaren.\n"
 "\n"
 "Merk at ikkje alle av plan sine avanserte funksjonar er støtta av "
 "dagsplanleggaren så nokre instillingar så det kan henda at noko data "
@@ -306,18 +305,17 @@ msgstr "Dagsplanleggaren fant ingen datafiler frå «plan»."
 
 #: dayplanner:2224 dayplanner:2228 dayplanner:2318 dayplanner:2322
 #, perl-format
-msgid ""
-"You do not have the perl module %s installed. The data will not be encrypted."
+msgid "The perl module %s is not installed. The data will not be encrypted."
 msgstr ""
-"Du har ikkje perl modulen %s installert. Dataen vil ikkje bli kryptert."
+"Du har ikkje perl modulen %s installert. Data vil ikkje bli kryptert."
 
 #: dayplanner:2246 dayplanner:2259 dayplanner:2326 dayplanner:2341
 msgid "Password"
 msgstr "Passord"
 
 #: dayplanner:2253 dayplanner:2294 dayplanner:2300
-msgid "Please enter the password you wish to use."
-msgstr "Skriv inn passordet du vil bruka."
+msgid "Please enter a password."
+msgstr "Skriv inn eit passord."
 
 #: dayplanner:2272
 msgid "Repeat the password:"
@@ -328,7 +326,7 @@ msgid "The password must be at least 6 characters long."
 msgstr "Passordet må ha minst 6 teikn."
 
 #: dayplanner:2300
-msgid "The passwords doesn't match."
+msgid "The passwords do not match."
 msgstr "Passordene er ikkje like."
 
 #: dayplanner:2334 dayplanner:2371
@@ -375,8 +373,8 @@ msgid "Import data"
 msgstr "Importer data"
 
 #: dayplanner:2845
-msgid "Where do you want to import from?"
-msgstr "Kvar vil du importera frå?"
+msgid "Import data from:"
+msgstr "Importer data frå:"
 
 #: dayplanner:2851
 msgid "From a file (day planner or iCalendar)"
@@ -475,8 +473,8 @@ msgstr "«%s» er ei mappe"
 
 #: dayplanner:3063
 #, perl-format
-msgid "\"%s\" already exists. Do you want to overwrite it?"
-msgstr "«%s» finst allereie. Vil du skriva over han?"
+msgid "\"%s\" already exists. Overwrite?"
+msgstr "«%s» finst allereie. Skriv over han?"
 
 #: dayplanner:3144
 msgid "Sunday"
@@ -519,8 +517,8 @@ msgid "(nothing)"
 msgstr "(ingenting)"
 
 #: dayplanner:3211
-msgid "You have no upcoming events the next seven days"
-msgstr "Du har ingen hendingar dei neste sju dagane"
+msgid "No upcoming events exist for the next seven days"
+msgstr "Ingen hendingar dei neste sju dagane"
 
 #: dayplanner:3264 dayplanner:3267
 msgid "and"
@@ -547,15 +545,9 @@ msgstr ""
 
 #: dayplanner:3338
 msgid ""
-"Are you sure you want to disable the automatic startup of the reminder?\n"
-"\n"
-"By doing this you will not get notified about events without having started "
-"day planner at least once."
-msgstr ""
-"Er du sikker på at du vil skru av den automatiske oppstarten av påminnaren?\n"
-"\n"
-"Ved å gjera dette vil du ikkje få påminningar om hendingar utan å ha starta "
-"dagsplanleggaren minst ein gong."
+"Disabling automatic startup of the reminder will prevent notifications "
+"unless day planner has been manually started. Disable the automatic startup?"
+msgstr "Ved å slå av automatisk oppstart av påminnaren vil du ikkje motta påminningar utan at du har manuelt starta dagsplanleggaren. Slå av automatisk oppstart?"
 
 #: dayplanner:3475 dayplanner:4020 dayplanner:4300 dayplanner:4314
 #: dayplanner-notifier:293
@@ -563,12 +555,12 @@ msgid "Details"
 msgstr "Detaljar"
 
 #: dayplanner:3526
-msgid "Some files could not be saved correctly. Are you sure you want to quit?"
-msgstr "Nokre filer kunne ikkje lagrst. Er du sikker på at du vil avslutte?"
+msgid "Some files could not be saved correctly. Quit anyway?"
+msgstr "Nokre filer kunne ikkje lagrast. Er du sikker på at du vil avslutte?"
 
 #: dayplanner:3531
-msgid "Are you sure you still want to quit?"
-msgstr "Er du sikker på at du fortsatt vil avslutte?"
+msgid "Quit anyway?"
+msgstr "Avslutt uansett?"
 
 #: dayplanner:3743 dayplanner:4502
 msgid "Event"
@@ -853,6 +845,27 @@ msgstr "Dagsplanleggar hending"
 #: dayplanner-notifier:276
 msgid "Postpone"
 msgstr "Utsett"
+
+#~ msgid "You haven't defined any birthdays"
+#~ msgstr "Du har ikkje definert nokon bursdagar"
+
+#~ msgid "Where do you want to import from?"
+#~ msgstr "Kvar vil du importera frå?"
+
+#~ msgid ""
+#~ "Are you sure you want to disable the automatic startup of the reminder?\n"
+#~ "\n"
+#~ "By doing this you will not get notified about events without having "
+#~ "started day planner at least once."
+#~ msgstr ""
+#~ "Er du sikker på at du vil skru av den automatiske oppstarten av "
+#~ "påminnaren?\n"
+#~ "\n"
+#~ "Ved å gjera dette vil du ikkje få påminningar om hendingar utan å ha "
+#~ "starta dagsplanleggaren minst ein gong."
+
+#~ msgid "Are you sure you still want to quit?"
+#~ msgstr "Er du sikker på at du fortsatt vil avslutte?"
 
 #~ msgid "Export data to file"
 #~ msgstr "Eksporter data til fil"
