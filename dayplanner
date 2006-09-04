@@ -405,15 +405,15 @@ sub DPS_Connect {
 			# Process network unreachable and bad hostname
 		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
 			$DPServices{Offline} = 1;
-			DPS_Error("Unable to connect to the Day Planner services server ($Host:$Port). You're probably not connected to the internet", "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s). You're probably not connected to the internet"), "$Host:$Port"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		}
 			# Process connection refused
 		elsif($Error eq "REFUSED") {
-			DPS_Error("Unable to connect to the Day Planner services server ($Host:$Port). The connection was refused by the server. Please verify your Day Planner services settings.\n\nIf this problem persists, please contact your service provider", "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s). The connection was refused by the server. Please verify your Day Planner services settings.\n\nIf this problem persists, please contact your service provider"), "$Host:$Port"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		} 
 			# Process unknown errors
 		else {
-			DPS_Error("Unable to connect to the day planner services server ($Host:$Port). If this problem persists please contact your service provider.", "Unable to connect to $Host on port $Port: $@");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the day planner services server (%s). If this problem persists please contact your service provider."), "$Host:$Port"), "Unable to connect to $Host on port $Port: $@");
 		}
 		return(undef);
 	}
@@ -423,11 +423,11 @@ sub DPS_Connect {
 
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
-	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error("The day planner services server you are connecting to does not support this version of day planner ($Version).", "API error received from the server.");});
+	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf($Gettext->get("The day planner services server you are connecting to does not support this version of day planner (%s)."), $Version), "API error received from the server.");});
 	DPS_Status("Connecting",0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	DPS_Status("Connecting",0.4);
-	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error("The username and/or password is incorrect.","Authentication error");});
+	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error($Gettext->get("The username and/or password is incorrect."),"Authentication error");});
 	return("OK");
 }
 
@@ -467,18 +467,19 @@ sub DPS_DataSegment {
 # Usage: DPS_RepairData();
 # 	returns true on success, false on failure
 sub DPS_RepairData {
-	my $ProgressWin = DPCreateProgressWin("Repairing","Getting data",0);
+	my $ProgressWin = DPCreateProgressWin($Gettext->get("Repairing"),$Gettext->get("Getting data"),0);
 	my $RawData = DPS_Perform("GET_RAW");
 	if(defined($RawData)) {
 		$ProgressWin->{ProgressBar}->set_fraction(0.4);
-		$ProgressWin->{ProgressBar}->set_text("Parsing and repairing");
+		$ProgressWin->{ProgressBar}->set_text($Gettext->get("Parsing and repairing"));
 		my ($PossibleCorruption,@Conflicts) = DPF_ParseData($RawData);
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
 		# TODO: Process conflicts
 		return(1);
 	} else {
-		DPError("A fatal error occurred while attempting repair");
+		# TODO: Use the DPS error function
+		DPError($Gettext->get("A fatal error occurred while attempting repair"));
 		return(0);
 	}
 }
@@ -507,13 +508,13 @@ sub DPS_GetData {
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
 		return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
 		unless(md5_base64($MainData) eq $MD5) {
-			DPS_Error("The data corrupted itself during download. You may want to attempt to synchronize again.","MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
+			DPS_Error($Gettext->get("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
 			$MainData = decode_base64($MainData);
 			unless($Raw) {
 				my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
 				eval($MainData) or do {
-					DPSError("Failed to parse the data recieved. This is a fatal error. Please contact your service provider","Data parse error: $@");
+					DPSError($Gettext->get("Failed to parse the data recieved. This is a fatal error. Please contact your service provider"),"Data parse error: $@");
 					return(undef);
 				};
 				%BirthdayContents = %BirthdayCalendarContent;
@@ -529,13 +530,13 @@ sub DPS_GetData {
 		if($Data =~ /^ERR NO_DATA/) {
 			# No data found on the server, this is fine.
 		} elsif($Data =~ /^ERR MD5_FAILURE/) {
-			DPS_Error("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider", "MD5 failure on server");
+			DPS_Error($Gettext->get("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider"), "MD5 failure on server");
 		} else {
 			DPS_Error("An unknown error occurred (the server replied $Data)", "Unknown error: $Data");
 		}
 	}
 	DPS_Disconnect();
-	DPS_Status("Downloaded data",1);
+	DPS_Status($Gettext->get("Downloaded data"),1);
 	if($Raw) {
 		if (defined($MainData) and length($MainData)) {
 			return($MainData);
@@ -564,7 +565,7 @@ sub DPS_SendData {
 	       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
 		if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
 			DPS_Disconnect();
-			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
+			if(DPQuestion($Gettext->get("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?"))) {
 				return(0) unless DPS_RepairData();
 				$InternalConfig{DPS_LastMD5} = $ServerMD5;
 				return(0) unless DPS_Connect();
@@ -577,11 +578,12 @@ sub DPS_SendData {
 		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
 		DPS_Disconnect();
 		unless($Reply eq "OK") {
+			# TODO: These need cleaning
 			if($Reply =~ s/^ERR\s+//) {
-				DPS_Error("An error ocurred during uploading of the data", "Sending data failed: $Reply");
+				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), sprintf($Gettext->get("Sending data failed: %s", $Reply)));
 			} else {
 				# Sending the data failed
-				DPS_Error("The server did not accept my uploaded data and replied with an unknwown value: $Reply", "Sending data failed: $Reply");
+				DPS_Error(sprintf($Gettext->get("The server did not accept my uploaded data and replied with an unknwown value: "), $Reply), sprintf($Gettext->get("Sending data failed: %s"), $Reply));
 			}
 			return(undef);
 		}
@@ -641,12 +643,12 @@ sub DPS_GUIPerform {
 
 	# Create the progress window
 	$MainWindow->set_sensitive(0);
-	$DPServices{ProgressWin} = DPCreateProgressWin("Services", "Initializing");
+	$DPServices{ProgressWin} = DPCreateProgressWin($Gettext->get("Services"), $Gettext->get("Initializing"));
 
 	my $Return = DPS_Perform($Function);
 	$DPServices{ProgressWin}->{Window}->destroy();
 	if(defined($DPServices{Error})) {
-		DPError("An error ocurred with the day planner services:\n\n$DPServices{Error}");
+		DPError(sprintf($Gettext->get("An error ocurred with the day planner services:\n\n%s"), $DPServices{Error}));
 		delete($DPServices{Error});
 	}
 	delete($DPServices{ProgressWar});
