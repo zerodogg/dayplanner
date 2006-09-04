@@ -36,6 +36,55 @@ open(STDIN, "<", "/dev/null") or warn("Couldn't reopen STDIN to /dev/null: $!");
 open(STDOUT, ">>", $Logfile) or warn("Couldn't reopen STDOUT to $Logfile: $!");
 open(STDERR, ">>", $Logfile) or warn("Couldn't reopen STDERR to $Logfile: $!");
 
+# Purpose: Perform simple locking
+# Usage: LockFile(PATH);
+# 	NOTICE: This function is not safe from race conditions but
+# 	provides minor security.
+sub LockFile {
+	my $Lockfile = shift;
+	my $Iter;
+	while(-e $Lockfile) {
+		open(my $RLF, "<", $Lockfile);
+		my $LFC = <$RLF>;
+		close($RLF);
+		if(-e "/proc/$LFC") {
+			sleep(1);
+			$Iter++;
+			if($Iter == 20) {
+				unlink($Lockfile);
+				last;
+			}
+		} else {
+			unlink($Lockfile);
+			last;
+		}
+	}
+	open(my $LF, ">", $Lockfile);
+	print $LF "$$";
+	close($LF);
+	open(my $RLF, "<", $Lockfile);
+	my $LFC = <$RLF>;
+	if(not $LFC eq "$$") {
+		die("Locking failed ($LFC != $$");
+	}
+	return(1);	# Locked
+}
+
+# Purpose: Simple unlocking
+# Usage: UnlockFile(PATH);
+sub UnlockFile {
+	my $Lockfile = shift;
+	return(0) unless -e $Lockfile;
+	open(my $RLF, "<", $Lockfile);
+	my $LFC = <$RLF>;
+	if(not $LFC eq $$) {
+		warn("Unlocking failed: $LFC != $$\n");
+		return(0);
+	}
+	close($RLF);
+	unlink($Lockfile);
+}
+
 my $Dir;
 my $User;
 my $Password;
@@ -88,6 +137,8 @@ foreach(keys(%ENV)) {
 system("mkdir -p $Dir");
 die("$Dir doesn't exist") unless -d $Dir;
 
+LockFile("$Dir/.DP_GenHTML.lock");
+
 $Dir = realpath($Dir);
 
 # Create the htaccess file
@@ -119,3 +170,4 @@ system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --importdpf $Dir/.tmp/fil
 system("rm -f $Dir/*.html");
 system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --exporthtml $Dir/");
 system("rm -rf $Dir/.tmp");
+UnlockFile("$Dir/.DP_GenHTML.lock");
