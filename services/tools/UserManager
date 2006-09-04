@@ -100,7 +100,7 @@ sub DPS_DataSegment {
 # Usage: LoadData();
 sub LoadData {
 	unless(-e "$DataDir/users.conf") {
-		die("$DataDir/users.conf does not exist");
+		die("$DataDir/users.conf does not exist\n");
 	}
 	%Users = do("$DataDir/users.conf");
 	return(1);
@@ -260,6 +260,21 @@ sub GetValidUsername {
 	}
 }
 
+# Purpose: Get information about a user
+# Usage: GetUserInfo();
+sub GetUserInfo {
+	system("clear");
+	print "Which user do you want to view information about?\n";
+	my $User = GetValidUsername();
+	$Data::Dumper::Purity = 1;
+	$Data::Dumper::Sortkeys = 1;
+	$Data::Dumper::Indent = 1;
+	my $Hashref = $Users{$User}{settings};
+	print Data::Dumper->Dump([$Hashref], ["*current settings"]);
+	WaitContinue();
+	return(1);
+}
+
 # Purpose: Change settings for a user
 # Usage: ChangeUserSettings();
 sub ChangeUserSettings {
@@ -366,26 +381,29 @@ sub MainMenu {
 		system("clear");
 		print "Welcome to the day planner services user management console\n\n";
 		print "Menu:\n";
-		print "1 - Add a new user\n2 - Delete a user\n";
-		print "3 - Edit a user\n";
-		print "4 - Change the level of a user\n";
-		print "5 - View the user list\n";
+		print "A - Add a new user\nD - Delete a user\n";
+		print "E - Edit a user\n";
+		print "C - Change the level of a user\n";
+		print "V - View the user list\n";
+		print "I - View information about a user\n";
 		print "R - Tell the day planner services daemon to reload the userlist\n";
 		print "Q - Quit and save\n";
-		my $Input = GetInput("Selection: ", "12345QR");
+		my $Input = GetInput("Selection: ", "ADECVIQR");
 		if($Input =~ /q/i) {
 			WriteData();
 			exit(0);
-		} elsif ($Input eq "1") {
+		} elsif ($Input =~ /a/i) {
 			AddUser();
-		} elsif ($Input eq "2") {
+		} elsif ($Input =~ /d/i) {
 			DeleteUser();
-		} elsif ($Input eq "3") {
+		} elsif ($Input =~ /e/i) {
 			ChangeUserSettings();
-		} elsif ($Input eq "4") {
+		} elsif ($Input =~ /c/i) {
 			ChangeUserLevel();
-		} elsif ($Input eq "5") {
+		} elsif ($Input =~ /v/i) {
 			UserList();
+		} elsif ($Input =~ /i/i) {
+			GetUserInfo();
 		} elsif ($Input =~ /r/i) {
 			DaemonReloadUsers();
 		}
