@@ -3053,8 +3053,9 @@ sub PromptOverwrite {
 			return(1);
 		}
 	} else {
-		unless(-w dirname($File)) {
-			DPInfo(sprintf($Gettext->get("You don't have write permission to \"%s\""), dirname($File)));
+		my $FileDirname = dirname($File);
+		unless(-w $FileDirname) {
+			DPInfo(sprintf($Gettext->get("\"%s\" is read only. Write permissions are required."), $FileDirname));
 			return(undef);
 		}
 		if(-e $File) {
@@ -3325,7 +3326,7 @@ sub DP_AddAutostart {
 		# error.
 		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
 			# It's set, so the user is running GNOME - display the error
-			DPError($Gettext->get("A problem occurred while setting up automatic startup of the day planner reminder.\n\nYou will have to set it up manually. Do this by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the field \"Startup Command\" and press \"OK\". It is now set up."));
+			DPError($Gettext->get("A problem occurred while setting up automatic startup of the day planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
 		}
 	} else {
 		DPIntWarn("Unknown return value from AddAutostart(): $Result");
@@ -3923,7 +3924,7 @@ sub EditEvent {
 		}
 			
 	} elsif ($Type eq 'holiday') {
-		DPInfo(sprintf($Gettext->get("This event is a \"holiday\" event. It is a predefined event read from a special \"holiday\"-file. You can not edit this information directly from day planner.\n\nIf you really want to edit this file you can do so by pointing a text editor to %s"), $HolidayFile));
+		DPInfo(sprintf($Gettext->get("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
 		return(1);
 	} else {
@@ -4024,7 +4025,7 @@ sub NormalEventWindow {
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
-	$Tooltips->set_tip($FT_Expander, $Gettext->get("Use this if you need to enter additional information about the event"));
+	$Tooltips->set_tip($FT_Expander, $Gettext->get("Additional information"));
 	
 	# Add the extended entry box
 	my $FulltextEntry = Gtk2::TextView->new();
@@ -4363,7 +4364,6 @@ sub PreferencesWindow {
 	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label($Gettext->get("Start the day planner reminder automatically when logging in"));
 	$AutostartReminder_Checkbox->show();
 	$Events_VBox->pack_start($AutostartReminder_Checkbox,0,0,0);
-	$Tooltips->set_tip($AutostartReminder_Checkbox,$Gettext->get("If you want the day planner reminder to start automatically when you log in"));
 	$AutostartReminder_Checkbox->set_active(1) if $InternalConfig{AddedAutostart};
 	$AutostartReminder_Checkbox->signal_connect('toggled' => sub {
 			if($AutostartReminder_Checkbox->get_active) {
@@ -4379,7 +4379,6 @@ sub PreferencesWindow {
 	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label($Gettext->get("Use notifications before events"));
 	$Events_EnabledCheckbox->show();
 	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
-	$Tooltips->set_tip($Events_EnabledCheckbox, $Gettext->get("Check this if you want day planner to notify you about events before they take place"));
 
 	# The widgets that selects when the user wants to be notified
 	# The HBox
@@ -4416,7 +4415,7 @@ sub PreferencesWindow {
 			});
 	
 	# If the user wants to be notified in advance
-	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label($Gettext->get("Warn me one day in advance"));
+	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label($Gettext->get("Remind one day in advance"));
 	$NotifyAdvance_CheckBox->show();
 	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
 	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
@@ -4425,7 +4424,6 @@ sub PreferencesWindow {
 	if($UserConfig{Events_DayNotify}) {
 		$NotifyAdvance_CheckBox->set_active(1);
 	}
-	$Tooltips->set_tip($NotifyAdvance_CheckBox, $Gettext->get("Check this if you want day planner to warn you about events one day before they take place"));
 	
 	# This needs to be at the bottom so that we can sensitiveize or not the rest of the dialog
 	$Events_EnabledCheckbox->signal_connect('toggled' => sub {
@@ -4836,9 +4834,9 @@ unless(defined($ENV{HOME}) and $ENV{HOME}) {
 }
 # The same goes for if HOME doesn't exist or isn't a directory
 unless(-e $ENV{HOME} and -d $ENV{HOME}) {
-	printf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME");
+	printf($Gettext->get("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME");
 	Gtk2Init();
-	DPError(sprintf($Gettext->get("Your home directory (%s) doesn't exist! Please verify that the environment variable %s is properly set. Unable to continue\n"), $ENV{HOME}, "HOME"));
+	DPError(sprintf($Gettext->get("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME"));
 	die("\n");
 }
 
