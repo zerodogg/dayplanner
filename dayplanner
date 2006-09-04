@@ -610,6 +610,7 @@ sub DPS_Error {
 sub DPS_Perform {
 	my $Function = $_[0];
 	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
+	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
 	# Verify that options are set
 	foreach my $Option (qw(host port user pass)) {
 		unless(defined($InternalConfig{"DPS_$Option"}) and length($InternalConfig{"DPS_$Option"})) {
