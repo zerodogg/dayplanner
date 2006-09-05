@@ -383,7 +383,7 @@ sub DPS_Connect {
 	$Password = $Password ? $Password : $DPServices{pass};
 	my $Error;
 	# Connect
-	DPS_Status("Connecting",0);
+	DPS_Status($Gettext->get("Connecting"),0);
 	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
 	$DPServices{socket} = IO::Socket::INET->new(
 					PeerAddr => $Host,
