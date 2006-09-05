@@ -3189,7 +3189,7 @@ sub PopulateUpcomingEvents {
 			$h->{dayname} = $DayNames{$getwday};
 		}
 		$h->{date} = "$getmday.$getmonth.$HumanYear";
-		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :\n ";
+		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :\n";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
 			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
