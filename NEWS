@@ -18,6 +18,8 @@ Version 0.3 (Unreleased)
 - Now destroys the about window correctly
 - Fixed a bug that caused the "upcoming events" not to be redrawn
   when you deleted an event.
+- Fixed a bug that caused the "upcoming events" to not have proper
+  newlines.
 
 * Daemon (dayplanner-daemon)
 
