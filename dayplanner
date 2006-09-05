@@ -583,7 +583,7 @@ sub DPS_SendData {
 				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), sprintf($Gettext->get("Sending data failed: %s", $Reply)));
 			} else {
 				# Sending the data failed
-				DPS_Error(sprintf($Gettext->get("The server did not accept my uploaded data and replied with an unknwown value: "), $Reply), sprintf($Gettext->get("Sending data failed: %s"), $Reply));
+				DPS_Error(sprintf($Gettext->get("The server did not accept my uploaded data and replied with an unknwown value: %s"), $Reply));
 			}
 			return(undef);
 		}
@@ -3194,13 +3194,13 @@ sub PopulateUpcomingEvents {
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
 			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
 				$HasEvents = 1;
-				$h->{text} .= $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
+				$h->{text} .= $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}\n";
 			}
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
 			foreach my $Birthday (keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
 					$HasEvents = 1;
-					$h->{text} .= sprintf($Gettext->get("%s's birthday"), $Birthday);
+					$h->{text} .= sprintf($Gettext->get("%s's birthday") . "\n", $Birthday);
 			}
 		}
 		unless($HasEvents) {
