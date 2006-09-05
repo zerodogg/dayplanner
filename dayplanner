@@ -405,15 +405,15 @@ sub DPS_Connect {
 			# Process network unreachable and bad hostname
 		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
 			$DPServices{Offline} = 1;
-			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s). You're probably not connected to the internet"), "$Host:$Port"), "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port",) . " " . "You're probably not connected to the internet", "Unable to connect to $Host on port $Port: $@ ($Error)");
 		}
 			# Process connection refused
 		elsif($Error eq "REFUSED") {
-			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s). The connection was refused by the server. Please verify your Day Planner services settings.\n\nIf this problem persists, please contact your service provider"), "$Host:$Port"), "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . $Gettext->get("The connection was refused by the server. Please verify your Day Planner services settings.") . "\n\n" . $Gettext->get("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		} 
 			# Process unknown errors
 		else {
-			DPS_Error(sprintf($Gettext->get("Unable to connect to the day planner services server (%s). If this problem persists please contact your service provider."), "$Host:$Port"), "Unable to connect to $Host on port $Port: $@");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . "If this problem persists, please contact your service provider", "Unable to connect to $Host on port $Port: $@");
 		}
 		return(undef);
 	}
