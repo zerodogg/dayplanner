@@ -207,6 +207,7 @@ sub SendMail {
 		Subject => "[DPS] " . $Subject,
 		Message => $Message,
 		"X-Mailer" => "dayplanner-services-daemon//Mail::SendMail",
+		"User-Agent" => "dayplanner-services-daemon//Mail::SendMail",
 	);
 	sendmail(%Message) or return($Mail::Sendmail::error);
 	return(undef);
