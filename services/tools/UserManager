@@ -147,6 +147,25 @@ sub DaemonReloadUsers {
 	WaitContinue();
 }
 
+sub DaemonUptime {
+	my $Username = GetInput("Username: ","");
+	my $Password = GetPassword();
+	$DPServices{host} = "localhost";
+	$DPServices{port} = 4435;
+	$DPServices{user} = $Username;
+	$DPServices{pass} = $Password;
+	if(DPS_ConnectHandler()) {
+		my $Reply = DPS_DataSegment("ADMIN UPTIME");
+		DPS_Disconnect();
+		if($Reply eq "REFUSED") {
+			print "Permission denied. This user does not have admin access\n";
+		} else {
+			print "Uptime: $Reply\n";
+		}
+	}
+	WaitContinue();
+}
+
 # Purpose: Print prompt, get input and validate the input
 # Usage: my $Input = GetInput("PROMPT", "VALID_INPUT");
 # 	VALID_INPUT can be [NUMERIC] for nunmeric, a list of characters (not seperated)
@@ -387,8 +406,9 @@ sub MainMenu {
 		print "V - View the user list\n";
 		print "I - View information about a user\n";
 		print "R - Tell the day planner services daemon to reload the userlist\n";
+		print "U - Display the daemon uptime\n";
 		print "Q - Quit and save\n";
-		my $Input = GetInput("Selection: ", "ADECVIQR");
+		my $Input = GetInput("Selection: ", "ADECVIQRU");
 		if($Input =~ /q/i) {
 			WriteData();
 			exit(0);
@@ -406,6 +426,8 @@ sub MainMenu {
 			GetUserInfo();
 		} elsif ($Input =~ /r/i) {
 			DaemonReloadUsers();
+		} elsif ($Input =~ /u/i) {
+			DaemonUptime();
 		}
 	}
 }
