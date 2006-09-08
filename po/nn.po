@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-09-05 13:39+0200\n"
-"PO-Revision-Date: 2006-09-05 13:45+0200\n"
+"POT-Creation-Date: 2006-09-08 09:39+0200\n"
+"PO-Revision-Date: 2006-09-08 09:44+0200\n"
 "Last-Translator: Eskild Hustvedt <zerodogg@skolelinux.no>\n"
 "Language-Team: Norsk nynorsk <i18n-no@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -108,16 +108,17 @@ msgstr "Kobler til"
 #: dayplanner:408 dayplanner:412 dayplanner:416
 #, perl-format
 msgid "Unable to connect to the Day Planner services server (%s)."
-msgstr ""
-"Klarte ikkje koble til tjeneren for dagsplanleggar tjenester (%s)."
+msgstr "Klarte ikkje koble til tjeneren for dagsplanleggar tjenester (%s)."
 
 #: dayplanner:412
 msgid ""
 "The connection was refused by the server. Please verify your Day Planner "
 "services settings."
-msgstr "Tilkoblingen blei nekta av tenaren. Sjekk innstillingane for dagsplanleggar tenesten."
+msgstr ""
+"Tilkoblingen blei nekta av tenaren. Sjekk innstillingane for dagsplanleggar "
+"tenesten."
 
-#: dayplanner:412
+#: dayplanner:412 dayplanner:416
 msgid "If this problem persists, please contact your service provider"
 msgstr "Kontakt levrandøren viss problemet fortsetter."
 
@@ -126,7 +127,9 @@ msgstr "Kontakt levrandøren viss problemet fortsetter."
 msgid ""
 "The day planner services server you are connecting to does not support this "
 "version of day planner (%s)."
-msgstr "Tenaren for dagsplanleggar tenester du koblar deg til støttar ikkje denne versjonen av dagsplanleggaren (%s)."
+msgstr ""
+"Tenaren for dagsplanleggar tenester du koblar deg til støttar ikkje denne "
+"versjonen av dagsplanleggaren (%s)."
 
 #: dayplanner:430
 msgid "The username and/or password is incorrect."
@@ -152,20 +155,24 @@ msgstr "Ein fatal feil oppstod under reparering"
 msgid ""
 "The data corrupted itself during download. You may want to attempt to "
 "synchronize again."
-msgstr "Dataen ble skadet under nedlasting. Du vil kanskje prøva å synkronisera på nytt."
+msgstr ""
+"Dataen ble skadet under nedlasting. Du vil kanskje prøva å synkronisera på "
+"nytt."
 
 #: dayplanner:517
 msgid ""
 "Failed to parse the data recieved. This is a fatal error. Please contact "
 "your service provider"
-msgstr "Klarte ikkje tolke dataen som ble mottatt. Dette er ein fatal feil. Kontakt levrandøren din."
+msgstr ""
+"Klarte ikkje tolke dataen som ble mottatt. Dette er ein fatal feil. Kontakt "
+"levrandøren din."
 
 #: dayplanner:533
 msgid ""
 "The data is corrupt on the services server. The administrator has been "
 "notified about this. If this problem does not go away within a few days, "
 "please contact your services provider"
-msgstr ""
+msgstr "Dataene er skada på dagsplanleggar-tenaren. Administratoren av tenaren har blitt varsla om problemet. Kontakt levrandøren viss problemet ikkje forsvinner innen eit par dagar."
 
 #: dayplanner:539
 msgid "Downloaded data"
@@ -180,7 +187,7 @@ msgid ""
 "Planner.\n"
 "\n"
 "Do you want Day Planner to try to repair this conflict?"
-msgstr ""
+msgstr "Ein feil oppstod under opplasting av dataene dine til dagsplanleggar tenaren.\n\nTenaren har ein anna versjon av dataene. Dette kan bli reparert av dagsplanleggaren.\n\nVil du at dagsplanleggaren skal prøva å reparera konflikten?"
 
 #: dayplanner:583
 msgid "An error ocurred during uploading of the data"
@@ -196,7 +203,9 @@ msgstr "Sending av data mislyktes: %s"
 msgid ""
 "The server did not accept my uploaded data and replied with an unknwown "
 "value: %s"
-msgstr "Tenaren godtok ikkje dataen som ble lasta opp og svarte med ein ukjend verdi: %s"
+msgstr ""
+"Tenaren godtok ikkje dataen som ble lasta opp og svarte med ein ukjend "
+"verdi: %s"
 
 #: dayplanner:646
 msgid "Services"
@@ -212,7 +221,10 @@ msgid ""
 "An error ocurred with the day planner services:\n"
 "\n"
 "%s"
-msgstr "Ein feil oppstod med dagsplanleggar tenestene:\n\n%s"
+msgstr ""
+"Ein feil oppstod med dagsplanleggar tenestene:\n"
+"\n"
+"%s"
 
 #: dayplanner:712
 #, perl-format
