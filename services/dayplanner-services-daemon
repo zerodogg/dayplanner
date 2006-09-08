@@ -610,6 +610,7 @@ GetOptions (
 print "WARNING: This is alpha software. Use at your own risk. See README for more information\n\n";
 
 SetStatus("starting");
+umask(077);
 LoadData();
 OpenSocket();
 MainLoop();
