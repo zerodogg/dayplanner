@@ -41,6 +41,7 @@ my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
 my $Port = 4435;	# The port we listen to. TODO: Add to the config
+my $StartedAt = time();
 
 my %ActiveUsers;	# Currently active users
 my %Clients;		# Hash of current network clients
@@ -477,6 +478,27 @@ sub AdminCommands {
 		IntVerbose("Userlist reloaded");
 		LoadData();
 		return("DONE");
+	} elsif ($Command =~ /^UPTIME/) {
+		my $Uptime = time() - $StartedAt;
+		$Uptime = sprintf("%u", $Uptime / 60);
+		my ($Days, $Hours, $Minutes) = (0,0,0);
+		while ($Uptime > 24 * 60) {
+			$Days++;
+			$Uptime -= 24 * 60;
+		}
+		while ($Uptime > 60) {
+			$Hours++;
+			$Uptime -= 60;
+		}
+		$Minutes = $Uptime;
+		my $UptimeString = $Days ? "$Days days " : "" . 
+		$Hours ? "$Hours hours " : "" . 
+		$Minutes ? "$Minutes minutes" : "";
+		unless(length($UptimeString)) {
+			$UptimeString = "Less than one minute";
+		}
+		IntVerbose("Uptime requested ($UptimeString)");
+		return($UptimeString);
 	}
 	return("ERR UNKNOWN_COMMAND");
 }
