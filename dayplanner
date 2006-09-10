@@ -3202,7 +3202,7 @@ sub PopulateUpcomingEvents {
 			}
 		}
 		unless($HasEvents) {
-			$h->{text} .= $Gettext->get("(nothing)");
+			$h->{text} .= "\n" . $Gettext->get("(nothing)");
 			$h->{noevents} = 1;
 		} else {
 			$HasUpcoming = 1;
