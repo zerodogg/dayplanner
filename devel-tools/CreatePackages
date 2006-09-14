@@ -98,11 +98,12 @@ unless(-e "$OrigDir/packages") {
 }
 
 chdir($tempdir) or die "Unable to chdir to $tempdir: $!\n";
+mkpath("$tempdir/dayplanner-$DPVersion/");
 
 print "Building tarball...\n";
 # Copy the files
 print " Copying files...";
-if (system("cp -r $OrigDir $tempdir/dayplanner-$DPVersion/")) {
+if (system("cp -r $OrigDir/* $tempdir/dayplanner-$DPVersion/ && cp -r $OrigDir/.svn $tempdir/dayplanner-$DPVersion/")) {
 	die "failed\n";
 }
 print "done\n";
@@ -115,6 +116,7 @@ find(sub {
 	return if $File::Find::name =~ m#/\.svn#;
 	if(-d $File::Find::name) {
 		return if $File::Find::name eq $tempdir;
+		return if $File::Find::name eq "$tempdir/dayplanner-$DPVersion";
 		unless(-d "$File::Find::name/.svn") {
 			push(@RMDirs, $File::Find::name);
 		}
