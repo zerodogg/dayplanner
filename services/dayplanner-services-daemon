@@ -18,6 +18,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 # TODO: Maybe we should get -T enabled
+# TODO: Implement a socket file of which the services daemon can be controlled
+# 	through (nonpassworded access to ADMIN commands)
 
 use strict;
 use warnings;
