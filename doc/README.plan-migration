@@ -1,3 +1,7 @@
+Plan to Day Planner migration notes
+$Id$
+-----------------------------------
+
 The conversion between the plan data format and the day planner data format is lossy.
 This means that you can loose data. The current limitations are:
 - It doesn't accept recurring appointments. That means that "repeat until", "repeat forever" and
@@ -6,9 +10,9 @@ This means that you can loose data. The current limitations are:
 	NOTE: Recurring appointments that reoccur once a year is NOT lost
 - It doesn't accept scripts that are to be run. This is because day planner does not support
 	this feature, and probably won't do so any time soon.
-- Warning times are lost. The feature isn't present in day planner yet
-- The holiday file is ignored as day planner doesn't support the format of the holiday file
-	yet.
+- Warning times are lost. Day Planner implements this differently from plan, and
+	the plan way can not be layered upon the day planner way.
+- The holiday file is ignored.
 - All colour coding is lost, this is a plan-specific feature not present in day planner.
 
 What it DOES support is:
