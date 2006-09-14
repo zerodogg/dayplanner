@@ -1,0 +1,8 @@
+Day Planner-specific environment variables
+$Id$
+------------------------------------------
+
+DP_DISABLE_SERVICES
+			Disables the DPS if set to 1
+
+vim: set tw=70 autoindent :
