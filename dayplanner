@@ -4661,20 +4661,12 @@ sub DrawMainWindow {
 	$Toolbar->show();
 
 	# Edit button
-	$ToolbarEditButton = Gtk2::MenuToolButton->new_from_stock('gtk-edit');
+	#
+	#
+	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
 	$ToolbarEditButton->show();
-
-	my @EditMenuItems = (
-		[ "/$DeleteStock",	undef,		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
-	);
-		
-	my $EditMenuIF = Gtk2::ItemFactory->new ("Gtk2::Menu","<main>");
-	$EditMenuIF->create_items (undef, @EditMenuItems);
-	my $EditMenuWidget = $EditMenuIF->get_widget("<main>");
-	$EditMenuWidget->show();
-	$ToolbarEditButton->set_menu($EditMenuWidget);
 	
 	# Add button
 	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
