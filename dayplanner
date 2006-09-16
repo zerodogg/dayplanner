@@ -2392,6 +2392,17 @@ sub iCal_GetSafe {
 	return($Data);
 }
 
+# Purpose: Removes escaping of iCalendar entries
+# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
+sub iCal_UnSafe {
+	my $Data = $_[0];
+	$Data =~ s/\\\\/\\/g;
+	$Data =~ s/\\,/,/g;
+	$Data =~ s/\\;/;/g;
+	$Data =~ s/\\n/\n/g;
+	return($Data);
+}
+
 # Purpose: Get a unique ID for an event
 # Usage: print $TARGET iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
 sub iCal_UID {
@@ -2486,9 +2497,31 @@ sub iCal_LoadFile {
 	my $LastStructure;
 	my $LastName = undef;
 	my $CurrentStructure;
-	open(my $ICALENDAR, "<", $File);
+	my @FileContents;
+	# If $File is a ref...
+	if(ref($File)) {
+		if(ref($File) eq "ARRAY") {
+			# All is well.
+			@FileContents = @{$File};
+		} else {
+			# Nothing is well, bug!
+			DPIntWarn("iCal_LoadFile: supplied reference is not an ARRAYREF!");
+			# Return an empty anonymous array
+			return([]);
+		}
+	}
+	# It isn't
+	else {
+		open(my $ICALENDAR, "<", $File) or do {
+			DPIntWarn("iCal_LoadFile: Unable to open $File for reading: $!");
+			# Return an empty anonymous array
+			return([]);
+		};
+		@FileContents = <$ICALENDAR>;
+		close($ICALENDAR);
+	}
 
-	while(<$ICALENDAR>) {
+	foreach(@FileContents) {
 		s/\r//;
 		chomp;
 		if (s/^\s//) {
@@ -2508,19 +2541,7 @@ sub iCal_LoadFile {
 			$iCalendarStructures[$CurrentStructure]{$Name} = iCal_UnSafe($Value);
 		}
 	}
-	close($ICALENDAR);
 	return(\@iCalendarStructures);
-}
-
-# Purpose: Removes escaping of iCalendar entries
-# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
-sub iCal_UnSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\\\/\\/g;
-	$Data =~ s/\\,/,/g;
-	$Data =~ s/\\;/;/g;
-	$Data =~ s/\\n/\n/g;
-	return($Data);
 }
 
 # Purpose: Imports files in the iCalendar format into day planner
