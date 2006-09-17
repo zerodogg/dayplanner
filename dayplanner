@@ -2415,7 +2415,7 @@ sub iCal_UID {
 }
 
 # Purpose: Export the day planner data to a file in the iCalendar format
-# Usage: iCal_Exporter(FILE, OnlyBirthdays?);
+# Usage: iCal_Exporter(FILE, OnlyBirthdays?, Don'tWriteFile?);
 sub iCal_Exporter {
 	my $File = $_[0];
 	my $BirthdaysOnly = $_[1];
@@ -2428,9 +2428,9 @@ sub iCal_Exporter {
 	print $TARGET "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
 
 	# Begin exporting birthdays
-	foreach my $Month (keys(%BirthdayContents)) {
-		foreach my $Day (keys(%{$BirthdayContents{$Month}})) {
-				foreach my $Name (keys(%{$BirthdayContents{$Month}{$Day}})) {
+	foreach my $Month (sort keys(%BirthdayContents)) {
+		foreach my $Day (sort keys(%{$BirthdayContents{$Month}})) {
+				foreach my $Name (sort keys(%{$BirthdayContents{$Month}{$Day}})) {
 					$Month = AppendZero($Month);
 					$Day = AppendZero($Day);
 					print $TARGET "BEGIN:VEVENT\r\n";
