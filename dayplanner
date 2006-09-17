@@ -2407,7 +2407,11 @@ sub iCal_UnSafe {
 # Usage: print $TARGET iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
 sub iCal_UID {
 	chomp(@_);
-	return("UID:dayplanner-" . time() . encode_base64($_[0],"") . encode_base64($_[1],"") . "\r\n");
+	if($DPServices{StaticUID}) {
+		return("UID:dayplanner-" . encode_base64($_[0], "") . "\r\n");
+	} else {
+		return("UID:dayplanner-" . time() . encode_base64($_[0],"") . encode_base64($_[1],"") . "\r\n");
+	}
 }
 
 # Purpose: Export the day planner data to a file in the iCalendar format
