@@ -553,9 +553,12 @@ sub DPS_GetData {
 # Usage: DPS_SendData();
 sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
-	return unless DPS_Connect();
+	return if not DPS_Connect();
 	DPS_Status("Sending data",0.5);
-	my ($SendData, $RawMD5) = DPF_GetData(0,0,1,1,1);
+	# Force UIDs in the iCalendar file to be static (less random)
+	$DPServices{StaticUID} = 1;
+	my $SendData = encode_base64(iCal_Exporter(undef, 0, 1));
+	$DPServices{StaticUID} = 0;
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
@@ -4848,6 +4851,7 @@ GetOptions (
 	'exportics_dps=s' => sub {
 		$DPServices{StaticUID} = 1;
 		CLI_Export(@_);
+		$DPServices{StaticUID} = 0;
 	},
 	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
