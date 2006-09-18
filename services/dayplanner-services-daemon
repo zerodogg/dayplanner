@@ -407,8 +407,9 @@ sub CommandHandler {
 	# API Level
 	if($Command =~ /^APILEVEL/) {
 		my $API = $Command;
-		$API =~ s/^APILEVEL\s+(\d+).*$/$1/;
+		$API =~ s/^APILEVEL\s+(\S*).*$/$1/;
 		unless($API eq "0") {
+			IntVerbose("APILEVEL mismatch from $Handle (got $API)");
 			return("ERR Unsupported");
 		} else {
 			$Clients{$Handle}{APIOK} = 1;
@@ -602,7 +603,7 @@ sub MainLoop {
 				if ($Command) {
 					chomp($Command);
 					my $Reply;
-					if($Clients{$Handle}{Admin} == 1) {
+					if(defined($Clients{$Handle}{Admin}) and $Clients{$Handle}{Admin} == 1) {
 						$Reply = AdminCommands($Command, $Handle);
 					} else {
 						$Reply = CommandHandler($Command, $Handle);
