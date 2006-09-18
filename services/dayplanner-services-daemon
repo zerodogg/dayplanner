@@ -545,7 +545,7 @@ sub OpenSocket {
 					LocalPort => $ListenPort,
 					Listen	=> 5,
 					Timeout => 15,		# We can't really wait longer as other users might want to connect
-			) or die "Unable to create a new socket: $@\n";
+			) or die "Unable to create a new socket on $ListenPort: $@\n";
 	$Servers{$NewServer} = 1;
 	# Add the server to the connection selection object
 	$ConnectionSelect->add($NewServer);
@@ -559,7 +559,7 @@ sub OpenLocalSocket {
 		Local	=> $Path,
 		Type	=> SOCK_STREAM,
 		Listen	=> 5,
-	) or die("Unable to create the local admin socket: $@ ($!)\n");
+	) or die("Unable to create the local admin socket on $Path: $@ ($!)\n");
 	$Servers{$AdminSocket} = 1;
 	# Add the server to the connection selection object
 	$ConnectionSelect->add($AdminSocket);
