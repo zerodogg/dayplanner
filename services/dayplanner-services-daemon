@@ -81,6 +81,8 @@ $SIG{INT} = sub {
 	foreach(keys(%Servers)) {
 		close($_);
 	}
+	close("$Config{DataPath}/adminsocket");
+	unlink("$Config{DataPath}/adminsocket");
 	print "Shutdown by SIG$_[0]\n";
 	exit(0);
 };
