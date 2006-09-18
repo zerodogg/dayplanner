@@ -2404,7 +2404,7 @@ sub iCal_UnSafe {
 }
 
 # Purpose: Get a unique ID for an event
-# Usage: print $TARGET iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
+# Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
 sub iCal_UID {
 	chomp(@_);
 	if($DPServices{StaticUID}) {
@@ -2419,13 +2419,10 @@ sub iCal_UID {
 sub iCal_Exporter {
 	my $File = $_[0];
 	my $BirthdaysOnly = $_[1];
-	open(my $TARGET, ">", $File) or do {
-		DPIntWarn("Unable to open $File for writing: $!");
-		DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
-		return(0);
-	};
+	my $DontWriteFile = $_[2];
+	my $iCalendar;
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
-	print $TARGET "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
+	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
 
 	# Begin exporting birthdays
 	foreach my $Month (sort keys(%BirthdayContents)) {
@@ -2433,27 +2430,27 @@ sub iCal_Exporter {
 				foreach my $Name (sort keys(%{$BirthdayContents{$Month}{$Day}})) {
 					$Month = AppendZero($Month);
 					$Day = AppendZero($Day);
-					print $TARGET "BEGIN:VEVENT\r\n";
+					$iCalendar .= "BEGIN:VEVENT\r\n";
 					# The unix epoch starts in 1970 so we put that in here as the start time
 					# for the event (we have no idea when a person was born)
-					print $TARGET "DTSTART:1970$Month${Day}T000000\r\n";
-					print $TARGET "DTEND:1970$Month${Day}T235959\r\n";
+					$iCalendar .= "DTSTART:1970$Month${Day}T000000\r\n";
+					$iCalendar .= "DTEND:1970$Month${Day}T235959\r\n";
 					# Day planner-style recurrance
-					print $TARGET "RRULE:FREQ=YEARLY\r\n";
+					$iCalendar .= "RRULE:FREQ=YEARLY\r\n";
 					# The summary is the name +'s birthday (localized).
-					print $TARGET "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
+					$iCalendar .= "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
 					# X-DP-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
-					print $TARGET "X-DP-BIRTHDAY:TRUE\r\n";
+					$iCalendar .= "X-DP-BIRTHDAY:TRUE\r\n";
 					# If X-DP-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
 					# X-DP-BIRTHDAYNAME instead.
-					print $TARGET "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
+					$iCalendar .= "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
 
 					# Most (maybe all) other calendars will happily ignore X-DP-BIRTHDAY*. It will be
 					# useful for day planner importing though.
 
 					# Get a unique identifier
-					print $TARGET iCal_UID("$Month$Day", $Name);
-					print $TARGET "END:VEVENT\r\n";
+					$iCalendar .= iCal_UID("$Month$Day", $Name);
+					$iCalendar .= "END:VEVENT\r\n";
 				}
 			}
 		}
@@ -2473,23 +2470,33 @@ sub iCal_Exporter {
 						$Hour =~ s/^(\d+):\d+$/$1/;
 						$Minute =~ s/^\d+:(\d+)$/$1/;
 						
-						print $TARGET "BEGIN:VEVENT\r\n";
-						print $TARGET "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
-						print $TARGET "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
-						print $TARGET "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
+						$iCalendar .= "BEGIN:VEVENT\r\n";
+						$iCalendar .= "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
+						$iCalendar .= "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
+						$iCalendar .= "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
 						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-							print $TARGET "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
+							$iCalendar .= "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
 						}
-						print $TARGET iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
-						print $TARGET "END:VEVENT\r\n";
+						$iCalendar .= iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
+						$iCalendar .= "END:VEVENT\r\n";
 
 					}
 				}
 			}
 		}
 	}
-	print $TARGET "END:VCALENDAR\r\n";
-	close($TARGET);
+	$iCalendar .= "END:VCALENDAR\r\n";
+	if($DontWriteFile) {
+		return($iCalendar);
+	} else {
+		open(my $TARGET, ">", $File) or do {
+			DPIntWarn("Unable to open $File for writing: $!");
+			DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
+			return(0);
+		};
+		print $TARGET $iCalendar;
+		close($TARGET);
+	}
 }
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
