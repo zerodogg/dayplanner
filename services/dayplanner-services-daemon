@@ -43,6 +43,7 @@ my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
 my $DropToUID;
+my $AdminSocket;
 my $Port = 4435;	# The port we listen to. TODO: Add to the config
 			# TODO: Make it possible to have multiple ports
 my @Ports;
@@ -70,6 +71,7 @@ my %Config = (
 	AdminMail => 'zerodogg@skolelinux.no',
 	HTMLBase => "./public_html/",
 	HTMLScript => "./GenHTML",
+	Ports => "",	# TODO: Make use of this over $Port
 );
 
 my $RCSRev = '$Id$';
@@ -529,6 +531,8 @@ sub InitNetwork {
 			setuid($DropToUID) or die("Unable to drop priveliges: $!");
 		}
 	}
+	# Open up the local communication unix socket
+	OpenLocalSocket("$Config{DataPath}/adminsocket");
 }
 
 # Purpose: Open a new communication socket on PORT
@@ -541,8 +545,22 @@ sub OpenSocket {
 					Timeout => 15,		# We can't really wait longer as other users might want to connect
 			) or die "Unable to create a new socket: $@\n";
 	$Servers{$NewServer} = 1;
-	# Add the main server
+	# Add the server to the connection selection object
 	$ConnectionSelect->add($NewServer);
+}
+
+# Purpose: Open a local communication socket
+# Usage: OpenLocalSocket(/PATH/);
+sub OpenLocalSocket {
+	my $Path = shift;
+	$AdminSocket = IO::Socket::UNIX->new(
+		Local	=> $Path,
+		Type	=> SOCK_STREAM,
+		Listen	=> 5,
+	) or die("Unable to create the local admin socket: $@ ($!)\n");
+	$Servers{$AdminSocket} = 1;
+	# Add the server to the connection selection object
+	$ConnectionSelect->add($AdminSocket);
 }
 
 # Purpose: Start the main loop
@@ -561,14 +579,19 @@ sub MainLoop {
 			if (defined($Servers{$Handle})) {
 				my $NewClient = $Handle->accept();
 				$ConnectionSelect->add($NewClient);
-				if ($Security{Banned}{$NewClient->peerhost}) {
-					IntDebug("New connection from " . $NewClient->peerhost  . "refused: banned");
-					print $NewClient "BANNED\n";
-					$ConnectionSelect->remove($NewClient);
+				if($Handle eq $AdminSocket) {
+					$Clients{$NewClient}{Admin} = 1;
+					IntDebug("New local admin connection on the admin socket");
 				} else {
-					IntDebug("New connection from " . $NewClient->peerhost . " on $NewClient");
+					if ($Security{Banned}{$NewClient->peerhost}) {
+						IntDebug("New connection from " . $NewClient->peerhost  . "refused: banned");
+						print $NewClient "BANNED\n";
+						$ConnectionSelect->remove($NewClient);
+					} else {
+						IntDebug("New connection from " . $NewClient->peerhost . " on $NewClient");
+					}
 				}
-			} 
+			}
 			# Handle isn't $server, it's an existing connection trying to tell us something
 			else {
 				# What is it trying to tell us?
@@ -576,7 +599,12 @@ sub MainLoop {
 				# If it is defined then it's a command
 				if ($Command) {
 					chomp($Command);
-					my ($Reply) = CommandHandler($Command, $Handle);
+					my $Reply;
+					if($Clients{$Handle}{Admin} == 1) {
+						$Reply = AdminCommands($Command, $Handle);
+					} else {
+						$Reply = CommandHandler($Command, $Handle);
+					}
 					print $Handle "$Reply\n";
 				} 
 				# If it isn't, then it closed the connection
