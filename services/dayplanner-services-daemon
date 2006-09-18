@@ -33,16 +33,20 @@ use Digest::MD5 qw(md5_base64);
 use Data::Dumper;
 use Mail::Sendmail;
 use Sys::Hostname;
-use POSIX qw/cuserid/;
+use POSIX qw/cuserid setuid/;
 
-my $Server;
+#my $Server;
 my $ConnectionSelect;
 my $Shutdown;
 
 my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
+my $DropToUID;
 my $Port = 4435;	# The port we listen to. TODO: Add to the config
+			# TODO: Make it possible to have multiple ports
+my @Ports;
+$Ports[0] = $Port;
 my $StartedAt = time();
 
 my %ActiveUsers;	# Currently active users
@@ -51,6 +55,7 @@ my %Users;		# User list
 my %Security;		# Security specific stuff. For now only handles banning
 			# of specific IP adresses.
 			# TODO: Should be cleaned once every day.
+my %Servers;
 
 # TODO: Not all user levels are fully functional
 # level 0 = EXPIRED - no access at all
@@ -71,7 +76,9 @@ my $RCSRev = '$Id$';
 my $Version = "0.3 ALPHA";
 
 $SIG{INT} = sub {
-	close($Server);
+	foreach(keys(%Servers)) {
+		close($_);
+	}
 	print "Shutdown by SIG$_[0]\n";
 	exit(0);
 };
@@ -130,7 +137,7 @@ sub IntWarn {
 # Purpose: Set the program status
 # Usage: SetStatus(STATUS);
 sub SetStatus {
-	$0 = "dayplanner-services-daemon port $Port [$_[0]]";
+	$0 = "dayplanner-services-daemon [$_[0]]";
 }
 
 # Purpose: Write a configuration file
@@ -505,20 +512,37 @@ sub AdminCommands {
 	return("ERR UNKNOWN_COMMAND");
 }
 
-# Purpose: Open our main communication socket
-# Usage: OpenSocket();
+# Purpose: Create the connection selector and open sockets
+# Usage: InitNetwork();
+sub InitNetwork {
+	# Create a new select handle for reading
+	$ConnectionSelect = IO::Select->new();
+	# Trap SIGPIPE
+	$SIG{PIPE} = \&SigpipeHandler;
+	# Open the sockets
+	foreach my $CurrPort (@Ports) {
+		OpenSocket($CurrPort);
+	}
+	# Drop root privs if needed
+	if ($> == 0 or $< == 0) {
+		if ($DropToUID) {
+			setuid($DropToUID) or die("Unable to drop priveliges: $!");
+		}
+	}
+}
+
+# Purpose: Open a new communication socket on PORT
+# Usage: OpenSocket(PORT);
 sub OpenSocket {
-	$Server = IO::Socket::INET->new(
-					LocalPort => $Port,
+	my $ListenPort = shift;
+	my $NewServer = IO::Socket::INET->new(
+					LocalPort => $ListenPort,
 					Listen	=> 5,
 					Timeout => 15,		# We can't really wait longer as other users might want to connect
 			) or die "Unable to create a new socket: $@\n";
-	# Trap SIGPIPE
-	$SIG{PIPE} = \&SigpipeHandler;
-	# Create a new select handle for reading
-	$ConnectionSelect = IO::Select->new();
+	$Servers{$NewServer} = 1;
 	# Add the main server
-	$ConnectionSelect->add($Server);
+	$ConnectionSelect->add($NewServer);
 }
 
 # Purpose: Start the main loop
@@ -534,8 +558,8 @@ sub MainLoop {
 		# For each handle...
 		foreach my $Handle (@Ready_Handles) {
 			# If the handle is $server then it's a new connection
-			if ($Handle eq $Server) {
-				my $NewClient = $Server->accept();
+			if (defined($Servers{$Handle})) {
+				my $NewClient = $Handle->accept();
 				$ConnectionSelect->add($NewClient);
 				if ($Security{Banned}{$NewClient->peerhost}) {
 					IntDebug("New connection from " . $NewClient->peerhost  . "refused: banned");
@@ -580,7 +604,8 @@ sub MainLoop {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 GetOptions (
-	'port|p=i' => \$Port,
+	'port|p=i' => \@Ports,
+	'switchuid=i' => \$DropToUID,
 	'help|h' => sub {
 		print "Day planner services daemon version $Version\n\n";
 		PrintHelp("-d", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
@@ -614,5 +639,5 @@ print "WARNING: This is alpha software. Use at your own risk. See README for mor
 SetStatus("starting");
 umask(077);
 LoadData();
-OpenSocket();
+InitNetwork();
 MainLoop();
