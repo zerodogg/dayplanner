@@ -519,6 +519,8 @@ sub DPS_GetData {
 				my @DataArray;
 				push(@DataArray, $_) foreach(split(/\r\n/,$MainData));
 				$MainData = undef;
+				%BirthdayContents = ();
+				%CalendarContents = ();
 				iCal_LoadData(\@DataArray);
 			}
 		}
@@ -552,7 +554,7 @@ sub DPS_SendData {
 	DPS_Status("Sending data",0.5);
 	# Force UIDs in the iCalendar file to be static (less random)
 	$DPServices{StaticUID} = 1;
-	my $SendData = encode_base64(iCal_Exporter(undef, 0, 1));
+	my $SendData = encode_base64(iCal_Exporter(undef, 0, 1),"");
 	$DPServices{StaticUID} = 0;
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
@@ -2557,6 +2559,7 @@ sub iCal_LoadData {
 # Usage: iCal_Importer(FILE OR ARRAYREF);
 sub iCal_Importer {
 	my $Data = iCal_LoadData($_[0]);
+	my @Conflicts;
 	return(undef) unless(defined($Data));
 	foreach(0..scalar(@{$Data})) {
 		my $Current = $Data->[$_];
@@ -2615,12 +2618,17 @@ sub iCal_Importer {
 		}
 		my $ConflictText;
 		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
+		push(@Conflicts, $ConflictText);
 		if($Time) {
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
 		}
 	}
-	return(1);
+	if(@Conflicts) {
+		return(@Conflicts);
+	} else {
+		return(1);
+	}
 }
 
 # Purpose: Parse an iCalendar date-time
