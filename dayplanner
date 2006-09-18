@@ -1674,14 +1674,14 @@ sub Import_ResolveConflict {
 sub CLI_Export {
 	my($Type,$Target) = @_;
 	MainInit();
-	if($Type =~ /(ical|dpf)/) {
+	if($Type =~ /(ical|ics_dps|dpf)/) {
 		unless(-w dirname($Target)) {
 			die("Unable to write to " . dirname($Target) . "\n");
 		}
 		if(-d $Target) {
 			die("$Target: is a directory\n");
 		}
-		if($Type =~ /ical/) {
+		if($Type =~ /(ical|ics_dps)/) {
 			if(iCal_Exporter($Target)) {
 				print "iCalendar data written to $Target\n";
 			}
@@ -2143,9 +2143,9 @@ sub PlanConvert_ProcessFile {
 # Purpose: Start converting plan
 # Usage: MigratePlan(IS_FIRST_TEST?);
 sub MigratePlan {
+	return(1) unless($Gtk2Init);
 	my $IsFirstTest = $_[0];
 	my @MigrateFiles;
-	
 	
 	foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
 		if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
@@ -4838,6 +4838,10 @@ GetOptions (
 	},
 	's|shutdaemon' => \$ShutdownDaemon,
 	'exportical|exportics=s' => \&CLI_Export,
+	'exportics_dps=s' => sub {
+		$DPServices{StaticUID} = 1;
+		CLI_Export(@_);
+	},
 	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
