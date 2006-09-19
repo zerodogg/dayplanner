@@ -497,7 +497,7 @@ sub DPS_GetData {
 	DPS_Status("Downloading data",0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# If the MD5 on the server is identical to ours we don't need to download the data
-	if(not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+	if(defined($InternalConfig{DPS_LastMD5}) and not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
 		DPS_Disconnect();
 		DPS_Status("Done", 1);
 		return(1);
@@ -510,7 +510,9 @@ sub DPS_GetData {
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
-		return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
+		if(defined($InternalConfig{DPS_LastMD5})) {
+			return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
+		}
 		unless(md5_base64($MainData) eq $MD5) {
 			DPS_Error($Gettext->get("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
@@ -521,7 +523,8 @@ sub DPS_GetData {
 				$MainData = undef;
 				%BirthdayContents = ();
 				%CalendarContents = ();
-				iCal_LoadData(\@DataArray);
+				iCal_Importer(\@DataArray);
+				UpdatedData();
 			}
 		}
 	} else {
@@ -563,16 +566,18 @@ sub DPS_SendData {
 	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
 		DPS_Disconnect();
 	} else {
-	       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
-		if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
-			DPS_Disconnect();
-			if(DPQuestion($Gettext->get("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?"))) {
-				return(0) unless DPS_RepairData();
-				$InternalConfig{DPS_LastMD5} = $ServerMD5;
-				return(0) unless DPS_Connect();
-			} else {
-				DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
-				return(0);
+		if (defined($InternalConfig{DPS_LastMD5}) and length($InternalConfig{DPS_LastMD5})) {
+		       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
+			if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+				DPS_Disconnect();
+				if(DPQuestion($Gettext->get("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?"))) {
+					return(0) unless DPS_RepairData();
+					$InternalConfig{DPS_LastMD5} = $ServerMD5;
+					return(0) unless DPS_Connect();
+				} else {
+					DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
+					return(0);
+				}
 			}
 		}
 		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
@@ -580,8 +585,8 @@ sub DPS_SendData {
 		DPS_Disconnect();
 		unless($Reply eq "OK") {
 			# TODO: These need cleaning
-			if($Reply =~ s/^ERR\s+//) {
-				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), sprintf($Gettext->get("Sending data failed: %s", $Reply)));
+			if($Reply =~ s/^ERR\s+(.*)$/$1/) {
+				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), sprintf($Gettext->get("Sending data failed: %s"), $Reply));
 			} else {
 				# Sending the data failed
 				DPS_Error(sprintf($Gettext->get("The server did not accept my uploaded data and replied with an unknwown value: %s"), $Reply));
@@ -2506,9 +2511,10 @@ sub iCal_LoadData {
 	my $File = $_[0];
 	my @iCalendarStructures;
 	my $LastStructure;
-	my $LastName = undef;
+	my $LastName;
 	my $CurrentStructure;
 	my @FileContents;
+	my $FileBegun;
 	# If $File is a ref...
 	if(ref($File)) {
 		if(ref($File) eq "ARRAY") {
@@ -2535,6 +2541,13 @@ sub iCal_LoadData {
 	foreach(@FileContents) {
 		s/\r//;
 		chomp;
+		unless($FileBegun) {
+			if (/^BEGIN:VCALENDAR/) {
+				$FileBegun = 1;
+			} else {
+				next;
+			}
+		}
 		if (s/^\s//) {
 			$iCalendarStructures[$CurrentStructure]{$LastName} .= $_;
 		} elsif(/^END/) {
@@ -2551,6 +2564,9 @@ sub iCal_LoadData {
 			$LastName = $Name;
 			$iCalendarStructures[$CurrentStructure]{$Name} = iCal_UnSafe($Value);
 		}
+	}
+	unless($FileBegun) {
+		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR. Nothing has been imported!");
 	}
 	return(\@iCalendarStructures);
 }
