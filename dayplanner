@@ -468,14 +468,16 @@ sub DPS_DataSegment {
 # Usage: DPS_RepairData();
 # 	returns true on success, false on failure
 sub DPS_RepairData {
-	DPInfo("Not implemented for iCalendar");
-	return(0);
-	# TODO: Rewrite for the iCalendar format.
 	my $ProgressWin = DPCreateProgressWin($Gettext->get("Repairing"),$Gettext->get("Getting data"),0);
 	my $RawData = DPS_Perform("GET_RAW");
 	if(defined($RawData)) {
 		$ProgressWin->{ProgressBar}->set_fraction(0.4);
 		$ProgressWin->{ProgressBar}->set_text($Gettext->get("Parsing and repairing"));
+		my @DataArray;
+		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
+		$RawData = undef;
+		iCal_Importer(\@DataArray);
+		UpdatedData();
 		my ($PossibleCorruption,@Conflicts) = DPF_ParseData($RawData);
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
@@ -963,6 +965,7 @@ sub SaveDatafile {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
+	# TODO: Migrate to non-pulsating progressbar
 	my($ProgressWin, $ProgressBar);
 	if($Gtk2Init) {
 		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 1);
@@ -974,6 +977,7 @@ sub SaveMainData {
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
 		$Return	= 'SAVE_FAILED';
 	}
+	# TODO: No longer write special.dpd
 	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
@@ -3152,10 +3156,13 @@ sub Gtk2Init {
 # 	Returns a hashref with the following keys:
 # 		Window = The window
 # 		ProgressBar = The progress bar
+# TODO: Migrate all Gtk2::ProgressBars to DPCreateProgressWin
 sub DPCreateProgressWin {
 	my ($Name, $Text, $PulsateMode) = @_;
 	my %ProgressHash;
 	$ProgressHash{Window} = Gtk2::Window->new();
+	$ProgressHash{Window}->set_skip_taskbar_hint(1);
+	$ProgressHash{Window}->set_skip_pager_hint(1);
 	if(defined($Name)) {
 		$ProgressHash{Window}->set_title($Name);
 	}
