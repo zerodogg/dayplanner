@@ -4879,10 +4879,16 @@ GetOptions (
 		CLI_Export(@_);
 		$DPServices{StaticUID} = 0;
 	},
-	'exportdpf=s' => \&CLI_Export,
+	'exportdpf=s' => sub {
+		DPIntWarn("The Day Planner data format is deprecated and will be removed in a future release. You should use iCalendar instead");
+	       	CLI_Export(@_);
+	},
 	'exporthtml=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
-	'importdpf=s' => \&CLI_Import,
+	'importdpf=s' => sub {
+		DPIntWarn("The Day Planner data format is deprecated and will be removed in a future release. You should use iCalendar instead");
+		CLI_Import(@_);
+	},
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
