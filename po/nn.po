@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-09-04 20:27+0200\n"
+"POT-Creation-Date: 2006-09-15 23:26+0200\n"
 "PO-Revision-Date: 2006-09-08 20:20+0200\n"
 "Last-Translator: Gaute Hvoslef Kvalnes <gaute@verdsveven.com>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -82,9 +82,12 @@ msgid ""
 "Running two instances of day planner can be forced. However that is not "
 "recommended as it may lead to data loss or corruption."
 msgstr ""
-"Ein annan dagsplanleggar køyrer allereie. Avslutt dagsplanleggaren som allereie køyrer før du fortsetter.\n"
+"Ein annan dagsplanleggar køyrer allereie. Avslutt dagsplanleggaren som "
+"allereie køyrer før du fortsetter.\n"
 "\n"
-"Du kan tvinge dagsplanleggaren til å køyra to instansar av programmet på ein gong. Dette er ikkje tilrådd, for det kan enda opp med tap eller skade av data."
+"Du kan tvinge dagsplanleggaren til å køyra to instansar av programmet på ein "
+"gong. Dette er ikkje tilrådd, for det kan enda opp med tap eller skade av "
+"data."
 
 #: dayplanner:329
 msgid "_Force"
@@ -94,7 +97,9 @@ msgstr "_Tving"
 msgid ""
 "Unable to force the start. This is likely due to a bug in the program, "
 "please contact the day planner developers."
-msgstr "Klarte ikkje å tvinga oppstart. Dette kjem truleg av ein feil i programmet. Ta kontakt med utviklarane av dagsplanleggaren."
+msgstr ""
+"Klarte ikkje å tvinga oppstart. Dette kjem truleg av ein feil i programmet. "
+"Ta kontakt med utviklarane av dagsplanleggaren."
 
 #: dayplanner:710
 #, perl-format
@@ -137,9 +142,13 @@ msgid ""
 msgstr ""
 "<b><big>Ein feil oppstod under lagringen av hendelsane.</big></b>\n"
 "\n"
-"Det verkar som om ein annan instans av dagsplanleggaren køyrer. Dette kan føra til tap av data.\n"
+"Det verkar som om ein annan instans av dagsplanleggaren køyrer. Dette kan "
+"føra til tap av data.\n"
 "\n"
-"La denne instansen av dagsplanleggaren vera open til du fiksar problemet med den andre instansen av dagsplanleggaren for å unngå å mista data. Lukkar du denne instansen av dagsplanleggaren før han får lagra endringane du har gjort, vil data bli tapt."
+"La denne instansen av dagsplanleggaren vera open til du fiksar problemet med "
+"den andre instansen av dagsplanleggaren for å unngå å mista data. Lukkar du "
+"denne instansen av dagsplanleggaren før han får lagra endringane du har "
+"gjort, vil data bli tapt."
 
 #: dayplanner:1661
 #, perl-format
@@ -264,7 +273,9 @@ msgid ""
 msgstr ""
 "Velkommen til dagsplanleggaren!\n"
 "\n"
-"Dagsplanleggaren har oppdaga eksisterande kalenderdata frå «plan». Vil du at dagsplanleggaren skal importera desse dataa? Eksisterande «plan»-data vil forbli intakt."
+"Dagsplanleggaren har oppdaga eksisterande kalenderdata frå «plan». Vil du at "
+"dagsplanleggaren skal importera desse dataa? Eksisterande «plan»-data vil "
+"forbli intakt."
 
 #: dayplanner:2179
 msgid "Migrating..."
@@ -284,7 +295,9 @@ msgid ""
 msgstr ""
 "Data frå «plan» har blitt importert til dagsplanleggaren.\n"
 "\n"
-"Merk at ikkje alle av plan sine avanserte funksjonar er støtta av dagsplanleggaren, så det kan henda at noko data (hendingar som gjentek seg sjølv og skript) ikkje har blitt heilt importert."
+"Merk at ikkje alle av plan sine avanserte funksjonar er støtta av "
+"dagsplanleggaren, så det kan henda at noko data (hendingar som gjentek seg "
+"sjølv og skript) ikkje har blitt heilt importert."
 
 #: dayplanner:2212
 msgid "Day planner was unable to detect any plan data-files."
@@ -337,7 +350,9 @@ msgstr "%s ser ikkje ut til å vera ei datafil for dagsplanleggaren"
 msgid ""
 "%s contains version %s of the day planner data format. This version of day "
 "planner only supports version 1"
-msgstr "%s inneheld versjon %s av dataformatet til dagsplanleggaren. Denne versjonen av dagsplanleggaren støttar berre versjon 1."
+msgstr ""
+"%s inneheld versjon %s av dataformatet til dagsplanleggaren. Denne versjonen "
+"av dagsplanleggaren støttar berre versjon 1."
 
 #: dayplanner:2817
 msgid ""
@@ -349,7 +364,8 @@ msgid ""
 msgstr ""
 "Konfliktar blei funne. Dagsplanleggaren har prøvd å fiksa konfliktane.\n"
 "\n"
-"Nokre av dataa kan ha blitt feil importerte eller ikkje importerte. Sjå detaljene nedanfor for informasjon om konfliktane."
+"Nokre av dataa kan ha blitt feil importerte eller ikkje importerte. Sjå "
+"detaljene nedanfor for informasjon om konfliktane."
 
 #: dayplanner:2834
 msgid "Import data"
@@ -396,7 +412,8 @@ msgid ""
 msgstr ""
 "Dagsplanleggaren har importert iCalendar-dataa så godt som han kan.\n"
 "\n"
-"Merk at dagsplanleggaren ikkje støttar alle funksjonane i iCalendar-formatet, så noko data kan ha gått tapt."
+"Merk at dagsplanleggaren ikkje støttar alle funksjonane i iCalendar-"
+"formatet, så noko data kan ha gått tapt."
 
 #: dayplanner:2944
 msgid "Export data"
@@ -433,7 +450,10 @@ msgid ""
 "There are already files in the directory \"%s\". If you continue any "
 "existing exported day planner data in that directory will be overwritten. Do "
 "you want to continue?"
-msgstr "Det er allereie filer i mappa «%s». Viss du held fram, vil eksisterande data eksportert av dagsplanleggaren til den mappa bli overskrivne. Vil du halda fram?"
+msgstr ""
+"Det er allereie filer i mappa «%s». Viss du held fram, vil eksisterande data "
+"eksportert av dagsplanleggaren til den mappa bli overskrivne. Vil du halda "
+"fram?"
 
 #: dayplanner:3049
 #, perl-format
@@ -512,9 +532,13 @@ msgid ""
 "From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-"
 "daemon\" in the \"Startup Command\" field and press the \"OK\" button."
 msgstr ""
-"Eit problem oppstod under oppsett av den automatiske oppstarten av dagsplanleggar-påminnaren.\n"
+"Eit problem oppstod under oppsett av den automatiske oppstarten av "
+"dagsplanleggar-påminnaren.\n"
 "\n"
-"Set han opp manuelt ved å velja: «Meny -> Skrivebordsmiljø -> Brukarval -> Økter». I vindauget som kjem opp vel du «Oppstartsprogram» og trykkjer på «Legg til». Skriv inn «dayplanner-daemon» i feltet «oppstartskommando» og trykk «OK». Automatisk oppstart av påminnaren er no sett opp."
+"Set han opp manuelt ved å velja: «Meny -> Skrivebordsmiljø -> Brukarval -> "
+"Økter». I vindauget som kjem opp vel du «Oppstartsprogram» og trykkjer på "
+"«Legg til». Skriv inn «dayplanner-daemon» i feltet «oppstartskommando» og "
+"trykk «OK». Automatisk oppstart av påminnaren er no sett opp."
 
 #: dayplanner:3340
 msgid ""
@@ -595,7 +619,10 @@ msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
 "directly from within day planner. In order to change these events use a text "
 "editor and edit the file %s."
-msgstr "Dette er ei førehandsvald merkedagshending. Denne hendinga kan ikkje redigerast i dagsplanleggaren. For å endra desse hendingane må du endra fila %s i eit skriveprogram."
+msgstr ""
+"Dette er ei førehandsvald merkedagshending. Denne hendinga kan ikkje "
+"redigerast i dagsplanleggaren. For å endra desse hendingane må du endra fila "
+"%s i eit skriveprogram."
 
 #: dayplanner:3936
 msgid "Discard changes"
@@ -640,7 +667,9 @@ msgstr ""
 
 #: dayplanner:4149
 msgid "There is no summary for this event. Please enter a summary."
-msgstr "Du har ikkje skrive inn eit samandrag for denne hendinga. Skriv inn eit samandrag."
+msgstr ""
+"Du har ikkje skrive inn eit samandrag for denne hendinga. Skriv inn eit "
+"samandrag."
 
 #: dayplanner:4192 dayplanner:4198
 #, perl-format
@@ -679,7 +708,9 @@ msgstr "Utvid «%s» som standard"
 msgid ""
 "Check this if you want the \"%s\" to be expanded by default in the add and "
 "edit event dialog"
-msgstr "Vel dette viss du vil at «%s» skal vera utvida som standard i dialogvindauga for tillegging og redigering av hendingar"
+msgstr ""
+"Vel dette viss du vil at «%s» skal vera utvida som standard i dialogvindauga "
+"for tillegging og redigering av hendingar"
 
 #: dayplanner:4357
 msgid "General events"
@@ -741,17 +772,19 @@ msgstr "_Rediger denne hendinga"
 msgid "_Delete this event"
 msgstr "_Slett denne hendinga"
 
-#: dayplanner:4832 dayplanner:4833
+#: dayplanner:4822 dayplanner:4823
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Miljøvariabelen %s er ikkje sett! Kan ikkje halda fram.\n"
 
-#: dayplanner:4837 dayplanner:4839
+#: dayplanner:4827 dayplanner:4829
 #, perl-format
 msgid ""
 "The home directory of the user %s doesn't exist at %s! Please verify that "
 "the environment variable %s is properly set. Unable to continue\n"
-msgstr "Heimemappa til brukaren %s finst ikkje (%s). Sjekk at miljøvariabelen %s er sett. Kan ikkje halda fram.\n"
+msgstr ""
+"Heimemappa til brukaren %s finst ikkje (%s). Sjekk at miljøvariabelen %s er "
+"sett. Kan ikkje halda fram.\n"
 
 #: dayplanner-notifier:259 dayplanner-notifier:343
 #, perl-format
@@ -787,4 +820,3 @@ msgstr "Dagsplanleggar-hending"
 #: dayplanner-notifier:276
 msgid "Postpone"
 msgstr "Utsett"
-

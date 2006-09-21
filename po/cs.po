@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-09-04 20:52+0200\n"
+"POT-Creation-Date: 2006-09-15 23:26+0200\n"
 "PO-Revision-Date: 2006-08-06 17:11+0200\n"
 "Last-Translator: Vlastimil Ott <vlastimil@e-ott.info>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -742,12 +742,12 @@ msgstr "_Upravit událost"
 msgid "_Delete this event"
 msgstr "_Smazat tuto událost"
 
-#: dayplanner:4832 dayplanner:4833
+#: dayplanner:4822 dayplanner:4823
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Promìnná prostøedí %s není nastavena! Nelze pokraèovat\n"
 
-#: dayplanner:4837 dayplanner:4839
+#: dayplanner:4827 dayplanner:4829
 #, fuzzy, perl-format
 msgid ""
 "The home directory of the user %s doesn't exist at %s! Please verify that "
