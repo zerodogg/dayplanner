@@ -1,4 +1,7 @@
 %changelog
+* Thu Sep 21 2006 Eskild Hustvedt <eskild@mandriva.org> 0.3-1mdk
+- New version 0.3 (see NEWS for changelog)
+
 * Sun Aug 06 2006 Eskild Hustvedt <eskild@mandriva.org> 0.2-1mdv
 - New version 0.2 (see NEWS for changelog)
 
