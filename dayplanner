@@ -3019,9 +3019,9 @@ sub ExportData {
 	$ExportVBox->pack_start($ExportHBox,0,0,0);
 
 	# Encryption checkbox
-	my $EncryptionCheckbox = Gtk2::CheckButton->new($Gettext->get("Password protect the file (encryption)"));
-	$EncryptionCheckbox->show();
-	$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
+	#my $EncryptionCheckbox = Gtk2::CheckButton->new($Gettext->get("Password protect the file (encryption)"));
+	#$EncryptionCheckbox->show();
+	#$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
 	# Only birthdays checkbox
 	my $BirthdaysOnlyCheckbox = Gtk2::CheckButton->new($Gettext->get("Only export birthdays"));
 	$BirthdaysOnlyCheckbox->show();
@@ -3035,21 +3035,20 @@ sub ExportData {
 	$ExportHBox->pack_start($FiletypeLabel,0,0,0);
 	# Combo selector
 	my $Export_Combo = Gtk2::ComboBox->new_text;
-	$Export_Combo->insert_text(0, sprintf($Gettext->get('Day planner data format (%s)'), '*.dpf'));
-	$Export_Combo->insert_text(1, 'iCalendar (*.ics)');
-	$Export_Combo->insert_text(2,         $Gettext->get('XHTML (exports to a directory)'));
+	$Export_Combo->insert_text(0, 'iCalendar (*.ics)');
+	$Export_Combo->insert_text(1,         $Gettext->get('XHTML (exports to a directory)'));
 	$ExportHBox->pack_end($Export_Combo,0,0,0);
 	$Export_Combo->show();
 
 	# Handle changed values in the combo box
 	$Export_Combo->signal_connect('changed' => sub {
 		$ActiveIndex = $Export_Combo->get_active();
-		unless($ActiveIndex == 0) {
-			$EncryptionCheckbox->set_sensitive(0);
-		} else {
-			$EncryptionCheckbox->set_sensitive(1);
-		}
-		if($ActiveIndex == 2) {
+		#unless($ActiveIndex == 0) {
+		#	$EncryptionCheckbox->set_sensitive(0);
+		#} else {
+		#	$EncryptionCheckbox->set_sensitive(1);
+		#}
+		if($ActiveIndex == 1) {
 			$BirthdaysOnlyCheckbox->set_sensitive(0);
 			$ExportWindow->set_action('select-folder');
 		} else {
@@ -3057,25 +3056,19 @@ sub ExportData {
 			$ExportWindow->set_action('save');
 		}
 	});
-	$Export_Combo->set_active(1);
+	$Export_Combo->set_active(0);
 
 	while (1) {
 		my $Response = $ExportWindow->run();
 		my $Filename = $ExportWindow->get_filename();
 		if($Response eq 'accept') {
 			my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
-			if($ActiveIndex == 0) {
-				if(PromptOverwrite("$Filename.dpf")) {
-					my $Encrypt = $EncryptionCheckbox->get_active();
-					WriteDayplannerDataFile("$Filename.dpf",$OnlyBirthdays,$Encrypt);
-					last;
-				}
-			} elsif ($ActiveIndex == 1) {
+			if ($ActiveIndex == 0) {
 				if(PromptOverwrite("$Filename.ics")) {
 					iCal_Exporter("$Filename.ics", $OnlyBirthdays);
 					last;
 				}
-			} elsif ($ActiveIndex == 2) {
+			} elsif ($ActiveIndex == 1) {
 				if(PromptOverwrite($Filename, 1)) {
 					HTML_Export($Filename);
 					last;
