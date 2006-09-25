@@ -8,6 +8,7 @@ may be subject to change.
 
 * Version 0.4
 - - - - - - -
+- Write functions for upgrading .holiday files
 - Add events that last the entire day
 - Finish Day Planner services
 - Have a third party look over all strings (in the pot-file) and try to
