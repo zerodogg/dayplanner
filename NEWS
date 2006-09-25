@@ -1,7 +1,18 @@
 Day planner version history
 **************************
 
-Version 0.3 (Unreleased)
+Version 0.4 (Unreleased)
+------------------------
+* Client (dayplanner)
+- Removed support for exporting DPF from the GUI, it has been deprecated, it has
+  been superseeded by iCalendar. Will be completely removed in 0.5.
+
+* Daemon (dayplanner-daemon)
+
+* Services daemon (dayplanner-services-daemon)
+- Initial release
+
+Version 0.3 (Released on the 21st of September 2006)
 ------------------------
 * Client (dayplanner)
 - Builtin import support of plan
