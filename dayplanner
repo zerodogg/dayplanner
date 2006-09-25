@@ -372,7 +372,6 @@ sub IO_Socket_INET_Errors {
 	}
 }
 
-
 # Purpose: Connect to a day planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
 # 		The arguments are optional and will be read from %DPServices if not supplied
@@ -406,7 +405,7 @@ sub DPS_Connect {
 			# Process network unreachable and bad hostname
 		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
 			$DPServices{Offline} = 1;
-			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port",) . " " . $Gettext->("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port",) . " " . $Gettext->get("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		}
 			# Process connection refused
 		elsif($Error eq "REFUSED") {
@@ -476,9 +475,8 @@ sub DPS_RepairData {
 		my @DataArray;
 		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
 		$RawData = undef;
-		iCal_Importer(\@DataArray);
+		my @Conflicts = iCal_Importer(\@DataArray);
 		UpdatedData();
-		my ($PossibleCorruption,@Conflicts) = DPF_ParseData($RawData);
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
 		# TODO: Process conflicts
