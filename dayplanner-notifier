@@ -272,6 +272,8 @@ sub GtkNotifier {
 		$NotifyDialog->set_keep_above(1);
 		$NotifyDialog->stick;
 		$NotifyDialog->set_title($Gettext->get("Day planner event"));
+		$NotifyDialog->set_skip_pager_hint(0);
+		# TODO: Set the urgency hint in GTK2 versions that support it
 		
 		my $PostponeButton = Gtk2::Button->new_with_label($Gettext->get('Postpone'));
 		$PostponeButton->can_default(1);
