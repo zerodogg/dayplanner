@@ -351,6 +351,13 @@ sub DaemonConnectionErrorHandler {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# FIXME: This sub shouldn't be needed
+# Purpose: Back up data to ~/.dayplanner/ before getting data
+# Usage: DPS_BackupData();
+sub DPS_BackupData {
+	iCal_Exporter("$SaveToDir/dps_backup" . time() . ".ics", 0);
+}
+
 # Purpose: Return better errors than IO::Socket::INET does.
 # Usage: my $ERROR = IO_Socket_INET_Errors($@);
 # 	Errors:
@@ -491,6 +498,7 @@ sub DPS_RepairData {
 # Purpose: Get day planner data from a services server
 # Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
+	DPS_BackupData();
 	my $Raw = $_[0];
 	my $MainData;
 	return unless DPS_Connect();
