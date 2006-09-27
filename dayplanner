@@ -489,8 +489,10 @@ sub DPS_RepairData {
 		# TODO: Process conflicts
 		return(1);
 	} else {
+		$ProgressWin->{Window}->destroy();
 		# TODO: Use the DPS error function
-		DPError($Gettext->get("A fatal error occurred while attempting repair"));
+		# TODO: Dump the data to a file (like DPS_BackupData() does currently)
+		DPError($Gettext->get("Unable to download raw data from the server, repairing is impossible!"));
 		return(0);
 	}
 }
@@ -518,6 +520,7 @@ sub DPS_GetData {
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
+		# FIXME: Can probably be dropped, already done
 		if(defined($InternalConfig{DPS_LastMD5})) {
 			return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
 		}
@@ -534,6 +537,7 @@ sub DPS_GetData {
 				iCal_Importer(\@DataArray);
 				UpdatedData();
 			}
+			$InternalConfig{DPS_LastMD5} = $MD5;
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
@@ -578,6 +582,7 @@ sub DPS_SendData {
 		       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
 			if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
 				DPS_Disconnect();
+				DPIntWarn("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
 				if(DPQuestion($Gettext->get("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?"))) {
 					return(0) unless DPS_RepairData();
 					return(0) unless DPS_Connect();
@@ -589,7 +594,6 @@ sub DPS_SendData {
 		}
 		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
 		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
-		$InternalConfig{DPS_LastMD5} = $MD5;
 		DPS_Disconnect();
 		unless($Reply eq "OK") {
 			# TODO: These need cleaning
