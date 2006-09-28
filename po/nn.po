@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn2\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-09-25 11:03+0200\n"
-"PO-Revision-Date: 2006-09-22 22:17+0200\n"
+"POT-Creation-Date: 2006-09-28 09:57+0200\n"
+"PO-Revision-Date: 2006-09-28 09:57+0200\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -101,20 +101,20 @@ msgstr ""
 "Klarte ikkje å tvinga oppstart. Dette kjem truleg av ein feil i programmet. "
 "Ta kontakt med utviklarane av dagsplanleggaren."
 
-#: dayplanner:386
+#: dayplanner:393
 msgid "Connecting"
 msgstr "Kobler til"
 
-#: dayplanner:408 dayplanner:412 dayplanner:416
+#: dayplanner:415 dayplanner:419 dayplanner:423
 #, perl-format
 msgid "Unable to connect to the Day Planner services server (%s)."
 msgstr "Klarte ikkje koble til tjeneren for dagsplanleggar tjenester (%s)."
 
-#: dayplanner:408
+#: dayplanner:415
 msgid "You're probably not connected to the internet"
 msgstr "Du er sannsynlegvis ikkje kobla til internett"
 
-#: dayplanner:412
+#: dayplanner:419
 msgid ""
 "The connection was refused by the server. Please verify your Day Planner "
 "services settings."
@@ -122,11 +122,11 @@ msgstr ""
 "Tilkoblingen blei nekta av tenaren. Sjekk innstillingane for dagsplanleggar "
 "tenesten."
 
-#: dayplanner:412 dayplanner:416
+#: dayplanner:419 dayplanner:423
 msgid "If this problem persists, please contact your service provider"
 msgstr "Kontakt levrandøren viss problemet fortsetter."
 
-#: dayplanner:426
+#: dayplanner:433
 #, perl-format
 msgid ""
 "The day planner services server you are connecting to does not support this "
@@ -135,27 +135,27 @@ msgstr ""
 "Tenaren for dagsplanleggar tenester du koblar deg til støttar ikkje denne "
 "versjonen av dagsplanleggaren (%s)."
 
-#: dayplanner:430
+#: dayplanner:437
 msgid "The username and/or password is incorrect."
 msgstr "Brukarnamnet og/eller passordet er feil."
 
-#: dayplanner:470
+#: dayplanner:477
 msgid "Repairing"
 msgstr "Reparerer"
 
-#: dayplanner:470
+#: dayplanner:477
 msgid "Getting data"
 msgstr "Henter data"
 
-#: dayplanner:474
+#: dayplanner:481
 msgid "Parsing and repairing"
 msgstr "Tolker og reparerer"
 
-#: dayplanner:486
-msgid "A fatal error occurred while attempting repair"
-msgstr "Ein fatal feil oppstod under reparering"
+#: dayplanner:495
+msgid "Unable to download raw data from the server, repairing is impossible!"
+msgstr "Klarte ikkje å lasta ned rå-data frå tenaren, det er umogleg å reparera!"
 
-#: dayplanner:517
+#: dayplanner:528
 msgid ""
 "The data corrupted itself during download. You may want to attempt to "
 "synchronize again."
@@ -163,7 +163,7 @@ msgstr ""
 "Dataen ble skadet under nedlasting. Du vil kanskje prøva å synkronisera på "
 "nytt."
 
-#: dayplanner:534
+#: dayplanner:546
 msgid ""
 "The data is corrupt on the services server. The administrator has been "
 "notified about this. If this problem does not go away within a few days, "
@@ -173,11 +173,11 @@ msgstr ""
 "blitt varsla om problemet. Kontakt levrandøren viss problemet ikkje "
 "forsvinner innen eit par dagar."
 
-#: dayplanner:540
+#: dayplanner:552
 msgid "Downloaded data"
 msgstr "Laster ned data"
 
-#: dayplanner:573
+#: dayplanner:586
 msgid ""
 "An error occurred while uploading your data to the day planner services "
 "server.\n"
@@ -195,16 +195,16 @@ msgstr ""
 "\n"
 "Vil du at dagsplanleggaren skal prøva å reparera konflikten?"
 
-#: dayplanner:589
+#: dayplanner:601
 msgid "An error ocurred during uploading of the data"
 msgstr "Ein feil oppstod under opplasting av dataen"
 
-#: dayplanner:589
+#: dayplanner:601
 #, perl-format
 msgid "Sending data failed: %s"
 msgstr "Sending av data mislyktes: %s"
 
-#: dayplanner:592
+#: dayplanner:604
 #, perl-format
 msgid ""
 "The server did not accept my uploaded data and replied with an unknwown "
@@ -213,15 +213,15 @@ msgstr ""
 "Tenaren godtok ikkje dataen som ble lasta opp og svarte med ein ukjend "
 "verdi: %s"
 
-#: dayplanner:652
+#: dayplanner:664
 msgid "Services"
 msgstr "Tjenester"
 
-#: dayplanner:652
+#: dayplanner:664
 msgid "Initializing"
 msgstr "Starter opp"
 
-#: dayplanner:657
+#: dayplanner:669
 #, perl-format
 msgid ""
 "An error ocurred with the day planner services:\n"
@@ -232,12 +232,12 @@ msgstr ""
 "\n"
 "%s"
 
-#: dayplanner:718
+#: dayplanner:730
 #, perl-format
 msgid "Unable to read the configuration settings from %s: %s"
 msgstr "Klarte ikkje lesa oppsettet frå %s: %s"
 
-#: dayplanner:875
+#: dayplanner:887
 #, perl-format
 msgid ""
 "Unable to create the directory %s: %s\n"
@@ -246,7 +246,7 @@ msgstr ""
 "Klarte ikkje oppretta mappa %s: %s\n"
 "Opprett denne mappa manuelt før du lukkar dette dialogvindauget."
 
-#: dayplanner:931 dayplanner:938 dayplanner:940
+#: dayplanner:943 dayplanner:950 dayplanner:952
 #, perl-format
 msgid ""
 "FATAL ERROR: Unable to open %s for writing: %s\n"
@@ -255,11 +255,11 @@ msgstr ""
 "FATAL FEIL: Klarte ikkje å opna %s for skriving: %s\n"
 "Skriv til %s i staden."
 
-#: dayplanner:969
+#: dayplanner:981
 msgid "Saving..."
 msgstr "Lagrar ..."
 
-#: dayplanner:989
+#: dayplanner:1001
 msgid ""
 "<b><big>Day planner encountered an error while saving events</big></b>.\n"
 "\n"
@@ -281,121 +281,121 @@ msgstr ""
 "denne instansen av dagsplanleggaren før han får lagra endringane du har "
 "gjort, vil data bli tapt."
 
-#: dayplanner:1671
+#: dayplanner:1683
 #, perl-format
 msgid "\"%s\" at %s has been moved to %s"
 msgstr "«%s» på %s har blitt flytta til %s"
 
-#: dayplanner:1673
+#: dayplanner:1685
 #, perl-format
 msgid "\"%s\" at %s did not get imported"
 msgstr "«%s» på %s blei ikkje importert"
 
-#: dayplanner:1776
+#: dayplanner:1788
 #, perl-format
 msgid "Day planner for %s"
 msgstr "Dagsplanleggar for %s"
 
-#: dayplanner:1782 dayplanner:1784 dayplanner:1786
+#: dayplanner:1794 dayplanner:1796 dayplanner:1798
 msgid "Tools"
 msgstr "Verktøy"
 
-#: dayplanner:1782 dayplanner:1786
+#: dayplanner:1794 dayplanner:1798
 msgid "View a list of birthdays"
 msgstr "Vis ei liste over bursdagar"
 
-#: dayplanner:1784
+#: dayplanner:1796
 msgid "View the main page"
 msgstr "Vis hovudsida"
 
-#: dayplanner:1786
+#: dayplanner:1798
 msgid "Change to another year"
 msgstr "Byt år"
 
-#: dayplanner:1786
+#: dayplanner:1798
 #, perl-format
 msgid "current: %s"
 msgstr "noverande: %s"
 
-#: dayplanner:1787
+#: dayplanner:1799
 msgid "Months"
 msgstr "Månader"
 
-#: dayplanner:1797
+#: dayplanner:1809
 msgid "Generated by"
 msgstr "Generert av"
 
-#: dayplanner:1797
+#: dayplanner:1809
 msgid "Day Planner"
 msgstr "Dagsplanleggar"
 
-#: dayplanner:1797
+#: dayplanner:1809
 msgid "version"
 msgstr "versjon"
 
-#: dayplanner:1808 dayplanner:1868 dayplanner:1918 dayplanner:1945
-#: dayplanner:1959 dayplanner:1977 dayplanner:2501 dayplanner:2690
-#: dayplanner:2806
+#: dayplanner:1820 dayplanner:1880 dayplanner:1930 dayplanner:1957
+#: dayplanner:1971 dayplanner:1989 dayplanner:2513 dayplanner:2702
+#: dayplanner:2818
 #, perl-format
 msgid "Unable to open %s for writing: %s"
 msgstr "Klarte ikkje å opna %s for skriving: %s"
 
-#: dayplanner:1814 dayplanner:4557
+#: dayplanner:1826 dayplanner:4570
 msgid "Time"
 msgstr "Klokka"
 
-#: dayplanner:1814
+#: dayplanner:1826
 msgid "Description"
 msgstr "Skildring"
 
-#: dayplanner:1818 dayplanner:2448 dayplanner:3258 dayplanner:3457
-#: dayplanner:3476 dayplanner:4602
+#: dayplanner:1830 dayplanner:2460 dayplanner:3270 dayplanner:3469
+#: dayplanner:3488 dayplanner:4615
 #, perl-format
 msgid "%s's birthday"
 msgstr "%ss bursdag"
 
-#: dayplanner:1880
+#: dayplanner:1892
 msgid "There are no events this month"
 msgstr "Det er ingen hendingar denne månaden"
 
-#: dayplanner:1883
+#: dayplanner:1895
 msgid "Birthdays this month:"
 msgstr "Bursdagar denne månaden:"
 
-#: dayplanner:1885 dayplanner:1924
+#: dayplanner:1897 dayplanner:1936
 msgid "Date"
 msgstr "Dato"
 
-#: dayplanner:1885 dayplanner:1924
+#: dayplanner:1897 dayplanner:1936
 msgid "Name"
 msgstr "Namn"
 
-#: dayplanner:1901
+#: dayplanner:1913
 msgid "Special days this month:"
 msgstr "Spesielle dagar denne månaden:"
 
-#: dayplanner:1921
+#: dayplanner:1933
 msgid "Birthdays"
 msgstr "Bursdagar"
 
-#: dayplanner:1934
+#: dayplanner:1946
 msgid "No birthdays are defined."
 msgstr "Ingen bursdagar er oppgitte."
 
-#: dayplanner:1949
+#: dayplanner:1961
 msgid "Select the month to view in the list above"
 msgstr "Vel månaden som skal visast i lista ovanfor"
 
-#: dayplanner:1963
+#: dayplanner:1975
 msgid "Select the year to view:"
 msgstr "Vel året som skal visast:"
 
-#: dayplanner:2018
+#: dayplanner:2030
 #, perl-format
 msgid "Unable to create the directory %s: %s"
 msgstr "Klarte ikkje oppretta mappa %s: %s"
 
-#: dayplanner:2169
+#: dayplanner:2181
 msgid ""
 "Welcome to day planner.\n"
 "\n"
@@ -408,15 +408,15 @@ msgstr ""
 "dagsplanleggaren skal importera desse dataa? Eksisterande «plan»-data vil "
 "forbli intakt."
 
-#: dayplanner:2189
+#: dayplanner:2201
 msgid "Migrating..."
 msgstr "Importerer ..."
 
-#: dayplanner:2194
+#: dayplanner:2206
 msgid "Migrating plan to day planner..."
 msgstr "Importerer til dagsplanleggaren ..."
 
-#: dayplanner:2220
+#: dayplanner:2232
 msgid ""
 "The plan data has been successfully migrated to Day Planner.\n"
 "\n"
@@ -430,53 +430,53 @@ msgstr ""
 "dagsplanleggaren, så det kan henda at noko data (hendingar som gjentek seg "
 "sjølv og skript) ikkje har blitt heilt importert."
 
-#: dayplanner:2222
+#: dayplanner:2234
 msgid "Day planner was unable to detect any plan data-files."
 msgstr "Dagsplanleggaren fann ingen datafiler frå «plan»."
 
-#: dayplanner:2235 dayplanner:2239 dayplanner:2329 dayplanner:2333
+#: dayplanner:2247 dayplanner:2251 dayplanner:2341 dayplanner:2345
 #, perl-format
 msgid "The perl module %s is not installed. The data will not be encrypted."
 msgstr "Du har ikkje perl-modulen %s installert. Data vil ikkje bli kryptert."
 
-#: dayplanner:2257 dayplanner:2270 dayplanner:2337 dayplanner:2352
+#: dayplanner:2269 dayplanner:2282 dayplanner:2349 dayplanner:2364
 msgid "Password"
 msgstr "Passord"
 
-#: dayplanner:2264 dayplanner:2305 dayplanner:2311
+#: dayplanner:2276 dayplanner:2317 dayplanner:2323
 msgid "Please enter a password."
 msgstr "Skriv inn eit passord."
 
-#: dayplanner:2283
+#: dayplanner:2295
 msgid "Repeat the password:"
 msgstr "Gjenta passordet:"
 
-#: dayplanner:2305
+#: dayplanner:2317
 msgid "The password must be at least 6 characters long."
 msgstr "Passordet må ha minst 6 teikn."
 
-#: dayplanner:2311
+#: dayplanner:2323
 msgid "The passwords do not match."
 msgstr "Passorda er ikkje like."
 
-#: dayplanner:2345 dayplanner:2382
+#: dayplanner:2357 dayplanner:2394
 msgid "This file is password protected."
 msgstr "Denne fila er passordverna."
 
-#: dayplanner:2382
+#: dayplanner:2394
 msgid "Invalid password."
 msgstr "Ugyldig passord"
 
-#: dayplanner:2634
+#: dayplanner:2646
 msgid "Unknown"
 msgstr "Ukjent"
 
-#: dayplanner:2816
+#: dayplanner:2828
 #, perl-format
 msgid "%s does not seem to be a day planner data file"
 msgstr "%s ser ikkje ut til å vera ei datafil for dagsplanleggaren"
 
-#: dayplanner:2843
+#: dayplanner:2855
 #, perl-format
 msgid ""
 "%s contains version %s of the day planner data format. This version of day "
@@ -485,7 +485,7 @@ msgstr ""
 "%s inneheld versjon %s av dataformatet til dagsplanleggaren. Denne versjonen "
 "av dagsplanleggaren støttar berre versjon 1."
 
-#: dayplanner:2878
+#: dayplanner:2890
 msgid ""
 "Conflicting events were detected. Day planner has attempted to resolve the "
 "conflicts.\n"
@@ -498,43 +498,43 @@ msgstr ""
 "Nokre av dataa kan ha blitt feil importerte eller ikkje importerte. Sjå "
 "detaljene nedanfor for informasjon om konfliktane."
 
-#: dayplanner:2895
+#: dayplanner:2907
 msgid "Import data"
 msgstr "Importer data"
 
-#: dayplanner:2907
+#: dayplanner:2919
 msgid "Import data from:"
 msgstr "Importer data frå:"
 
-#: dayplanner:2913
+#: dayplanner:2925
 msgid "From a file (day planner or iCalendar)"
 msgstr "Frå ei fil (dagsplanleggar eller iCalendar)"
 
-#: dayplanner:2914
+#: dayplanner:2926
 msgid "From the \"plan\" software"
 msgstr "Frå «plan»-programmet"
 
-#: dayplanner:2952
+#: dayplanner:2964
 msgid "Import data from a day planner data file"
 msgstr "Importer data frå ei dagsplanleggar-datafil"
 
-#: dayplanner:2953
+#: dayplanner:2965
 msgid "Import data from the \"plan\" program."
 msgstr "Importer data frå «plan»-programmet"
 
-#: dayplanner:2954
+#: dayplanner:2966
 msgid "Cancel importing and return to day planner"
 msgstr "Avbryt importering og gå tilbake til dagsplanleggaren"
 
-#: dayplanner:2955
+#: dayplanner:2967
 msgid "Import the selected data"
 msgstr "Importer frå den valde kjelda"
 
-#: dayplanner:2982
+#: dayplanner:2994
 msgid "All supported file formats"
 msgstr "Alle støtta format"
 
-#: dayplanner:2993
+#: dayplanner:3005
 msgid ""
 "Day planner has imported the iCalendar data as well as it can.\n"
 "\n"
@@ -546,27 +546,27 @@ msgstr ""
 "Merk at dagsplanleggaren ikkje støttar alle funksjonane i iCalendar-"
 "formatet, så noko data kan ha gått tapt."
 
-#: dayplanner:3005
+#: dayplanner:3017
 msgid "Export data"
 msgstr "Eksporter data"
 
-#: dayplanner:3008
+#: dayplanner:3020
 msgid "My_dayplanner"
 msgstr "Min_dagsplanleggar"
 
-#: dayplanner:3024
+#: dayplanner:3036
 msgid "Only export birthdays"
 msgstr "Berre eksporter bursdagar"
 
-#: dayplanner:3030
+#: dayplanner:3042
 msgid "Save as filetype:"
 msgstr "Lagra som filtype:"
 
-#: dayplanner:3037
+#: dayplanner:3049
 msgid "XHTML (exports to a directory)"
 msgstr "XHTML (eksporterer til ei mappe)"
 
-#: dayplanner:3094
+#: dayplanner:3106
 #, perl-format
 msgid ""
 "There are already files in the directory \"%s\". If you continue any "
@@ -577,75 +577,75 @@ msgstr ""
 "eksportert av dagsplanleggaren til den mappa bli overskrivne. Vil du halda "
 "fram?"
 
-#: dayplanner:3103
+#: dayplanner:3115
 #, perl-format
 msgid "\"%s\" already exists and is not a directory."
 msgstr "«%s» finst allereie og er ikkje ei mappe."
 
-#: dayplanner:3112
+#: dayplanner:3124
 #, perl-format
 msgid "\"%s\" is read only. Write permissions are required."
 msgstr "«%s» er berre lesbar, treng skrivetilgang."
 
-#: dayplanner:3117
+#: dayplanner:3129
 #, perl-format
 msgid "\"%s\" is a directory."
 msgstr "«%s» er ei mappe"
 
-#: dayplanner:3119
+#: dayplanner:3131
 #, perl-format
 msgid "\"%s\" already exists. Overwrite?"
 msgstr "«%s» finst allereie. Skriv over henne?"
 
-#: dayplanner:3203
+#: dayplanner:3215
 msgid "Sunday"
 msgstr "Sundag"
 
-#: dayplanner:3204
+#: dayplanner:3216
 msgid "Monday"
 msgstr "Måndag"
 
-#: dayplanner:3205
+#: dayplanner:3217
 msgid "Tuesday"
 msgstr "Tysdag"
 
-#: dayplanner:3206
+#: dayplanner:3218
 msgid "Wednesday"
 msgstr "Onsdag"
 
-#: dayplanner:3207
+#: dayplanner:3219
 msgid "Thursday"
 msgstr "Torsdag"
 
-#: dayplanner:3208
+#: dayplanner:3220
 msgid "Friday"
 msgstr "Fredag"
 
-#: dayplanner:3209
+#: dayplanner:3221
 msgid "Saturday"
 msgstr "Laurdag"
 
-#: dayplanner:3238
+#: dayplanner:3250
 msgid "Tomorrow"
 msgstr "I morgon"
 
-#: dayplanner:3252
+#: dayplanner:3264
 msgid "At"
 msgstr "Kl."
 
-#: dayplanner:3262 dayplanner:3331
+#: dayplanner:3274 dayplanner:3343
 msgid "(nothing)"
 msgstr "(ingenting)"
 
-#: dayplanner:3270
+#: dayplanner:3282
 msgid "No upcoming events exist for the next seven days"
 msgstr "Ingen hendingar dei neste sju dagane"
 
-#: dayplanner:3323 dayplanner:3326
+#: dayplanner:3335 dayplanner:3338
 msgid "and"
 msgstr "og"
 
-#: dayplanner:3386
+#: dayplanner:3398
 msgid ""
 "A problem occurred while setting up automatic startup of the day planner "
 "reminder.\n"
@@ -662,7 +662,7 @@ msgstr ""
 "«Legg til». Skriv inn «dayplanner-daemon» i feltet «oppstartskommando» og "
 "trykk «OK». Automatisk oppstart av påminnaren er no sett opp."
 
-#: dayplanner:3397
+#: dayplanner:3409
 msgid ""
 "Disabling automatic startup of the reminder will prevent notifications "
 "unless day planner has been manually started. Disable the automatic startup?"
@@ -671,71 +671,71 @@ msgstr ""
 "påminningar utan at du har manuelt starta dagsplanleggaren. Slå av "
 "automatisk oppstart?"
 
-#: dayplanner:3534 dayplanner:4079 dayplanner:4359 dayplanner:4373
-#: dayplanner-notifier:293
+#: dayplanner:3546 dayplanner:4091 dayplanner:4372 dayplanner:4386
+#: dayplanner-notifier:295
 msgid "Details"
 msgstr "Detaljar"
 
-#: dayplanner:3585
+#: dayplanner:3597
 msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr "Nokre filer kunne ikkje lagrast. Er du sikker på at du vil avslutta?"
 
-#: dayplanner:3590
+#: dayplanner:3602
 msgid "Quit anyway?"
 msgstr "Avslutt uansett?"
 
-#: dayplanner:3802 dayplanner:4558
+#: dayplanner:3814 dayplanner:4571
 msgid "Event"
 msgstr "Hending"
 
-#: dayplanner:3856
+#: dayplanner:3868
 msgid "Add an event"
 msgstr "Legg til ei hending"
 
-#: dayplanner:3856
+#: dayplanner:3868
 #, perl-format
 msgid "Adding an event on the %s. %s %s"
 msgstr "Legg til ei hending på %s. %s %s"
 
-#: dayplanner:3862
+#: dayplanner:3874
 msgid "Event type:"
 msgstr "Hendingstype:"
 
-#: dayplanner:3867
+#: dayplanner:3879
 msgid "Normal"
 msgstr "Normal"
 
-#: dayplanner:3868
+#: dayplanner:3880
 msgid "Birthday"
 msgstr "Bursdag"
 
-#: dayplanner:3876
+#: dayplanner:3888
 msgid "Add this event"
 msgstr "Legg til denne hendinga"
 
-#: dayplanner:3877
+#: dayplanner:3889
 msgid "Discard this event"
 msgstr "Ikkje legg til denne hendinga"
 
-#: dayplanner:3948
+#: dayplanner:3960
 msgid "Editing an event"
 msgstr "Redigerer ei hending"
 
-#: dayplanner:3948
+#: dayplanner:3960
 #, perl-format
 msgid "Editing an event on the %s. %s %s"
 msgstr "Redigerer ei hending på %s. %s %s"
 
-#: dayplanner:3968
+#: dayplanner:3980
 msgid "Editing a birthday"
 msgstr "Rediger ein bursdag"
 
-#: dayplanner:3968
+#: dayplanner:3980
 #, perl-format
 msgid "Editing a birthday on the %s. %s %s"
 msgstr "Redigerer ein bursdag på %s. %s %s"
 
-#: dayplanner:3984
+#: dayplanner:3996
 #, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -746,39 +746,39 @@ msgstr ""
 "redigerast i dagsplanleggaren. For å endra desse hendingane må du endra fila "
 "%s i eit skriveprogram."
 
-#: dayplanner:3993
+#: dayplanner:4005
 msgid "Discard changes"
 msgstr "Avvis endringane"
 
-#: dayplanner:3994
+#: dayplanner:4006
 msgid "Accept changes"
 msgstr "Godta endringane"
 
-#: dayplanner:4050
+#: dayplanner:4062
 msgid "Time:"
 msgstr "Tidspunkt:"
 
-#: dayplanner:4060
+#: dayplanner:4072
 msgid "Description:"
 msgstr "Skildring:"
 
-#: dayplanner:4072
+#: dayplanner:4084
 msgid "Enter a description of the event here"
 msgstr "Skriv inn ein skildring av hendinga her"
 
-#: dayplanner:4085
+#: dayplanner:4097
 msgid "Additional information"
 msgstr "Meir informasjon"
 
-#: dayplanner:4150
+#: dayplanner:4162
 msgid "Name:"
 msgstr "Namn:"
 
-#: dayplanner:4162
+#: dayplanner:4174
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Skriv inn namnet til personen som har bursdag her"
 
-#: dayplanner:4195 dayplanner:4201
+#: dayplanner:4207 dayplanner:4213
 #, perl-format
 msgid ""
 "There is already an event at %s on %s %s. Please select another time for "
@@ -787,45 +787,41 @@ msgstr ""
 "Det er allereie ei hending klokka %s på %s %s. Vel eit anna tidspunkt for "
 "denne hendinga."
 
-#: dayplanner:4206
+#: dayplanner:4218
 msgid "There is no summary for this event. Please enter a summary."
 msgstr ""
 "Du har ikkje skrive inn eit samandrag for denne hendinga. Skriv inn eit "
 "samandrag."
 
-#: dayplanner:4249 dayplanner:4255
+#: dayplanner:4261 dayplanner:4267
 #, perl-format
 msgid "A Birthday already exists for \"%s\" on %s %s"
 msgstr "Ein bursdag finst frå før for «%s» på %s %s"
 
-#: dayplanner:4260
+#: dayplanner:4272
 msgid "A name is required to add a birthday"
 msgstr "Du må skriva inn eit namn for å leggja til ein bursdag"
 
-#: dayplanner:4296 dayplanner:4633
+#: dayplanner:4308 dayplanner:4646
 msgid "Day planner"
 msgstr "Dagsplanleggar"
 
-#: dayplanner:4307 dayplanner:4308
+#: dayplanner:4319 dayplanner:4320
 msgid "THE NAMES OF THE TRANSLATORS"
 msgstr ""
 "Eskild Hustvedt <zerodogg at skolelinux dot no>\n"
 "Gaute Hvoslef Kvalnes <gaute at verdsveven dot com>"
 
-#: dayplanner:4324
-msgid "Preferences"
-msgstr "Brukarval"
-
-#: dayplanner:4352
+#: dayplanner:4365
 msgid "Interface"
 msgstr "Brukargrensesnitt"
 
-#: dayplanner:4359
+#: dayplanner:4372
 #, perl-format
 msgid "Expand \"%s\" by default"
 msgstr "Utvid «%s» som standard"
 
-#: dayplanner:4373
+#: dayplanner:4386
 #, perl-format
 msgid ""
 "Check this if you want the \"%s\" to be expanded by default in the add and "
@@ -834,72 +830,72 @@ msgstr ""
 "Vel dette viss du vil at «%s» skal vera utvida som standard i dialogvindauga "
 "for tillegging og redigering av hendingar"
 
-#: dayplanner:4414
+#: dayplanner:4427
 msgid "General events"
 msgstr "Generelle hendingar"
 
-#: dayplanner:4421
+#: dayplanner:4434
 msgid "Start the day planner reminder automatically when logging in"
 msgstr "Start påminnaren automatisk under innlogging"
 
-#: dayplanner:4436
+#: dayplanner:4449
 msgid "Use notifications before events"
 msgstr "Varsla meg om hendingar før hendingstidspunktet"
 
-#: dayplanner:4446
+#: dayplanner:4459
 msgid "Time before the event to display the notification"
 msgstr "Kor lenge før hendinga varslinga skal visast"
 
-#: dayplanner:4451 dayplanner:4452 dayplanner:4453 dayplanner:4454
+#: dayplanner:4464 dayplanner:4465 dayplanner:4466 dayplanner:4467
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minutt"
 
-#: dayplanner:4455
+#: dayplanner:4468
 #, perl-format
 msgid "%s hour"
 msgstr "%s time"
 
-#: dayplanner:4456 dayplanner:4457 dayplanner:4458
+#: dayplanner:4469 dayplanner:4470 dayplanner:4471
 #, perl-format
 msgid "%s hours"
 msgstr "%s timar"
 
-#: dayplanner:4475
+#: dayplanner:4488
 msgid "Remind one day in advance"
 msgstr "Varsla ein dag på førehand"
 
-#: dayplanner:4674 dayplanner:4675 dayplanner:4676 dayplanner:4677
-#: dayplanner:4678
+#: dayplanner:4687 dayplanner:4688 dayplanner:4689 dayplanner:4690
+#: dayplanner:4691
 msgid "_Calendar"
 msgstr "_Kalender"
 
-#: dayplanner:4675
+#: dayplanner:4688
 msgid "_Import"
 msgstr "_Importer"
 
-#: dayplanner:4676
+#: dayplanner:4689
 msgid "_Export"
 msgstr "_Eksporter"
 
-#: dayplanner:4681
+#: dayplanner:4694
 msgid "_Add an event"
 msgstr "_Legg til ei hending"
 
-#: dayplanner:4682 dayplanner:4703
+#: dayplanner:4695 dayplanner:4716
 msgid "_Edit this event"
 msgstr "_Rediger denne hendinga"
 
-#: dayplanner:4683 dayplanner:4707
+#: dayplanner:4696 dayplanner:4720
 msgid "_Delete this event"
 msgstr "_Slett denne hendinga"
 
-#: dayplanner:4890 dayplanner:4891
+#: dayplanner:4903 dayplanner:4904
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Miljøvariabelen %s er ikkje sett! Kan ikkje halda fram.\n"
 
-#: dayplanner:4895 dayplanner:4897
+#: dayplanner:4908 dayplanner:4910
 #, perl-format
 msgid ""
 "The home directory of the user %s doesn't exist at %s! Please verify that "
@@ -908,7 +904,7 @@ msgstr ""
 "Heimemappa til brukaren %s finst ikkje (%s). Sjekk at miljøvariabelen %s er "
 "sett. Kan ikkje halda fram.\n"
 
-#: dayplanner-notifier:259 dayplanner-notifier:343
+#: dayplanner-notifier:259 dayplanner-notifier:345
 #, perl-format
 msgid ""
 "Today at %s:\n"
@@ -917,7 +913,7 @@ msgstr ""
 "I dag klokka %s:\n"
 "%s"
 
-#: dayplanner-notifier:261 dayplanner-notifier:345
+#: dayplanner-notifier:261 dayplanner-notifier:347
 #, perl-format
 msgid ""
 "Tomorrow at %s:\n"
@@ -926,7 +922,7 @@ msgstr ""
 "I morgon klokka %s:\n"
 "%s"
 
-#: dayplanner-notifier:263 dayplanner-notifier:347
+#: dayplanner-notifier:263 dayplanner-notifier:349
 #, perl-format
 msgid ""
 "At %s on %s:\n"
@@ -939,9 +935,15 @@ msgstr ""
 msgid "Day planner event"
 msgstr "Dagsplanleggar-hending"
 
-#: dayplanner-notifier:276
+#: dayplanner-notifier:278
 msgid "Postpone"
 msgstr "Utsett"
+
+#~ msgid "A fatal error occurred while attempting repair"
+#~ msgstr "Ein fatal feil oppstod under reparering"
+
+#~ msgid "Preferences"
+#~ msgstr "Brukarval"
 
 #~ msgid ""
 #~ "Failed to parse the data recieved. This is a fatal error. Please contact "
