@@ -523,10 +523,6 @@ sub DPS_GetData {
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
-		# FIXME: Can probably be dropped, already done
-		if(defined($InternalConfig{DPS_LastMD5})) {
-			return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
-		}
 		unless(md5_base64($MainData) eq $MD5) {
 			DPS_Error($Gettext->get("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
