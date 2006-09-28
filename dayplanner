@@ -4326,14 +4326,15 @@ sub AboutBox {
 
 # Purpose: Draw the preferences window and allow the user to set different
 #  configuration options
-# Usage: PreferencesWindow();
+# Usage: PreferencesWindow(NAME);
 sub PreferencesWindow {
+	my $Name = shift;
 	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
 	$PreferencesWindow->set_transient_for($MainWindow);
 	$PreferencesWindow->set_position('center-on-parent');
-	$PreferencesWindow->set_title($Gettext->get("Preferences"));
+	$PreferencesWindow->set_title($Name);
 	$PreferencesWindow->set_resizable(0);
 	$PreferencesWindow->set_border_width(12);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
@@ -4694,7 +4695,7 @@ sub DrawMainWindow {
 		[ "/$EditStock/" . $Gettext->get("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/$EditStock/" . $Gettext->get("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
-		[ "/$EditStock/$PrefsStock" , undef,			\&PreferencesWindow,		1, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock },		1, 	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
