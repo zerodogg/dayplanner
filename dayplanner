@@ -375,7 +375,7 @@ sub IO_Socket_INET_Errors {
 # Purpose: Back up data to ~/.dayplanner/ before getting data
 # Usage: DPS_BackupData();
 sub DPS_BackupData {
-	my $Target = "$SaveToDir/dps_backup" . time() . ".ics"
+	my $Target = "$SaveToDir/dps_backup" . time() . ".ics";
 	iCal_Exporter($Target, 0);
 	DPIntInfo("DPS: Backup written to $Target");
 }
@@ -502,7 +502,7 @@ sub DPS_RepairData {
 # Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
 	my $Raw = $_[0];
-	if($InternalConfig{DPS_ParanoidBackup} eq "1") {
+	if(defined($InternalConfig{DPS_ParanoidBackup}) and $InternalConfig{DPS_ParanoidBackup} eq "1") {
 		DPS_BackupData();
 	}
 	my $MainData;
