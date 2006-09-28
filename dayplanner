@@ -351,13 +351,6 @@ sub DaemonConnectionErrorHandler {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# FIXME: This sub shouldn't be needed
-# Purpose: Back up data to ~/.dayplanner/ before getting data
-# Usage: DPS_BackupData();
-sub DPS_BackupData {
-	iCal_Exporter("$SaveToDir/dps_backup" . time() . ".ics", 0);
-}
-
 # Purpose: Return better errors than IO::Socket::INET does.
 # Usage: my $ERROR = IO_Socket_INET_Errors($@);
 # 	Errors:
@@ -377,6 +370,14 @@ sub IO_Socket_INET_Errors {
 	} else {
 		return($Error);
 	}
+}
+
+# Purpose: Back up data to ~/.dayplanner/ before getting data
+# Usage: DPS_BackupData();
+sub DPS_BackupData {
+	my $Target = "$SaveToDir/dps_backup" . time() . ".ics"
+	iCal_Exporter($Target, 0);
+	DPIntInfo("DPS: Backup written to $Target");
 }
 
 # Purpose: Connect to a day planner services server.
@@ -1138,6 +1139,12 @@ sub GetDistVer {
 # Usage: DPIntWarn("Warning");
 sub DPIntWarn {
 	warn "*** (Day Planner $Version) Warning: $_[0]\n";
+}
+
+# Purpose: Print an info message to STDOUT with proper output
+# Usage: DPIntInfo("Info");
+sub DPIntInfo {
+	warn "*** (Day Planner $Version): $_[0]\n";
 }
 
 # Purpose: Delete keys from %CalendarContents, recusively if needed
