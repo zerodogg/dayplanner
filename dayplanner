@@ -500,8 +500,10 @@ sub DPS_RepairData {
 # Purpose: Get day planner data from a services server
 # Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
-	DPS_BackupData();
 	my $Raw = $_[0];
+	if($InternalConfig{DPS_ParanoidBackup} eq "1") {
+		DPS_BackupData();
+	}
 	my $MainData;
 	return unless DPS_Connect();
 	DPS_Status("Downloading data",0.5);
@@ -782,6 +784,7 @@ sub WriteStateFile {
 		DPS_pass => "The password",
 		DPS_port => "The port to connect to on the DPS server",
 		DPS_user => "The username",
+		DPS_ParanoidBackups => "Writes a backup of the internal data to $Dir every time DPS is used.\n# This is useful when DPS is being debugged, in order to avoid data loss",
 		HEADER => "This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually",
 	);
 
@@ -4695,7 +4698,7 @@ sub DrawMainWindow {
 		[ "/$EditStock/" . $Gettext->get("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/$EditStock/" . $Gettext->get("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
-		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock },		1, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1, 	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
