@@ -1144,7 +1144,7 @@ sub DPIntWarn {
 # Purpose: Print an info message to STDOUT with proper output
 # Usage: DPIntInfo("Info");
 sub DPIntInfo {
-	warn "*** (Day Planner $Version): $_[0]\n";
+	print "*** (Day Planner $Version): $_[0]\n";
 }
 
 # Purpose: Delete keys from %CalendarContents, recusively if needed
