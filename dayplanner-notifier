@@ -275,12 +275,15 @@ sub GtkNotifier {
 		$NotifyDialog->set_skip_pager_hint(0);
 		# TODO: Set the urgency hint in GTK2 versions that support it
 		
+		my $Tooltips = Gtk2::Tooltips->new();
 		my $PostponeButton = Gtk2::Button->new_with_label($Gettext->get('Postpone'));
 		$PostponeButton->can_default(1);
 		my $PostponeImage = Gtk2::Image->new_from_stock('gtk-go-forward','button');
 		$PostponeButton->set_image($PostponeImage);
 		$NotifyDialog->add_action_widget($PostponeButton, 'reject');
 		$PostponeButton->show();
+		$Tooltips->enable();
+		$Tooltips->set_tip($PostponeButton, $Gettext->get("Postpone this notification for 10 minutes"));
 	
 		my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
 		$OkayButton->can_default(1);
