@@ -35,7 +35,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 use File::Copy;			# We need to copy the holiday file
 use FindBin;			# So that we can detect module dirs during runtime
 use MIME::Base64;		# Used for import/export
-use Digest::MD5 qw(md5_base64);	# Used for import/export
+use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
 use File::Path qw/mkpath/;	# We need mkpath
 # So that we can use a local Date::HolidayParser
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
@@ -775,6 +775,7 @@ sub WriteStateFile {
 		AddedAutostart => "If day planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
 		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
 		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
+		LastVersion => "The last day planner version used",
 		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
 		DPS_LastMD5 => "The MD5 sum of the last data downloaded from the DPS server (base64 encoded)",
 		DPS_host => "The DPS host to connect to",
@@ -807,6 +808,9 @@ sub LoadStateFile {
 	my $File = $_[1];
 	if(-e "$Dir/$File") {
 		LoadConfigFile("$Dir/$File", \%InternalConfig, undef, 0);
+	}
+	if(not defined($InternalConfig{LastVersion}) or not $InternalConfig{LastVersion} eq $Version) {
+		UpgradeVersion();
 	}
 }
 
@@ -1065,6 +1069,33 @@ sub DataLoadTest {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Upgrade from one version to another (upgrades the holiday file)
+# Usage: UpgradeVersion();
+sub UpgradeVersion () {
+	my $ProgressWin = DPCreateProgressWin($Gettext->get("Upgrading"), "", 1);
+	$InternalConfig{LastVersion} = $Version;
+	PulsateProgressbar($ProgressWin->{ProgressBar});
+	if(-e $HolidayFile) {
+		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
+			my %UpgradeInfo;
+			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
+			PulsateProgressbar($ProgressWin->{ProgressBar});
+			open(my $ReadHoliday, "<", $HolidayFile);
+			my $HolidayMd5 = md5_hex(<$ReadHoliday>);
+			close($ReadHoliday);
+			if($UpgradeInfo{$HolidayMd5}) {
+				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}") {
+					# Copy the new file in place
+					unlink($HolidayFile);
+					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
+					PulsateProgressbar($ProgressWin->{ProgressBar});
+				}
+			}
+		}
+	}
+	$ProgressWin->{Window}->destroy();
+}
 
 # Purpose: Append a "0" to a number if it is only one digit.
 # Usage: my $NewNumber = AppendZero(NUMBER);
