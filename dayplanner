@@ -4365,7 +4365,8 @@ sub AboutBox {
 #  configuration options
 # Usage: PreferencesWindow(NAME);
 sub PreferencesWindow {
-	my $Name = shift;
+	$_[0] =~ s/_//;
+	my $Name = $_[0];
 	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
