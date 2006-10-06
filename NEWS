@@ -6,6 +6,7 @@ Version 0.4 (Unreleased)
 * Client (dayplanner)
 - Removed support for exporting DPF from the GUI, it has been deprecated, it has
   been superseeded by iCalendar. Will be completely removed in 0.5.
+- Fixed sorting in the upcoming events widget
 
 * Daemon (dayplanner-daemon)
 
