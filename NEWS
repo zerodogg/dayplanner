@@ -7,11 +7,16 @@ Version 0.4 (Unreleased)
 - Removed support for exporting DPF from the GUI, it has been deprecated, it has
   been superseeded by iCalendar. Will be completely removed in 0.5.
 - Fixed sorting in the upcoming events widget
+- Can now upgrade holiday files automatically
 
 * Notifier (dayplanner-notifier)
 - Now displays different icons in the dialog box for events, one for
-	notifications before the event, and one for notifications
-	on the actual event.
+  notifications before the event, and one for notifications
+  on the actual event.
+
+* Holidays
+- Fixed an error in the Norwegian holiday file that declared the wrong
+  date for winter-time.
 
 * Daemon (dayplanner-daemon)
 
