@@ -8,6 +8,11 @@ Version 0.4 (Unreleased)
   been superseeded by iCalendar. Will be completely removed in 0.5.
 - Fixed sorting in the upcoming events widget
 
+* Notifier (dayplanner-notifier)
+- Now displays different icons in the dialog box for events, one for
+	notifications before the event, and one for notifications
+	on the actual event.
+
 * Daemon (dayplanner-daemon)
 
 * Services daemon (dayplanner-services-daemon)
