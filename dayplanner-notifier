@@ -43,6 +43,7 @@ my $Message;			# The message
 my $Fulltext;			# The fulltext (details)
 my $Time;			# The time
 my $Date;			# The date
+my $IsWarning;			# If it is a warning or the actual event time
 
 my $MessageID;			# The daemon message ID
 my $NoFork;
@@ -186,6 +187,10 @@ sub GetMessages {
 	$Time = Daemon_DataSegment("NOTIFICATION GET $_[0] Time");
 	$Date = Daemon_DataSegment("NOTIFICATION GET $_[0] Date");
 	$Fulltext = Daemon_DataSegment("NOTIFICATION GET $_[0] Fulltext");
+	$IsWarning = Daemon_DataSegment("NOTIFICATION GET $_[0] PreNot");
+	if($IsWarning eq "$_[0] UNDEF") {
+		$IsWarning = 0;
+	}
 
 	# Fulltext is a multiline packet and can thus return "" on failure.
 	# We assume $_[0] UNDEF on ""/failure
@@ -262,9 +267,13 @@ sub GtkNotifier {
 		} else {
 			$MainText = sprintf($Gettext->get("At %s on %s:\n%s"),$Time,$Date,$Message);
 		}
+		# If it is a warning then we use the "info" type.
+		# If it isn't a warning, then we use the "warning" type to attempt to
+		#  display the urgency of the notification better.
+		my $DialogType = $IsWarning ? 'info' : 'warning';
 		my $NotifyDialog = Gtk2::MessageDialog->new (undef,
 							'destroy-with-parent',
-							'info',
+							$DialogType,
 							'none',
 							$MainText);
 		# This is important, so set the urgency hint and keep it above all other windows
