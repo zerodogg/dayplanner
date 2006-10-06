@@ -3265,13 +3265,13 @@ sub PopulateUpcomingEvents {
 		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
-			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
+			foreach(sort keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
 				$HasEvents = 1;
 				$h->{text} .= "\n" . $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
 			}
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
-			foreach my $Birthday (keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
+			foreach my $Birthday (sort keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
 					$HasEvents = 1;
 					$h->{text} .= "\n" .  sprintf($Gettext->get("%s's birthday"), $Birthday);
 			}
