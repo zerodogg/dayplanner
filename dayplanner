@@ -4909,8 +4909,10 @@ GetOptions (
 		}
 		print "Available modules:";
 		print " $_" foreach(@AvailModules);
+		print " (none)" unless(@AvailModules);
 		print "\nUnavailable modules:";
 		print " $_" foreach(@UnavailModules);
+		print " (none)" unless(@UnavailModules);
 		print "\n";
 		exit(0);
 	},
