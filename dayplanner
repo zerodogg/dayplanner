@@ -512,7 +512,7 @@ sub DPS_GetData {
 	DPS_Status("Downloading data",0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# If the MD5 on the server is identical to ours we don't need to download the data
-	if(defined($InternalConfig{DPS_LastMD5}) and not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+	if($ServerMD5 =~ /^(\[NONE\]|ERR)/ or (defined($InternalConfig{DPS_LastMD5}) and $ServerMD5 eq $InternalConfig{DPS_LastMD5})) {
 		DPS_Log("Skipping download, the data on the server matched our data ($InternalConfig{DPS_LastMD5} = $ServerMD5)");
 		DPS_Disconnect();
 		DPS_Status("Done", 1);
