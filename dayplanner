@@ -876,7 +876,6 @@ sub WriteConfig {
 	# Tell the daemon to reload the config file
 	if($DaemonInitialized) {
 		unless(Daemon_DataSegment("RELOAD_CONFIG") eq "done\n") {
-			# TODO: GUI dialog?
 			DPIntWarn("Failed to tell the daemon to reload its configuration file. This might cause problems");
 		}
 	}
