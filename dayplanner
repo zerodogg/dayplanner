@@ -511,12 +511,15 @@ sub DPS_GetData {
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# If the MD5 on the server is identical to ours we don't need to download the data
 	if(defined($InternalConfig{DPS_LastMD5}) and not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+		DPS_Log("Skipping download, the data on the server matched our data ($InternalConfig{DPS_LastMD5} = $ServerMD5)");
 		DPS_Disconnect();
 		DPS_Status("Done", 1);
 		return(1);
 	}
+	DPS_Log("The server had $ServerMD5, I had $InternalConfig{DPS_LastMD5} - downloading data");
 	my $Data = DPS_DataSegment("GETDATA");
 	if($Data =~ /^OK/) {
+		DPS_Log("Got data");
 		my $Initial = $Data;
 		my $MD5 = $Data;
 		$MainData = $Data;
@@ -536,11 +539,11 @@ sub DPS_GetData {
 				iCal_Importer(\@DataArray);
 				UpdatedData();
 			}
-			$InternalConfig{DPS_LastMD5} = $MD5;
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
 			# No data found on the server, this is fine.
+			DPS_Log("No data found on the server.");
 		} elsif($Data =~ /^ERR MD5_FAILURE/) {
 			DPS_Error($Gettext->get("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider"), "MD5 failure on server");
 		} else {
@@ -564,6 +567,7 @@ sub DPS_GetData {
 # Usage: DPS_SendData();
 sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
+	DPS_Log("DPS_SendData($Force) called");
 	return if not DPS_Connect();
 	DPS_Status("Sending data",0.5);
 	# Force UIDs in the iCalendar file to be static (less random)
@@ -575,13 +579,18 @@ sub DPS_SendData {
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# Don't send the data if the checksums match
 	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
+		DPS_Log("Not sending data - checksums matched");
 		DPS_Disconnect();
 	} else {
+		DPS_Log("Sending data to server. My MD5 is $MD5, the one on the server is $ServerMD5.");
 		if (defined($InternalConfig{DPS_LastMD5}) and length($InternalConfig{DPS_LastMD5})) {
 		       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
 			if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
 				DPS_Disconnect();
 				DPIntWarn("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
+				DPS_Log("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
+				# TODO: Drop the prompting. The repair is required to avoid data loss so
+				# the user doesn't really have a choice.
 				if(DPQuestion($Gettext->get("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?"))) {
 					return(0) unless DPS_RepairData();
 					return(0) unless DPS_Connect();
@@ -593,6 +602,7 @@ sub DPS_SendData {
 		}
 		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
 		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
+		$InternalConfig{DPS_LastMD5} = $MD5;
 		DPS_Disconnect();
 		unless($Reply eq "OK") {
 			# TODO: These need cleaning
@@ -616,6 +626,7 @@ sub DPS_SendData {
 sub DPS_Error {
 	my ($user_error, $tech_error) = @_;
 	DPIntWarn("DPS: $tech_error");
+	DPS_Log($tech_error);
 	if(defined($user_error)) {
 		$DPServices{Error} = $user_error;
 	}
@@ -638,6 +649,10 @@ sub DPS_Perform {
 		} else {
 			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
 		}
+	}
+	if(not defined($DPServices{Log_FH})) {
+		open($DPServices{Log_FH}, ">", "$SaveToDir/services.log");
+		DPS_Log("DPS initialized");
 	}
 	if($Function eq "GET") {
 		return(DPS_GetData());
@@ -686,6 +701,20 @@ sub DPS_Status {
 		$DPServices{ProgressWin}->{ProgressBar}->set_text($Text);
 		Gtk2->main_iteration while Gtk2->events_pending;
 	}
+}
+
+# Purpose: Log DPS info
+# Usage: DPS_Log(INFO);
+sub DPS_Log {
+	if(defined($DPServices{Log_FH})) {
+		my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
+		$lhour = "0$lhour" unless $lhour >= 10;
+		$lmin = "0$lmin" unless $lmin >= 10;
+		$lsec = "0$lsec" unless $lsec >= 10;
+		my $FH = $DPServices{Log_FH};
+		print $FH "[$lhour:$lmin:$lsec] $_[0]\n";
+	}
+	return(1);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
