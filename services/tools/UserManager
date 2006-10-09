@@ -98,7 +98,6 @@ sub DaemonReloadUsers {
 			print "failed, replied $Reply\n";
 		}
 	}
-	WaitContinue();
 }
 
 # Purpose: Display the uptime of the daemon
@@ -375,6 +374,7 @@ sub MainMenu {
 			GetUserInfo();
 		} elsif ($Input =~ /r/i) {
 			DaemonReloadUsers();
+			WaitContinue();
 		} elsif ($Input =~ /u/i) {
 			DaemonUptime();
 		}
