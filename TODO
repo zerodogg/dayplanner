@@ -9,7 +9,7 @@ may be subject to change.
 * Version 0.4
 - - - - - - -
 - Add events that last the entire day
-- Finish Day Planner services
+- Finish Day Planner services (see TODO_DPS)
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
