@@ -609,10 +609,12 @@ sub DPS_SendData {
 		unless($Reply eq "OK") {
 			# TODO: These need cleaning
 			if($Reply =~ s/^ERR\s+(.*)$/$1/) {
-				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), sprintf($Gettext->get("Sending data failed: %s"), $Reply));
+				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), sprintf($Gettext->get("Sending data failed: %s"), $Reply), "An error ocurred during upload of the data: $Reply");
+			} elsif($Reply =~ /^EXPIRED/) {
+				DPS_Error($Gettext->get("Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired."), "Account expired");
 			} else {
 				# Sending the data failed
-				DPS_Error(sprintf($Gettext->get("The server did not accept my uploaded data and replied with an unknwown value: %s"), $Reply));
+				DPS_Error(sprintf($Gettext->get("The server did not accept my uploaded data and replied with an unknwown value: %s"), $Reply, "The server did not accept the uploaded data: $Reply"));
 			}
 			return(undef);
 		}
