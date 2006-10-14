@@ -17,14 +17,24 @@ TODO:
 - Don't ask the user if she wants to resolve the conflicts. It is required
   to avoid data loss.
 - Clean the text of error messages in DPS_SendData().
+- Handle MOTD
 
  Server:
  ------
 - Move $Port to the config
+- Use the config a lot more
+- Implement --conffile and use it, but fallback to a config in ./
 - Implement connection encryption
 - Clean %Security once every day
 - Clean up ghost connections (timeout on 5-10 minutes?)
 - Allow encrypted connections
+- Add MOTD command
+- Add a SETTINGS command (gives info about the settings for the user):
+	Client: SETTINGS
+	Server reply: Encrypted=1 GenHTML=0
+- Add a CHANGE command:
+	CHANGE SET [SETTING] [NEWSETTING]
+	CHANGE PASSWORD [OLDPASSWORD] [NEWPASSWORD]
 
  Other:
  -----
