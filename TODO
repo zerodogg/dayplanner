@@ -15,6 +15,7 @@ may be subject to change.
 
 * Version 0.5
 - - - - - - -
+- Switch to using iCalendar as data format
 - Create a feature to choose *how* long a event lasts
 - Add support for:
 	- Repeat every X [days|months]
