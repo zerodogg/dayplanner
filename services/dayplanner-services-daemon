@@ -42,10 +42,9 @@ my $OutputVerbose = 1;
 my $DebuggingOutput = 1;
 my $DropToUID;
 my $AdminSocket;
-my $Port = 4435;	# The port we listen to. TODO: Add to the config
 my @Ports;
-$Ports[0] = $Port;
 my $StartedAt = time();
+my $ConfFile = "./dpservices.conf";
 
 my %ActiveUsers;	# Currently active users
 my %Clients;		# Hash of current network clients
@@ -62,15 +61,7 @@ my %Servers;
 # level 3 = ACTIVE - rw access
 # level 4 = ADMIN - rw access and ADMIN command access
 
-# TODO: Should be loaded from another file
-my %Config = (
-	DataPath => "./dpservices/",
-	AdminMail => 'zerodogg@skolelinux.no',
-	HTMLBase => "./public_html/",
-	HTMLScript => "./GenHTML",
-	Ports => "",	# TODO: Make use of this over $Port
-);
-
+my %Config;
 my $RCSRev = '$Id$';
 my $Version = "0.3 ALPHA";
 
@@ -88,6 +79,42 @@ $SIG{TERM} = $SIG{INT};
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Load the services config file
+# Usage: LoadServicesConfig(FILE);
+sub LoadServicesConfig {
+	my $File = $_[0];
+	die("The configuration file $File does not exist.\n") unless -r $File;
+
+	my %ConfigOptions = (
+		DataPath => '.',
+		AdminMail => '^.+@.+$',
+		HTMLBase => ".",
+		HTMLScript => ".",
+		Ports => '^[\d\s]+$',
+		DropToUID => '^\d*$',
+	);
+
+	# Load the configuration file into the %Config hash
+	LoadConfigFile($File, \%Config, \%ConfigOptions, 1) or die("Errors in the configuration file, unable to continue\n");
+	# Make sure we have all the options
+	my $OptionsMissing = 0;
+	foreach(keys(%ConfigOptions)) {
+		if(not defined($Config{$_})) {
+			print "The configuration option $_ is missing!\n";
+			$OptionsMissing = 1;
+		}
+	}
+	die("Errors in the configuration file, unable to continue\n") if($OptionsMissing);
+	# Populate the ports
+	foreach(split(/\s+/, $Config{Ports})) {
+		push(@Ports, $_);
+	}
+	# Set $DropToUID if needed
+	if($Config{DropToUID} and not $DropToUID) {
+		$DropToUID = $Config{DropToUID};
+	}
+}
 
 # Purpose: Print formatted --help output
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
@@ -174,6 +201,8 @@ sub WriteConfigFile {
 sub LoadConfigFile {
 	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
 
+	my $Status = 1;
+
 	open(my $CONFIG, "<", "$File") or do {
 		print "Unable to read config settings: $File:$!\n";
 		return(0);
@@ -194,17 +223,20 @@ sub LoadConfigFile {
 		}
 		unless(defined($Value)) {
 			IntVerbose("Empty value for option $Option in $File");
+			$Status = 0;
 		}
 		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
 			my $MustMatch = $OptionRegex->{$Option};
 			unless ($Value =~ /$MustMatch/) {
-				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{Option}.\n";
+				$Status = 0;
+				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{$Option}\n";
 				next;
 			}
 		}
 		$ConfigHash->{$Option} = $Value;
 	}
 	close($CONFIG);
+	return($Status);
 }
 
 # Purpose: Send an e-mail (sendmail() wrapper)
@@ -232,7 +264,8 @@ sub DataCorruption {
 	my $Error = SendMail(
 		$Config{AdminMail},
 		"Data corruption for user $User!",
-		"The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ":$Port.\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
+		# TODO: Re-add port to this one
+		"The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
 	);
 	if($Error) {
 		IntVerbose("WARNING: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Error");
@@ -642,9 +675,13 @@ GetOptions (
 		PrintHelp("-n,", "--nofork", "Don't go into the background (and log to STDOUT/STDERR instead of the logfile)");
 		PrintHelp("-v,", "--verbose", "Be verbose");
 		PrintHelp("-V,", "--veryverbose", "Be very verbose");
+		PrintHelp("-c,", "--conffile", "Set which configuration file to use");
+		PrintHelp("", "--switchuid", "Switch to the supplied UID after startup");
+		PrintHelp("-p", "--port", "Additional ports to listen on (can be supplied multiple times)");
 		PrintHelp("-D,", "--debug", "Output debugging information");
 		exit(0);
 	},
+	'c|config|configfile|conffile=s' => \$ConfFile,
 	'debug|D' => sub {
 		$DebuggingOutput = 1;
 		$OutputVerbose = 1;
@@ -666,6 +703,7 @@ print "WARNING: This is alpha software. Use at your own risk. See README for mor
 
 SetStatus("starting");
 umask(077);
+LoadServicesConfig($ConfFile);
 LoadData();
 InitNetwork();
 MainLoop();
