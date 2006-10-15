@@ -21,9 +21,6 @@ TODO:
 
  Server:
  ------
-- Move $Port to the config
-- Use the config a lot more
-- Implement --conffile and use it, but fallback to a config in ./
 - Implement connection encryption
 - Clean %Security once every day
 - Clean up ghost connections (timeout on 5-10 minutes?)
@@ -51,3 +48,6 @@ DONE:
  Server:
  ------
 - Get a working services daemon
+- Move $Port to the config
+- Use the config a lot more
+- Implement --conffile and use it, but fallback to a config in ./
