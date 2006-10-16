@@ -89,7 +89,6 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 # Hashes
 my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
-my %SpecialEvents;		# The contents of the special events file
 my %AllDayEvents;		# The contents of the all-day events file
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
@@ -1011,12 +1010,7 @@ sub SaveMainData {
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
 		$Return	= 'SAVE_FAILED';
 	}
-	ProgressFraction($ProgressBar, 0.3);
-	# TODO: No longer write special.dpd
-	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents", $ProgressBar)) {
-		$Return = 'SAVE_FAILED';
-	}
-	ProgressFraction($ProgressBar, 0.6);
+	ProgressFraction($ProgressBar, 0.5);
 	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
@@ -1058,12 +1052,9 @@ sub LoadCalendar {
 	if(DataLoadTest("$SaveToDir/$BirthdayFile")) {
 		%BirthdayContents = do("$SaveToDir/$BirthdayFile");
 	}
-	if(DataLoadTest("$SaveToDir/$SpecialEventsFile")) {
-		%SpecialEvents = do("$SaveToDir/$SpecialEventsFile");
-	}
-	if(DataLoadTest("$SaveToDir/$AllDayEventsFile")) {
-		%AllDayEvents = do("$SaveToDir/$AllDayEventsFile");
-	}
+	#if(DataLoadTest("$SaveToDir/$AllDayEventsFile")) {
+	#	%AllDayEvents = do("$SaveToDir/$AllDayEventsFile");
+	#}
 	return(1);
 }
 
