@@ -1011,20 +1011,16 @@ sub SaveMainData {
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
 		$Return	= 'SAVE_FAILED';
 	}
-	# TODO: Split these two into one sub
-	$ProgressBar->set_fraction(0.3) if $Gtk2Init;
-	if($Gtk2Init) { Gtk2->main_iteration while Gtk2->events_pending }
+	ProgressFraction($ProgressBar, 0.3);
 	# TODO: No longer write special.dpd
 	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
-	$ProgressBar->set_fraction(0.6) if $Gtk2Init;
-	if($Gtk2Init) { Gtk2->main_iteration while Gtk2->events_pending }
+	ProgressFraction($ProgressBar, 0.6);
 	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
-	$ProgressBar->set_fraction(1) if $Gtk2Init;
-	if($Gtk2Init) { Gtk2->main_iteration while Gtk2->events_pending }
+	ProgressFraction($ProgressBar, 1);
 	$ProgressWin->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
@@ -3267,6 +3263,16 @@ sub PulsateProgressbar {
 		Gtk2->main_iteration while Gtk2->events_pending;
 	}
 	return(1);
+}
+
+# Purpose: Set the fraction in a progressbar
+# Usage: ProgressFraction($Progressbar, fraction);
+sub ProgressFraction {
+	my($Progressbar, $fraction) = @_;
+	if($Gtk2Init and defined($Progressbar)) {
+		$Progressbar->set_fraction($fraction);
+		Gtk2->main_iteration while Gtk2->events_pending
+	}
 }
 
 # Purpose: Populate the upcoming events widget
