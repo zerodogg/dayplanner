@@ -14,8 +14,6 @@ TODO:
 - Use the DPS error function in DPS_RepairData.
 - Do a forced DPS_BackupData on DPS_RepairData failure.
 - Add conflict resolving on download (don't blindly trust it).
-- Don't ask the user if she wants to resolve the conflicts. It is required
-  to avoid data loss.
 - Clean the text of error messages in DPS_SendData().
 - Handle MOTD
 
@@ -44,6 +42,8 @@ DONE:
  Client:
  ------
 - Get the client working
+- Don't ask the user if she wants to resolve the conflicts. It is required
+  to avoid data loss.
 
  Server:
  ------
