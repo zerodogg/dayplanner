@@ -518,7 +518,11 @@ sub DPS_GetData {
 		DPS_Status("Done", 1);
 		return(1);
 	}
-	DPS_Log("The server had $ServerMD5, I had $InternalConfig{DPS_LastMD5} - downloading data");
+	if(defined($InternalConfig{DPS_LastMD5})) {
+		DPS_Log("The server had $ServerMD5, I had $InternalConfig{DPS_LastMD5} - downloading data");
+	} else {
+		DPS_Log("The server had $ServerMD5, I had no MD5 - downloading data");
+	}
 	my $Data = DPS_DataSegment("GETDATA");
 	if($Data =~ /^OK/) {
 		DPS_Log("Got data");
