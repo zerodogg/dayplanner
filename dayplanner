@@ -937,7 +937,7 @@ sub FirstStartup {
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
 sub SaveDatafile {
-	my($Directory, $Filename, $SaveHash, $HashName, $ProgressBar) = @_;
+	my($Directory, $Filename, $SaveHash, $HashName) = @_;
 	my $SAVEFILE;
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
@@ -945,12 +945,8 @@ sub SaveDatafile {
 	$Data::Dumper::Sortkeys = 1;
 	# Set the indentation
 	$Data::Dumper::Indent = 1;
-	# Pulse once
-	PulsateProgressbar($ProgressBar);
 	# Create the save directory
 	CreateSaveDir();
-	# Pulse once
-	PulsateProgressbar($ProgressBar);
 	# Open the savefile ($_[0]/$_[1]) for writing
 	open($SAVEFILE, ">", "$_[0]/$_[1]") or do {
 		# EMERGENCY FALLBACK
@@ -962,7 +958,6 @@ sub SaveDatafile {
 		my $FallbackFailed = 1;
 		# Try to find a directory we can use
 		foreach my $Fallback (@SaveFallbackDirs) {
-			PulsateProgressbar($ProgressBar);
 			if (-e $Fallback and -w $Fallback) {
 				if (-e "$Fallback/$_[1]" and ! -w "$Fallback/$_[1]") {
 					next;
@@ -994,12 +989,9 @@ sub SaveDatafile {
 	print $SAVEFILE "# Day Planner data file for day planner version $Version\n";
 	print $SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
 	print $SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
-	# Pulse once
-	PulsateProgressbar($ProgressBar);
 	# Dump the data
 	print $SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
-	# Pulse once and close
-	PulsateProgressbar($ProgressBar);
+	# Close the file
 	close($SAVEFILE);
 	# We successfully saved the data
 	return(1);
@@ -1008,10 +1000,9 @@ sub SaveDatafile {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
-	# TODO: Migrate to non-pulsating progressbar
 	my($ProgressWin, $ProgressBar);
 	if($Gtk2Init) {
-		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 1);
+		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 0);
 		$ProgressWin = $ProgressBarWin->{Window};
 		$ProgressBar = $ProgressBarWin->{ProgressBar};
 	}
@@ -1020,13 +1011,20 @@ sub SaveMainData {
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
 		$Return	= 'SAVE_FAILED';
 	}
+	# TODO: Split these two into one sub
+	$ProgressBar->set_fraction(0.3) if $Gtk2Init;
+	if($Gtk2Init) { Gtk2->main_iteration while Gtk2->events_pending }
 	# TODO: No longer write special.dpd
 	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
+	$ProgressBar->set_fraction(0.6) if $Gtk2Init;
+	if($Gtk2Init) { Gtk2->main_iteration while Gtk2->events_pending }
 	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
+	$ProgressBar->set_fraction(1) if $Gtk2Init;
+	if($Gtk2Init) { Gtk2->main_iteration while Gtk2->events_pending }
 	$ProgressWin->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
