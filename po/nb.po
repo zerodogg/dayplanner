@@ -257,7 +257,7 @@ msgstr ""
 
 #: dayplanner:1094
 msgid "Upgrading"
-msgstr ""
+msgstr "Oppgraderer"
 
 #: dayplanner:1738
 #, perl-format
@@ -918,9 +918,8 @@ msgid "Postpone"
 msgstr "Utsett"
 
 #: dayplanner-notifier:295
-#, fuzzy
 msgid "Postpone this notification for 10 minutes"
-msgstr "Varsle meg om hendelser før hendelsestidspunktet"
+msgstr "Utsett denne hendelesen ti minutter"
 
 #~ msgid "Preferences"
 #~ msgstr "Brukervalg"
