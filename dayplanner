@@ -378,6 +378,7 @@ sub DPS_BackupData {
 	iCal_Exporter($Target, 0);
 	DPS_Log("Backup written to $Target");
 	DPIntInfo("DPS: Backup written to $Target");
+	return($Target);
 }
 
 # Purpose: Connect to a day planner services server.
@@ -487,13 +488,16 @@ sub DPS_RepairData {
 		UpdatedData();
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
-		# TODO: Process conflicts
+		if(@Conflicts) {
+			foreach(@Conflicts) {
+				DPS_Log("Conflict during repair: $_");
+			}
+		}
 		return(1);
 	} else {
 		$ProgressWin->{Window}->destroy();
-		# TODO: Use the DPS error function
-		# TODO: Dump the data to a file (like DPS_BackupData() does currently)
-		DPError($Gettext->get("Unable to download raw data from the server, repairing is impossible!"));
+		my $BackedUpTo = DPS_BackupData();
+		DPS_Error(sprintf($Gettext->get("Unable to download the raw day planner data from the server. Repairing is not possible! Backup written to %s."), $BackedUpTo), "Unable to retrieve the raw data - repairing is impossible. Backup written to $BackedUpTo.");
 		return(0);
 	}
 }
