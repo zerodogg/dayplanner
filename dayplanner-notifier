@@ -32,7 +32,7 @@ my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 setlocale(LC_ALL, "" );
 textdomain("dayplanner");
 
-my $Version = "0.4";
+my $Version = "0.3.1";
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 
