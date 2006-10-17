@@ -1107,6 +1107,7 @@ sub UpgradeVersion () {
 					# Copy the new file in place
 					unlink($HolidayFile);
 					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
+					DPIntInfo("Upgraded $HolidayFile");
 					PulsateProgressbar($ProgressWin->{ProgressBar});
 				}
 			}
