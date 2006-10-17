@@ -35,7 +35,7 @@ use IO::Socket;			# Network layer to communicate with the daemon
 use File::Copy;			# We need to copy the holiday file
 use FindBin;			# So that we can detect module dirs during runtime
 use MIME::Base64;		# Used for import/export
-use Digest::MD5 qw(md5_base64);	# Used for import/export
+use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
 use File::Path qw/mkpath/;	# We need mkpath
 # So that we can use a local Date::HolidayParser
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
@@ -43,7 +43,7 @@ use lib "$FindBin::RealBin/modules/";
 use Date::HolidayParser;	# Parsing of .holiday files
 
 # Scalars
-my $Version = "0.3";
+my $Version = "0.3.1";
 my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
@@ -58,6 +58,7 @@ my $DaemonOnline = 0;					# Is the daemon online?
 my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
+my $DPS_APILevel = "04A";				# The DPS API level used/supported
 
 setlocale(LC_ALL, "" );
 textdomain("dayplanner");
@@ -88,7 +89,6 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 # Hashes
 my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
-my %SpecialEvents;		# The contents of the special events file
 my %AllDayEvents;		# The contents of the all-day events file
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
@@ -371,6 +371,15 @@ sub IO_Socket_INET_Errors {
 	}
 }
 
+# Purpose: Back up data to ~/.dayplanner/ before getting data
+# Usage: DPS_BackupData();
+sub DPS_BackupData {
+	my $Target = "$SaveToDir/dps_backup" . time() . ".ics";
+	iCal_Exporter($Target, 0);
+	DPS_Log("Backup written to $Target");
+	DPIntInfo("DPS: Backup written to $Target");
+	return($Target);
+}
 
 # Purpose: Connect to a day planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
@@ -383,7 +392,7 @@ sub DPS_Connect {
 	$Password = $Password ? $Password : $DPServices{pass};
 	my $Error;
 	# Connect
-	DPS_Status("Connecting",0);
+	DPS_Status($Gettext->get("Connecting"),0);
 	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
 	$DPServices{socket} = IO::Socket::INET->new(
 					PeerAddr => $Host,
@@ -405,15 +414,15 @@ sub DPS_Connect {
 			# Process network unreachable and bad hostname
 		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
 			$DPServices{Offline} = 1;
-			DPS_Error("Unable to connect to the Day Planner services server ($Host:$Port). You're probably not connected to the internet", "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port",) . " " . $Gettext->get("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		}
 			# Process connection refused
 		elsif($Error eq "REFUSED") {
-			DPS_Error("Unable to connect to the Day Planner services server ($Host:$Port). The connection was refused by the server. Please verify your Day Planner services settings.\n\nIf this problem persists, please contact your service provider", "Unable to connect to $Host on port $Port: $@ ($Error)");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . $Gettext->get("The connection was refused by the server. Please verify your Day Planner services settings.") . "\n\n" . $Gettext->get("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		} 
 			# Process unknown errors
 		else {
-			DPS_Error("Unable to connect to the day planner services server ($Host:$Port). If this problem persists please contact your service provider.", "Unable to connect to $Host on port $Port: $@");
+			DPS_Error(sprintf($Gettext->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . $Gettext->get("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@");
 		}
 		return(undef);
 	}
@@ -422,12 +431,12 @@ sub DPS_Connect {
 	delete($DPServices{Offline});
 
 	# Authenticate
-	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
-	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error("The day planner services server you are connecting to does not support this version of day planner ($Version).", "API error received from the server.");});
+	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
+	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf($Gettext->get("The day planner services server you are connecting to does not support this version of day planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
 	DPS_Status("Connecting",0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	DPS_Status("Connecting",0.4);
-	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error("The username and/or password is incorrect.","Authentication error");});
+	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error($Gettext->get("The username and/or password is incorrect."),"Authentication error");});
 	return("OK");
 }
 
@@ -467,18 +476,28 @@ sub DPS_DataSegment {
 # Usage: DPS_RepairData();
 # 	returns true on success, false on failure
 sub DPS_RepairData {
-	my $ProgressWin = DPCreateProgressWin("Repairing","Getting data",0);
+	my $ProgressWin = DPCreateProgressWin($Gettext->get("Repairing"),$Gettext->get("Getting data"),0);
 	my $RawData = DPS_Perform("GET_RAW");
 	if(defined($RawData)) {
 		$ProgressWin->{ProgressBar}->set_fraction(0.4);
-		$ProgressWin->{ProgressBar}->set_text("Parsing and repairing");
-		my ($PossibleCorruption,@Conflicts) = DPF_ParseData($RawData);
+		$ProgressWin->{ProgressBar}->set_text($Gettext->get("Parsing and repairing"));
+		my @DataArray;
+		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
+		$RawData = undef;
+		my @Conflicts = iCal_Importer(\@DataArray);
+		UpdatedData();
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
-		# TODO: Process conflicts
+		if(@Conflicts) {
+			foreach(@Conflicts) {
+				DPS_Log("Conflict during repair: $_");
+			}
+		}
 		return(1);
 	} else {
-		DPError("A fatal error occurred while attempting repair");
+		$ProgressWin->{Window}->destroy();
+		my $BackedUpTo = DPS_BackupData();
+		DPS_Error(sprintf($Gettext->get("Unable to download the raw day planner data from the server. Repairing is not possible! Backup written to %s."), $BackedUpTo), "Unable to retrieve the raw data - repairing is impossible. Backup written to $BackedUpTo.");
 		return(0);
 	}
 }
@@ -486,56 +505,62 @@ sub DPS_RepairData {
 # Purpose: Get day planner data from a services server
 # Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
-	my $Raw = $_[0];
+	my $Raw = $_[0] ? 1 : 0;
+	DPS_Log("DPS_GetData($Raw) called");
+	if(defined($InternalConfig{DPS_ParanoidBackup}) and $InternalConfig{DPS_ParanoidBackup} eq "1") {
+		DPS_BackupData();
+	}
 	my $MainData;
 	return unless DPS_Connect();
 	DPS_Status("Downloading data",0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# If the MD5 on the server is identical to ours we don't need to download the data
-	if(not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+	if($ServerMD5 =~ /^(\[NONE\]|ERR)/ or (defined($InternalConfig{DPS_LastMD5}) and $ServerMD5 eq $InternalConfig{DPS_LastMD5})) {
+		DPS_Log("Skipping download, the data on the server matched our data ($InternalConfig{DPS_LastMD5} = $ServerMD5)");
 		DPS_Disconnect();
 		DPS_Status("Done", 1);
 		return(1);
 	}
+	if(defined($InternalConfig{DPS_LastMD5})) {
+		DPS_Log("The server had $ServerMD5, I had $InternalConfig{DPS_LastMD5} - downloading data");
+	} else {
+		DPS_Log("The server had $ServerMD5, I had no MD5 - downloading data");
+	}
 	my $Data = DPS_DataSegment("GETDATA");
 	if($Data =~ /^OK/) {
+		DPS_Log("Got data");
 		my $Initial = $Data;
 		my $MD5 = $Data;
 		$MainData = $Data;
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
 		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
-		return(1) if $InternalConfig{DPS_LastMD5} eq $MD5;
 		unless(md5_base64($MainData) eq $MD5) {
-			DPS_Error("The data corrupted itself during download. You may want to attempt to synchronize again.","MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
+			DPS_Error($Gettext->get("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
 			$MainData = decode_base64($MainData);
 			unless($Raw) {
-				my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
-				eval($MainData) or do {
-					DPSError("Failed to parse the data recieved. This is a fatal error. Please contact your service provider","Data parse error: $@");
-					return(undef);
-				};
-				%BirthdayContents = %BirthdayCalendarContent;
-				%BirthdayCalendarContent = ();
-				unless($DP_OnlyBirthdays) {
-					%CalendarContents = %MainCalendarContent;
-					%MainCalendarContent = ();
-				}
-				$InternalConfig{DPS_LastMD5} = $MD5;
+				my @DataArray;
+				push(@DataArray, $_) foreach(split(/\r\n/,$MainData));
+				$MainData = undef;
+				%BirthdayContents = ();
+				%CalendarContents = ();
+				iCal_Importer(\@DataArray);
+				UpdatedData();
 			}
 		}
 	} else {
 		if($Data =~ /^ERR NO_DATA/) {
 			# No data found on the server, this is fine.
+			DPS_Log("No data found on the server.");
 		} elsif($Data =~ /^ERR MD5_FAILURE/) {
-			DPS_Error("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider", "MD5 failure on server");
+			DPS_Error($Gettext->get("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider"), "MD5 failure on server");
 		} else {
 			DPS_Error("An unknown error occurred (the server replied $Data)", "Unknown error: $Data");
 		}
 	}
 	DPS_Disconnect();
-	DPS_Status("Downloaded data",1);
+	DPS_Status($Gettext->get("Downloaded data"),1);
 	if($Raw) {
 		if (defined($MainData) and length($MainData)) {
 			return($MainData);
@@ -551,37 +576,45 @@ sub DPS_GetData {
 # Usage: DPS_SendData();
 sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
-	return unless DPS_Connect();
+	DPS_Log("DPS_SendData($Force) called");
+	return if not DPS_Connect();
 	DPS_Status("Sending data",0.5);
-	my ($SendData, $RawMD5) = DPF_GetData(0,0,1,1,1);
+	# Force UIDs in the iCalendar file to be static (less random)
+	$DPServices{StaticUID} = 1;
+	my $SendData = encode_base64(iCal_Exporter(undef, 0, 1),"");
+	$DPServices{StaticUID} = 0;
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# Don't send the data if the checksums match
 	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
+		DPS_Log("Not sending data - checksums matched");
 		DPS_Disconnect();
 	} else {
-	       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
-		if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
-			DPS_Disconnect();
-			if(DPQuestion("An error occurred while uploading your data to the day planner services server.\n\nThe server has another version of the data. This can be repaired by Day Planner.\n\nDo you want Day Planner to try to repair this conflict?")) {
+		DPS_Log("Sending data to server. My MD5 is $MD5, the one on the server is $ServerMD5.");
+		if (defined($InternalConfig{DPS_LastMD5}) and length($InternalConfig{DPS_LastMD5})) {
+		       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
+			if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
+				DPS_Disconnect();
+				DPIntWarn("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
+				DPS_Log("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
 				return(0) unless DPS_RepairData();
-				$InternalConfig{DPS_LastMD5} = $ServerMD5;
 				return(0) unless DPS_Connect();
-			} else {
-				DPIntWarn("DPS: Failed to send due to an md5 mismatch and the user declined automatic repair");
-				return(0);
 			}
 		}
 		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
 		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
+		$InternalConfig{DPS_LastMD5} = $MD5;
 		DPS_Disconnect();
 		unless($Reply eq "OK") {
-			if($Reply =~ s/^ERR\s+//) {
-				DPS_Error("An error ocurred during uploading of the data", "Sending data failed: $Reply");
+			# TODO: These need cleaning
+			if($Reply =~ s/^ERR\s+(.*)$/$1/) {
+				DPS_Error($Gettext->get("An error ocurred during uploading of the data"), "An error ocurred during upload of the data: $Reply");
+			} elsif($Reply =~ /^EXPIRED/) {
+				DPS_Error($Gettext->get("Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired."), "Account expired");
 			} else {
 				# Sending the data failed
-				DPS_Error("The server did not accept my uploaded data and replied with an unknwown value: $Reply", "Sending data failed: $Reply");
+				DPS_Error(sprintf($Gettext->get("The server did not accept the uploaded data and replied with an unknwown value: %s"), $Reply, "The server did not accept the uploaded data: $Reply"));
 			}
 			return(undef);
 		}
@@ -597,6 +630,7 @@ sub DPS_SendData {
 sub DPS_Error {
 	my ($user_error, $tech_error) = @_;
 	DPIntWarn("DPS: $tech_error");
+	DPS_Log($tech_error);
 	if(defined($user_error)) {
 		$DPServices{Error} = $user_error;
 	}
@@ -620,6 +654,10 @@ sub DPS_Perform {
 			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
 		}
 	}
+	if(not defined($DPServices{Log_FH})) {
+		open($DPServices{Log_FH}, ">", "$SaveToDir/services.log");
+		DPS_Log("DPS initialized");
+	}
 	if($Function eq "GET") {
 		return(DPS_GetData());
 	} elsif ($Function eq "SEND") {
@@ -641,12 +679,12 @@ sub DPS_GUIPerform {
 
 	# Create the progress window
 	$MainWindow->set_sensitive(0);
-	$DPServices{ProgressWin} = DPCreateProgressWin("Services", "Initializing");
+	$DPServices{ProgressWin} = DPCreateProgressWin($Gettext->get("Services"), $Gettext->get("Initializing"));
 
 	my $Return = DPS_Perform($Function);
 	$DPServices{ProgressWin}->{Window}->destroy();
 	if(defined($DPServices{Error})) {
-		DPError("An error ocurred with the day planner services:\n\n$DPServices{Error}");
+		DPError(sprintf($Gettext->get("An error ocurred with the day planner services:\n\n%s"), $DPServices{Error}));
 		delete($DPServices{Error});
 	}
 	delete($DPServices{ProgressWar});
@@ -667,6 +705,20 @@ sub DPS_Status {
 		$DPServices{ProgressWin}->{ProgressBar}->set_text($Text);
 		Gtk2->main_iteration while Gtk2->events_pending;
 	}
+}
+
+# Purpose: Log DPS info
+# Usage: DPS_Log(INFO);
+sub DPS_Log {
+	if(defined($DPServices{Log_FH})) {
+		my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
+		$lhour = "0$lhour" unless $lhour >= 10;
+		$lmin = "0$lmin" unless $lmin >= 10;
+		$lsec = "0$lsec" unless $lsec >= 10;
+		my $FH = $DPServices{Log_FH};
+		print $FH "[$lhour:$lmin:$lsec] $_[0]\n";
+	}
+	return(1);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -756,12 +808,14 @@ sub WriteStateFile {
 		AddedAutostart => "If day planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
 		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
 		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
+		LastVersion => "The last day planner version used",
 		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
 		DPS_LastMD5 => "The MD5 sum of the last data downloaded from the DPS server (base64 encoded)",
 		DPS_host => "The DPS host to connect to",
 		DPS_pass => "The password",
 		DPS_port => "The port to connect to on the DPS server",
 		DPS_user => "The username",
+		DPS_ParanoidBackups => "Writes a backup of the internal data to $Dir every time DPS is used.\n# This is useful when DPS is being debugged, in order to avoid data loss",
 		HEADER => "This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually",
 	);
 
@@ -787,6 +841,9 @@ sub LoadStateFile {
 	my $File = $_[1];
 	if(-e "$Dir/$File") {
 		LoadConfigFile("$Dir/$File", \%InternalConfig, undef, 0);
+	}
+	if(not defined($InternalConfig{LastVersion}) or not $InternalConfig{LastVersion} eq $Version) {
+		UpgradeVersion();
 	}
 }
 
@@ -819,7 +876,6 @@ sub WriteConfig {
 	# Tell the daemon to reload the config file
 	if($DaemonInitialized) {
 		unless(Daemon_DataSegment("RELOAD_CONFIG") eq "done\n") {
-			# TODO: GUI dialog?
 			DPIntWarn("Failed to tell the daemon to reload its configuration file. This might cause problems");
 		}
 	}
@@ -884,7 +940,7 @@ sub FirstStartup {
 # Purpose: Save the datafile
 # Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
 sub SaveDatafile {
-	my($Directory, $Filename, $SaveHash, $HashName, $ProgressBar) = @_;
+	my($Directory, $Filename, $SaveHash, $HashName) = @_;
 	my $SAVEFILE;
 	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
 	$Data::Dumper::Purity = 1;
@@ -892,12 +948,8 @@ sub SaveDatafile {
 	$Data::Dumper::Sortkeys = 1;
 	# Set the indentation
 	$Data::Dumper::Indent = 1;
-	# Pulse once
-	PulsateProgressbar($ProgressBar);
 	# Create the save directory
 	CreateSaveDir();
-	# Pulse once
-	PulsateProgressbar($ProgressBar);
 	# Open the savefile ($_[0]/$_[1]) for writing
 	open($SAVEFILE, ">", "$_[0]/$_[1]") or do {
 		# EMERGENCY FALLBACK
@@ -909,7 +961,6 @@ sub SaveDatafile {
 		my $FallbackFailed = 1;
 		# Try to find a directory we can use
 		foreach my $Fallback (@SaveFallbackDirs) {
-			PulsateProgressbar($ProgressBar);
 			if (-e $Fallback and -w $Fallback) {
 				if (-e "$Fallback/$_[1]" and ! -w "$Fallback/$_[1]") {
 					next;
@@ -941,12 +992,9 @@ sub SaveDatafile {
 	print $SAVEFILE "# Day Planner data file for day planner version $Version\n";
 	print $SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
 	print $SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
-	# Pulse once
-	PulsateProgressbar($ProgressBar);
 	# Dump the data
 	print $SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
-	# Pulse once and close
-	PulsateProgressbar($ProgressBar);
+	# Close the file
 	close($SAVEFILE);
 	# We successfully saved the data
 	return(1);
@@ -957,7 +1005,7 @@ sub SaveDatafile {
 sub SaveMainData {
 	my($ProgressWin, $ProgressBar);
 	if($Gtk2Init) {
-		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 1);
+		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 0);
 		$ProgressWin = $ProgressBarWin->{Window};
 		$ProgressBar = $ProgressBarWin->{ProgressBar};
 	}
@@ -966,12 +1014,11 @@ sub SaveMainData {
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
 		$Return	= 'SAVE_FAILED';
 	}
-	unless(SaveDatafile($SaveToDir, $SpecialEventsFile, \%SpecialEvents, "SpecialEvents", $ProgressBar)) {
-		$Return = 'SAVE_FAILED';
-	}
+	ProgressFraction($ProgressBar, 0.5);
 	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents", $ProgressBar)) {
 		$Return = 'SAVE_FAILED';
 	}
+	ProgressFraction($ProgressBar, 1);
 	$ProgressWin->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
@@ -1009,12 +1056,9 @@ sub LoadCalendar {
 	if(DataLoadTest("$SaveToDir/$BirthdayFile")) {
 		%BirthdayContents = do("$SaveToDir/$BirthdayFile");
 	}
-	if(DataLoadTest("$SaveToDir/$SpecialEventsFile")) {
-		%SpecialEvents = do("$SaveToDir/$SpecialEventsFile");
-	}
-	if(DataLoadTest("$SaveToDir/$AllDayEventsFile")) {
-		%AllDayEvents = do("$SaveToDir/$AllDayEventsFile");
-	}
+	#if(DataLoadTest("$SaveToDir/$AllDayEventsFile")) {
+	#	%AllDayEvents = do("$SaveToDir/$AllDayEventsFile");
+	#}
 	return(1);
 }
 
@@ -1043,6 +1087,33 @@ sub DataLoadTest {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Upgrade from one version to another (upgrades the holiday file)
+# Usage: UpgradeVersion();
+sub UpgradeVersion () {
+	my $ProgressWin = DPCreateProgressWin($Gettext->get("Upgrading"), "", 1);
+	$InternalConfig{LastVersion} = $Version;
+	PulsateProgressbar($ProgressWin->{ProgressBar});
+	if(-e $HolidayFile) {
+		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
+			my %UpgradeInfo;
+			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
+			PulsateProgressbar($ProgressWin->{ProgressBar});
+			open(my $ReadHoliday, "<", $HolidayFile);
+			my $HolidayMd5 = md5_hex(<$ReadHoliday>);
+			close($ReadHoliday);
+			if($UpgradeInfo{$HolidayMd5}) {
+				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}") {
+					# Copy the new file in place
+					unlink($HolidayFile);
+					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
+					PulsateProgressbar($ProgressWin->{ProgressBar});
+				}
+			}
+		}
+	}
+	$ProgressWin->{Window}->destroy();
+}
 
 # Purpose: Append a "0" to a number if it is only one digit.
 # Usage: my $NewNumber = AppendZero(NUMBER);
@@ -1113,6 +1184,12 @@ sub GetDistVer {
 # Usage: DPIntWarn("Warning");
 sub DPIntWarn {
 	warn "*** (Day Planner $Version) Warning: $_[0]\n";
+}
+
+# Purpose: Print an info message to STDOUT with proper output
+# Usage: DPIntInfo("Info");
+sub DPIntInfo {
+	print "*** (Day Planner $Version): $_[0]\n";
 }
 
 # Purpose: Delete keys from %CalendarContents, recusively if needed
@@ -1671,14 +1748,14 @@ sub Import_ResolveConflict {
 sub CLI_Export {
 	my($Type,$Target) = @_;
 	MainInit();
-	if($Type =~ /(ical|dpf)/) {
+	if($Type =~ /(ical|ics_dps|dpf)/) {
 		unless(-w dirname($Target)) {
 			die("Unable to write to " . dirname($Target) . "\n");
 		}
 		if(-d $Target) {
 			die("$Target: is a directory\n");
 		}
-		if($Type =~ /ical/) {
+		if($Type =~ /(ical|ics_dps)/) {
 			if(iCal_Exporter($Target)) {
 				print "iCalendar data written to $Target\n";
 			}
@@ -1716,7 +1793,7 @@ sub CLI_Import {
 	# Initialize the daemon (we need it)
 	DaemonInit() or die();
 	if($Type =~ /ical/) {
-		if(iCal_ImportFile($Source)) {
+		if(iCal_Importer($Source)) {
 			print "Imported iCalendar data from $Source\n";
 		} else {
 			print "Importing failed.\n";
@@ -1759,7 +1836,7 @@ sub HTML_Header {
 	my $Header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
 	$Header .= "<html><head>\n";
 	$Header .= '<meta content="text/html; charset=iso-8859-1" http-equiv="content-type" />';
-	$Header .= "<meta name='generator' content='Day planner $Version - http://home.gna.org/dayplanner' />\n";;
+	$Header .= "<meta name='generator' content='Day planner $Version - http://www.day-planner.org' />\n";;
 	if($NonDateMode) {
 		$Header .= "<title>" . HTML_Encode($Date) . "</title>";
 	} else {
@@ -1784,7 +1861,7 @@ sub HTML_Header {
 # Purpose: Print the footer of all day planner HTML documents
 # Usage: print $FILE HTML_Footer();
 sub HTML_Footer {
-	my $Footer = "<br /><small><small>" . HTML_Encode($Gettext->get("Generated by")) .  " <a href='http://home.gna.org/dayplanner'>" . HTML_Encode($Gettext->get("Day Planner")) . "</a> " . HTML_Encode($Gettext->get("version")) . " $Version</small></small><br />";
+	my $Footer = "<br /><small><small>" . HTML_Encode($Gettext->get("Generated by")) .  " <a href='http://www.day-planner.org/'>" . HTML_Encode($Gettext->get("Day Planner")) . "</a> " . HTML_Encode($Gettext->get("version")) . " $Version</small></small><br />";
 	$Footer .= "</body></html>";
 	return($Footer);
 }
@@ -2140,9 +2217,9 @@ sub PlanConvert_ProcessFile {
 # Purpose: Start converting plan
 # Usage: MigratePlan(IS_FIRST_TEST?);
 sub MigratePlan {
+	return(1) unless($Gtk2Init);
 	my $IsFirstTest = $_[0];
 	my @MigrateFiles;
-	
 	
 	foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
 		if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
@@ -2389,53 +2466,65 @@ sub iCal_GetSafe {
 	return($Data);
 }
 
+# Purpose: Removes escaping of iCalendar entries
+# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
+sub iCal_UnSafe {
+	my $Data = $_[0];
+	$Data =~ s/\\\\/\\/g;
+	$Data =~ s/\\,/,/g;
+	$Data =~ s/\\;/;/g;
+	$Data =~ s/\\n/\n/g;
+	return($Data);
+}
+
 # Purpose: Get a unique ID for an event
-# Usage: print $TARGET iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
+# Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
 sub iCal_UID {
 	chomp(@_);
-	return("UID:dayplanner-" . time() . encode_base64($_[0],"") . encode_base64($_[1],"") . "\r\n");
+	if($DPServices{StaticUID}) {
+		return("UID:dayplanner-" . encode_base64($_[0], "") . "\r\n");
+	} else {
+		return("UID:dayplanner-" . time() . encode_base64($_[0],"") . encode_base64($_[1],"") . "\r\n");
+	}
 }
 
 # Purpose: Export the day planner data to a file in the iCalendar format
-# Usage: iCal_Exporter(FILE, OnlyBirthdays?);
+# Usage: iCal_Exporter(FILE, OnlyBirthdays?, Don'tWriteFile?);
 sub iCal_Exporter {
 	my $File = $_[0];
 	my $BirthdaysOnly = $_[1];
-	open(my $TARGET, ">", $File) or do {
-		DPIntWarn("Unable to open $File for writing: $!");
-		DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
-		return(0);
-	};
+	my $DontWriteFile = $_[2];
+	my $iCalendar;
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
-	print $TARGET "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
+	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
 
 	# Begin exporting birthdays
-	foreach my $Month (keys(%BirthdayContents)) {
-		foreach my $Day (keys(%{$BirthdayContents{$Month}})) {
-				foreach my $Name (keys(%{$BirthdayContents{$Month}{$Day}})) {
+	foreach my $Month (sort keys(%BirthdayContents)) {
+		foreach my $Day (sort keys(%{$BirthdayContents{$Month}})) {
+				foreach my $Name (sort keys(%{$BirthdayContents{$Month}{$Day}})) {
 					$Month = AppendZero($Month);
 					$Day = AppendZero($Day);
-					print $TARGET "BEGIN:VEVENT\r\n";
+					$iCalendar .= "BEGIN:VEVENT\r\n";
 					# The unix epoch starts in 1970 so we put that in here as the start time
 					# for the event (we have no idea when a person was born)
-					print $TARGET "DTSTART:1970$Month${Day}T000000\r\n";
-					print $TARGET "DTEND:1970$Month${Day}T235959\r\n";
+					$iCalendar .= "DTSTART:1970$Month${Day}T000000\r\n";
+					$iCalendar .= "DTEND:1970$Month${Day}T235959\r\n";
 					# Day planner-style recurrance
-					print $TARGET "RRULE:FREQ=YEARLY\r\n";
+					$iCalendar .= "RRULE:FREQ=YEARLY\r\n";
 					# The summary is the name +'s birthday (localized).
-					print $TARGET "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
+					$iCalendar .= "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
 					# X-DP-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
-					print $TARGET "X-DP-BIRTHDAY:TRUE\r\n";
+					$iCalendar .= "X-DP-BIRTHDAY:TRUE\r\n";
 					# If X-DP-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
 					# X-DP-BIRTHDAYNAME instead.
-					print $TARGET "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
+					$iCalendar .= "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
 
 					# Most (maybe all) other calendars will happily ignore X-DP-BIRTHDAY*. It will be
 					# useful for day planner importing though.
 
 					# Get a unique identifier
-					print $TARGET iCal_UID("$Month$Day", $Name);
-					print $TARGET "END:VEVENT\r\n";
+					$iCalendar .= iCal_UID("$Month$Day", $Name);
+					$iCalendar .= "END:VEVENT\r\n";
 				}
 			}
 		}
@@ -2455,39 +2544,79 @@ sub iCal_Exporter {
 						$Hour =~ s/^(\d+):\d+$/$1/;
 						$Minute =~ s/^\d+:(\d+)$/$1/;
 						
-						print $TARGET "BEGIN:VEVENT\r\n";
-						print $TARGET "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
-						print $TARGET "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
-						print $TARGET "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
+						$iCalendar .= "BEGIN:VEVENT\r\n";
+						$iCalendar .= "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
+						$iCalendar .= "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
+						$iCalendar .= "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
 						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-							print $TARGET "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
+							$iCalendar .= "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
 						}
-						print $TARGET iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
-						print $TARGET "END:VEVENT\r\n";
+						$iCalendar .= iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
+						$iCalendar .= "END:VEVENT\r\n";
 
 					}
 				}
 			}
 		}
 	}
-	print $TARGET "END:VCALENDAR\r\n";
-	close($TARGET);
+	$iCalendar .= "END:VCALENDAR\r\n";
+	if($DontWriteFile) {
+		return($iCalendar);
+	} else {
+		open(my $TARGET, ">", $File) or do {
+			DPIntWarn("Unable to open $File for writing: $!");
+			DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
+			return(0);
+		};
+		print $TARGET $iCalendar;
+		close($TARGET);
+	}
 }
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
 # 	undef on failure.
-# Usage: my $iCalendar = iCal_LoadFile(FILE);
-sub iCal_LoadFile {
+# Usage: my $iCalendar = iCal_LoadData(FILE);
+sub iCal_LoadData {
 	my $File = $_[0];
 	my @iCalendarStructures;
 	my $LastStructure;
-	my $LastName = undef;
+	my $LastName;
 	my $CurrentStructure;
-	open(my $ICALENDAR, "<", $File);
+	my @FileContents;
+	my $FileBegun;
+	# If $File is a ref...
+	if(ref($File)) {
+		if(ref($File) eq "ARRAY") {
+			# All is well.
+			@FileContents = @{$File};
+		} else {
+			# Nothing is well, bug!
+			DPIntWarn("iCal_LoadData: supplied reference is not an ARRAYREF!");
+			# Return an empty anonymous array
+			return([]);
+		}
+	}
+	# It isn't
+	else {
+		open(my $ICALENDAR, "<", $File) or do {
+			DPIntWarn("iCal_LoadData: Unable to open $File for reading: $!");
+			# Return an empty anonymous array
+			return([]);
+		};
+		@FileContents = <$ICALENDAR>;
+		close($ICALENDAR);
+	}
 
-	while(<$ICALENDAR>) {
+	foreach(@FileContents) {
 		s/\r//;
 		chomp;
+		unless($FileBegun) {
+			if (/^BEGIN:VCALENDAR/) {
+				$FileBegun = 1;
+			} else {
+				next;
+			}
+		}
 		if (s/^\s//) {
 			$iCalendarStructures[$CurrentStructure]{$LastName} .= $_;
 		} elsif(/^END/) {
@@ -2505,25 +2634,17 @@ sub iCal_LoadFile {
 			$iCalendarStructures[$CurrentStructure]{$Name} = iCal_UnSafe($Value);
 		}
 	}
-	close($ICALENDAR);
+	unless($FileBegun) {
+		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR. Nothing has been imported!");
+	}
 	return(\@iCalendarStructures);
 }
 
-# Purpose: Removes escaping of iCalendar entries
-# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
-sub iCal_UnSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\\\/\\/g;
-	$Data =~ s/\\,/,/g;
-	$Data =~ s/\\;/;/g;
-	$Data =~ s/\\n/\n/g;
-	return($Data);
-}
-
-# Purpose: Imports files in the iCalendar format into day planner
-# Usage: iCal_ImportFile(FILE);
-sub iCal_ImportFile {
-	my $Data = iCal_LoadFile($_[0]);
+# Purpose: Imports data in the iCalendar format into day planner
+# Usage: iCal_Importer(FILE OR ARRAYREF);
+sub iCal_Importer {
+	my $Data = iCal_LoadData($_[0]);
+	my @Conflicts;
 	return(undef) unless(defined($Data));
 	foreach(0..scalar(@{$Data})) {
 		my $Current = $Data->[$_];
@@ -2582,12 +2703,17 @@ sub iCal_ImportFile {
 		}
 		my $ConflictText;
 		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
+		push(@Conflicts, $ConflictText);
 		if($Time) {
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
 		}
 	}
-	return(1);
+	if(@Conflicts) {
+		return(@Conflicts);
+	} else {
+		return(1);
+	}
 }
 
 # Purpose: Parse an iCalendar date-time
@@ -2615,6 +2741,8 @@ sub iCal_ParseDateTime {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Day planner data format functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# DEPRECATED
 
 # Purpose: Write the day planner data format
 # Usage: WriteDayplannerDataFile(FILE, ONLY_BIRTHDAYS?, ENCRYPT?);
@@ -2927,7 +3055,7 @@ sub ImportDataFromFile {
 			LoadDayplannerDataFile($Filename);
 			UpdatedData();
 		} elsif($Filename =~ /\.ics$/i) {
-			iCal_ImportFile($Filename);
+			iCal_Importer($Filename);
 			UpdatedData();
 			DPInfo($Gettext->get("Day planner has imported the iCalendar data as well as it can.\n\nNote however that day planner does not support all functions present in the iCalendar format so some data may have been lost."));
 		} else {
@@ -2956,9 +3084,9 @@ sub ExportData {
 	$ExportVBox->pack_start($ExportHBox,0,0,0);
 
 	# Encryption checkbox
-	my $EncryptionCheckbox = Gtk2::CheckButton->new($Gettext->get("Password protect the file (encryption)"));
-	$EncryptionCheckbox->show();
-	$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
+	#my $EncryptionCheckbox = Gtk2::CheckButton->new($Gettext->get("Password protect the file (encryption)"));
+	#$EncryptionCheckbox->show();
+	#$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
 	# Only birthdays checkbox
 	my $BirthdaysOnlyCheckbox = Gtk2::CheckButton->new($Gettext->get("Only export birthdays"));
 	$BirthdaysOnlyCheckbox->show();
@@ -2972,21 +3100,20 @@ sub ExportData {
 	$ExportHBox->pack_start($FiletypeLabel,0,0,0);
 	# Combo selector
 	my $Export_Combo = Gtk2::ComboBox->new_text;
-	$Export_Combo->insert_text(0, sprintf($Gettext->get('Day planner data format (%s)'), '*.dpf'));
-	$Export_Combo->insert_text(1, 'iCalendar (*.ics)');
-	$Export_Combo->insert_text(2,         $Gettext->get('XHTML (exports to a directory)'));
+	$Export_Combo->insert_text(0, 'iCalendar (*.ics)');
+	$Export_Combo->insert_text(1,         $Gettext->get('XHTML (exports to a directory)'));
 	$ExportHBox->pack_end($Export_Combo,0,0,0);
 	$Export_Combo->show();
 
 	# Handle changed values in the combo box
 	$Export_Combo->signal_connect('changed' => sub {
 		$ActiveIndex = $Export_Combo->get_active();
-		unless($ActiveIndex == 0) {
-			$EncryptionCheckbox->set_sensitive(0);
-		} else {
-			$EncryptionCheckbox->set_sensitive(1);
-		}
-		if($ActiveIndex == 2) {
+		#unless($ActiveIndex == 0) {
+		#	$EncryptionCheckbox->set_sensitive(0);
+		#} else {
+		#	$EncryptionCheckbox->set_sensitive(1);
+		#}
+		if($ActiveIndex == 1) {
 			$BirthdaysOnlyCheckbox->set_sensitive(0);
 			$ExportWindow->set_action('select-folder');
 		} else {
@@ -3001,18 +3128,12 @@ sub ExportData {
 		my $Filename = $ExportWindow->get_filename();
 		if($Response eq 'accept') {
 			my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
-			if($ActiveIndex == 0) {
-				if(PromptOverwrite("$Filename.dpf")) {
-					my $Encrypt = $EncryptionCheckbox->get_active();
-					WriteDayplannerDataFile("$Filename.dpf",$OnlyBirthdays,$Encrypt);
-					last;
-				}
-			} elsif ($ActiveIndex == 1) {
+			if ($ActiveIndex == 0) {
 				if(PromptOverwrite("$Filename.ics")) {
 					iCal_Exporter("$Filename.ics", $OnlyBirthdays);
 					last;
 				}
-			} elsif ($ActiveIndex == 2) {
+			} elsif ($ActiveIndex == 1) {
 				if(PromptOverwrite($Filename, 1)) {
 					HTML_Export($Filename);
 					last;
@@ -3093,10 +3214,13 @@ sub Gtk2Init {
 # 	Returns a hashref with the following keys:
 # 		Window = The window
 # 		ProgressBar = The progress bar
+# TODO: Migrate all Gtk2::ProgressBars to DPCreateProgressWin
 sub DPCreateProgressWin {
 	my ($Name, $Text, $PulsateMode) = @_;
 	my %ProgressHash;
 	$ProgressHash{Window} = Gtk2::Window->new();
+	$ProgressHash{Window}->set_skip_taskbar_hint(1);
+	$ProgressHash{Window}->set_skip_pager_hint(1);
 	if(defined($Name)) {
 		$ProgressHash{Window}->set_title($Name);
 	}
@@ -3134,6 +3258,16 @@ sub PulsateProgressbar {
 		Gtk2->main_iteration while Gtk2->events_pending;
 	}
 	return(1);
+}
+
+# Purpose: Set the fraction in a progressbar
+# Usage: ProgressFraction($Progressbar, fraction);
+sub ProgressFraction {
+	my($Progressbar, $fraction) = @_;
+	if($Gtk2Init and defined($Progressbar)) {
+		$Progressbar->set_fraction($fraction);
+		Gtk2->main_iteration while Gtk2->events_pending
+	}
 }
 
 # Purpose: Populate the upcoming events widget
@@ -3190,13 +3324,13 @@ sub PopulateUpcomingEvents {
 		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
-			foreach(keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
+			foreach(sort keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
 				$HasEvents = 1;
 				$h->{text} .= "\n" . $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
 			}
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
-			foreach my $Birthday (keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
+			foreach my $Birthday (sort keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
 					$HasEvents = 1;
 					$h->{text} .= "\n" .  sprintf($Gettext->get("%s's birthday"), $Birthday);
 			}
@@ -4235,7 +4369,7 @@ sub AboutBox {
 	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006");
-	$AboutDialog->set_website("http://home.gna.org/dayplanner/");
+	$AboutDialog->set_website("http://www.day-planner.org/");
 	$AboutDialog->set_name($Gettext->get("Day planner"));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
@@ -4257,14 +4391,16 @@ sub AboutBox {
 
 # Purpose: Draw the preferences window and allow the user to set different
 #  configuration options
-# Usage: PreferencesWindow();
+# Usage: PreferencesWindow(NAME);
 sub PreferencesWindow {
+	$_[0] =~ s/_//;
+	my $Name = $_[0];
 	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
 	$PreferencesWindow->set_transient_for($MainWindow);
 	$PreferencesWindow->set_position('center-on-parent');
-	$PreferencesWindow->set_title($Gettext->get("Preferences"));
+	$PreferencesWindow->set_title($Name);
 	$PreferencesWindow->set_resizable(0);
 	$PreferencesWindow->set_border_width(12);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
@@ -4625,7 +4761,7 @@ sub DrawMainWindow {
 		[ "/$EditStock/" . $Gettext->get("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/$EditStock/" . $Gettext->get("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
-		[ "/$EditStock/$PrefsStock" , undef,			\&PreferencesWindow,		1, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1, 	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
@@ -4789,6 +4925,23 @@ GetOptions (
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		printf "Perl version %vd\n", $^V;
 		print "OS: ", GetDistVer(), "\n";
+		# Display module information (also includes daemon and notifier deps)
+		my @AvailModules;
+		my @UnavailModules;
+		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser Crypt::CBC Crypt::Blowfish IO::Select/) {
+			if(eval("use $_; 1")) {
+				push(@AvailModules, $_);
+			} else {
+				push(@UnavailModules, $_);
+			}
+		}
+		print "Available modules:";
+		print " $_" foreach(@AvailModules);
+		print " (none)" unless(@AvailModules);
+		print "\nUnavailable modules:";
+		print " $_" foreach(@UnavailModules);
+		print " (none)" unless(@UnavailModules);
+		print "\n";
 		exit(0);
 	},
 	'test|t' => sub {
@@ -4808,10 +4961,21 @@ GetOptions (
 	},
 	's|shutdaemon' => \$ShutdownDaemon,
 	'exportical|exportics=s' => \&CLI_Export,
-	'exportdpf=s' => \&CLI_Export,
+	'exportics_dps=s' => sub {
+		$DPServices{StaticUID} = 1;
+		CLI_Export(@_);
+		$DPServices{StaticUID} = 0;
+	},
+	'exportdpf=s' => sub {
+		DPIntWarn("The Day Planner data format is deprecated and will be removed in a future release. You should use iCalendar instead");
+	       	CLI_Export(@_);
+	},
 	'exporthtml=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
-	'importdpf=s' => \&CLI_Import,
+	'importdpf=s' => sub {
+		DPIntWarn("The Day Planner data format is deprecated and will be removed in a future release. You should use iCalendar instead");
+		CLI_Import(@_);
+	},
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;

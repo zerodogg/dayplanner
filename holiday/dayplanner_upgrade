@@ -1,0 +1,12 @@
+# Day planner holiday upgrades
+# $Id$
+#
+# This file defines when day planner should upgrade holiday files
+# Syntax:
+# md5sum=NEWFILE
+#
+# The reason day planner doesn't just blindly overwrite the holiday file
+# by default is that the user might have manually edited the holiday file.
+
+# Old holiday_norway files
+c8ebe361b2ef8b601d45aa042d52dbfc=holiday_norway

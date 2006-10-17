@@ -1,0 +1,53 @@
+TODO_DPS
+$Id$
+
+These are the items required to be done before DPS can be released
+for broader use.
+
+TODO:
+
+ Client:
+ ------
+- Implement support for an encrypted ICS filetype to enable DPS to
+  have on-server encryption.
+- Log conflicts in DPS_RepairData.
+- Use the DPS error function in DPS_RepairData.
+- Do a forced DPS_BackupData on DPS_RepairData failure.
+- Add conflict resolving on download (don't blindly trust it).
+- Clean the text of error messages in DPS_SendData().
+- Handle MOTD
+
+ Server:
+ ------
+- Implement connection encryption
+- Clean %Security once every day
+- Clean up ghost connections (timeout on 5-10 minutes?)
+- Allow encrypted connections
+- Add MOTD command
+- Add a SETTINGS command (gives info about the settings for the user):
+	Client: SETTINGS
+	Server reply: Encrypted=1 GenHTML=0
+- Add a CHANGE command:
+	CHANGE SET [SETTING] [NEWSETTING]
+	CHANGE PASSWORD [OLDPASSWORD] [NEWPASSWORD]
+
+ Other:
+ -----
+- Write a document on how to communicate with the DPS.
+
+----------------------------------------------------------------------
+
+DONE:
+
+ Client:
+ ------
+- Get the client working
+- Don't ask the user if she wants to resolve the conflicts. It is required
+  to avoid data loss.
+
+ Server:
+ ------
+- Get a working services daemon
+- Move $Port to the config
+- Use the config a lot more
+- Implement --conffile and use it, but fallback to a config in ./

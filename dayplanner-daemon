@@ -18,8 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-# FIXME: 00:00 notifications appear on the *wrong day*
-
 use strict;			# Force strict coding
 use warnings;			# Tell perl to print warnings
 use IO::Socket;			# We use IO::Socket for communication with dayplanner
@@ -35,7 +33,7 @@ use POSIX qw/setsid/;		# We need setsid();
 Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
 # Scalars
-my $Version = '0.3';
+my $Version = '0.3.1';
 my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";		# The filename to read events from
 my $BirthdayFile = "birthdays.dpd";		# The filename to read birthdays from
@@ -438,7 +436,8 @@ sub DayplannerAlarm {
 			RunNotifier($NotificationHash{"$currhour:$currmin"}{summary},
 				$NotificationHash{"$currhour:$currmin"}{fulltext},
 				'today',
-				"$currhour:$currmin");
+				"$currhour:$currmin",
+				0);
 			$NotifierStarted = 1;
 		} 
 	} 
@@ -446,14 +445,16 @@ sub DayplannerAlarm {
 		RunNotifier($NotificationHash{"prenot_$currhour:$currmin"}{summary},
 			$NotificationHash{"prenot_$currhour:$currmin"}{fulltext},
 			'today',
-			$NotificationHash{"prenot_$currhour:$currmin"}{PreNotification});
+			$NotificationHash{"prenot_$currhour:$currmin"}{PreNotification},
+			1);
 		$NotifierStarted = 1;
 	} 
 	if(defined($NotificationHash{"tomorrow_$currhour:$currmin"})) {
 		RunNotifier($NotificationHash{"tomorrow_$currhour:$currmin"}{summary},
 			$NotificationHash{"tomorrow_$currhour:$currmin"}{fulltext},
 			'tomorrow',
-			"$currhour:$currmin");
+			"$currhour:$currmin",
+			1);
 		$NotifierStarted = 1;
 	}
        unless($NotifierStarted) {
@@ -465,7 +466,7 @@ sub DayplannerAlarm {
 # Usage: RunNotifier(SUMMARY, FULLTEXT, DATE, TIME);
 sub RunNotifier {
 	# Notifier
-	my ($Summary, $Fulltext, $Date, $Time) = @_;
+	my ($Summary, $Fulltext, $Date, $Time, $IsPreNot) = @_;
 	IntDebug("Alarm! Task: $Summary at $Time on $Date");
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($Self))))) {
 		if ( -x "$_/$NotifierName") {
@@ -474,6 +475,7 @@ sub RunNotifier {
 			$CurrentNotification{$NotificationID}{Fulltext} = $Fulltext;
 			$CurrentNotification{$NotificationID}{Time} = $Time;
 			$CurrentNotification{$NotificationID}{Date} = $Date;
+			$CurrentNotification{$NotificationID}{PreNot} = $IsPreNot;
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
 			# and 1-255 on FALSE, so it's the other way around from perl
 			unless(system("$_/$NotifierName --socket \"$DaemonSocket\" --id \"$NotificationID\"")) {

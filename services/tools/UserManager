@@ -28,72 +28,33 @@ use File::Path qw/mkpath rmtree/;
 my %Users;
 my %DPServices;
 my $DataDir = "./dpservices/";
+$| = 1;		# Don't buffer output
 
-
-# Purpose: Connect to a day planner services server.
-# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
-# 	This shouldn't be called directly. Use DPS_ConnectHandler
-sub DPS_Connect {
-	my ($Host, $Port, $User, $Password) = @_;
-	# Connect
-	$DPServices{socket} = IO::Socket::INET->new(
-					PeerAddr => $Host,
-					PeerPort => $Port,
-			) or die "Unable to connect to $Host:$Port: $@\n";
-	# Authenticate
-	my $APIREPLY = DPS_DataSegment("APILEVEL 0");
-	return("APIERROR") if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect(); });
-	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
-	return("AUTHERROR") if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); });
-	return("OK");
-}
-
-# Purpose: Call DPS_Connect and handle errors
-# Usage: DPS_ConnectHandler();
-sub DPS_ConnectHandler {
-	my $CONReply = DPS_Connect($DPServices{host}, $DPServices{port}, $DPServices{user}, $DPServices{pass});
-	if($CONReply eq "APIERROR") {
-		# Api ERROR message
-		print "API Error: This UserManager is too old\n";
-		return(undef);
-	} elsif($CONReply eq "AUTHERROR") {
-		# Auth error message
-		print "Authentication error: Invalid username or password\n";
-		return(undef);
+# Purpose: Send a command to the daemon
+# Usage: SendDaemonCommand(COMMAND);
+sub SendDaemonCommand {
+	my $Command = shift;
+	my $SocketName = "$DataDir/adminsocket";
+	# Verify socket existance
+	unless (-e $SocketName) {
+		die "$SocketName doesn't exist\n";
 	}
-	return(1);
-}
 
-# Purpose: Do something when an error has occurred
-# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
-# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
-sub DPS_ErrorIfNeeded {
-	my ($Expected, $Recieved, $ErrorSub) = @_;
-	unless($Expected eq $Recieved) {
-		$ErrorSub->($Recieved);
-		return(1);
-	} else {
-		return(0);
+	# Verify that it actually IS a socket
+	unless (-S $SocketName) {
+		die "$SocketName is not a socket\n";
 	}
-}
 
-# Purpose: Disconnect from a day planner services daemon
-# Usage: DPS_Disconnect();
-sub DPS_Disconnect {
-	my $Socket = $DPServices{socket};
-	close($Socket);
-	delete($DPServices{socket});
-	return(1);
-}
-
-# Purpose: Send data to a day planner services daemon and get the reply
-# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
-sub DPS_DataSegment {
-	my $Socket = $DPServices{socket};
-	print $Socket "$_[0]\n";
-	my $Data = <$Socket>;
-	chomp($Data);
-	return($Data);
+	# Open up the connection to the socket or die trying
+	my $socket = IO::Socket::UNIX->new(Peer	=> $SocketName,
+	                                Type	=> SOCK_STREAM,
+					Timeout	=> 10 )
+	    or die "Couldn't connect to $SocketName: $@\nPerhaps the services daemon isn't running?\n";
+	print $socket $Command,"\n";
+	my $Return = <$socket>;
+	close($socket);
+	chomp($Return);
+	return($Return);
 }
 
 # Purpose: Load the data
@@ -120,29 +81,33 @@ sub WriteData {
 	$Data::Dumper::Indent = 1;
 	print $WriteTo Data::Dumper->Dump([\%Users], ["*Users"]);
 	close($WriteTo);
+	DaemonReloadUsers();
 }
 
 # Purpose: Tell the daemon to reload its user list
 # Usage: DaemonReloadUsers();
 sub DaemonReloadUsers {
-	my $Username = GetInput("Username: ","");
-	my $Password = GetPassword();
-	$DPServices{host} = "localhost";
-	$DPServices{port} = 4435;
-	$DPServices{user} = $Username;
-	$DPServices{pass} = $Password;
-	if(DPS_ConnectHandler()) {
-		my $Reply = DPS_DataSegment("ADMIN RELOAD_USERLIST");
-		DPS_Disconnect();
-		if($Reply eq "DONE") {
-			print "The daemon has reloaded the data\n";
+	print "Telling the daemon to reload the data...";
+	my $Reply = SendDaemonCommand("RELOAD_USERLIST");
+	if($Reply eq "DONE") {
+		print "done\n";
+	} else {
+		if($Reply eq "REFUSED") {
+			print "failed. Permission denied\n";
 		} else {
-			if($Reply eq "REFUSED") {
-				print "Permission denied. This user does not have admin access\n";
-			} else {
-				print "Failed: $Reply\n";
-			}
+			print "failed, replied $Reply\n";
 		}
+	}
+}
+
+# Purpose: Display the uptime of the daemon
+# Usage: DaemonUptime();
+sub DaemonUptime {
+	my $Reply = SendDaemonCommand("UPTIME");
+	if($Reply eq "REFUSED") {
+		print "Permission denied.\n";
+	} else {
+		print "Uptime: $Reply\n";
 	}
 	WaitContinue();
 }
@@ -224,8 +189,8 @@ sub AddUser {
 		mkpath("$DataDir/$Username/") or warn("FAILED to mkpath($DataDir/$Username/): $!\n");
 	}
 	print "done\n";
-	print "Press enter to continue";
-	<STDIN>;
+	WriteData();
+	WaitContinue();
 }
 
 # Purpose: Display formatted user level information
@@ -301,6 +266,7 @@ sub ChangeUserSettings {
 		} else {
 			print "Change cancelled\n";
 		}
+		WriteData();
 		WaitContinue();
 		return(1);
 	}
@@ -314,6 +280,7 @@ sub ChangeUserLevel {
 	my $Level = SetUserLevel();
 	$Users{$User}{level} = $Level;
 	print "User level of $User set to $Level\n";
+	WriteData();
 	WaitContinue();
 }
 
@@ -325,6 +292,7 @@ sub DeleteUser {
 	my $User = GetValidUsername();
 	delete($Users{$User});
 	print "User deleted. The data directory for this user is still left intact!\n";
+	WriteData();
 	WaitContinue();
 }
 
@@ -387,10 +355,10 @@ sub MainMenu {
 		print "V - View the user list\n";
 		print "I - View information about a user\n";
 		print "R - Tell the day planner services daemon to reload the userlist\n";
+		print "U - Display the daemon uptime\n";
 		print "Q - Quit and save\n";
-		my $Input = GetInput("Selection: ", "ADECVIQR");
+		my $Input = GetInput("Selection: ", "ADECVIQRU");
 		if($Input =~ /q/i) {
-			WriteData();
 			exit(0);
 		} elsif ($Input =~ /a/i) {
 			AddUser();
@@ -406,6 +374,9 @@ sub MainMenu {
 			GetUserInfo();
 		} elsif ($Input =~ /r/i) {
 			DaemonReloadUsers();
+			WaitContinue();
+		} elsif ($Input =~ /u/i) {
+			DaemonUptime();
 		}
 	}
 }
