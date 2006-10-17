@@ -129,7 +129,7 @@ foreach(@BINLINKS) {
 	print UNINSTALL "rm -f $_/dayplanner $_/dayplanner-daemon $_/dayplanner-notifier\n";
 	print UNINSTALL "echo -n \".\"\n";
 }
-print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/dayplanner.menu && update-menus\n";
+print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/dayplanner.menu && update-menus &> /dev/null\n";
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
 print UNINSTALL "echo \"done\"\n";
