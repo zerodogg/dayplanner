@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn2\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2006-10-17 10:53+0200\n"
+"POT-Creation-Date: 2006-10-17 13:01+0200\n"
 "PO-Revision-Date: 2006-09-28 09:57+0200\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
@@ -152,12 +152,11 @@ msgid "Parsing and repairing"
 msgstr "Tolker og reparerer"
 
 #: dayplanner:500
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "Unable to download the raw day planner data from the server. Repairing is "
 "not possible! Backup written to %s."
-msgstr ""
-"Klarte ikkje å lasta ned rå-data frå tenaren, det er umogleg å reparera!"
+msgstr "Klarte ikkje å lasta ned rå-data frå tenaren. Det er ikkje mogleg å reparera! Sikkerhetskopi lagra til %s."
 
 #: dayplanner:539
 msgid ""
@@ -194,7 +193,7 @@ msgid ""
 msgstr ""
 
 #: dayplanner:617
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "The server did not accept the uploaded data and replied with an unknwown "
 "value: %s"
@@ -208,7 +207,7 @@ msgstr "Tenester"
 
 #: dayplanner:682
 msgid "Initializing"
-msgstr "Starter opp"
+msgstr "Startar opp"
 
 #: dayplanner:687
 #, perl-format
@@ -933,9 +932,9 @@ msgid "Postpone"
 msgstr "Utsett"
 
 #: dayplanner-notifier:295
-#, fuzzy
+#, 
 msgid "Postpone this notification for 10 minutes"
-msgstr "Varsla meg om hendingar før hendingstidspunktet"
+msgstr "Utsett denne varslinga ti minuttar"
 
 #~ msgid ""
 #~ "An error occurred while uploading your data to the day planner services "
