@@ -1085,44 +1085,97 @@ sub DataLoadTest {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Core helper functions
+# Data helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Upgrade from one version to another (upgrades the holiday file)
-# Usage: UpgradeVersion();
-sub UpgradeVersion () {
-	my $ProgressWin = DPCreateProgressWin($Gettext->get("Upgrading"), "", 1);
-	$InternalConfig{LastVersion} = $Version;
-	PulsateProgressbar($ProgressWin->{ProgressBar});
-	if(-e $HolidayFile) {
-		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
-			my %UpgradeInfo;
-			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
-			PulsateProgressbar($ProgressWin->{ProgressBar});
-			open(my $ReadHoliday, "<", $HolidayFile);
-			my $HolidayMd5 = md5_hex(<$ReadHoliday>);
-			close($ReadHoliday);
-			if($UpgradeInfo{$HolidayMd5}) {
-				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}") {
-					# Copy the new file in place
-					unlink($HolidayFile);
-					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
-					DPIntInfo("Upgraded $HolidayFile");
-					PulsateProgressbar($ProgressWin->{ProgressBar});
-				}
-			}
-		}
+# Purpose: Delete keys from %CalendarContents, recusively if needed
+# Usage: CalendarDelete(year,month,day,time);
+sub CalendarDelete {
+	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
+	unless(CalendarDefined(@_)) {
+		DPIntWarn("CalendarDelete: Unable to find an event at $EventYear/$EventMonth/$EventDay/$EventTime");
+		return(undef);
 	}
-	$ProgressWin->{Window}->destroy();
+	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
+		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
+			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
+				unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}})) {
+					delete($CalendarContents{$EventYear}{$EventMonth});
+						unless(keys(%{$CalendarContents{$EventYear}})) {
+							delete($CalendarContents{$EventYear});
+						}
+			}
+	}
 }
 
-# Purpose: Append a "0" to a number if it is only one digit.
-# Usage: my $NewNumber = AppendZero(NUMBER);
-sub AppendZero {
-	if ($_[0] =~ /^\d$/) {
-		return("0$_[0]");
+# Purpose: Delete keys from %BirthdayContents, recusively if needed
+# Usage: BirthdayDelete(month,day,name);
+sub BirthdayDelete {
+	my ($EventMonth,$EventDay,$Name) = @_;
+	unless(BirthdayDefined(@_)) {
+		DPIntWarn("BirthdayDelete: Unable to find an event at $EventMonth/$EventDay/$Name");
+		return(undef);
 	}
-	return($_[0]);
+	delete($BirthdayContents{$EventMonth}{$EventDay}{$Name});
+		unless (keys(%{$BirthdayContents{$EventMonth}{$EventDay}})) {
+			delete($BirthdayContents{$EventMonth}{$EventDay});
+				unless (keys(%{$BirthdayContents{$EventMonth}})) {
+					delete($BirthdayContents{$EventMonth});
+			}
+	}
+}
+
+# If a single test is run then invalid data might get inserted into the data hashes.
+# Using the *Defined functions avoids this.
+
+# Purpose: Recursively test for defined data in %CalendarContents
+# Usage: CalendarDefined(year,month,day,time);
+sub CalendarDefined {
+	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
+	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
+			return(1)
+		}
+	return(0);
+}
+
+# Purpose: Recursively test for defined data in %BirthdayContents
+# Usage: BirthdayDefined(month,day,summary);
+sub BirthdayDefined {
+	my ($EventMonth, $EventDay, $EventSummary) = @_;
+	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay}) and defined($BirthdayContents{$EventMonth}{$EventDay}{$EventSummary})) {
+			return(1)
+		}
+	return(0);
+}
+
+# Purpose: Recursively test for defined data in %CalendarContents
+# Usage: CalendarDayDefined(year,month,day);
+sub CalendarDayDefined {
+	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
+	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay})) {
+			return(1)
+		}
+	return(0);
+}
+
+# Purpose: Recursively test for defined data in %BirthdayContents
+# Usage: BirthdayDayDefined(month,day);
+sub BirthdayDayDefined {
+	my ($EventMonth, $EventDay, $EventSummary) = @_;
+	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay})) {
+			return(1)
+		}
+	return(0);
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# General helper functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Print formatted --help output
+# Usage: PrintHelp("-shortoption", "--longoption", "description");
+sub PrintHelp {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
 }
 
 # Purpose: Get OS/distro version information
@@ -1181,6 +1234,57 @@ sub GetDistVer {
 	return("Unknown ($sysname $release $version $machine)");
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Core helper functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Get the real name of the person whose birthday it is
+# Usage: my $Name = GetRealBirthdayName(NAME);
+sub GetRealBirthdayName {
+	my $Name = $_[0];
+	my $BirthdayString = $Gettext->get("%s's birthday");
+	$BirthdayString =~ s/%s//;
+	$Name =~ s/$BirthdayString$//;
+	return($Name);
+}
+
+# Purpose: Upgrade from one version to another (upgrades the holiday file)
+# Usage: UpgradeVersion();
+sub UpgradeVersion () {
+	my $ProgressWin = DPCreateProgressWin($Gettext->get("Upgrading"), "", 1);
+	$InternalConfig{LastVersion} = $Version;
+	PulsateProgressbar($ProgressWin->{ProgressBar});
+	if(-e $HolidayFile) {
+		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
+			my %UpgradeInfo;
+			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
+			PulsateProgressbar($ProgressWin->{ProgressBar});
+			open(my $ReadHoliday, "<", $HolidayFile);
+			my $HolidayMd5 = md5_hex(<$ReadHoliday>);
+			close($ReadHoliday);
+			if($UpgradeInfo{$HolidayMd5}) {
+				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}") {
+					# Copy the new file in place
+					unlink($HolidayFile);
+					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
+					DPIntInfo("Upgraded $HolidayFile");
+					PulsateProgressbar($ProgressWin->{ProgressBar});
+				}
+			}
+		}
+	}
+	$ProgressWin->{Window}->destroy();
+}
+
+# Purpose: Append a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = AppendZero(NUMBER);
+sub AppendZero {
+	if ($_[0] =~ /^\d$/) {
+		return("0$_[0]");
+	}
+	return($_[0]);
+}
+
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
 sub DPIntWarn {
@@ -1191,92 +1295,6 @@ sub DPIntWarn {
 # Usage: DPIntInfo("Info");
 sub DPIntInfo {
 	print "*** (Day Planner $Version): $_[0]\n";
-}
-
-# Purpose: Delete keys from %CalendarContents, recusively if needed
-# Usage: CalendarDelete(year,month,day,time);
-sub CalendarDelete {
-	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
-	unless(CalendarDefined(@_)) {
-		DPIntWarn("CalendarDelete: Unable to find an event at $EventYear/$EventMonth/$EventDay/$EventTime");
-		return(undef);
-	}
-	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
-		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
-			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
-				unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}})) {
-					delete($CalendarContents{$EventYear}{$EventMonth});
-						unless(keys(%{$CalendarContents{$EventYear}})) {
-							delete($CalendarContents{$EventYear});
-						}
-			}
-	}
-}
-
-# Purpose: Delete keys from %BirthdayContents, recusively if needed
-# Usage: BirthdayDelete(month,day,name);
-sub BirthdayDelete {
-	my ($EventMonth,$EventDay,$Name) = @_;
-	unless(BirthdayDefined(@_)) {
-		DPIntWarn("BirthdayDelete: Unable to find an event at $EventMonth/$EventDay/$Name");
-		return(undef);
-	}
-	delete($BirthdayContents{$EventMonth}{$EventDay}{$Name});
-		unless (keys(%{$BirthdayContents{$EventMonth}{$EventDay}})) {
-			delete($BirthdayContents{$EventMonth}{$EventDay});
-				unless (keys(%{$BirthdayContents{$EventMonth}})) {
-					delete($BirthdayContents{$EventMonth});
-			}
-	}
-}
-
-# Purpose: Print formatted --help output
-# Usage: PrintHelp("-shortoption", "--longoption", "description");
-sub PrintHelp {
-	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
-}
-
-# If a single test is run then invalid data might get inserted into the data hashes.
-# Using the *Defined functions avoids this.
-
-# Purpose: Recursively test for defined data in %CalendarContents
-# Usage: CalendarDefined(year,month,day,time);
-sub CalendarDefined {
-	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
-	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
-			return(1)
-		}
-	return(0);
-}
-
-# Purpose: Recursively test for defined data in %BirthdayContents
-# Usage: BirthdayDefined(month,day,summary);
-sub BirthdayDefined {
-	my ($EventMonth, $EventDay, $EventSummary) = @_;
-	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay}) and defined($BirthdayContents{$EventMonth}{$EventDay}{$EventSummary})) {
-			return(1)
-		}
-	return(0);
-}
-
-# Purpose: Recursively test for defined data in %CalendarContents
-# Usage: CalendarDayDefined(year,month,day);
-sub CalendarDayDefined {
-	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
-	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay})) {
-			return(1)
-		}
-	return(0);
-}
-
-# Purpose: Recursively test for defined data in %BirthdayContents
-# Usage: BirthdayDayDefined(month,day);
-sub BirthdayDayDefined {
-	my ($EventMonth, $EventDay, $EventSummary) = @_;
-	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay})) {
-			return(1)
-		}
-	return(0);
 }
 
 # Purpose: Handle various signals gracefully
@@ -1576,6 +1594,66 @@ sub AddAutostart {
 		close($FLUXSTART);
 	}
 	return($RETURN);
+}
+
+# Purpose: Wrapper around AddAutostart that detects if we have an pre-2.14
+# 		version of GNOME and displays an information dialog about the
+# 		inability to add a gnome autostart
+# Usage: DP_AddAutostart();
+sub DP_AddAutostart {
+	my $GNOME_Version;
+	my $Old_GNOME;
+
+	# Set the settings var
+	$InternalConfig{AutostartOn} = 1;
+
+	# Try to get the gnome version from the gnome control center
+	foreach(split(/:/, sprintf("%s:%s", dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
+		if (-x "$_/gnome-control-center") {
+			$GNOME_Version = qx#$_/gnome-control-center --version#;
+			chomp($GNOME_Version);
+			$GNOME_Version =~ s/^(.+)\s+(.+)\s+(.+)$/$3/;
+			$GNOME_Version =~ s/^(\d+\.\d+).*$/$1/;
+			$GNOME_Version = undef unless($GNOME_Version =~ /^\d+\.\d+(\.\d+.*)?$/);
+			last;
+		}
+	}
+	if(defined($GNOME_Version)) {
+		unless($GNOME_Version > 2.12) {
+			$Old_GNOME = 1;
+		} else {
+			$Old_GNOME = 0;
+		}
+	} else {	# If we couldn't get the GNOME version then we just assume the user 
+			# either doesn't use GNOME or has a version of GNOME newer than 2.12
+		$Old_GNOME = 0;
+	}
+
+	my $Result = AddAutostart($Old_GNOME);
+	return(1) if $Result =~ /^okay$/;
+
+	if($Result =~ /^gnome-fail$/) {
+		# GNOME failed, check if GNOME_DESKTOP_SESSION_ID is set.
+		# If it isn't set, then the user isn't running GNOME *now* so we don't want to display the
+		# error.
+		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
+			# It's set, so the user is running GNOME - display the error
+			DPError($Gettext->get("A problem occurred while setting up automatic startup of the day planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
+		}
+	} else {
+		DPIntWarn("Unknown return value from AddAutostart(): $Result");
+	}
+	return(1);
+}
+
+# Purpose: Wrapper around RemoveAutostart that sets the config vars
+# Usage: DP_RemoveAutostart();
+sub DP_RemoveAutostart {
+	if(DPQuestion($Gettext->get("Disabling automatic startup of the reminder will prevent notifications unless day planner has been manually started. Disable the automatic startup?"))) {
+		$InternalConfig{AutostartOn} = 1;
+		return(RemoveAutostart());
+	}
+	return(undef);
 }
 
 # Purpose: Get the number of *milli*seconds until midnight
@@ -2887,6 +2965,7 @@ sub LoadDayplannerDataFile {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI import/export dialogs
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 # Purpose: Pop up a graphical dialog for importing data
 # Usage: ImportData();
 sub ImportData {
@@ -3354,66 +3433,6 @@ sub PopulateUpcomingEvents {
 	}
 }
 
-# Purpose: Wrapper around AddAutostart that detects if we have an pre-2.14
-# 		version of GNOME and displays an information dialog about the
-# 		inability to add a gnome autostart
-# Usage: DP_AddAutostart();
-sub DP_AddAutostart {
-	my $GNOME_Version;
-	my $Old_GNOME;
-
-	# Set the settings var
-	$InternalConfig{AutostartOn} = 1;
-
-	# Try to get the gnome version from the gnome control center
-	foreach(split(/:/, sprintf("%s:%s", dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
-		if (-x "$_/gnome-control-center") {
-			$GNOME_Version = qx#$_/gnome-control-center --version#;
-			chomp($GNOME_Version);
-			$GNOME_Version =~ s/^(.+)\s+(.+)\s+(.+)$/$3/;
-			$GNOME_Version =~ s/^(\d+\.\d+).*$/$1/;
-			$GNOME_Version = undef unless($GNOME_Version =~ /^\d+\.\d+(\.\d+.*)?$/);
-			last;
-		}
-	}
-	if(defined($GNOME_Version)) {
-		unless($GNOME_Version > 2.12) {
-			$Old_GNOME = 1;
-		} else {
-			$Old_GNOME = 0;
-		}
-	} else {	# If we couldn't get the GNOME version then we just assume the user 
-			# either doesn't use GNOME or has a version of GNOME newer than 2.12
-		$Old_GNOME = 0;
-	}
-
-	my $Result = AddAutostart($Old_GNOME);
-	return(1) if $Result =~ /^okay$/;
-
-	if($Result =~ /^gnome-fail$/) {
-		# GNOME failed, check if GNOME_DESKTOP_SESSION_ID is set.
-		# If it isn't set, then the user isn't running GNOME *now* so we don't want to display the
-		# error.
-		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
-			# It's set, so the user is running GNOME - display the error
-			DPError($Gettext->get("A problem occurred while setting up automatic startup of the day planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
-		}
-	} else {
-		DPIntWarn("Unknown return value from AddAutostart(): $Result");
-	}
-	return(1);
-}
-
-# Purpose: Wrapper around RemoveAutostart that sets the config vars
-# Usage: DP_RemoveAutostart();
-sub DP_RemoveAutostart {
-	if(DPQuestion($Gettext->get("Disabling automatic startup of the reminder will prevent notifications unless day planner has been manually started. Disable the automatic startup?"))) {
-		$InternalConfig{AutostartOn} = 1;
-		return(RemoveAutostart());
-	}
-	return(undef);
-}
-
 # Purpose: Detect the path to the image file(s) supplied. Returns the path to the
 # 		first one found or undef
 # Usage: $Image = DetectImage(image1, image2);
@@ -3461,16 +3480,6 @@ sub DeleteEvent {
 	} else {
 		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
 	}
-}
-
-# Purpose: Get the real name of the person whose birthday it is
-# Usage: my $Name = GetRealBirthdayName(NAME);
-sub GetRealBirthdayName {
-	my $Name = $_[0];
-	my $BirthdayString = $Gettext->get("%s's birthday");
-	$BirthdayString =~ s/%s//;
-	$Name =~ s/$BirthdayString$//;
-	return($Name);
 }
 
 # Purpose: Detect which kind of event is selected in the eventlist
@@ -3637,6 +3646,8 @@ sub SetActiveCalItems {
 
 # Purpose: Sets the date/time variables to the current date/time
 # Usage: GetDate();
+# TODO: This is abuse of global variables. Should be dropped and replaced
+# by proper ones.
 sub GetDate {
 	($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	$curryear += 1900;						# Fix the year format
@@ -4290,7 +4301,7 @@ sub BirthdayEvent_OK {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# GUI functions
+# Main GUI functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # USER DIALOGS
