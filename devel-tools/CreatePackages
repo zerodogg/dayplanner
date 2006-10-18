@@ -109,7 +109,7 @@ if (system("cp -r $OrigDir/* $tempdir/dayplanner-$DPVersion/ && cp -r $OrigDir/.
 print "done\n";
 
 # Remove SVN files
-print "Removing files not present in SVN...";
+print " Removing files not present in SVN...";
 my @RMDirs;
 find(sub {
 	# Skip SVN files
