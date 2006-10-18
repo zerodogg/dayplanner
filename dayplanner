@@ -1834,6 +1834,7 @@ sub CLI_Export {
 			if(iCal_Exporter($Target)) {
 				print "iCalendar data written to $Target\n";
 			}
+		}
 	} elsif($Type =~ /html/) {
 		if(-e $Target) {
 			unless(-w $Target) {
