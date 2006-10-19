@@ -1,7 +1,7 @@
 Day planner version history
 **************************
 
-Version 0.3.1 (Unreleased)
+Version 0.3.1 (Released on the 19th of October 2006)
 --------------------------
 * Client (dayplanner)
 - Removed support for exporting DPF from the GUI, it has been deprecated, it has
