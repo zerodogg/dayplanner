@@ -2774,7 +2774,9 @@ sub iCal_Importer {
 		}
 		my $ConflictText;
 		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
-		push(@Conflicts, $ConflictText);
+		if($ConflictText) {
+			push(@Conflicts, $ConflictText);
+		}
 		if($Time) {
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
