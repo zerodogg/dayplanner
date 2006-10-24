@@ -512,6 +512,23 @@ sub DPS_GetData {
 		DPS_BackupData();
 	}
 	my $MainData;
+	# FIXME: DPS_Status messages should be translated
+	DPS_Status("Verifying data", 0.3);
+	if(not $DPServices{GET_MD5_Checked}) {
+		$DPServices{GET_MD5_Checked} = 1;
+		$DPServices{StaticUID} = 1;
+		my $Current_DataMD5 = encode_base64(iCal_Exporter(undef, 0, 1),"");
+		chomp($Current_DataMD5);
+		$Current_DataMD5 = md5_base64($Current_DataMD5);
+		$DPServices{StaticUID} = 0;
+		unless($Current_DataMD5 eq $InternalConfig{DPS_LastMD5}) {
+			DPS_Log("$Current_DataMD5 (current) did not match DPS_LastMD5 $InternalConfig{DPS_LastMD5}. Forcing data repairing");
+			# NOTE: Forcing this repair here is «kind of» dangerous. It might result
+			# in deleted events reappearing. This will be very very very rare however,
+			# currently it has been judged as the best way to fix this.
+			return(DPS_RepairData());
+		}
+	}
 	return unless DPS_Connect();
 	DPS_Status("Downloading data",0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
