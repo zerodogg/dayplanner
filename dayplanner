@@ -485,6 +485,7 @@ sub DPS_RepairData {
 		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
 		$RawData = undef;
 		my @Conflicts = iCal_Importer(\@DataArray);
+		$InternalConfig{DPS_LastMD5} = DPS_Perform("GET_MD5");
 		UpdatedData();
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
@@ -664,6 +665,11 @@ sub DPS_Perform {
 		return(DPS_SendData());
 	} elsif ($Function eq "GET_RAW") {
 		return(DPS_GetData(1));
+	} elsif ($Function eq "GET_MD5") {
+		return if not DPS_Connect();
+		my $MD5Sum = DPS_DataSegment("GET_MD5");
+		DPS_Disconnect();
+		return($MD5Sum);
 	} else {
 		DPIntWarn("Invalid option to DPS_Perform: $Function. Ignoring");
 		return(undef);
