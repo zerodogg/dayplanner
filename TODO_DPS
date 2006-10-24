@@ -10,7 +10,6 @@ TODO:
  ------
 - Implement support for an encrypted ICS filetype to enable DPS to
   have on-server encryption.
-- Add conflict resolving on download (don't blindly trust it).
 - Clean the text of error messages in DPS_SendData().
 - Handle MOTD
 
@@ -44,6 +43,7 @@ DONE:
 - Log conflicts in DPS_RepairData.
 - Use the DPS error function in DPS_RepairData.
 - Do a forced DPS_BackupData on DPS_RepairData failure.
+- Add conflict resolving on download (don't blindly trust it).
 
  Server:
  ------
