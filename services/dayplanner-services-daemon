@@ -438,7 +438,7 @@ sub CommandHandler {
 	if($Command =~ /^APILEVEL/) {
 		my $API = $Command;
 		$API =~ s/^APILEVEL\s+(\S*).*$/$1/;
-		unless($API eq "04A") {
+		unless($API eq "04B") {
 			IntVerbose("APILEVEL mismatch from $Handle (got $API)");
 			return("ERR Unsupported");
 		} else {

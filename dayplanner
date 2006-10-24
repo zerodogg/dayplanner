@@ -58,7 +58,7 @@ my $DaemonOnline = 0;					# Is the daemon online?
 my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
-my $DPS_APILevel = "04A";				# The DPS API level used/supported
+my $DPS_APILevel = "04B";				# The DPS API level used/supported
 
 setlocale(LC_ALL, "" );
 textdomain("dayplanner");
