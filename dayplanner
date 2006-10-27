@@ -2702,7 +2702,7 @@ sub iCal_LoadData {
 	}
 
 	foreach(@FileContents) {
-		s/\r//;
+		s/\r//g;
 		chomp;
 		unless($FileBegun) {
 			if (/^BEGIN:VCALENDAR/) {
