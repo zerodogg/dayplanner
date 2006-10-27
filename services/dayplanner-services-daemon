@@ -308,13 +308,13 @@ sub LoadData {
 sub SendData {
 	my $User = $_[0];
 	my %User_DataConfig;
-	unless(-e "$Config{DataPath}/$User/dataconfig" and -e "$Config{DataPath}/$User/calendardata") {
+	unless(-e "$Config{DataPath}/users/$User/dataconfig" and -e "$Config{DataPath}/users/$User/calendardata") {
 		return("ERR NO_DATA");
 	}
 
-	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+	LoadConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig);
 
-	open(my $User_Data, "<", "$Config{DataPath}/$User/calendardata") or return("ERR READFAIL $!");
+	open(my $User_Data, "<", "$Config{DataPath}/users/$User/calendardata") or return("ERR READFAIL $!");
 	my $ReturnData = <$User_Data>;
 	close($User_Data);
 	unless(defined($User_DataConfig{LastMD5})) {
@@ -349,7 +349,7 @@ sub RecieveData {
 		return("ERR FORMATERROR");
 	}
 
-	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+	LoadConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig);
 	
 	unless($FORCE) {
 		if(defined($User_DataConfig{LastMD5})) {
@@ -365,8 +365,8 @@ sub RecieveData {
 	}
 
 	# We got this far, write the data
-	open(my $OutData, ">", "$Config{DataPath}/$User/calendardata") or do {
-		IntVerbose("Unable to open $Config{DataPath}/$User/calendardata for writing!: $!");
+	open(my $OutData, ">", "$Config{DataPath}/users/$User/calendardata") or do {
+		IntVerbose("Unable to open $Config{DataPath}/users/$User/calendardata for writing!: $!");
 		return("ERR WRITEFAILURE");
 	};
 	print $OutData $Data;
@@ -379,7 +379,7 @@ sub RecieveData {
 		HEADER => "Data information for $User",
 	);
 
-	WriteConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig, \%ConfigInfo);
+	WriteConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig, \%ConfigInfo);
 	IntVerbose("New data for user $User recieved");
 	GenHTML($User);
 	return("OK");
@@ -390,7 +390,7 @@ sub RecieveData {
 sub GetMD5 {
 	my $User = $_[0];
 	my %User_DataConfig;
-	LoadConfigFile("$Config{DataPath}/$User/dataconfig", \%User_DataConfig);
+	LoadConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig);
 	if(defined($User_DataConfig{LastMD5})) {
 		return($User_DataConfig{LastMD5});
 	} else {
@@ -419,8 +419,8 @@ sub GenHTML {
 	} else {
 		$Language = "en";
 	}
-	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/$User/calendardata' --language $Language");
-	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/$User/calendardata' --language $Language");
+	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/users/$User/calendardata' --language $Language");
+	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/users/$User/calendardata' --language $Language");
 	return(1);
 }
 
