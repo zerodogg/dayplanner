@@ -6,6 +6,9 @@ Version 0.4 (Unreleased)
 
 * Client (dayplanner)
 - Some code cleanup and reorganizing
+- Added a new import dialog
+- Can now import data directly from Evolution
+- Can now import data directly from Gnome Calendar
 
 * Notifier (dayplanner-notifier)
 
