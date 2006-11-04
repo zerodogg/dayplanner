@@ -952,12 +952,14 @@ sub CreateSaveDir {
 }
 
 # Purpose: Perform certain commands on first startup
-# Usage: FirstStartup(MIGRATE?);
+# Usage: FirstStartup(GUI?);
 sub FirstStartup {
 	# First create the savedir
 	CreateSaveDir();
-	# Attempt to import data
-	ImportDataFromProgram(1);
+	if(not $_[0]) {
+		# Attempt to import data
+		ImportDataFromProgram(1);
+	}
 }	
 
 # Purpose: Save the datafile
