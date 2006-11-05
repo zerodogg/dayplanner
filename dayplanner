@@ -49,8 +49,7 @@ my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
 my $BirthdayFile = "birthdays.dpd";			# The filename to save birthdays to
-my $SpecialEventsFile = "special_events.dpd";		# The filename to save events with special settings
-my $AllDayEventsFile = "allday_events.dpd";		# The filename to save all-day events to
+my $ICSFile = "calendar.ics";				# The ICS calendar
 my $ConfigFile = "dayplanner.conf";			# The filename to save the configuration to
 my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
 my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
@@ -926,6 +925,9 @@ sub LoadConfig {
 	return(1);
 }
 
+# TODO: Drop these rather useless functions, make LoadConfig and WriteConfig just
+# 	have sane defaults
+
 # Purpose: Load the default configuration file
 # Usage: LoadDefaultConfig();
 sub LoadDefaultConfig {
@@ -1028,23 +1030,21 @@ sub SaveDatafile {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
-	my($ProgressWin, $ProgressBar);
+	my $ProgressBarWin;
 	if($Gtk2Init) {
-		my $ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 0);
-		$ProgressWin = $ProgressBarWin->{Window};
-		$ProgressBar = $ProgressBarWin->{ProgressBar};
+		$ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 0);
 	}
 
 	my $Return = 'OKAY';
-	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents", $ProgressBar)) {
+	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
 		$Return	= 'SAVE_FAILED';
 	}
-	ProgressFraction($ProgressBar, 0.5);
-	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents", $ProgressBar)) {
+	ProgressMade(2, 1, $ProgressBarWin) if($Gtk2Init);
+	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents")) {
 		$Return = 'SAVE_FAILED';
 	}
-	ProgressFraction($ProgressBar, 1);
-	$ProgressWin->destroy() if($Gtk2Init);
+	ProgressMade(2, 2, $ProgressBarWin) if($Gtk2Init);
+	$ProgressBarWin->{Window}->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
 		if($Gtk2Init) {
@@ -1084,9 +1084,6 @@ sub LoadCalendar {
 	if(DataLoadTest("$SaveToDir/$BirthdayFile")) {
 		%BirthdayContents = do("$SaveToDir/$BirthdayFile");
 	}
-	#if(DataLoadTest("$SaveToDir/$AllDayEventsFile")) {
-	#	%AllDayEvents = do("$SaveToDir/$AllDayEventsFile");
-	#}
 	return(1);
 }
 
@@ -3056,6 +3053,8 @@ sub ImportDataFromProgram {
 	$ImportWindow->set_modal(1);
 	$ImportWindow->set_transient_for($MainWindow) if $MainWindow;
 	$ImportWindow->set_position('center-on-parent');
+	$ImportWindow->set_default_size(120,50);
+	$ImportWindow->resize(120,50);
 	# Do some extra things if it is the first time
 	if($FirstTime) {
 		$ImportWindow->set_title($Gettext->get("Day Planner") . " - " . $Gettext->get("Import data"));
@@ -3075,7 +3074,9 @@ sub ImportDataFromProgram {
 	$ImportWindow->add($ImportVBox);
 
 	# Create the initial text
-	my $ImportLabel = Gtk2::Label->new($Gettext->get('Which program(s) do you wish to import data from?'));
+	my $LabelText = $FirstTime ? $Gettext->get("Welcome to Day Planner.\n\nYou may now choose to import data from other programs.\nCheck the programs you wish to import from below and\npress Ok to continue, press Cancel if you don't want\nto import anything.") : $Gettext->get('Which program(s) do you wish to import data from?');
+	my $ImportLabel = Gtk2::Label->new($LabelText);
+	$ImportLabel->set_line_wrap_mode("word-char");
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
 	$ImportLabel->show();
 
