@@ -958,6 +958,8 @@ sub CreateSaveDir {
 sub FirstStartup {
 	# First create the savedir
 	CreateSaveDir();
+	# Set LastVersion
+	$InternalConfig{LastVersion} = $Version;
 	if(not $_[0]) {
 		# Attempt to import data
 		ImportDataFromProgram(1);
@@ -1034,16 +1036,29 @@ sub SaveMainData {
 	if($Gtk2Init) {
 		$ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 0);
 	}
+	my($Total, $WriteICS);
+	if(-e "$SaveToDir/$ICSFile") {
+		$Total = 3;
+		$WriteICS = 1;
+	} else {
+		$WriteICS = 0;
+		$Total = 2;
+	}
 
 	my $Return = 'OKAY';
 	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
 		$Return	= 'SAVE_FAILED';
 	}
-	ProgressMade(2, 1, $ProgressBarWin) if($Gtk2Init);
+	ProgressMade(2, $Total, $ProgressBarWin) if($Gtk2Init);
 	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents")) {
 		$Return = 'SAVE_FAILED';
 	}
-	ProgressMade(2, 2, $ProgressBarWin) if($Gtk2Init);
+	ProgressMade(2, $Total, $ProgressBarWin) if($Gtk2Init);
+	if($WriteICS) {
+		ProgressMade(3, $Total, $ProgressBarWin) if($Gtk2Init);
+		DPIntInfo("Running in forward compatible mode. Saving to $SaveToDir/$ICSFile in addition to the *.dpd's");
+		iCal_Exporter("$SaveToDir/$ICSFile");
+	}
 	$ProgressBarWin->{Window}->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
@@ -1078,11 +1093,20 @@ sub UpdatedData {
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
 sub LoadCalendar {
+	my $LoadedPrimary = 0;
 	if(DataLoadTest("$SaveToDir/$MainEventsFile")) {
+		$LoadedPrimary = 1;
 		%CalendarContents = do("$SaveToDir/$MainEventsFile");
 	}
 	if(DataLoadTest("$SaveToDir/$BirthdayFile")) {
+		$LoadedPrimary = 1;
 		%BirthdayContents = do("$SaveToDir/$BirthdayFile");
+	}
+	unless($LoadedPrimary) {
+		if(-e "$SaveToDir/$ICSFile") {
+			DPIntWarn("Running in forward-compatible mode, loading $SaveToDir/$ICSFile.");
+			iCal_Importer("$SaveToDir/$ICSFile");
+		}
 	}
 	return(1);
 }
@@ -1276,6 +1300,7 @@ sub GetRealBirthdayName {
 # Purpose: Upgrade from one version to another (upgrades the holiday file)
 # Usage: UpgradeVersion();
 sub UpgradeVersion () {
+	# TODO: Stop pulsating, and start showing some real progress
 	my $ProgressWin = DPCreateProgressWin($Gettext->get("Upgrading"), "", 1);
 	$InternalConfig{LastVersion} = $Version;
 	PulsateProgressbar($ProgressWin->{ProgressBar});
@@ -1297,6 +1322,9 @@ sub UpgradeVersion () {
 				}
 			}
 		}
+	}
+	if(-e "$SaveToDir/special_events.dpd") {
+		unlink("$SaveToDir/special_events.dpd");
 	}
 	$ProgressWin->{Window}->destroy();
 }
@@ -5104,7 +5132,7 @@ GetOptions (
 		exit(0);
 	},
 	'test|t' => sub {
-		print "*** (Day Planner $Version) Running in test mode\n";
+		DPIntInfo("Running in test mode");
 		$SaveToDir = "$ENV{HOME}/.dayplanner/debug";
 	},
 	'confdir=s' => sub {
