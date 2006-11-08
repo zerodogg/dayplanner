@@ -3259,6 +3259,7 @@ sub ImportDataFromFile {
 	my $filter = Gtk2::FileFilter->new;
 	$filter->add_pattern('*.dpf');
 	$filter->add_pattern('*.ics');
+	$filter->add_pattern('*.vcf');
 	$filter->set_name($Gettext->get('All supported file formats'));
 	$ImportWindow->add_filter($filter);
 	my $Response = $ImportWindow->run();
@@ -3267,7 +3268,7 @@ sub ImportDataFromFile {
 		if($Filename =~ /\.dpf$/i) {
 			LoadDayplannerDataFile($Filename);
 			UpdatedData();
-		} elsif($Filename =~ /\.ics$/i) {
+		} elsif($Filename =~ /\.(ics|vcf)$/i) {
 			iCal_Importer($Filename);
 			UpdatedData();
 		} else {
