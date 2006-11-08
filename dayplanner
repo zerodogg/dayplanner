@@ -1300,15 +1300,15 @@ sub GetRealBirthdayName {
 # Purpose: Upgrade from one version to another (upgrades the holiday file)
 # Usage: UpgradeVersion();
 sub UpgradeVersion () {
-	# TODO: Stop pulsating, and start showing some real progress
 	my $ProgressWin = DPCreateProgressWin($Gettext->get("Upgrading"), "", 1);
 	$InternalConfig{LastVersion} = $Version;
-	PulsateProgressbar($ProgressWin->{ProgressBar});
+	my $Total = 5;
 	if(-e $HolidayFile) {
+		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
 		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
 			my %UpgradeInfo;
 			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
-			PulsateProgressbar($ProgressWin->{ProgressBar});
+			ProgressMade(2, $Total, $ProgressWin) if($Gtk2Init);
 			open(my $ReadHoliday, "<", $HolidayFile);
 			my $HolidayMd5 = md5_hex(<$ReadHoliday>);
 			close($ReadHoliday);
@@ -1318,7 +1318,7 @@ sub UpgradeVersion () {
 					unlink($HolidayFile);
 					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
 					DPIntInfo("Upgraded $HolidayFile");
-					PulsateProgressbar($ProgressWin->{ProgressBar});
+					ProgressMade(3, $Total, $ProgressWin) if($Gtk2Init);
 				}
 			}
 		}
@@ -1326,6 +1326,7 @@ sub UpgradeVersion () {
 	if(-e "$SaveToDir/special_events.dpd") {
 		unlink("$SaveToDir/special_events.dpd");
 	}
+	ProgressMade(4, $Total, $ProgressWin) if($Gtk2Init);
 	$ProgressWin->{Window}->destroy();
 }
 
