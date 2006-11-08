@@ -9,6 +9,8 @@ Version 0.4 (Unreleased)
 - Added a new import dialog
 - Can now import data directly from Evolution
 - Can now import data directly from Gnome Calendar
+- Replaced pulsating progress bars with proper ones
+- Can now import vCalendar 1.0 (*.vcf) files from the GUI
 
 * Notifier (dayplanner-notifier)
 
