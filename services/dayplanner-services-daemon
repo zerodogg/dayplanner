@@ -63,7 +63,7 @@ my %Servers;
 
 my %Config;
 my $RCSRev = '$Id$';
-my $Version = "0.3 ALPHA";
+my $Version = "0.4 ALPHA";
 
 $SIG{INT} = sub {
 	foreach(keys(%Servers)) {
