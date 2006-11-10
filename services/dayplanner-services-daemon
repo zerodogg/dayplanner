@@ -535,9 +535,9 @@ sub AdminCommands {
 			$Uptime -= 60;
 		}
 		$Minutes = $Uptime;
-		my $UptimeString = $Days ? "$Days days " : "" . 
-		$Hours ? "$Hours hours " : "" . 
-		$Minutes ? "$Minutes minutes" : "";
+		my $UptimeString = $Days ? "$Days days " : "";
+		$UptimeString .= $Hours ? "$Hours hours " : "";
+		$UptimeString .= "$Minutes minutes";
 		unless(length($UptimeString)) {
 			$UptimeString = "Less than one minute";
 		}
