@@ -558,7 +558,8 @@ sub DPS_GetData {
 			$MainData = decode_base64($MainData);
 			unless($Raw) {
 				my @DataArray;
-				push(@DataArray, $_) foreach(split(/\r\n/,$MainData));
+				$MainData =~ s/\r//g;
+				push(@DataArray, $_) foreach(split(/\n/,$MainData));
 				$MainData = undef;
 				%BirthdayContents = ();
 				%CalendarContents = ();
@@ -2636,8 +2637,10 @@ sub iCal_LoadData {
 	my $CurrentStructure;
 	my @FileContents;
 	my $FileBegun;
+	my $Type;
 	# If $File is a ref...
 	if(ref($File)) {
+		$Type = "ref";
 		if(ref($File) eq "ARRAY") {
 			# All is well.
 			@FileContents = @{$File};
@@ -2650,6 +2653,7 @@ sub iCal_LoadData {
 	}
 	# It isn't
 	else {
+		$Type = "file ($File)";
 		open(my $ICALENDAR, "<", $File) or do {
 			DPIntWarn("iCal_LoadData: Unable to open $File for reading: $!");
 			# Return an empty anonymous array
@@ -2687,7 +2691,7 @@ sub iCal_LoadData {
 		}
 	}
 	unless($FileBegun) {
-		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR. Nothing has been imported!");
+		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
 	}
 	return(\@iCalendarStructures);
 }
