@@ -34,6 +34,10 @@ open(STDIN, "<", "/dev/null") or warn("Couldn't reopen STDIN to /dev/null: $!");
 open(STDOUT, ">>", $Logfile) or warn("Couldn't reopen STDOUT to $Logfile: $!");
 open(STDERR, ">>", $Logfile) or warn("Couldn't reopen STDERR to $Logfile: $!");
 
+# The DPS daemon sets its own umask, we need to reset it so that the httpd
+# can read the files.
+umask(0022);
+
 # Purpose: Perform simple locking
 # Usage: LockFile(PATH);
 # 	NOTICE: This function is not safe from race conditions but
