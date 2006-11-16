@@ -347,7 +347,7 @@ sub MainMenu {
 	LoadData();
 	while(1) {
 		system("clear");
-		print "Welcome to the day planner services user management console\n\n";
+		print "Welcome to the day planner services administration console\n\n";
 		print "Menu:\n";
 		print "A - Add a new user\nD - Delete a user\n";
 		print "E - Edit a user\n";
