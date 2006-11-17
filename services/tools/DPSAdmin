@@ -258,8 +258,8 @@ sub AddUser {
 	$Users{$Username}{settings}{Encrypted} = $Encrypted =~ /y/i ? 1 : 0;
 	$Users{$Username}{settings}{GenHTML} = $GenHTML =~ /y/ ? 1 : 0;
 	$Users{$Username}{settings}{language} = $Language;
-	unless (-d "$DataDir/$Username/") {
-		mkpath("$DataDir/$Username/") or warn("FAILED to mkpath($DataDir/$Username/): $!\n");
+	unless (-d "$DataDir/users/$Username/") {
+		mkpath("$DataDir/users/$Username/") or warn("FAILED to mkpath($DataDir/users/$Username/): $!\n");
 	}
 	print "done\n";
 	WriteData();
@@ -387,21 +387,21 @@ sub WaitContinue {
 # Usage: RegenerateDataMD5For(USER);
 sub RegenerateDataMD5For {
 	my $User = shift;
-	if(not (-e "$DataDir/$User/dataconfig") or not(-e "$DataDir/$User/calendardata")) {
+	if(not (-e "$DataDir/users/$User/dataconfig") or not(-e "$DataDir/users/$User/calendardata")) {
 		print "The user \"$User\" does not have the needed files present\n";
 		return(0);
 	}
 	print "Regenerating...";
 	my %DataHash;
-	LoadConfigFile("$DataDir/$User/dataconfig", \%DataHash);
+	LoadConfigFile("$DataDir/users/$User/dataconfig", \%DataHash);
 	print ".";
-	open(my $UserData, "<", "$DataDir/$User/calendardata");
+	open(my $UserData, "<", "$DataDir/users/$User/calendardata");
 	my $ContainedData = <$UserData>;
 	print ".";
 	$DataHash{LastMD5} = md5_base64($ContainedData);
 	close($UserData);
 	print ".";
-	WriteConfigFile("$DataDir/$User/dataconfig", \%DataHash, { HEADER => "Written by DPSAdmin"});
+	WriteConfigFile("$DataDir/users/$User/dataconfig", \%DataHash, { HEADER => "Written by DPSAdmin"});
 	print "done ($DataHash{LastMD5})\n";
 }
 
@@ -434,7 +434,7 @@ sub EditUserConfig {
 	print "Which user do you wish to hand-edit the data for?\n";
 	my $UserName = GetValidUsername();
 
-	if(not -e "$DataDir/$UserName/dataconfig") {
+	if(not -e "$DataDir/users/$UserName/dataconfig") {
 		print "This user doesn't have any configuration file\n";
 		print "Unable to edit\n";
 		WaitContinue();
@@ -442,7 +442,7 @@ sub EditUserConfig {
 	}
 
 	my %CurrUserData;
-	LoadConfigFile("$DataDir/$UserName/dataconfig", \%CurrUserData);
+	LoadConfigFile("$DataDir/users/$UserName/dataconfig", \%CurrUserData);
 	
 	$Data::Dumper::Purity = 1;
 	$Data::Dumper::Sortkeys = 1;
@@ -463,7 +463,7 @@ sub EditUserConfig {
 		} else {
 			print "Change cancelled\n";
 		}
-		WriteConfigFile("$DataDir/$UserName/dataconfig", \%CurrUserData, { HEADER => "Written by DPSAdmin"});
+		WriteConfigFile("$DataDir/users/$UserName/dataconfig", \%CurrUserData, { HEADER => "Written by DPSAdmin"});
 		WaitContinue();
 		return(1);
 	}
