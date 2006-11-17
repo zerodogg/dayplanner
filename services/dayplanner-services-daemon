@@ -32,6 +32,7 @@ use Data::Dumper;
 use Mail::Sendmail;
 use Sys::Hostname;
 use POSIX qw/cuserid setuid/;
+use Cwd qw(realpath);
 
 #my $Server;
 my $ConnectionSelect;
@@ -52,6 +53,7 @@ my %Users;		# User list
 my %Security;		# Security specific stuff. For now only handles banning
 			# of specific IP adresses.
 			# TODO: Should be cleaned once every day.
+my %Config;
 my %Servers;
 
 # TODO: Not all user levels are fully functional
@@ -61,7 +63,6 @@ my %Servers;
 # level 3 = ACTIVE - rw access
 # level 4 = ADMIN - rw access and ADMIN command access
 
-my %Config;
 my $RCSRev = '$Id$';
 my $Version = "0.4 ALPHA";
 
@@ -71,7 +72,7 @@ $SIG{INT} = sub {
 	}
 	close("$Config{DataPath}/adminsocket");
 	unlink("$Config{DataPath}/adminsocket");
-	print "Shutdown by SIG$_[0]\n";
+	IntOutputMSG("Shutdown by SIG$_[0]\n");
 	exit(0);
 };
 $SIG{TERM} = $SIG{INT};
@@ -88,6 +89,7 @@ sub LoadServicesConfig {
 
 	my %ConfigOptions = (
 		DataPath => '.',
+		LogFile => '.',
 		AdminMail => '^.+@.+$',
 		HTMLBase => ".",
 		HTMLScript => ".",
@@ -664,6 +666,28 @@ sub MainLoop {
 # INITIALIZATION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Go into true daemon-mode (reopen STDOUT, STDERR and STDIN, chdir(/) and fork)
+# Usage: Do_DaemonMode();
+sub Do_DaemonMode {
+	# Fork
+	my $PID = fork;
+	exit if $PID;
+	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
+	# Get an absolute path to the data and logfile
+	$Config{DataPath} = realpath($Config{DataPath});
+	$Config{LogFile} = realpath($Config{LogFile});
+	# Change to root
+	chdir('/');
+	# Reopen STDOUT, STDERR to the logfile
+	open(STDOUT, ">>", $Config{LogFile});
+	open(STDERR, ">>", $Config{LogFile});
+	# Reopen STDIN from /dev/null
+	open(STDIN, "<", "/dev/null");
+
+	print "\n";
+	IntOutputMSG("Started\n");
+}
+
 GetOptions (
 	'port|p=i' => \@Ports,
 	'switchuid=i' => \$DropToUID,
@@ -706,4 +730,5 @@ umask(077);
 LoadServicesConfig($ConfFile);
 LoadData();
 InitNetwork();
+Do_DaemonMode();
 MainLoop();
