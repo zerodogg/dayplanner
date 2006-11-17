@@ -23,12 +23,85 @@ use Term::ReadLine;
 use Term::ReadKey;
 use Data::Dumper;
 use IO::Socket::INET;
+use Digest::MD5 qw(md5_base64);
 use File::Path qw/mkpath rmtree/;
 
 my %Users;
 my %DPServices;
 my $DataDir = "./dpservices/";
 $| = 1;		# Don't buffer output
+
+# Purpose: Clear the screen (currently only calls system("clear");)
+# Usage: ClearScreen();
+sub ClearScreen {
+	system("clear");
+}
+
+# Purpose: Write a configuration file
+# Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
+sub WriteConfigFile {
+	my ($File, $Config, $Explanations) = @_;
+
+	# Open the config for writing
+	open(my $CONFIG, ">", "$File") or do {
+		# If we can't then we error out, no need for failsafe stuff - it's just the config file
+		DPIntWarn("Unable to save the configuration file $File: $!");
+		return(0);
+	};
+	if(defined($Explanations->{HEADER})) {
+		print $CONFIG "# $Explanations->{HEADER}\n";
+	}
+	foreach(sort(keys(%{$Config}))) {
+		next unless length($Config->{$_});	# Don't write empty options
+		if(defined($Explanations->{$_})) {
+			print $CONFIG "\n# $Explanations->{$_}";
+		}
+		print $CONFIG "\n$_=$Config->{$_}\n";
+	}
+	close($CONFIG);
+}
+
+# Purpose: Load a configuration file
+# Usage: LoadConfigFile(/FILE, \%ConfigHash, \%OptionRegexHash, OnlyValidOptions?);
+#  OptionRegeXhash can be available for only a select few of the config options
+#  or skipped completely (by replacing it by undef).
+#  If OnlyValidOptions is true it will cause LoadConfigFile to skip options not in
+#  the OptionRegexHash.
+sub LoadConfigFile {
+	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
+
+	open(my $CONFIG, "<", "$File") or do {
+		DPError(sprintf("Unable to read the configuration settings from %s: %s", $File, $!));
+		return(0);
+	};
+	while(<$CONFIG>) {
+		next if m/^\s*(#.*)?$/;
+		next unless m/=/;
+		chomp;
+		my $Option = $_;
+		my $Value = $_;
+		$Option =~ s/^\s*(.*)\s*=.*/$1/;
+		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		if($OnlyValidOptions) {
+			unless(defined($OptionRegex->{$Option})) {
+				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
+				next;
+			}
+		}
+		unless(defined($Value)) {
+			DPIntWarn("Empty value for option $Option in $File");
+		}
+		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
+			my $MustMatch = $OptionRegex->{$Option};
+			unless ($Value =~ /$MustMatch/) {
+				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{Option}.\n";
+				next;
+			}
+		}
+		$ConfigHash->{$Option} = $Value;
+	}
+	close($CONFIG);
+}
 
 # Purpose: Send a command to the daemon
 # Usage: SendDaemonCommand(COMMAND);
@@ -160,7 +233,7 @@ sub GetPassword {
 # Purpose: Add a user
 # Usage: AddUser();
 sub AddUser {
-	system("clear");
+	ClearScreen();
 	print "Adding a user\n\n";
 	my $Username = GetInput("Username: ", "");
 	while(defined($Users{$Username})) {
@@ -228,7 +301,7 @@ sub GetValidUsername {
 # Purpose: Get information about a user
 # Usage: GetUserInfo();
 sub GetUserInfo {
-	system("clear");
+	ClearScreen();
 	print "Which user do you want to view information about?\n";
 	my $User = GetValidUsername();
 	$Data::Dumper::Purity = 1;
@@ -243,7 +316,7 @@ sub GetUserInfo {
 # Purpose: Change settings for a user
 # Usage: ChangeUserSettings();
 sub ChangeUserSettings {
-	system("clear");
+	ClearScreen();
 	print "Which user do you want to change settings for?\n";
 	my $User = GetValidUsername();
 	$Data::Dumper::Purity = 1;
@@ -275,7 +348,7 @@ sub ChangeUserSettings {
 # Purpose: Change the level of a user
 # Usage: ChangeUserLevel();
 sub ChangeUserLevel {
-	system("clear");
+	ClearScreen();
 	my $User = GetValidUsername();
 	my $Level = SetUserLevel();
 	$Users{$User}{level} = $Level;
@@ -287,7 +360,7 @@ sub ChangeUserLevel {
 # Purpose: Delete a user
 # Usage: DeleteUser();
 sub DeleteUser {
-	system("clear");
+	ClearScreen();
 	print "Which user do you want to delete?\n";
 	my $User = GetValidUsername();
 	delete($Users{$User});
@@ -310,10 +383,97 @@ sub WaitContinue {
 	<STDIN>;
 }
 
+# Purpose: Regenerate the data MD5 for the specified user
+# Usage: RegenerateDataMD5For(USER);
+sub RegenerateDataMD5For {
+	my $User = shift;
+	if(not (-e "$DataDir/$User/dataconfig") or not(-e "$DataDir/$User/calendardata")) {
+		print "The user \"$User\" does not have the needed files present\n";
+		return(0);
+	}
+	print "Regenerating...";
+	my %DataHash;
+	LoadConfigFile("$DataDir/$User/dataconfig", \%DataHash);
+	print ".";
+	open(my $UserData, "<", "$DataDir/$User/calendardata");
+	my $ContainedData = <$UserData>;
+	print ".";
+	$DataHash{LastMD5} = md5_base64($ContainedData);
+	close($UserData);
+	print ".";
+	WriteConfigFile("$DataDir/$User/dataconfig", \%DataHash, { HEADER => "Written by DPSAdmin"});
+	print "done ($DataHash{LastMD5})\n";
+}
+
+# Purpose: Regenerate the data MD5 for all users
+# Usage: RegenerateAllUserMD5();
+sub RegenerateAllUserMD5 {
+	ClearScreen();
+	print "Regenerating MD5 sums for all user data:\n";
+	foreach my $UserN (sort(keys(%Users))) {
+		print " $UserN: ";
+		RegenerateDataMD5For($UserN);
+	}
+	WaitContinue();
+}
+
+# Purpose: Prompt to regenerate the data MD5 for a user
+# Usage: RegenerateUserMD5();
+sub RegenerateUserMD5 {
+	ClearScreen();
+	print "Which user do you wish to regenerate the MD5 sum for?\n";
+	my $User = GetValidUsername();
+	RegenerateDataMD5For($User);
+	WaitContinue();
+}
+
+# Purpose: Hand-edit the user configuration
+# Usage: EditUserConfig();
+sub EditUserConfig {
+	ClearScreen();
+	print "Which user do you wish to hand-edit the data for?\n";
+	my $UserName = GetValidUsername();
+
+	if(not -e "$DataDir/$UserName/dataconfig") {
+		print "This user doesn't have any configuration file\n";
+		print "Unable to edit\n";
+		WaitContinue();
+		return(1);
+	}
+
+	my %CurrUserData;
+	LoadConfigFile("$DataDir/$UserName/dataconfig", \%CurrUserData);
+	
+	$Data::Dumper::Purity = 1;
+	$Data::Dumper::Sortkeys = 1;
+	$Data::Dumper::Indent = 1;
+	print Data::Dumper->Dump([\%CurrUserData], ["*current settings"]);
+	while(1) {
+		my $ChangeSetting = GetInput("Which setting do you want to set? ", "");
+		if(defined($CurrUserData{$ChangeSetting})) {
+				print "Current value: $ChangeSetting=$CurrUserData{$ChangeSetting}\n";
+			} else {
+				print "Current value: $ChangeSetting=NOT_SET\n";
+			}
+		my $ChangeTo = GetInput("What do you want to change it to? ", "");
+		print "Will set the following setting:\n$ChangeSetting=$ChangeTo\n";
+		my $OK = GetInput("OK? ", "YN");
+		if($OK =~ /y/i) {
+			$CurrUserData{$ChangeSetting} = $ChangeTo;
+		} else {
+			print "Change cancelled\n";
+		}
+		WriteConfigFile("$DataDir/$UserName/dataconfig", \%CurrUserData, { HEADER => "Written by DPSAdmin"});
+		WaitContinue();
+		return(1);
+	}
+
+}
+
 # Purpose: Print the user list
 # Usage: UserList();
 sub UserList {
-	system("clear");
+	ClearScreen();
 	PrintUserList("Username:", "Level:", "Access:");
 	foreach my $User (sort(keys(%Users))) {
 		my $Level = $Users{$User}{level};
@@ -341,12 +501,40 @@ sub UserList {
 	WaitContinue();
 }
 
+# Purpose: Display the expert menu
+# Usage: ExpertMenu();
+sub ExpertMenu {
+	while(1) {
+		ClearScreen();
+		print "DPS Admin - Expert menu\n\n";
+		print "Warning: These options can do actual damage to the data used by the DPS server!\n\n";
+		print "Menu:\n";
+		print "U - Regenerate data MD5 for a user\n";
+		print "\tThis is useful in the case of data corruption where you wish to simply\n";
+		print "\tre-enable the account without restoring backups\n";
+		print "R - Regenerate data MD5 for all users\n";
+		print "\tUseful for data corruption for multiple users\n";
+		print "E - Edit the data config for a user\n";
+		print "M - Return to the main menu\n";
+		my $Input = GetInput("Selection: ", "UREM");
+		if($Input =~ /U/i) {
+			RegenerateUserMD5();
+		} elsif($Input =~ /e/i) {
+			EditUserConfig();
+		} elsif($Input =~ /r/i) {
+			RegenerateAllUserMD5();
+		} else {
+			return(1);
+		}
+	}
+}
+
 # Purpose: Display the main menu. Also takes care of calling LoadData(); and WriteData();
 # Usage: MainMenu();
 sub MainMenu {
 	LoadData();
 	while(1) {
-		system("clear");
+		ClearScreen();
 		print "Welcome to the day planner services administration console\n\n";
 		print "Menu:\n";
 		print "A - Add a new user\nD - Delete a user\n";
@@ -356,8 +544,9 @@ sub MainMenu {
 		print "I - View information about a user\n";
 		print "R - Tell the day planner services daemon to reload the userlist\n";
 		print "U - Display the daemon uptime\n";
+		print "X - View the expert menu\n";
 		print "Q - Quit and save\n";
-		my $Input = GetInput("Selection: ", "ADECVIQRU");
+		my $Input = GetInput("Selection: ", "ADECVIQRUX");
 		if($Input =~ /q/i) {
 			exit(0);
 		} elsif ($Input =~ /a/i) {
@@ -375,6 +564,8 @@ sub MainMenu {
 		} elsif ($Input =~ /r/i) {
 			DaemonReloadUsers();
 			WaitContinue();
+		} elsif ($Input =~ /x/i) {
+			ExpertMenu();
 		} elsif ($Input =~ /u/i) {
 			DaemonUptime();
 		}
