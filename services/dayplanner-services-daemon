@@ -52,7 +52,6 @@ my %Clients;		# Hash of current network clients
 my %Users;		# User list
 my %Security;		# Security specific stuff. For now only handles banning
 			# of specific IP adresses.
-			# TODO: Should be cleaned once every day.
 my %Config;
 my %Servers;
 
@@ -472,15 +471,14 @@ sub CommandHandler {
 			IntVerbose("Authentication from $Handle failed as $Username");
 			return(LoginFailure($Handle->peerhost));
 		}
-		# Make sure it's not in use
-		if(defined($ActiveUsers{$Username}) and defined($ActiveUsers{$Username}{Handle})) {
-			IntDebug("$Handle tried to auth as $Username but $ActiveUsers{$Username}{Handle} is authenticated as that user already");
-			return("REFUSED IN_USE");
-		}
-
 		# If the user's level is 0 then the user account is expired and we refuse the login.
 		if($Users{$Username}{level} eq "0") {
 			return("EXPIRED");
+		}
+		# If someone is already logged in as this user, kick that peer off
+		if(defined($ActiveUsers{$Username}) and defined($ActiveUsers{$Username}{Handle})) {
+			close($ActiveUsers{$Username}{Handle});
+			delete($ActiveUsers{$Username});
 		}
 		$Clients{$Handle}{User} = $Username;
 		$ActiveUsers{$Username}{Handle} = $Handle;
