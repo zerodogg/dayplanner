@@ -2122,6 +2122,7 @@ sub HTML_BirthdayList {
 		print $FILE "<tbody><tr><td>" . HTML_Encode($Gettext->get("Date")) . "</td><td>" . HTML_Encode($Gettext->get("Name")) . "</td></tr>\n";
 		foreach my $Month (sort {$a <=> $b}  keys(%BirthdayContents)) {
 			foreach my $Day (sort {$a <=> $b} keys(%{$BirthdayContents{$Month}})) {
+				$Day = AppendZero($Day);
 				foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
 					print $FILE "<tr><td>" . HTML_Encode("$Day $MonthNames{$Month}") . "</td><td>" . HTML_Encode($Name) . "</td></tr>\n";
 				}
