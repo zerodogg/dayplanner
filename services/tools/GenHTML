@@ -121,7 +121,7 @@ GetOptions (
 	'user=s' => \$User,
 	'pass=s' => \$Password,
 	'dpfsource=s' => \$DPFSource,
-	'lang=s' => \$Language,
+	'lang|language=s' => \$Language,
 );
 # TODO: Properly verify commandline parameters
 $Language = $Language ? $Language : "en";
