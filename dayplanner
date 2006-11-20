@@ -522,7 +522,7 @@ sub DPS_GetData {
 		$DPServices{StaticUID} = 0;
 		unless($Current_DataMD5 eq $InternalConfig{DPS_LastMD5}) {
 			DPS_Log("$Current_DataMD5 (current) did not match DPS_LastMD5 $InternalConfig{DPS_LastMD5}. Forcing data repairing");
-			# NOTE: Forcing this repair here is «kind of» dangerous. It might result
+			# NOTE: Forcing this repair here is "kind of" dangerous. It might result
 			# in deleted events reappearing. This will be very very very rare however,
 			# currently it has been judged as the best way to fix this.
 			return(DPS_RepairData());
