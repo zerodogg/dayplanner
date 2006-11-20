@@ -4,4 +4,4 @@ services server.
 GenHTML			Temporary HTML generation script, will be replaced by
 			a forking dayplanner-services-daemon sometime in the
 			future.
-UserManager		Day planner services user management console.
+DPSAdmin		Day planner services user management console.
