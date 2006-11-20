@@ -16,8 +16,6 @@ TODO:
  Server:
  ------
 - Implement connection encryption
-- Clean %Security once every day
-- Clean up ghost connections (timeout on 5-10 minutes?)
 - Allow encrypted connections
 - Add MOTD command
 - Add a SETTINGS command (gives info about the settings for the user):
@@ -51,3 +49,5 @@ DONE:
 - Move $Port to the config
 - Use the config a lot more
 - Implement --conffile and use it, but fallback to a config in ./
+- Clean up ghost connections (kicks old connections when a new one
+	tries to auth as the same user)
