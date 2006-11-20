@@ -31,6 +31,7 @@ use Digest::MD5 qw(md5_base64);
 use Data::Dumper;
 use Mail::Sendmail;
 use Sys::Hostname;
+use MIME::Base64;
 use POSIX qw/cuserid setuid/;
 use Cwd qw(realpath);
 
@@ -429,6 +430,19 @@ sub GenHTML {
 # CORE SERVER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Send the MOTD
+# Usage: return(SendMOTD());
+sub SendMOTD {
+	if(defined($Config{MOTDFile}) and length($Config{MOTDFile})) {
+		open(my $MOTDFile, "<", $Config{MOTDFile});
+		my $MOTD = <$MOTDFile>;
+		close($MOTDFile);
+		return(encode_base64($MOTD, ""));
+	} else {
+		return("NO_MOTD");
+	}
+}
+
 # Purpose: Handle commands
 # Usage: CommandHandler(COMMAND, HANDLE);
 sub CommandHandler {
@@ -507,6 +521,8 @@ sub CommandHandler {
 		} else {
 			return("REFUSED");
 		}
+	} elsif($Command =~ /^MOTD/) {
+		return(SendMOTD());
 	}
 	IntVeryVerbose("Unknown command from " . $Handle->peerhost() . " ($Handle): $Command");
 	return("ERR UNKNOWN_COMMAND");
@@ -671,9 +687,12 @@ sub Do_DaemonMode {
 	my $PID = fork;
 	exit if $PID;
 	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
-	# Get an absolute path to the data and logfile
+	# Get an absolute path to the data, logfile and MOTD file
 	$Config{DataPath} = realpath($Config{DataPath});
 	$Config{LogFile} = realpath($Config{LogFile});
+	if(length($Config{MOTDFile})) {
+		$Config{MOTDFile} = realpath($Config{MOTDFile});
+	}
 	# Change to root
 	chdir('/');
 	# Reopen STDOUT, STDERR to the logfile
