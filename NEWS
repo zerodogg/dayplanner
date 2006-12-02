@@ -9,12 +9,18 @@ Version 0.4 (Unreleased)
 - Added a new import dialog
 - Can now import data directly from Evolution
 - Can now import data directly from Gnome Calendar
+- Can now import data directly from Korganizer
 - Replaced pulsating progress bars with proper ones
 - Can now import vCalendar 1.0 (*.vcf) files from the GUI
+- Now displays a message when attempting to delete a holiday event
 
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
+
+* Holidays
+- Fixed an error in the Norwegian and Swedish holiday files that declared
+  the wrong date for advent.
 
 Version 0.3.1 (Released on the 19th of October 2006)
 --------------------------
