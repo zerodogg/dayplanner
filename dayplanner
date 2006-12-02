@@ -833,11 +833,15 @@ sub WriteStateFile {
 		MainWin_Maximized => "If the main window is maximized or not (0=false, 1=true)",
 		MainWin_Width => "The width of the main window",
 		MainWin_Height => "The height of the main window",
+		MainWin_X => "The X-axis position of the main window",
+		MainWin_Y => "The Y-axist position of the main window",
 		AutostartOn => "If the preferences setting for autostarting the daemon on login is on or not",
 		AddedAutostart => "If day planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
 		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
 		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
 		LastVersion => "The last day planner version used",
+		# All except DPS_LastMD5 and DPS_ParanoidBackups actually belongs in dayplanner.conf
+		# and not in state.conf. Maybe we should add an dps.conf/services.conf ?
 		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
 		DPS_LastMD5 => "The MD5 sum of the last data downloaded from the DPS server (base64 encoded)",
 		DPS_host => "The DPS host to connect to",
@@ -855,6 +859,7 @@ sub WriteStateFile {
 		$InternalConfig{MainWin_Maximized} = 0;
 		if($NewWinState) {
 			($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = $MainWindow->get_size();
+			($InternalConfig{MainWin_X}, $InternalConfig{MainWin_Y}) = $MainWindow->get_position();
 		}
 	}
 	
@@ -5082,6 +5087,9 @@ sub DrawMainWindow {
 	$MainWindow->set_title($Gettext->get("Day planner"));
 	$MainWindow->set_default_size ($InternalConfig{MainWin_Width},$InternalConfig{MainWin_Height});
 	$MainWindow->maximize if ($InternalConfig{MainWin_Maximized});
+	if($InternalConfig{MainWin_X} and $InternalConfig{MainWin_Y}) {
+		$MainWindow->move($InternalConfig{MainWin_X}, $InternalConfig{MainWin_Y});
+	}
 
 	# Set the icon
 	my $MainWindowIcon = DetectImage("dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
