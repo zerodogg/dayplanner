@@ -2705,10 +2705,11 @@ sub iCal_UnSafe {
 # Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
 sub iCal_UID {
 	chomp(@_);
+	$_[0] =~ s/\D//g;
 	if($DPServices{StaticUID}) {
-		return("UID:dayplanner-" . encode_base64($_[0], "") . "\r\n");
+		return("UID:dayplanner-" . $_[0] . "\r\n");
 	} else {
-		return("UID:dayplanner-" . time() . encode_base64($_[0],"") . encode_base64($_[1],"") . "\r\n");
+		return("UID:dayplanner-" . time() . $_[0] . int(rand(10000)) . "\r\n");
 	}
 }
 
@@ -2948,7 +2949,6 @@ sub iCal_Importer {
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
 # TODO: Handle VALUE=DATE:YYYYMMDD once full day events are available
-# FIXME: YYYYMMDD is actually valid. So we'll need to check for that.
 sub iCal_ParseDateTime {
 	my $Year = $_[0];
 	my $Month = $_[0];
@@ -2960,10 +2960,16 @@ sub iCal_ParseDateTime {
 	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
 	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
 
-	$Hour =~ s/^.+T//;
-	$Hour =~ s/^(\d\d).*$/$1/;
-	$Minutes =~ s/^.+T//;
-	$Minutes =~ s/^\d\d(\d\d)\d*$/$1/;
+	# This is here to support events where there is no time set.
+	if($Hour =~ s/^.+T//) {
+		$Hour =~ s/^.+T//;
+		$Hour =~ s/^(\d\d).*$/$1/;
+		$Minutes =~ s/^.+T//;
+		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
+	} else {
+		$Hour = 0;
+		$Minutes = 0;
+	}
 	return($Year,$Month,$Day,AppendZero($Hour) . ":" . AppendZero($Minutes));
 }
 
