@@ -24,7 +24,6 @@ use IO::Socket;			# We use IO::Socket for communication with dayplanner
 use IO::Select;			# We use IO::Select to wait for connections and at the same
 				#  time wait for a timeout
 use Locale::gettext;		# Allow translation, might not be needed
-use Getopt::Long;		# Commandline options
 use Cwd;			# We need Cwd::realpath to find the notifier
 use File::Basename;		# Ditto
 use Data::Dumper;		# We need to be able to dump data
@@ -66,6 +65,8 @@ my %CurrentNotification;
 my %AccessStatus = (
 	Connected => 0,
 	ClientList => {
+	},
+	HandlePIDS => {
 	},
 );				# Hash containing current connection status
 
@@ -487,10 +488,11 @@ sub RunNotifier {
 }
 
 # Purpose: Handle commands
-# Usage: CommandHandler(COMMAND);
+# Usage: CommandHandler(COMMAND, HANDLE);
 sub CommandHandler {
 	SetStatus("processing");
 	$_ = $_[0];
+	my $Handle = $_[1];
 	my $PID = $_[0];
 	$PID =~ s/^(\d+)\s+(.*)/$1/;
 	unless ($PID) {
@@ -526,6 +528,7 @@ sub CommandHandler {
 			return("REFUSED");
 		}
 		$AccessStatus{ClientList}{$PID} = $TYPE;
+		$AccessStatus{HandlePIDS}{$Handle} = $PID;
 		return("HI")
 	}
 	
@@ -737,13 +740,24 @@ sub MainLoop {
 				# If it is defined then it's a command
 				if ($Command) {
 					chomp($Command);
-					my ($Reply) = CommandHandler($Command);
+					my ($Reply) = CommandHandler($Command, $Handle);
 					print $Handle "$Reply\n";
 				} 
 				# If it isn't, then it closed the connection
 				else {
 					IntDebug("Connection closed");
 					$ConnectionSelect->remove($Handle);
+					# Make sure that the handle is removed from our current users list.
+					# This so that connections that don't BYE is removed properly anyway.
+					# This usually happens when day planner is killed or maybe even crashes,
+					# and then when started again displays a false message about an already running
+					# day planner.
+					if($AccessStatus{HandlePIDS}{$Handle} eq $AccessStatus{Connected}) {
+						$AccessStatus{Connected} = 0;
+					}
+					# Delete the connection from the main hashes
+					delete($AccessStatus{HandlePIDS}{$Handle});
+					delete($AccessStatus{ClientList}{$AccessStats{HandlePIDS}{$Handle}});
 				}
 			}
 		}
@@ -912,6 +926,15 @@ GetOptions (
 $DayplannerDir = "$ENV{HOME}/.dayplanner" unless defined($DayplannerDir);
 $DaemonSocket = "$DayplannerDir/$SocketName";
 
+# Verify the dir
+die "$DayplannerDir doesn't exist!\n" unless -e $DayplannerDir;
+die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
+
+$Logfile = "$DayplannerDir/$LogfileName" unless defined($Logfile) and length($Logfile);;
+
+# Main
+SetStatus("starting");
+OpenSocket();
 # Daemonize unless NoFork is true
 if (not $NoFork or $ForceFork) {
 	# Fork
@@ -922,18 +945,8 @@ if (not $NoFork or $ForceFork) {
 	setsid() or IntWarn "Unable to start a new POSIX session (setsid()): $!";
 	# Change dir to / - this to avoid clogging up a mountpoint
 	chdir("/") or IntWarn "Unable to chdir to /: $!";
-	# (We finish the daemonizing after opening the socket, loading the config and calendar)
+	# (We finish the daemonizing after loading the config and calendar)
 }
-
-# Verify the dir
-die "$DayplannerDir doesn't exist!\n" unless -e $DayplannerDir;
-die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
-
-$Logfile = "$DayplannerDir/$LogfileName" unless defined($Logfile) and length($Logfile);;
-
-# Main
-SetStatus("starting");
-OpenSocket();
 LoadConfig();
 LoadCalendar();
 
