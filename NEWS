@@ -13,6 +13,7 @@ Version 0.4 (Unreleased)
 - Replaced pulsating progress bars with proper ones
 - Can now import vCalendar 1.0 (*.vcf) files from the GUI
 - Now displays a message when attempting to delete a holiday event
+- Now remembers the window placement from session to session
 
 * Notifier (dayplanner-notifier)
 
