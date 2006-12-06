@@ -5372,6 +5372,7 @@ GetOptions (
 		CLI_Export(@_);
 		$DPServices{StaticUID} = 0;
 	},
+	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
 	'exportphp=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
