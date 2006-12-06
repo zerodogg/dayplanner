@@ -23,7 +23,7 @@ use warnings;			# Tell perl to print warnings
 use IO::Socket;			# We use IO::Socket for communication with dayplanner
 use IO::Select;			# We use IO::Select to wait for connections and at the same
 				#  time wait for a timeout
-use Locale::gettext;		# Allow translation, might not be needed
+use Getopt::Long;
 use Cwd;			# We need Cwd::realpath to find the notifier
 use File::Basename;		# Ditto
 use Data::Dumper;		# We need to be able to dump data
@@ -757,7 +757,7 @@ sub MainLoop {
 					}
 					# Delete the connection from the main hashes
 					delete($AccessStatus{HandlePIDS}{$Handle});
-					delete($AccessStatus{ClientList}{$AccessStats{HandlePIDS}{$Handle}});
+					delete($AccessStatus{ClientList}{$AccessStatus{HandlePIDS}{$Handle}});
 				}
 			}
 		}
