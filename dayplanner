@@ -496,7 +496,7 @@ sub DPS_RepairData {
 		$ProgressWin->{Window}->destroy();
 		if(@Conflicts) {
 			foreach(@Conflicts) {
-				DPS_Log("Conflict during repair: $_");
+				DPS_Log("Conflicts during repair: $_");
 			}
 		}
 		return(1);
@@ -526,12 +526,14 @@ sub DPS_GetData {
 		chomp($Current_DataMD5);
 		$Current_DataMD5 = md5_base64($Current_DataMD5);
 		$DPServices{StaticUID} = 0;
-		unless($Current_DataMD5 eq $InternalConfig{DPS_LastMD5}) {
-			DPS_Log("$Current_DataMD5 (current) did not match DPS_LastMD5 $InternalConfig{DPS_LastMD5}. Forcing data repairing");
-			# NOTE: Forcing this repair here is "kind of" dangerous. It might result
-			# in deleted events reappearing. This will be very very very rare however,
-			# currently it has been judged as the best way to fix this.
-			return(DPS_RepairData());
+		if(defined($InternalConfig{DPS_LastMD5})) {
+			unless($Current_DataMD5 eq $InternalConfig{DPS_LastMD5}) {
+				DPS_Log("$Current_DataMD5 (current) did not match DPS_LastMD5 $InternalConfig{DPS_LastMD5}. Forcing data repairing");
+				# NOTE: Forcing this repair here is "kind of" dangerous. It might result
+				# in deleted events reappearing. This will be very very very rare however,
+				# currently it has been judged as the best way to fix this.
+				return(DPS_RepairData());
+			}
 		}
 	}
 	return unless DPS_Connect();
@@ -2926,6 +2928,8 @@ sub iCal_Importer {
 			if(defined($Current->{SUMMARY})) {
 				$Summary = iCal_UnSafe($Current->{SUMMARY});
 			} else {
+				DPIntWarn("Dangerous: SUMMARY missing from iCalendar import. Dumping data:");
+				print Dumper(\$Current);
 				$Summary = $Gettext->get("Unknown");
 			}
 		}
@@ -2942,7 +2946,7 @@ sub iCal_Importer {
 	if(@Conflicts) {
 		return(@Conflicts);
 	} else {
-		return(1);
+		return(0);
 	}
 }
 
