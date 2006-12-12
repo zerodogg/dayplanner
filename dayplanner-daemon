@@ -756,8 +756,8 @@ sub MainLoop {
 						$AccessStatus{Connected} = 0;
 					}
 					# Delete the connection from the main hashes
-					delete($AccessStatus{HandlePIDS}{$Handle});
 					delete($AccessStatus{ClientList}{$AccessStatus{HandlePIDS}{$Handle}});
+					delete($AccessStatus{HandlePIDS}{$Handle});
 				}
 			}
 		}
@@ -852,7 +852,7 @@ sub CalculateNotificationHash {
 sub PackageMultiLine {
 	my $Message = $_[0];
 	my $NewMessage = "BEGIN MULTILINE\n";
-	my $Lines;
+	my $Lines = 0;
 	foreach(split(/\n/,$Message)) {
 		$Lines++;
 		chomp;
