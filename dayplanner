@@ -3424,25 +3424,25 @@ sub ImportProgData {
 
 	# Begin with gnome
 	if($ImportGnome) {
-		ProgressMade($MaxProgress, $CurrentProgress, $Progress, $Gettext->get("Gnome Calendar"));
+		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Gnome Calendar");
 		iCal_Importer("$ENV{HOME}/.gnome/user-cal.vcf");
 		$CurrentProgress++;
 	}
 	# Continue with evolution
 	foreach(@EvolutionFiles) {
-		ProgressMade($MaxProgress, $CurrentProgress, $Progress, $Gettext->get("Evolution"));
+		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Evolution");
 		iCal_Importer($_);
 		$CurrentProgress++;
 	}
 	# Then do korganizer
 	if($ImportKorganizer) {
-		ProgressMade($MaxProgress, $CurrentProgress, $Progress, $Gettext->get("Korganizer"));
+		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Korganizer");
 		iCal_Importer("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
 		$CurrentProgress++;
 	}
 	# End with plan
 	foreach(@PlanFiles) {
-		ProgressMade($MaxProgress, $CurrentProgress, $Progress, $Gettext->get("Plan"));
+		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Plan");
 		my %PlanConvertHash;
 		if(PlanConvert_ProcessFile($_,\%PlanConvertHash)) {
 			PlanConvert_PurgeBuffer(\%PlanConvertHash);
