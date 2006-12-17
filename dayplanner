@@ -435,9 +435,9 @@ sub DPS_Connect {
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
 	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf($Gettext->get("The day planner services server you are connecting to does not support this version of day planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
-	DPS_Status("Connecting",0.2);
+	DPS_Status($Gettext->get("Connecting"),0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
-	DPS_Status("Connecting",0.4);
+	DPS_Status($Gettext->get("Connecting"),0.4);
 	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error($Gettext->get("The username and/or password is incorrect."),"Authentication error");});
 	return("OK");
 }
@@ -517,8 +517,7 @@ sub DPS_GetData {
 		DPS_BackupData();
 	}
 	my $MainData;
-	# FIXME: DPS_Status messages should be translated
-	DPS_Status("Verifying data", 0.3);
+	DPS_Status($Gettext->get("Verifying data"), 0.3);
 	if(not $DPServices{GET_MD5_Checked}) {
 		$DPServices{GET_MD5_Checked} = 1;
 		$DPServices{StaticUID} = 1;
@@ -537,13 +536,13 @@ sub DPS_GetData {
 		}
 	}
 	return unless DPS_Connect();
-	DPS_Status("Downloading data",0.5);
+	DPS_Status($Gettext->get("Downloading data"),0.5);
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	# If the MD5 on the server is identical to ours we don't need to download the data
 	if($ServerMD5 =~ /^(\[NONE\]|ERR)/ or (defined($InternalConfig{DPS_LastMD5}) and $ServerMD5 eq $InternalConfig{DPS_LastMD5})) {
 		DPS_Log("Skipping download, the data on the server matched our data ($InternalConfig{DPS_LastMD5} = $ServerMD5)");
 		DPS_Disconnect();
-		DPS_Status("Done", 1);
+		DPS_Status($Gettext->get("Done"), 1);
 		return(1);
 	}
 	if(defined($InternalConfig{DPS_LastMD5})) {
@@ -604,7 +603,7 @@ sub DPS_SendData {
 	my $Force = $_[0] ? 1 : 0;
 	DPS_Log("DPS_SendData($Force) called");
 	return if not DPS_Connect();
-	DPS_Status("Sending data",0.5);
+	DPS_Status($Gettext->get("Sending data"),0.5);
 	# Force UIDs in the iCalendar file to be static (less random)
 	$DPServices{StaticUID} = 1;
 	my $SendData = encode_base64(iCal_Exporter(undef, 0, 1),"");
@@ -645,7 +644,7 @@ sub DPS_SendData {
 			return(undef);
 		}
 	}
-	DPS_Status("Data sent",1);
+	DPS_Status($Gettext->get("Data sent"),1);
 	return(1);
 }
 
