@@ -2865,6 +2865,8 @@ sub iCal_LoadData {
 	}
 	unless($FileBegun) {
 		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
+		# TODO: DROP
+		print Dumper(\@FileContents);
 	}
 	return(\@iCalendarStructures);
 }
