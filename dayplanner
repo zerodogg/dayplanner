@@ -3641,7 +3641,6 @@ sub Gtk2Init {
 # 	Returns a hashref with the following keys:
 # 		Window = The window
 # 		ProgressBar = The progress bar
-# TODO: Migrate all Gtk2::ProgressBars to DPCreateProgressWin
 sub DPCreateProgressWin {
 	my ($Name, $Text, $PulsateMode) = @_;
 	my %ProgressHash;
