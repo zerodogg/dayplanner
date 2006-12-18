@@ -18,6 +18,7 @@ Version 0.4 (Unreleased)
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
+- Now cleans up internal data a bit better
 
 * Holidays
 - Fixed an error in the Norwegian and Swedish holiday files that declared
