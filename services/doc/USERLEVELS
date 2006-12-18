@@ -17,7 +17,9 @@ Userlevel:      Explanation:
 Level 1 is provided to allow a "grace period" between an active level
 (2 and 3) and the expired level (0). This can be used for paying services
 where you reduce access to 1 for a preiod when the account expires
-and isn't renewed. Just allow userlevel 1 or so for a few weeks.
+and isn't renewed. Just allow userlevel 1 for a few weeks or so.
+
+Level 3 is provided here in anticipation of future features.
 
 2 - Full reference list
 - - - - - - - - - - - -
