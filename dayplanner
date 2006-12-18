@@ -339,7 +339,7 @@ sub DaemonConnectionErrorHandler {
 		} else {
 			$ErrorDialog->destroy;
 			unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-					DPError($Gettext->get("Unable to force the start. This is likely due to a bug in the program, please contact the day planner developers."));
+					DPError($Gettext->get("Unable to force the start. This is likely due to a bug in the application, please contact the day planner developers."));
 					exit(1);
 				}
 		}
@@ -3164,7 +3164,7 @@ sub ImportData {
 	my %StateHash;
 	my $ActiveButton = "dayplanner";
 	my $FromFileButton = Gtk2::RadioButton->new (undef, $Gettext->get('A file'));
-	my $FromProgramButton = Gtk2::RadioButton->new ($FromFileButton, $Gettext->get('Other programs'));
+	my $FromProgramButton = Gtk2::RadioButton->new ($FromFileButton, $Gettext->get('Other applications'));
 	$ImportVBox->pack_start($FromFileButton,0,0,0);
 	$ImportVBox->pack_start($FromProgramButton,0,0,0);
 
@@ -3203,7 +3203,7 @@ sub ImportData {
 	# Add tooltips
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->set_tip($FromFileButton, $Gettext->get("Import data from a file"));
-	$Tooltips->set_tip($FromProgramButton, $Gettext->get("Import data from various other programs."));
+	$Tooltips->set_tip($FromProgramButton, $Gettext->get("Import data from various other applications."));
 	$Tooltips->set_tip($CancelButton, $Gettext->get('Cancel importing and return to day planner'));
 	$Tooltips->set_tip($OKButton, $Gettext->get('Continue'));
 
@@ -3262,7 +3262,7 @@ sub ImportDataFromProgram {
 	$ProgressWindow->{Window}->destroy();
 	if(not $Programs{ImportPossible}) {
 		unless($FirstTime) {
-			DPInfo($Gettext->get("Could not detect data from any program to import."));
+			DPInfo($Gettext->get("Could not detect data from any application to import."));
 		} else {
 			$MainWindow->show();
 		}
@@ -3297,7 +3297,7 @@ sub ImportDataFromProgram {
 	$ImportWindow->add($ImportVBox);
 
 	# Create the initial text
-	my $LabelText = $FirstTime ? $Gettext->get("Welcome to Day Planner.\n\nYou may now choose to import data from other programs.\nCheck the programs you wish to import from below and\npress Ok to continue, press Cancel if you don't want\nto import anything.") : $Gettext->get('Which program(s) do you wish to import data from?');
+	my $LabelText = $FirstTime ? $Gettext->get("Welcome to Day Planner.\n\nYou may now choose to import data from other applications.\nCheck the application(s) you wish to import from below and\npress Ok to continue, press Cancel if you don't want\nto import anything.") : $Gettext->get('Which application(s) do you wish to import data from?');
 	my $ImportLabel = Gtk2::Label->new($LabelText);
 	$ImportLabel->set_line_wrap_mode("word-char");
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
@@ -5279,7 +5279,7 @@ sub DrawMainWindow {
 # Usage: Gtk2->init_add(\&InitDPCore);
 sub InitDPCore {
 	my $Exception =  Glib->install_exception_handler(sub {
-		DPError("An exception occurred. This reflects a bug in the program.\nPlease save the following exception text and report this problem to the day planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
+		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the day planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
 		1;
 	});
 	
