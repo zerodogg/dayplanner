@@ -3203,7 +3203,7 @@ sub ImportData {
 	# Add tooltips
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->set_tip($FromFileButton, $Gettext->get("Import data from a file"));
-	$Tooltips->set_tip($FromProgramButton, $Gettext->get("Import data from various other applications."));
+	$Tooltips->set_tip($FromProgramButton, $Gettext->get("Import data from various other applications"));
 	$Tooltips->set_tip($CancelButton, $Gettext->get('Cancel importing and return to day planner'));
 	$Tooltips->set_tip($OKButton, $Gettext->get('Continue'));
 
@@ -3297,7 +3297,7 @@ sub ImportDataFromProgram {
 	$ImportWindow->add($ImportVBox);
 
 	# Create the initial text
-	my $LabelText = $FirstTime ? $Gettext->get("Welcome to Day Planner.\n\nYou may now choose to import data from other applications.\nCheck the application(s) you wish to import from below and\npress Ok to continue, press Cancel if you don't want\nto import anything.") : $Gettext->get('Which application(s) do you wish to import data from?');
+	my $LabelText = $FirstTime ? $Gettext->get("Welcome to Day Planner.\n\nYou may now choose to import data from other applications.\nCheck the application(s) you want to import from below and\npress Ok to continue, press Cancel if you don't want\nto import anything.") : $Gettext->get('Which application(s) do you want to import data from?');
 	my $ImportLabel = Gtk2::Label->new($LabelText);
 	$ImportLabel->set_line_wrap_mode("word-char");
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
