@@ -91,7 +91,6 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 # Hashes
 my %CalendarContents;		# The contents of the main calendar
 my %BirthdayContents;		# The contents of the birthday file
-my %AllDayEvents;		# The contents of the all-day events file
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
@@ -888,8 +887,7 @@ sub LoadStateFile {
 # Usage: WriteConfig(DIRECTORY, FILENAME);
 sub WriteConfig {
 	# The parameters
-	my $Dir = $_[0];
-	my $File = $_[1];
+	my ($Dir,$File) = ($SaveToDir, $ConfigFile);
 	# Verify the options first
 	unless(defined($UserConfig{EditorVerboseDefault}) and length($UserConfig{EditorVerboseDefault})) {
 		$UserConfig{EditorVerboseDefault} = 0;
@@ -919,11 +917,10 @@ sub WriteConfig {
 }
 
 # Purpose: Load the configuration file
-# Usage: LoadConfig(DIRECTORY, FILENAME);
+# Usage: LoadConfig();
 sub LoadConfig {
 	# The parameters
-	my $Dir = $_[0];
-	my $File = $_[1];
+	my ($Dir,$File) = ($SaveToDir, $ConfigFile);
 	# If it doesn't exist then we just let WriteConfig handle it
 	unless (-e "$Dir/$File") {
 		WriteConfig($Dir, $File);
@@ -938,21 +935,6 @@ sub LoadConfig {
 
 	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash);
 	return(1);
-}
-
-# TODO: Drop these rather useless functions, make LoadConfig and WriteConfig just
-# 	have sane defaults
-
-# Purpose: Load the default configuration file
-# Usage: LoadDefaultConfig();
-sub LoadDefaultConfig {
-	return(LoadConfig($SaveToDir, $ConfigFile));
-}
-
-# Purpose: Save the default configuration file
-# Usage: SaveDefaultConfig();
-sub SaveDefaultConfig {
-	return(WriteConfig($SaveToDir, $ConfigFile));
 }
 
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
@@ -981,100 +963,11 @@ sub FirstStartup {
 	}
 }	
 
-# Purpose: Save the datafile
-# Usage: SaveDatafile(DIRECTORY, FILENAME, HashRef to save, Name of the hash);
-sub SaveDatafile {
-	my($Directory, $Filename, $SaveHash, $HashName) = @_;
-	my $SAVEFILE;
-	# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
-	$Data::Dumper::Purity = 1;
-	# Sort the keys
-	$Data::Dumper::Sortkeys = 1;
-	# Set the indentation
-	$Data::Dumper::Indent = 1;
-	# Create the save directory
-	CreateSaveDir();
-	# Open the savefile ($_[0]/$_[1]) for writing
-	open($SAVEFILE, ">", "$_[0]/$_[1]") or do {
-		# EMERGENCY FALLBACK
-		
-		# Okay, we couldn't open it. This is bad.
-		# Now we try to detect a directory to fall back to.
-		my $FallbackDirectory;
-		my $Error = $!;
-		my $FallbackFailed = 1;
-		# Try to find a directory we can use
-		foreach my $Fallback (@SaveFallbackDirs) {
-			if (-e $Fallback and -w $Fallback) {
-				if (-e "$Fallback/$_[1]" and ! -w "$Fallback/$_[1]") {
-					next;
-				}
-				$FallbackDirectory = $Fallback;
-				last;
-			}
-		}
-		# If $FallbackDirectory is true then display the error and try to open the fallback
-		if ($FallbackDirectory) {
-			DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
-			$FallbackFailed = 0;
-			open($SAVEFILE, ">", "$FallbackDirectory/$_[1]") or $FallbackFailed = 1;
-		} 
-		# If FallbackDirectory failed or we didn't find one - output to STDOUT
-		if ($FallbackFailed) {
-			if ($FallbackDirectory) {	# If $FallbackDirectory was attempted but failed then display this
-				DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$FallbackDirectory/$_[1]", $Error, "STDOUT"));
-			} else {			# If $FallbackDirectory wasn't possible, display this
-				DPError(sprintf($Gettext->get("FATAL ERROR: Unable to open %s for writing: %s\nWriting to %s instead"), "$_[0]/$_[1]", $Error, "$FallbackDirectory/$_[1]"));
-			}
-			print STDOUT Dumper(\%CalendarContents);
-			# By returning 0 we tell the caller that something went very wrong and that we
-			# might not want to quit if that's what we're doing.
-			return(0);
-		}
-	};
-	# Print this
-	print $SAVEFILE "# Day Planner data file for day planner version $Version\n";
-	print $SAVEFILE "# Last saved on: ", scalar(localtime),"\n";
-	print $SAVEFILE "#\n# The format is explained in doc/SaveformatSyntax\n";
-	# Dump the data
-	print $SAVEFILE Data::Dumper->Dump([$_[2]], ["*$_[3]"]);
-	# Close the file
-	close($SAVEFILE);
-	# We successfully saved the data
-	return(1);
-}
-
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
-	my $ProgressBarWin;
-	if($Gtk2Init) {
-		$ProgressBarWin = DPCreateProgressWin($Gettext->get("Saving..."), undef, 0);
-	}
-	my($Total, $WriteICS);
-	if(-e "$SaveToDir/$ICSFile") {
-		$Total = 3;
-		$WriteICS = 1;
-	} else {
-		$WriteICS = 0;
-		$Total = 2;
-	}
-
 	my $Return = 'OKAY';
-	unless(SaveDatafile($SaveToDir, $MainEventsFile, \%CalendarContents, "CalendarContents")) {
-		$Return	= 'SAVE_FAILED';
-	}
-	ProgressMade(2, $Total, $ProgressBarWin) if($Gtk2Init);
-	unless(SaveDatafile($SaveToDir, $BirthdayFile, \%BirthdayContents, "BirthdayContents")) {
-		$Return = 'SAVE_FAILED';
-	}
-	ProgressMade(2, $Total, $ProgressBarWin) if($Gtk2Init);
-	if($WriteICS) {
-		ProgressMade(3, $Total, $ProgressBarWin) if($Gtk2Init);
-		DPIntInfo("Running in forward compatible mode. Saving to $SaveToDir/$ICSFile in addition to the *.dpd's");
-		iCal_SaveData("$SaveToDir/$ICSFile");
-	}
-	$ProgressBarWin->{Window}->destroy() if($Gtk2Init);
+	iCal_SaveData("$SaveToDir/$ICSFile");
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
 		if($Gtk2Init) {
@@ -1108,21 +1001,11 @@ sub UpdatedData {
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
 sub LoadCalendar {
-	my $LoadedPrimary = 0;
-	if(DataLoadTest("$SaveToDir/$MainEventsFile")) {
-		$LoadedPrimary = 1;
-		%CalendarContents = do("$SaveToDir/$MainEventsFile");
+	if(-e "$SaveToDir/$ICSFile") {
+		iCal_LoadFile("$SaveToDir/$ICSFile");
 	}
-	if(DataLoadTest("$SaveToDir/$BirthdayFile")) {
-		$LoadedPrimary = 1;
-		%BirthdayContents = do("$SaveToDir/$BirthdayFile");
-	}
-	unless($LoadedPrimary) {
-		if(-e "$SaveToDir/$ICSFile") {
-			DPIntWarn("Running in forward-compatible mode, loading $SaveToDir/$ICSFile.");
-			iCal_LoadFile("$SaveToDir/$ICSFile");
-		}
-	}
+	# TODO: Do something when the file doesn't exist? Such as check if
+	# migration is needed.
 	return(1);
 }
 
@@ -1773,7 +1656,7 @@ sub MainInit {
 	}
 
 	# Load the configuration file
-	LoadDefaultConfig();
+	LoadConfig();
 	# Load the internal state file
 	LoadStateFile($SaveToDir, "state.conf");
 	# Load the calendar
@@ -2712,6 +2595,7 @@ sub iCal_UID {
 
 # Purpose: Export the day planner data to a file in the iCalendar format
 # Usage: iCal_SaveData(FILE, OnlyBirthdays?, Don'tWriteFile?);
+# TODO: Progress bars
 sub iCal_SaveData {
 	my $File = $_[0];
 	my $BirthdaysOnly = $_[1];
@@ -4634,7 +4518,7 @@ sub PreferencesWindow {
 	# Handle closing
 	$PreferencesWindow->signal_connect("destroy" => sub { 
 			$MainWindow->set_sensitive(1);
-			SaveDefaultConfig();
+			WriteConfig();
 			});
 	
 	# Creat the vbox
@@ -5150,12 +5034,9 @@ GetOptions (
 		PrintHelp("-s", "--shutdaemon", "Shutdown the daemon when day planner is closed");
 		PrintHelp("", "--exportical", "Export the day planner data in the iCalendar format");
 		PrintHelp("", "", "to the filename supplied");
-		PrintHelp("", "--exportdpf", "Export the day planner data in the day planner data");
-		PrintHelp("", "", "format to the filename supplied");
 		PrintHelp("", "--exporthtml", "Export the day planner data in the HTML format to the");
 		PrintHelp("", "", "directory supplied");
 		PrintHelp("", "--importical", "Import data from the iCalendar file specified");
-		PrintHelp("", "--importdpf", "Import data from the day planner data file specified");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
@@ -5214,14 +5095,9 @@ GetOptions (
 		CLI_Export(@_);
 		$DPServices{StaticUID} = 0;
 	},
-	'exportdpf=s' => \&CLI_Export,
 	'exporthtml=s' => \&CLI_Export,
 	'exportphp=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
-	'importdpf=s' => sub {
-		DPIntWarn("The Day Planner data format is deprecated and will be removed in a future release. You should use iCalendar instead");
-		CLI_Import(@_);
-	},
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
