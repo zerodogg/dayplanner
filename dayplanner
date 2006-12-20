@@ -377,7 +377,7 @@ sub IO_Socket_INET_Errors {
 # Usage: DPS_BackupData();
 sub DPS_BackupData {
 	my $Target = "$SaveToDir/dps_backup" . time() . ".ics";
-	iCal_Exporter($Target, 0);
+	iCal_SaveData($Target, 0);
 	DPS_Log("Backup written to $Target");
 	DPIntInfo("DPS: Backup written to $Target");
 	return($Target);
@@ -489,7 +489,7 @@ sub DPS_RepairData {
 		my @DataArray;
 		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
 		$RawData = undef;
-		my @Conflicts = iCal_Importer(\@DataArray);
+		my @Conflicts = iCal_LoadFile(\@DataArray);
 		$InternalConfig{DPS_LastMD5} = DPS_Perform("GET_MD5");
 		UpdatedData();
 		$ProgressWin->{ProgressBar}->set_fraction(1);
@@ -521,7 +521,7 @@ sub DPS_GetData {
 	if(not $DPServices{GET_MD5_Checked}) {
 		$DPServices{GET_MD5_Checked} = 1;
 		$DPServices{StaticUID} = 1;
-		my $Current_DataMD5 = encode_base64(iCal_Exporter(undef, 0, 1),"");
+		my $Current_DataMD5 = encode_base64(iCal_SaveData(undef, 0, 1),"");
 		chomp($Current_DataMD5);
 		$Current_DataMD5 = md5_base64($Current_DataMD5);
 		$DPServices{StaticUID} = 0;
@@ -558,7 +558,9 @@ sub DPS_GetData {
 		$MainData = $Data;
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
-		$MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/;
+		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/) {
+			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
+		}
 		unless(md5_base64($MainData) eq $MD5) {
 			DPS_Error($Gettext->get("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
@@ -570,7 +572,7 @@ sub DPS_GetData {
 				$MainData = undef;
 				%BirthdayContents = ();
 				%CalendarContents = ();
-				iCal_Importer(\@DataArray);
+				iCal_LoadFile(\@DataArray);
 				UpdatedData();
 			}
 		}
@@ -606,7 +608,7 @@ sub DPS_SendData {
 	DPS_Status($Gettext->get("Sending data"),0.5);
 	# Force UIDs in the iCalendar file to be static (less random)
 	$DPServices{StaticUID} = 1;
-	my $SendData = encode_base64(iCal_Exporter(undef, 0, 1),"");
+	my $SendData = encode_base64(iCal_SaveData(undef, 0, 1),"");
 	$DPServices{StaticUID} = 0;
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
@@ -1070,7 +1072,7 @@ sub SaveMainData {
 	if($WriteICS) {
 		ProgressMade(3, $Total, $ProgressBarWin) if($Gtk2Init);
 		DPIntInfo("Running in forward compatible mode. Saving to $SaveToDir/$ICSFile in addition to the *.dpd's");
-		iCal_Exporter("$SaveToDir/$ICSFile");
+		iCal_SaveData("$SaveToDir/$ICSFile");
 	}
 	$ProgressBarWin->{Window}->destroy() if($Gtk2Init);
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
@@ -1118,7 +1120,7 @@ sub LoadCalendar {
 	unless($LoadedPrimary) {
 		if(-e "$SaveToDir/$ICSFile") {
 			DPIntWarn("Running in forward-compatible mode, loading $SaveToDir/$ICSFile.");
-			iCal_Importer("$SaveToDir/$ICSFile");
+			iCal_LoadFile("$SaveToDir/$ICSFile");
 		}
 	}
 	return(1);
@@ -1903,7 +1905,7 @@ sub CLI_Export {
 			die("$Target: is a directory\n");
 		}
 		if($Type =~ /(ical|ics_dps)/) {
-			if(iCal_Exporter($Target)) {
+			if(iCal_SaveData($Target)) {
 				print "iCalendar data written to $Target\n";
 			}
 		}
@@ -1942,7 +1944,7 @@ sub CLI_Import {
 	# Initialize the daemon (we need it)
 	DaemonInit() or die();
 	if($Type =~ /ical/) {
-		if(iCal_Importer($Source)) {
+		if(iCal_LoadFile($Source)) {
 			print "Imported iCalendar data from $Source\n";
 		} else {
 			print "Importing failed.\n";
@@ -2715,8 +2717,8 @@ sub iCal_UID {
 }
 
 # Purpose: Export the day planner data to a file in the iCalendar format
-# Usage: iCal_Exporter(FILE, OnlyBirthdays?, Don'tWriteFile?);
-sub iCal_Exporter {
+# Usage: iCal_SaveData(FILE, OnlyBirthdays?, Don'tWriteFile?);
+sub iCal_SaveData {
 	my $File = $_[0];
 	my $BirthdaysOnly = $_[1];
 	my $DontWriteFile = $_[2];
@@ -2801,8 +2803,8 @@ sub iCal_Exporter {
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
 # 	undef on failure.
-# Usage: my $iCalendar = iCal_LoadData(FILE);
-sub iCal_LoadData {
+# Usage: my $iCalendar = iCal_ParseData(FILE);
+sub iCal_ParseData {
 	my $File = $_[0];
 	my @iCalendarStructures;
 	my $LastStructure;
@@ -2819,7 +2821,7 @@ sub iCal_LoadData {
 			@FileContents = @{$File};
 		} else {
 			# Nothing is well, bug!
-			DPIntWarn("iCal_LoadData: supplied reference is not an ARRAYREF!");
+			DPIntWarn("iCal_ParseData: supplied reference is not an ARRAYREF!");
 			# Return an empty anonymous array
 			return([]);
 		}
@@ -2828,7 +2830,7 @@ sub iCal_LoadData {
 	else {
 		$Type = "file ($File)";
 		open(my $ICALENDAR, "<", $File) or do {
-			DPIntWarn("iCal_LoadData: Unable to open $File for reading: $!");
+			DPIntWarn("iCal_ParseData: Unable to open $File for reading: $!");
 			# Return an empty anonymous array
 			return([]);
 		};
@@ -2872,9 +2874,9 @@ sub iCal_LoadData {
 }
 
 # Purpose: Imports data in the iCalendar format into day planner
-# Usage: iCal_Importer(FILE OR ARRAYREF);
-sub iCal_Importer {
-	my $Data = iCal_LoadData($_[0]);
+# Usage: iCal_LoadFile(FILE OR ARRAYREF);
+sub iCal_LoadFile {
+	my $Data = iCal_ParseData($_[0]);
 	my @Conflicts;
 	return(undef) unless(defined($Data));
 	foreach(0..scalar(@{$Data})) {
@@ -3426,19 +3428,19 @@ sub ImportProgData {
 	# Begin with gnome
 	if($ImportGnome) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Gnome Calendar");
-		iCal_Importer("$ENV{HOME}/.gnome/user-cal.vcf");
+		iCal_LoadFile("$ENV{HOME}/.gnome/user-cal.vcf");
 		$CurrentProgress++;
 	}
 	# Continue with evolution
 	foreach(@EvolutionFiles) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Evolution");
-		iCal_Importer($_);
+		iCal_LoadFile($_);
 		$CurrentProgress++;
 	}
 	# Then do korganizer
 	if($ImportKorganizer) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Korganizer");
-		iCal_Importer("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
+		iCal_LoadFile("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
 		$CurrentProgress++;
 	}
 	# End with plan
@@ -3483,7 +3485,7 @@ sub ImportDataFromFile {
 			LoadDayplannerDataFile($Filename);
 			UpdatedData();
 		} elsif($Filename =~ /\.(ics|vcf)$/i) {
-			iCal_Importer($Filename);
+			iCal_LoadFile($Filename);
 			UpdatedData();
 		} else {
 			DPIntWarn("Unknown filetype: $Filename");
@@ -3557,7 +3559,7 @@ sub ExportData {
 			my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
 			if ($ActiveIndex == 0) {
 				if(PromptOverwrite("$Filename.ics")) {
-					iCal_Exporter("$Filename.ics", $OnlyBirthdays);
+					iCal_SaveData("$Filename.ics", $OnlyBirthdays);
 					last;
 				}
 			} elsif ($ActiveIndex == 1) {
