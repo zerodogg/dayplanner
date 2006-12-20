@@ -1621,31 +1621,7 @@ sub HolidaySetup {
 	} elsif(defined($InternalConfig{Holiday_Attempted}) and $InternalConfig{Holiday_Attempted} eq $Version) {
 		return(1);
 	}
-	# Hash of LC_ADDRESS code => holiday file
-	my %HolidayFiles = (
-		"nb" => "norway",	# Norway
-		"nn" => "norway",	# Norway
-		"no" => "norway",	# Norway
-		"en_US" => "us",	# USA
-		"us" => "us",		# USA
-		"en_UK" => "uk",	# The UK
-		"uk" => "uk",		# The UK
-		"sv" => "swedish",	# Sweden
-		"fr" => "french",	# France
-		"it" => "italy",	# Italy
-		"el_GR" => "greek",	# Greece
-		"cs_CZ" => "czech",	# Czech
-		"da_DK" => "denmark",	# Denmark
-		"nl_NL" => "dutch",	# The Netherlands
-		"fi_FI" => "finnish",	# Finland
-		"de_DE" => "german",	# Germany
-		"hu_HU" => "hungary",	# Hungary
-		"ja_JP" => "japan",	# Japan
-		"pt_PT" => "portugal",	# Portugal
-		"sk_SK" => "slovak",	# Slovakia
-		"es_ES" => "spain",	# Spain
-		"en_CA" => "canada",	# Canada
-	);
+
 	# Yay, the user already has a .holiday file. Use this one
 	if(-e "$ENV{HOME}/.holiday") {
 		symlink("$ENV{HOME}/.holiday",$HolidayFile);
@@ -1653,6 +1629,13 @@ sub HolidaySetup {
 		return(1);
 	}
 
+	# Hash of LC_ADDRESS code => holiday file
+	# Loaded from dayplanner_detection
+	my %HolidayFiles;
+	if(-e "$FindBin::RealBin/holiday/dayplanner_detection") {
+		LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_detection", \%HolidayFiles, undef, 0)
+			or DPIntWarn("Unable to load holiday detection definitions!");
+	}
 
 	my $LocationDetect;
 
@@ -4764,6 +4747,8 @@ sub PopulateEventList {
 	$MenuEditEntry->set_sensitive(0);
 	$MenuDeleteEntry->set_sensitive(0);
 	
+	# TODO: Do some magic to calculate yearly stuff here
+
 	# Main calendar contents
 	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
 		foreach my $Time (sort keys %{$CalendarContents{$Year}{$Month}{$Day}}) {
