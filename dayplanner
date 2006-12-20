@@ -873,10 +873,8 @@ sub WriteStateFile {
 # Usage: LoadStateFile(DIRECTORY, FILENAME);
 sub LoadStateFile {
 	# The parameters
-	my $Dir = $_[0];
-	my $File = $_[1];
-	if(-e "$Dir/$File") {
-		LoadConfigFile("$Dir/$File", \%InternalConfig, undef, 0);
+	if(-e "$SaveToDir/state.conf") {
+		LoadConfigFile("$SaveToDir/state.conf", \%InternalConfig, undef, 0);
 		if(not defined($InternalConfig{LastVersion}) or not $InternalConfig{LastVersion} eq $Version) {
 			UpgradeVersion();
 		}
@@ -1658,7 +1656,7 @@ sub MainInit {
 	# Load the configuration file
 	LoadConfig();
 	# Load the internal state file
-	LoadStateFile($SaveToDir, "state.conf");
+	LoadStateFile();
 	# Load the calendar
 	LoadCalendar();
 	# Set up holidays
