@@ -89,12 +89,14 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 );
 
 # Hashes
-my %CalendarContents;		# The contents of the main calendar
-my %BirthdayContents;		# The contents of the birthday file
+my %CalendarContents;		# The contents of the main calendar (DEPRECATED)
+my %BirthdayContents;		# The contents of the birthday file (DEPRECATED)
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
 my %DPServices;			# Day planner services hash
+my %InternalCalendar;		# The contents of the users calendar
+my %RawCalendar;		# The raw iCalendar data, by UID
 
 # The reason we do not use strftime() or I18N::Langinfo is that these return
 # values in random encodings. By using Gettext->get() we get values
@@ -989,7 +991,7 @@ sub UpdatedData {
 		SaveMainData();
 	}
 	# Redraw the event list
-	DrawEventlist();
+	PopulateEventList();
 	# Repopulate the upcoming events
 	PopulateUpcomingEvents();
 	# Redraw the calendar
@@ -1030,11 +1032,347 @@ sub DataLoadTest {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# iCalendar functions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Escape certain characters that are special in iCalendar
+# Usage: my $SafeData = iCal_GetSafe($Data);
+sub iCal_GetSafe {
+	my $Data = $_[0];
+	$Data =~ s/\\/\\\\/g;
+	$Data =~ s/,/\,/g;
+	$Data =~ s/;/\;/g;
+	$Data =~ s/\n/\\n/g;
+	return($Data);
+}
+
+# Purpose: Removes escaping of iCalendar entries
+# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
+sub iCal_UnSafe {
+	my $Data = $_[0];
+	$Data =~ s/\\\\/\\/g;
+	$Data =~ s/\\,/,/g;
+	$Data =~ s/\\;/;/g;
+	$Data =~ s/\\n/\n/g;
+	return($Data);
+}
+
+# Purpose: Get a unique ID for an event
+# Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
+sub iCal_UID {
+	chomp(@_);
+	$_[0] =~ s/\D//g;
+	if($DPServices{StaticUID}) {
+		return("UID:dayplanner-" . $_[0] . "\r\n");
+	} else {
+		return("UID:dayplanner-" . time() . $_[0] . int(rand(10000)) . "\r\n");
+	}
+}
+
+# Purpose: Export the day planner data to a file in the iCalendar format
+# Usage: iCal_SaveData(FILE, OnlyBirthdays?, Don'tWriteFile?);
+# TODO: Progress bars
+sub iCal_SaveData {
+	my $File = $_[0];
+	my $BirthdaysOnly = $_[1];
+	my $DontWriteFile = $_[2];
+	my $iCalendar;
+	# Print initial info. The prodid could probably be changed to something mroe suitable.
+	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
+
+	# Begin exporting birthdays
+	foreach my $Month (sort keys(%BirthdayContents)) {
+		foreach my $Day (sort keys(%{$BirthdayContents{$Month}})) {
+				foreach my $Name (sort keys(%{$BirthdayContents{$Month}{$Day}})) {
+					$Month = AppendZero($Month);
+					$Day = AppendZero($Day);
+					$iCalendar .= "BEGIN:VEVENT\r\n";
+					# The unix epoch starts in 1970 so we put that in here as the start time
+					# for the event (we have no idea when a person was born)
+					$iCalendar .= "DTSTART:1970$Month${Day}T000000\r\n";
+					$iCalendar .= "DTEND:1970$Month${Day}T235959\r\n";
+					# Day planner-style recurrance
+					$iCalendar .= "RRULE:FREQ=YEARLY\r\n";
+					# The summary is the name +'s birthday (localized).
+					$iCalendar .= "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
+					# X-DP-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
+					$iCalendar .= "X-DP-BIRTHDAY:TRUE\r\n";
+					# If X-DP-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
+					# X-DP-BIRTHDAYNAME instead.
+					$iCalendar .= "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
+
+					# Most (maybe all) other calendars will happily ignore X-DP-BIRTHDAY*. It will be
+					# useful for day planner importing though.
+
+					# Get a unique identifier
+					$iCalendar .= iCal_UID("$Month$Day", $Name);
+					$iCalendar .= "END:VEVENT\r\n";
+				}
+			}
+		}
+	# Export the rest of the data if needed
+	unless($BirthdaysOnly) {
+		foreach my $Year (keys(%CalendarContents)) {
+			foreach my $Month (keys(%{$CalendarContents{$Year}})) {
+				foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
+					foreach my $Time(keys(%{$CalendarContents{$Year}{$Month}{$Day}})) {
+						# Fix the month and day
+						my $iCalMonth = AppendZero($Month);
+						my $iCalDay = AppendZero($Day);
+
+						# Get the time
+						my $Hour = $Time;
+						my $Minute = $Time;
+						$Hour =~ s/^(\d+):\d+$/$1/;
+						$Minute =~ s/^\d+:(\d+)$/$1/;
+						
+						$iCalendar .= "BEGIN:VEVENT\r\n";
+						$iCalendar .= "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
+						$iCalendar .= "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
+						$iCalendar .= "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
+						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
+							$iCalendar .= "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
+						}
+						$iCalendar .= iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
+						$iCalendar .= "END:VEVENT\r\n";
+
+					}
+				}
+			}
+		}
+	}
+	$iCalendar .= "END:VCALENDAR\r\n";
+	if($DontWriteFile) {
+		return($iCalendar);
+	} else {
+		open(my $TARGET, ">", $File) or do {
+			DPIntWarn("Unable to open $File for writing: $!");
+			DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
+			return(0);
+		};
+		print $TARGET $iCalendar;
+		close($TARGET);
+	}
+}
+
+# Purpose: Loads an iCalendar file and returns a simple data structure. Returns
+# 	undef on failure.
+# Usage: my $iCalendar = iCal_ParseData(FILE);
+sub iCal_ParseData {
+	my $File = $_[0];
+	my @iCalendarStructures;
+	my $LastStructure;
+	my $LastName;
+	my $CurrentStructure;
+	my @FileContents;
+	my $FileBegun;
+	my $Type;
+	# If $File is a ref...
+	if(ref($File)) {
+		$Type = "ref";
+		if(ref($File) eq "ARRAY") {
+			# All is well.
+			@FileContents = @{$File};
+		} else {
+			# Nothing is well, bug!
+			DPIntWarn("iCal_ParseData: supplied reference is not an ARRAYREF!");
+			# Return an empty anonymous array
+			return([]);
+		}
+	}
+	# It isn't
+	else {
+		$Type = "file ($File)";
+		open(my $ICALENDAR, "<", $File) or do {
+			DPIntWarn("iCal_ParseData: Unable to open $File for reading: $!");
+			# Return an empty anonymous array
+			return([]);
+		};
+		@FileContents = <$ICALENDAR>;
+		close($ICALENDAR);
+	}
+
+	foreach(@FileContents) {
+		s/\r//g;
+		chomp;
+		unless($FileBegun) {
+			if (/^BEGIN:VCALENDAR/) {
+				$FileBegun = 1;
+			} else {
+				next;
+			}
+		}
+		if (s/^\s//) {
+			$iCalendarStructures[$CurrentStructure]{$LastName} .= $_;
+		} elsif(/^END/) {
+			next;
+		} else {
+			my $Name = $_;
+			my $Value = $_;
+			$Name =~ s/(.+):(.*)$/$1/;
+			$Value =~ s/(.+):(.*)$/$2/;
+			if($Name =~ /^BEGIN/) {
+				$CurrentStructure++;
+				$Name = "X-PARSER_ENTRYTYPE";
+			}
+			$LastName = $Name;
+			$iCalendarStructures[$CurrentStructure]{$Name} = iCal_UnSafe($Value);
+		}
+	}
+	unless($FileBegun) {
+		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
+		# TODO: DROP
+		print Dumper(\@FileContents);
+	}
+	return(\@iCalendarStructures);
+}
+
+# Purpose: Imports data in the iCalendar format into day planner
+# Usage: iCal_LoadFile(FILE OR ARRAYREF);
+sub iCal_LoadFile {
+	my $Data = iCal_ParseData($_[0]);
+	my @Conflicts;
+	return(undef) unless(defined($Data));
+	foreach(0..scalar(@{$Data})) {
+		my $Current = $Data->[$_];
+		my ($Summary, $Fulltext, $UID);
+		# First make sure we've got everything we need. Skip entries
+		# missing some things.
+		next unless(defined($Current->{"X-PARSER_ENTRYTYPE"}));
+		next unless($Current->{"X-PARSER_ENTRYTYPE"} eq 'VEVENT');
+		unless(defined($Current->{'DTSTART'})) {
+			# Detect an alternate dstart
+			foreach(keys(%{$Current})) {
+				if(/^DTSTART/) {
+					$Current->{'DTSTART'} = $Current->{$_};
+					last;
+				}
+			}
+			next unless(defined($Current->{'DTSTART'}));
+		}
+		# FIXME: Don't blindly assume $Time is set.
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
+		$Year =~ s/^0*//;
+		$Month =~ s/^0*//;
+		$Day =~ s/^0*//;
+		# Assign an UID if it is missing
+		unless($Current->{UID}) {
+			$UID = iCal_UID($Year.$Month.$Day);
+		} else {
+			$UID = $Current->{UID};
+		}
+		delete($Current->{UID});
+		if(defined($RawCalendar{UID})) {
+			# FIXME: This WILL produce false warnings
+			DPIntWarn("Duplicate UID detected! Reassigning.");
+			# We try extra hard to get a unique one here
+			$UID = iCal_UID(int(rand(10000)) . int(rand(10000)) . int(rand(10000)));
+		}
+		next unless(defined($Year));
+		if($Current->{RRULE}) {
+			if($Current->{RRULE} =~ /YEARLY/) {
+				# Birthday?
+				if($Current->{"X-DP-BIRTHDAY"} eq "TRUE") {
+					if(defined($Current->{"X-DP-BIRTHDAYNAME"})) {
+						$Summary = iCal_UnSafe($Current->{"X-DP-BIRTHDAYNAME"});
+					} else {
+						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
+					}
+				} else {
+					if(defined($Current->{"SUMMARY"})) {
+						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
+					} else {
+						next;
+					}
+				}
+				push(@{$InternalCalendar{Recurring}{Yearly}{$Month}{$Day}{DAY}},$UID);
+				$BirthdayContents{$Month}{$Day}{$Summary} = 1;
+				push(@{$InternalCalendar{Single}{$Year}{$Month}{$Day}{$Time}}, $UID);
+				foreach(keys(%{$Current})) {
+					if(not /^X-PARSER/) {
+						$RawCalendar{$UID}{$_} = iCal_UnSafe($Current->{$_});
+					}
+				}
+				next unless defined($Current->{DESCRIPTION});
+			} else {
+				next unless defined($Current->{DESCRIPTION});
+			}
+		}
+		if(defined($Current->{DESCRIPTION})) {
+			$Fulltext = iCal_UnSafe($Current->{DESCRIPTION});
+		}
+		unless(defined($Summary)) {
+			if(defined($Current->{SUMMARY})) {
+				$Summary = iCal_UnSafe($Current->{SUMMARY});
+			} else {
+				DPIntWarn("Dangerous: SUMMARY missing from iCalendar import. Dumping data:");
+				print Dumper(\$Current);
+				$Summary = $Gettext->get("Unknown");
+			}
+		}
+		if($Time) {
+			push(@{$InternalCalendar{Single}{$Year}{$Month}{$Day}{$Time}}, $UID);
+			foreach(keys(%{$Current})) {
+				if(not /^X-PARSER/) {
+					$RawCalendar{$UID}{$_} = iCal_UnSafe($Current->{$_});
+				}
+			}
+		}
+		# TODO: Conflict resolution no longer required after migration to %InternalCalendar
+		my $ConflictText;
+		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
+		if($ConflictText) {
+			push(@Conflicts, $ConflictText);
+		}
+		if($Time) {
+			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
+			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
+		}
+	}
+	$Data::Dumper::Purity = 1;$Data::Dumper::Sortkeys = 1;$Data::Dumper::Indent = 1;
+	print Dumper(\%InternalCalendar);
+	print Dumper(\%RawCalendar);
+	if(@Conflicts) {
+		return(@Conflicts);
+	} else {
+		return(0);
+	}
+}
+
+# Purpose: Parse an iCalendar date-time
+# Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
+# TODO: Handle VALUE=DATE:YYYYMMDD once full day events are available
+sub iCal_ParseDateTime {
+	my $Year = $_[0];
+	my $Month = $_[0];
+	my $Day = $_[0];
+	my $Hour = $_[0];
+	my $Minutes = $_[0];
+
+	$Year =~ s/^(\d\d\d\d).*$/$1/;
+	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
+	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
+
+	# This is here to support events where there is no time set.
+	if($Hour =~ s/^.+T//) {
+		$Hour =~ s/^.+T//;
+		$Hour =~ s/^(\d\d).*$/$1/;
+		$Minutes =~ s/^.+T//;
+		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
+	} else {
+		$Hour = 0;
+		$Minutes = 0;
+	}
+	return($Year,$Month,$Day,AppendZero($Hour) . ":" . AppendZero($Minutes));
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Delete keys from %CalendarContents, recusively if needed
 # Usage: CalendarDelete(year,month,day,time);
+# TODO: Rewrite to simplify for the new data system
 sub CalendarDelete {
 	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
 	unless(CalendarDefined(@_)) {
@@ -1055,6 +1393,7 @@ sub CalendarDelete {
 
 # Purpose: Delete keys from %BirthdayContents, recusively if needed
 # Usage: BirthdayDelete(month,day,name);
+# TODO: Drop. Birthdays aren't special in the new data system
 sub BirthdayDelete {
 	my ($EventMonth,$EventDay,$Name) = @_;
 	unless(BirthdayDefined(@_)) {
@@ -1072,6 +1411,8 @@ sub BirthdayDelete {
 
 # If a single test is run then invalid data might get inserted into the data hashes.
 # Using the *Defined functions avoids this.
+
+# TODO: Replace these with a single test
 
 # Purpose: Recursively test for defined data in %CalendarContents
 # Usage: CalendarDefined(year,month,day,time);
@@ -2551,309 +2892,6 @@ sub DecryptData {
 		$Label->set_text($Gettext->get("Invalid password.") . "\n" . $Gettext->get('This file is password protected.'));
 		$InputEntry->set_text('');
 	}
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# iCalendar functions
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Escape certain characters that are special in iCalendar
-# Usage: my $SafeData = iCal_GetSafe($Data);
-sub iCal_GetSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\/\\\\/g;
-	$Data =~ s/,/\,/g;
-	$Data =~ s/;/\;/g;
-	$Data =~ s/\n/\\n/g;
-	return($Data);
-}
-
-# Purpose: Removes escaping of iCalendar entries
-# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
-sub iCal_UnSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\\\/\\/g;
-	$Data =~ s/\\,/,/g;
-	$Data =~ s/\\;/;/g;
-	$Data =~ s/\\n/\n/g;
-	return($Data);
-}
-
-# Purpose: Get a unique ID for an event
-# Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
-sub iCal_UID {
-	chomp(@_);
-	$_[0] =~ s/\D//g;
-	if($DPServices{StaticUID}) {
-		return("UID:dayplanner-" . $_[0] . "\r\n");
-	} else {
-		return("UID:dayplanner-" . time() . $_[0] . int(rand(10000)) . "\r\n");
-	}
-}
-
-# Purpose: Export the day planner data to a file in the iCalendar format
-# Usage: iCal_SaveData(FILE, OnlyBirthdays?, Don'tWriteFile?);
-# TODO: Progress bars
-sub iCal_SaveData {
-	my $File = $_[0];
-	my $BirthdaysOnly = $_[1];
-	my $DontWriteFile = $_[2];
-	my $iCalendar;
-	# Print initial info. The prodid could probably be changed to something mroe suitable.
-	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
-
-	# Begin exporting birthdays
-	foreach my $Month (sort keys(%BirthdayContents)) {
-		foreach my $Day (sort keys(%{$BirthdayContents{$Month}})) {
-				foreach my $Name (sort keys(%{$BirthdayContents{$Month}{$Day}})) {
-					$Month = AppendZero($Month);
-					$Day = AppendZero($Day);
-					$iCalendar .= "BEGIN:VEVENT\r\n";
-					# The unix epoch starts in 1970 so we put that in here as the start time
-					# for the event (we have no idea when a person was born)
-					$iCalendar .= "DTSTART:1970$Month${Day}T000000\r\n";
-					$iCalendar .= "DTEND:1970$Month${Day}T235959\r\n";
-					# Day planner-style recurrance
-					$iCalendar .= "RRULE:FREQ=YEARLY\r\n";
-					# The summary is the name +'s birthday (localized).
-					$iCalendar .= "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
-					# X-DP-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
-					$iCalendar .= "X-DP-BIRTHDAY:TRUE\r\n";
-					# If X-DP-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
-					# X-DP-BIRTHDAYNAME instead.
-					$iCalendar .= "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
-
-					# Most (maybe all) other calendars will happily ignore X-DP-BIRTHDAY*. It will be
-					# useful for day planner importing though.
-
-					# Get a unique identifier
-					$iCalendar .= iCal_UID("$Month$Day", $Name);
-					$iCalendar .= "END:VEVENT\r\n";
-				}
-			}
-		}
-	# Export the rest of the data if needed
-	unless($BirthdaysOnly) {
-		foreach my $Year (keys(%CalendarContents)) {
-			foreach my $Month (keys(%{$CalendarContents{$Year}})) {
-				foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
-					foreach my $Time(keys(%{$CalendarContents{$Year}{$Month}{$Day}})) {
-						# Fix the month and day
-						my $iCalMonth = AppendZero($Month);
-						my $iCalDay = AppendZero($Day);
-
-						# Get the time
-						my $Hour = $Time;
-						my $Minute = $Time;
-						$Hour =~ s/^(\d+):\d+$/$1/;
-						$Minute =~ s/^\d+:(\d+)$/$1/;
-						
-						$iCalendar .= "BEGIN:VEVENT\r\n";
-						$iCalendar .= "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
-						$iCalendar .= "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
-						$iCalendar .= "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
-						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-							$iCalendar .= "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
-						}
-						$iCalendar .= iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
-						$iCalendar .= "END:VEVENT\r\n";
-
-					}
-				}
-			}
-		}
-	}
-	$iCalendar .= "END:VCALENDAR\r\n";
-	if($DontWriteFile) {
-		return($iCalendar);
-	} else {
-		open(my $TARGET, ">", $File) or do {
-			DPIntWarn("Unable to open $File for writing: $!");
-			DPWarning(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
-			return(0);
-		};
-		print $TARGET $iCalendar;
-		close($TARGET);
-	}
-}
-
-# Purpose: Loads an iCalendar file and returns a simple data structure. Returns
-# 	undef on failure.
-# Usage: my $iCalendar = iCal_ParseData(FILE);
-sub iCal_ParseData {
-	my $File = $_[0];
-	my @iCalendarStructures;
-	my $LastStructure;
-	my $LastName;
-	my $CurrentStructure;
-	my @FileContents;
-	my $FileBegun;
-	my $Type;
-	# If $File is a ref...
-	if(ref($File)) {
-		$Type = "ref";
-		if(ref($File) eq "ARRAY") {
-			# All is well.
-			@FileContents = @{$File};
-		} else {
-			# Nothing is well, bug!
-			DPIntWarn("iCal_ParseData: supplied reference is not an ARRAYREF!");
-			# Return an empty anonymous array
-			return([]);
-		}
-	}
-	# It isn't
-	else {
-		$Type = "file ($File)";
-		open(my $ICALENDAR, "<", $File) or do {
-			DPIntWarn("iCal_ParseData: Unable to open $File for reading: $!");
-			# Return an empty anonymous array
-			return([]);
-		};
-		@FileContents = <$ICALENDAR>;
-		close($ICALENDAR);
-	}
-
-	foreach(@FileContents) {
-		s/\r//g;
-		chomp;
-		unless($FileBegun) {
-			if (/^BEGIN:VCALENDAR/) {
-				$FileBegun = 1;
-			} else {
-				next;
-			}
-		}
-		if (s/^\s//) {
-			$iCalendarStructures[$CurrentStructure]{$LastName} .= $_;
-		} elsif(/^END/) {
-			next;
-		} else {
-			my $Name = $_;
-			my $Value = $_;
-			$Name =~ s/(.+):(.*)$/$1/;
-			$Value =~ s/(.+):(.*)$/$2/;
-			if($Name =~ /^BEGIN/) {
-				$CurrentStructure++;
-				$Name = "X-PARSER_ENTRYTYPE";
-			}
-			$LastName = $Name;
-			$iCalendarStructures[$CurrentStructure]{$Name} = iCal_UnSafe($Value);
-		}
-	}
-	unless($FileBegun) {
-		DPIntWarn("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
-		# TODO: DROP
-		print Dumper(\@FileContents);
-	}
-	return(\@iCalendarStructures);
-}
-
-# Purpose: Imports data in the iCalendar format into day planner
-# Usage: iCal_LoadFile(FILE OR ARRAYREF);
-sub iCal_LoadFile {
-	my $Data = iCal_ParseData($_[0]);
-	my @Conflicts;
-	return(undef) unless(defined($Data));
-	foreach(0..scalar(@{$Data})) {
-		my $Current = $Data->[$_];
-		my ($Summary, $Fulltext);
-		# First make sure we've got everything we need. Skip entries
-		# missing some things.
-		next unless(defined($Current->{"X-PARSER_ENTRYTYPE"}));
-		next unless($Current->{"X-PARSER_ENTRYTYPE"} eq 'VEVENT');
-		unless(defined($Current->{'DTSTART'})) {
-			# Detect an alternate dstart
-			foreach(keys(%{$Current})) {
-				if(/^DTSTART/) {
-					$Current->{'DTSTART'} = $Current->{$_};
-					last;
-				}
-			}
-			next unless(defined($Current->{'DTSTART'}));
-		}
-		# FIXME: Don't blindly assume $Time is set.
-		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
-		$Year =~ s/^0*//;
-		$Month =~ s/^0*//;
-		$Day =~ s/^0*//;
-		next unless(defined($Year));
-		if($Current->{RRULE}) {
-			if($Current->{RRULE} =~ /YEARLY/) {
-				# Birthday?
-				if($Current->{"X-DP-BIRTHDAY"} eq "TRUE") {
-					if(defined($Current->{"X-DP-BIRTHDAYNAME"})) {
-						$Summary = iCal_UnSafe($Current->{"X-DP-BIRTHDAYNAME"});
-					} else {
-						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
-					}
-				} else {
-					if(defined($Current->{"SUMMARY"})) {
-						$Summary = iCal_UnSafe($Current->{"SUMMARY"});
-					} else {
-						next;
-					}
-				}
-				$BirthdayContents{$Month}{$Day}{$Summary} = 1;
-				next unless defined($Current->{DESCRIPTION});
-			} else {
-				next unless defined($Current->{DESCRIPTION});
-			}
-		}
-		if(defined($Current->{DESCRIPTION})) {
-			$Fulltext = iCal_UnSafe($Current->{DESCRIPTION});
-		}
-		unless(defined($Summary)) {
-			if(defined($Current->{SUMMARY})) {
-				$Summary = iCal_UnSafe($Current->{SUMMARY});
-			} else {
-				DPIntWarn("Dangerous: SUMMARY missing from iCalendar import. Dumping data:");
-				print Dumper(\$Current);
-				$Summary = $Gettext->get("Unknown");
-			}
-		}
-		my $ConflictText;
-		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
-		if($ConflictText) {
-			push(@Conflicts, $ConflictText);
-		}
-		if($Time) {
-			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
-			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
-		}
-	}
-	if(@Conflicts) {
-		return(@Conflicts);
-	} else {
-		return(0);
-	}
-}
-
-# Purpose: Parse an iCalendar date-time
-# Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
-# TODO: Handle VALUE=DATE:YYYYMMDD once full day events are available
-sub iCal_ParseDateTime {
-	my $Year = $_[0];
-	my $Month = $_[0];
-	my $Day = $_[0];
-	my $Hour = $_[0];
-	my $Minutes = $_[0];
-
-	$Year =~ s/^(\d\d\d\d).*$/$1/;
-	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
-	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
-
-	# This is here to support events where there is no time set.
-	if($Hour =~ s/^.+T//) {
-		$Hour =~ s/^.+T//;
-		$Hour =~ s/^(\d\d).*$/$1/;
-		$Minutes =~ s/^.+T//;
-		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
-	} else {
-		$Hour = 0;
-		$Minutes = 0;
-	}
-	return($Year,$Month,$Day,AppendZero($Hour) . ":" . AppendZero($Minutes));
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4713,9 +4751,10 @@ sub PreferencesWindow {
 
 # MAIN WINDOW
 
-# Purpose: Draw the eventlist on the currently selected date in the calendar
-# Usage: DrawEventlist();
-sub DrawEventlist {
+# Purpose: Populate the event list for the currently selected date in the calendar
+# Usage: PopulateEventList();
+sub PopulateEventList {
+	@{$EventlistWidget->{data}} = ();
 	my $Year = $CalendarWidget->year;
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
@@ -4724,57 +4763,7 @@ sub DrawEventlist {
 	$ToolbarEditButton->set_sensitive(0);
 	$MenuEditEntry->set_sensitive(0);
 	$MenuDeleteEntry->set_sensitive(0);
-
-	# Create the widget if needed
-	unless ($EventlistWidget) {
-		# Greate the pop-up on right-click
-		my $PopupWidget = Gtk2::Menu->new();
-		my $delete = Gtk2::ImageMenuItem->new_from_stock('gtk-delete');
-		$delete->show();
-		$delete->signal_connect('activate' => \&DeleteEvent);
-		my $edit = Gtk2::ImageMenuItem->new_from_stock('gtk-edit');
-		$edit->show();
-		$edit->signal_connect('activate' => \&EditEvent);
-		$PopupWidget->append($edit);
-		$PopupWidget->append($delete);
-		$PopupWidget->show();
-
-		# Create the widget and set up signal handlers
-		$EventlistWidget = Gtk2::SimpleList->new (
-			'UID' => 'hidden',
-			$Gettext->get("Time") => 'text',
-			$Gettext->get("Event") => 'text',
-		);
-		$EventlistWidget->set_rules_hint(1);
-		$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
-		$EventlistWin->add($EventlistWidget);
-		# Handle making the toolbar edit button sensitive
-		$EventlistWidget->signal_connect('focus-in-event' => sub {
-			my $Selected = [$EventlistWidget->get_selected_indices]->[0];
-			# If there is something in that data array then there is something selected on focus-in-event
-			if(@{$EventlistWidget->{data}}) {
-				$ToolbarEditButton->set_sensitive(1);
-				$MenuEditEntry->set_sensitive(1);
-				$MenuDeleteEntry->set_sensitive(1);
-			}
-		});
-		$EventlistWidget->signal_connect('button-release-event' => sub {
-				my($widget,$event) = @_;
-				my $button = $event->button;
-				if($button == 3) {
-					my($self, $event) = @_;
-					my ($path, $column, $cell_x, $cell_y) = $EventlistWidget->get_path_at_pos ($event->x, $event->y);
-					if(scalar($widget->get_selected_indices) > 0) {
-						if(defined($path)) {
-							$PopupWidget->popup(undef, undef, undef, undef, 0, 0);
-						}
-					}
-				}
-			});
-	} else {
-		# Remove data if needed
-		@{$EventlistWidget->{data}} = ();
-	}
+	
 	# Main calendar contents
 	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
 		foreach my $Time (sort keys %{$CalendarContents{$Year}{$Month}{$Day}}) {
@@ -4806,8 +4795,57 @@ sub DrawEventlist {
 		}
 
 	}
-
 	$EventlistWidget->show();
+}
+
+# Purpose: Draw the eventlist on the currently selected date in the calendar
+# Usage: DrawEventlist();
+sub DrawEventlist {
+	# Greate the pop-up on right-click
+	my $PopupWidget = Gtk2::Menu->new();
+	my $delete = Gtk2::ImageMenuItem->new_from_stock('gtk-delete');
+	$delete->show();
+	$delete->signal_connect('activate' => \&DeleteEvent);
+	my $edit = Gtk2::ImageMenuItem->new_from_stock('gtk-edit');
+	$edit->show();
+	$edit->signal_connect('activate' => \&EditEvent);
+	$PopupWidget->append($edit);
+	$PopupWidget->append($delete);
+	$PopupWidget->show();
+
+	# Create the widget and set up signal handlers
+	$EventlistWidget = Gtk2::SimpleList->new (
+		'UID' => 'hidden',
+		$Gettext->get("Time") => 'text',
+		$Gettext->get("Event") => 'text',
+	);
+	$EventlistWidget->set_rules_hint(1);
+	$EventlistWidget->signal_connect("row_activated" => \&EditEvent);
+	$EventlistWin->add($EventlistWidget);
+	# Handle making the toolbar edit button sensitive
+	$EventlistWidget->signal_connect('focus-in-event' => sub {
+		my $Selected = [$EventlistWidget->get_selected_indices]->[0];
+		# If there is something in that data array then there is something selected on focus-in-event
+		if(@{$EventlistWidget->{data}}) {
+			$ToolbarEditButton->set_sensitive(1);
+			$MenuEditEntry->set_sensitive(1);
+			$MenuDeleteEntry->set_sensitive(1);
+		}
+	});
+	$EventlistWidget->signal_connect('button-release-event' => sub {
+			my($widget,$event) = @_;
+			my $button = $event->button;
+			if($button == 3) {
+				my($self, $event) = @_;
+				my ($path, $column, $cell_x, $cell_y) = $EventlistWidget->get_path_at_pos ($event->x, $event->y);
+				if(scalar($widget->get_selected_indices) > 0) {
+					if(defined($path)) {
+						$PopupWidget->popup(undef, undef, undef, undef, 0, 0);
+					}
+				}
+			}
+		});
+	PopulateEventList();
 }
 
 # Purpose: Draw the main window
@@ -4962,7 +5000,7 @@ sub DrawMainWindow {
 				return;
 			}
 			$LastDay = Get_DateInfo($CalendarWidget);
-			DrawEventlist();
+			PopulateEventList();
 		});
 
 	# UPCOMING EVENTS
