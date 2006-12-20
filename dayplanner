@@ -3616,8 +3616,9 @@ sub DeleteEvent {
 	}
 	my $Type = GetEventListType();
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my $EventTime = $EventlistWidget->{data}[$Selected][0];
-	my $EventSummary = $EventlistWidget->{data}[$Selected][1];
+	my $EventUID = $EventlistWidget->{data}[$Selected][0];
+	my $EventTime = $EventlistWidget->{data}[$Selected][1];
+	my $EventSummary = $EventlistWidget->{data}[$Selected][2];
 
 	if($Type eq 'normal') {
 		if (defined($EventTime)) {
@@ -3649,8 +3650,9 @@ sub GetEventListType {
 		return(0);
 	}
 	# Initialize
-	my $Time = $EventlistWidget->{data}[$Selected][0];
-	my $Summary = $EventlistWidget->{data}[$Selected][1];
+	my $EventUID = $EventlistWidget->{data}[$Selected][0];
+	my $Time = $EventlistWidget->{data}[$Selected][1];
+	my $Summary = $EventlistWidget->{data}[$Selected][2];
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 
 	my $BirthdayString = $Gettext->get("%s's birthday");
@@ -4101,8 +4103,9 @@ sub EditEvent {
 	$MainWindow->set_sensitive(0);
 
 	# Initialize
-	my $Time = AMPM_To24($EventlistWidget->{data}[$Selected][0]);
-	my $Summary = $EventlistWidget->{data}[$Selected][1];
+	my $EventUID = $EventlistWidget->{data}[$Selected][0];
+	my $Time = AMPM_To24($EventlistWidget->{data}[$Selected][1]);
+	my $Summary = $EventlistWidget->{data}[$Selected][2];
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
@@ -4738,6 +4741,7 @@ sub DrawEventlist {
 
 		# Create the widget and set up signal handlers
 		$EventlistWidget = Gtk2::SimpleList->new (
+			'UID' => 'hidden',
 			$Gettext->get("Time") => 'text',
 			$Gettext->get("Event") => 'text',
 		);
@@ -4777,13 +4781,13 @@ sub DrawEventlist {
 			unless (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"})) {
 				DPIntWarn("Found no summary for entry: $Time");
 			} else {
-				push (@{$EventlistWidget->{data}}, [AMPM_From24($Time), $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
+				push (@{$EventlistWidget->{data}}, [0,AMPM_From24($Time), $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
 			}
 		}
 	}
 	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
 		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
-			push (@{$EventlistWidget->{data}}, ["", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
+			push (@{$EventlistWidget->{data}}, [0,"", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
 		}
 	}
 	unless($Year > 2037) {
@@ -4796,7 +4800,7 @@ sub DrawEventlist {
 			}
 			if(defined($Holidays{$Year}) and defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
 				foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
-					push(@{$EventlistWidget->{data}}, ["", $CurrHoliday]);
+					push(@{$EventlistWidget->{data}}, [0,"", $CurrHoliday]);
 				}
 			}
 		}
