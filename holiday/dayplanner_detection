@@ -1,0 +1,80 @@
+# Day planner holiday detection definitions
+# $Id$
+#
+# This file defines which holiday files to use for which countries.
+#
+# The syntax is:
+# LC_ADDRESS=NAME
+# Where LC_ADDRESS is your LC_ADDRESS environment variable value and
+#  NAME is your the name of the holiday file to use. Skip any charset
+#  definition in LC_ADDRESS.
+#  If your country has a distinct first part (such as Sweden has) you don't
+#  need to include the part after the "_" in the LC_ADDRESS. For instance
+#  swedish definitions could be written using sv= instead of sv_SV=,
+#  while US definitions has to be en_US= because their first part is
+#  used by multiple countries.
+# Example:
+# nn_NO=norway
+# Skip the holiday_ part of the filename.
+# EVERYTHING is case sensitive.
+#
+# Your country missing? Mail eskild at zerodogg d o t  org with the
+# information for your coutry.
+
+# Norway
+nn_NO=norway
+nb_NO=norway
+no_NO=norway
+
+# USA
+en_US=us
+us=us
+
+# UK
+en_UK=uk
+uk=uk
+
+# Sweden
+sv=swedish
+
+# France
+fr=french
+
+# Italy
+it=italy
+
+# Greece
+el_GR=greece
+
+# Czech
+cs_CZ=czech
+
+# Denmark
+da_DK=denmark
+
+# The Netherlands
+nl_NL=dutch
+
+# Finland
+fi_FI=finnish
+
+# Germany
+de_DE=german
+
+# Hungary
+hu_HU=hungary
+
+# Japan
+ja_JP=japan
+
+# Portugal
+pt_PT=portugal
+
+# Slovakia
+sk_SK=slovakia
+
+# Spain
+es_ES=spain
+
+# Canada
+en_CA=canada
