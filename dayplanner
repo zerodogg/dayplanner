@@ -43,7 +43,7 @@ use lib "$FindBin::RealBin/modules/";
 use Date::HolidayParser;	# Parsing of .holiday files
 
 # Scalars
-my $Version = "0.4";
+my $Version = "0.5";
 my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
