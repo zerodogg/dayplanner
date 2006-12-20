@@ -1,0 +1,108 @@
+Specification of the Day Planner services protocol version 1 DRAFT
+by Eskild Hustvedt
+$Id$
+------------------------------------------------------------
+
+This is only a draft, and is not yet a full spec.
+
+Table of contents:
+1 - Introduction
+
+2 - Connection
+3 - Commands
+4 - Data
+
+5 - Planned features
+6 - Comments issues and feedback
+
+1 - Introduction
+----------------
+Day Planner services is a server<->client system for calendars.
+It allows you to have the same calendar data on multiple machines,
+synchronizing them when needed. It should be pretty transparent
+for the user, and the data should just be there and work.
+It uses complete files instead of single events and does not do
+any parsing of iCalendar itself. It /can/ therefore be used
+to save any kind of data, but you should never use it for anything
+but the calendar data it is designed for.
+
+It includes additional features such as the ability to encrypt the data
+on the server. It encrypts the data before sending it so there is no
+way for any of the server admins to retrieve the unencrypted data.
+Also, for those that don't want encrypted data, it can autogenerate
+an HTML version of the data and make that available, using the same
+username/password as is used to connect to the service itself.
+
+In time calendar sharing and such will also be available through this service.
+
+Ideally (and as it is in the primary implementation «Day Planner services»)
+it is a simple daemon that doesn't do any fancy processing. It reads and
+writes the data and authenticates users, that's about it. The HTML
+processing will be done by external software, and as the data
+should be in the iCalendar format, any iCalendar compliant parser
+can generate it. The primary implementation uses Day Planner for this.
+
+2 - Connection
+--------------
+The connection is simple. You connect, authenticate, send commands, disconnect.
+Here is an example session (using the current cleartext password sending):
+
+APILEVEL 1
+AUTH username password
+GET_MD5
+
+There is no need for a specific "bye" command. The only requirement of the
+protocol is that the first thing a client does is run the APILEVEL command, and
+after that authenticates. From there on the client is free to do whatever
+is needed.
+
+3 - Commands
+------------
+
+	APILEVEL
+Syntax: APILEVEL [NUMBER]
+Possible replies:	OK
+			ERR Unsupported
+Description: This command specifies the API level the client is compatible with.
+	That is the version number of the spec. For the version 1 spec the client
+	would issue a APILEVEL 1. It replies "ERR Unsupported" if the APILEVEL
+	requested is not supported by the server. This command is required.
+	If not issued the server will simply reply: "REFUSED NO_APILEVEL"
+	to all commands.
+
+	-=-
+
+	AUTH
+Syntax: AUTH [USERNAME] [PASSWORD]
+Possible replies:	OK
+			REFUSED ALREADY_AUTHED [as user]
+			REFUSED IN_USE
+			EXPIRED
+			REFUSED
+Description: This command authenticates a client as the user specified. This
+	gives the client access to the useful commands. It replies OK when
+	the client got successfully logged in as that user. If not issued
+	after APILEVEL before running additional commands the server will simply
+	reply: "REFUSED AUTHFIRST"
+
+	-=-
+
+	GETDATA
+Syntax: GETDATA
+Possible replies:	ERR NO_DATA
+			ERR NO_MD5
+			ERR MD5_FAILURE
+			OK [MD5] [DATA]
+Description: This command supplies the client with the data of the user it is
+	authenticated as, from the server. It replies "ERR NO_DATA" when no data
+	is available, "ERR NO_MD5" when there is no MD5 sum for the data available
+	on the server and "ERR MD5_FAILURE" when there is data corruption on the
+	server itself. When everything is fine it will reply "OK [THE MD5 SUM OF THE
+	DATA] [THE DATA]". The data is an base64 encoded iCalendar file (or encrypted
+	iCalendar file - depending upon the users settings).
+
+	-=-
+
+	SENDDATA
+Syntax: SENDDATA [MD5] [LAST MD5] [DATA] [FORCE?]
+Possible replies:
