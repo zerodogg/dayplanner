@@ -12,14 +12,15 @@ msgstr ""
 "Project-Id-Version: day planner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2006-12-20 08:35+0100\n"
-"PO-Revision-Date: 2006-10-17 21:45+0100\n"
+"PO-Revision-Date: 2006-12-20 09:11+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: dayplanner:54 dayplanner-notifier:31
+#: dayplanner:54
+#: dayplanner-notifier:31
 msgid "dayplanner"
 msgstr "dagplanerare"
 
@@ -73,36 +74,31 @@ msgstr "December"
 
 #: dayplanner:328
 msgid ""
-"Another instance of day planner appears to be running. Please quit the "
-"currently running instance of day planner before continuing\n"
+"Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n"
 "\n"
-"Running two instances of day planner can be forced. However that is not "
-"recommended as it may lead to data loss or corruption."
+"Running two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."
 msgstr ""
-"En annan instans av Dagplanerare verkar redan vara igång. Avsluta den för "
-"närvarande körande instansen av Dagplanerare innan du fortsätter\n"
+"En annan instans av Dagplanerare verkar redan vara igång. Avsluta den för närvarande körande instansen av Dagplanerare innan du fortsätter\n"
 "\n"
-"Att köra två instanser av Dagplanerare kan tvingas igenom. Dock är det inte "
-"rekommenderat eftersom det kan innebära att data förloras eller skadas."
+"Att köra två instanser av Dagplanerare kan tvingas igenom. Dock är det inte rekommenderat eftersom det kan innebära att data förloras eller skadas."
 
 #: dayplanner:331
 msgid "_Force"
 msgstr "_Tvinga"
 
 #: dayplanner:342
-#, fuzzy
-msgid ""
-"Unable to force the start. This is likely due to a bug in the application, "
-"please contact the day planner developers."
-msgstr ""
-"Kunde inte tvinga igenom körning. Detta kan innebära att det finns ett fel i "
-"programmet, kontakt utvecklarna för Dagplanerare."
+msgid "Unable to force the start. This is likely due to a bug in the application, please contact the day planner developers."
+msgstr "Kunde inte tvinga igenom en start. Detta kan innebära att det finns ett fel i programmet, kontakt utvecklarna för Dagplanerare."
 
-#: dayplanner:397 dayplanner:438 dayplanner:440
+#: dayplanner:397
+#: dayplanner:438
+#: dayplanner:440
 msgid "Connecting"
 msgstr "Ansluter"
 
-#: dayplanner:419 dayplanner:423 dayplanner:427
+#: dayplanner:419
+#: dayplanner:423
+#: dayplanner:427
 #, perl-format
 msgid "Unable to connect to the Day Planner services server (%s)."
 msgstr "Kunde inte ansluta till Dagplanerarens tjänsteserver (%s)."
@@ -112,25 +108,18 @@ msgid "You're probably not connected to the internet"
 msgstr "Du är antagligen inte ansluten till Internet"
 
 #: dayplanner:423
-msgid ""
-"The connection was refused by the server. Please verify your Day Planner "
-"services settings."
-msgstr ""
-"Anslutningen nekades av servern. Granska dina tjänsteinställningar för "
-"Dagplanerare."
+msgid "The connection was refused by the server. Please verify your Day Planner services settings."
+msgstr "Anslutningen nekades av servern. Granska dina tjänsteinställningar för Dagplanerare."
 
-#: dayplanner:423 dayplanner:427
+#: dayplanner:423
+#: dayplanner:427
 msgid "If this problem persists, please contact your service provider"
 msgstr "Om problemet kvarstår, kontakta din tjänsteleverantör"
 
 #: dayplanner:437
 #, perl-format
-msgid ""
-"The day planner services server you are connecting to does not support this "
-"version of day planner (%s)."
-msgstr ""
-"Den tjänsteserver för Dagplanerare som du ansluter till saknar stöd för den "
-"här versionen av Dagplanerare (%s)."
+msgid "The day planner services server you are connecting to does not support this version of day planner (%s)."
+msgstr "Den tjänsteserver för Dagplanerare som du ansluter till saknar stöd för den här versionen av Dagplanerare (%s)."
 
 #: dayplanner:441
 msgid "The username and/or password is incorrect."
@@ -150,81 +139,54 @@ msgstr "Tolkar och reparerar"
 
 #: dayplanner:506
 #, perl-format
-msgid ""
-"Unable to download the raw day planner data from the server. Repairing is "
-"not possible! Backup written to %s."
-msgstr ""
-"Kunde inte hämta rådata för Dagplanerare från servern. Reparering är inte "
-"möjlig! Säkerhetskopia skrevs till %s."
+msgid "Unable to download the raw day planner data from the server. Repairing is not possible! Backup written to %s."
+msgstr "Kunde inte hämta rådata för Dagplanerare från servern. Reparering är inte möjlig! Säkerhetskopia skrevs till %s."
 
 #: dayplanner:520
-#, fuzzy
 msgid "Verifying data"
-msgstr "Hämtar data"
+msgstr "Validerar data"
 
 #: dayplanner:539
-#, fuzzy
 msgid "Downloading data"
-msgstr "Hämtat data"
+msgstr "Hämtar data"
 
-#: dayplanner:545 dayplanner:3453
+#: dayplanner:545
+#: dayplanner:3453
 msgid "Done"
-msgstr ""
+msgstr "Klar"
 
 #: dayplanner:563
-msgid ""
-"The data corrupted itself during download. You may want to attempt to "
-"synchronize again."
-msgstr ""
-"Data skadade sig självt under hämtning. Du kanske vill försöka att "
-"synkronisera igen."
+msgid "The data corrupted itself during download. You may want to attempt to synchronize again."
+msgstr "Data skadade sig självt under hämtning. Du kanske vill försöka att synkronisera igen."
 
 #: dayplanner:582
-msgid ""
-"The data is corrupt on the services server. The administrator has been "
-"notified about this. If this problem does not go away within a few days, "
-"please contact your services provider"
-msgstr ""
-"Data är skadat på tjänsteservern. Administratören har informerats om det "
-"här. Om det här problemet inte försvinner inom ett par dagar, kontakta din "
-"tjänsteleverantör"
+msgid "The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider"
+msgstr "Data är skadat på tjänsteservern. Administratören har informerats om det här. Om det här problemet inte försvinner inom ett par dagar, kontakta din tjänsteleverantör"
 
 #: dayplanner:588
 msgid "Downloaded data"
 msgstr "Hämtat data"
 
 #: dayplanner:606
-#, fuzzy
 msgid "Sending data"
-msgstr "Hämtar data"
+msgstr "Skickar data"
 
 #: dayplanner:637
 msgid "An error ocurred during uploading of the data"
 msgstr "Ett fel inträffade vid sändning av data"
 
 #: dayplanner:639
-msgid ""
-"Your account has expired. If you are using a payed service this may be "
-"because you have not payed for the current period. If not, you should "
-"contact your service provider to get information on why your account has "
-"expired."
-msgstr ""
-"Ditt konto har gått ut. Om du använder en betaltjänst kan det här bero på "
-"att du inte har betalt för aktuell period. Om inte, bör du kontakta din "
-"tjänsteleverantör för att få information om varför ditt konto har gått ut."
+msgid "Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired."
+msgstr "Ditt konto har gått ut. Om du använder en betaltjänst kan det här bero på att du inte har betalt för aktuell period. Om inte, bör du kontakta din tjänsteleverantör för att få information om varför ditt konto har gått ut."
 
 #: dayplanner:642
 #, perl-format
-msgid ""
-"The server did not accept the uploaded data and replied with an unknwown "
-"value: %s"
-msgstr ""
-"Servern accepterade inte uppskickat data och svarade med ett okänt värde: %s"
+msgid "The server did not accept the uploaded data and replied with an unknwown value: %s"
+msgstr "Servern accepterade inte uppskickat data och svarade med ett okänt värde: %s"
 
 #: dayplanner:647
-#, fuzzy
 msgid "Data sent"
-msgstr "Datum"
+msgstr "Data skickat"
 
 #: dayplanner:712
 msgid "Services"
@@ -259,7 +221,9 @@ msgstr ""
 "Kunde inte skapa katalogen %s: %s\n"
 "Skapa denna katalog manuellt innan du stänger denna dialogruta."
 
-#: dayplanner:1016 dayplanner:1023 dayplanner:1025
+#: dayplanner:1016
+#: dayplanner:1023
+#: dayplanner:1025
 #, perl-format
 msgid ""
 "FATAL ERROR: Unable to open %s for writing: %s\n"
@@ -276,26 +240,22 @@ msgstr "Sparar..."
 msgid ""
 "<b><big>Day planner encountered an error while saving events</big></b>.\n"
 "\n"
-"There appears to be another instance of day planner running. This may lead "
-"to data loss.\n"
+"There appears to be another instance of day planner running. This may lead to data loss.\n"
 "\n"
-"Leaving this instance of Day Planner open while you resolve the issues with "
-"the other instance of Day Planner will ensure your data remains safe. "
-"Closing this instance of Day Planner before it can safely write recent "
-"changes will result in data loss."
+"Leaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."
 msgstr ""
 "<b><big>Dagplanerare påträffade ett fel när händelser sparades</big></b>.\n"
 "\n"
-"Det verkar finnas en annan instans av Dagplanerare som kör. Detta kan leda "
-"till att data går förlorad.\n"
+"Det verkar finnas en annan instans av Dagplanerare som kör. Detta kan leda till att data går förlorad.\n"
 "\n"
-"Lämna denna instans av Dagplanerare öppen under tiden du löser problemen med "
-"den andra instansen för att se till att din data finns kvar. Stäng denna "
-"instans av Dagplanerare innan den kan spara tidigare ändringar innebär att "
-"data går förlorad."
+"Lämna denna instans av Dagplanerare öppen under tiden du löser problemen med den andra instansen för att se till att din data finns kvar. Stäng denna instans av Dagplanerare innan den kan spara tidigare ändringar innebär att data går förlorad."
 
-#: dayplanner:1307 dayplanner:2095 dayplanner:2741 dayplanner:3786
-#: dayplanner:3936 dayplanner:5066
+#: dayplanner:1307
+#: dayplanner:2095
+#: dayplanner:2741
+#: dayplanner:3786
+#: dayplanner:3936
+#: dayplanner:5066
 #, perl-format
 msgid "%s's birthday"
 msgstr "Födelsedag för %s"
@@ -306,29 +266,17 @@ msgstr "Uppgradering"
 
 #: dayplanner:1708
 msgid ""
-"A problem occurred while setting up automatic startup of the day planner "
-"reminder.\n"
+"A problem occurred while setting up automatic startup of the day planner reminder.\n"
 "\n"
-"Set it up manually by selecting: menu -> desktop -> settings -> sessions. "
-"From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-"
-"daemon\" in the \"Startup Command\" field and press the \"OK\" button."
+"Set it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."
 msgstr ""
-"Ett problem inträffade vid inställning av den automatiska uppstarten av "
-"Dagplanerarens påminnare.\n"
+"Ett problem inträffade vid inställning av den automatiska uppstarten av Dagplanerarens påminnare.\n"
 "\n"
-"Du måste ställa in det manuellt genom att välja: Meny -> Skrivbord -> "
-"Inställningar -> Sessioner. Därifrån ska du välja \"Startprogram\", klicka "
-"på \"Lägg till\". Mata in \"dayplanner-daemon\" i fältet \"Uppstartskommando"
-"\" och sedan trycka på \"OK\"."
+"Du måste ställa in det manuellt genom att välja: Meny -> Skrivbord -> Inställningar -> Sessioner. Därifrån ska du välja \"Startprogram\", klicka på \"Lägg till\". Mata in \"dayplanner-daemon\" i fältet \"Uppstartskommando\" och sedan trycka på \"OK\"."
 
 #: dayplanner:1719
-msgid ""
-"Disabling automatic startup of the reminder will prevent notifications "
-"unless day planner has been manually started. Disable the automatic startup?"
-msgstr ""
-"Inaktivering av automatiskt uppstart för påminnaren kommer att förhindra "
-"notifieringar såvida inte Dagplanerare har startats manuellt. Inaktivera den "
-"automatiska uppstarten?"
+msgid "Disabling automatic startup of the reminder will prevent notifications unless day planner has been manually started. Disable the automatic startup?"
+msgstr "Inaktivering av automatiskt uppstart för påminnaren kommer att förhindra notifieringar såvida inte Dagplanerare har startats manuellt. Inaktivera den automatiska uppstarten?"
 
 #: dayplanner:1885
 #, perl-format
@@ -345,11 +293,14 @@ msgstr "\"%s\" klockan %s blev inte importerad"
 msgid "Day planner for %s"
 msgstr "Dagplanerare för %s"
 
-#: dayplanner:2048 dayplanner:2050 dayplanner:2052
+#: dayplanner:2048
+#: dayplanner:2050
+#: dayplanner:2052
 msgid "Tools"
 msgstr "Verktyg"
 
-#: dayplanner:2048 dayplanner:2052
+#: dayplanner:2048
+#: dayplanner:2052
 msgid "View a list of birthdays"
 msgstr "Visa en lista på födelsedagar"
 
@@ -374,7 +325,8 @@ msgstr "Månader"
 msgid "Generated by"
 msgstr "Genererad av"
 
-#: dayplanner:2074 dayplanner:3283
+#: dayplanner:2074
+#: dayplanner:3283
 msgid "Day Planner"
 msgstr "Dagplanerare"
 
@@ -382,13 +334,20 @@ msgstr "Dagplanerare"
 msgid "version"
 msgstr "version"
 
-#: dayplanner:2085 dayplanner:2145 dayplanner:2195 dayplanner:2223
-#: dayplanner:2237 dayplanner:2255 dayplanner:2794 dayplanner:3058
+#: dayplanner:2085
+#: dayplanner:2145
+#: dayplanner:2195
+#: dayplanner:2223
+#: dayplanner:2237
+#: dayplanner:2255
+#: dayplanner:2794
+#: dayplanner:3058
 #, perl-format
 msgid "Unable to open %s for writing: %s"
 msgstr "Kunde inte öppna %s för skrivning: %s"
 
-#: dayplanner:2091 dayplanner:5021
+#: dayplanner:2091
+#: dayplanner:5021
 msgid "Time"
 msgstr "Tid"
 
@@ -404,11 +363,13 @@ msgstr "Det finns inga händelser denna månad"
 msgid "Birthdays this month:"
 msgstr "Födelsedagar denna månad:"
 
-#: dayplanner:2162 dayplanner:2201
+#: dayplanner:2162
+#: dayplanner:2201
 msgid "Date"
 msgstr "Datum"
 
-#: dayplanner:2162 dayplanner:2201
+#: dayplanner:2162
+#: dayplanner:2201
 msgid "Name"
 msgstr "Namn"
 
@@ -432,22 +393,30 @@ msgstr "Välj den månad du vill se i listan ovanför"
 msgid "Select the year to view:"
 msgstr "Välj det år du vill se:"
 
-#: dayplanner:2290 dayplanner:2360
+#: dayplanner:2290
+#: dayplanner:2360
 #, perl-format
 msgid "Unable to create the directory %s: %s"
 msgstr "Kunde inte skapa katalogen %s: %s"
 
-#: dayplanner:2527 dayplanner:2531 dayplanner:2621 dayplanner:2625
+#: dayplanner:2527
+#: dayplanner:2531
+#: dayplanner:2621
+#: dayplanner:2625
 #, perl-format
 msgid "The perl module %s is not installed. The data will not be encrypted."
-msgstr ""
-"Du har inte Perl-modulen %s installerad. Data kommer inte att krypteras."
+msgstr "Du har inte Perl-modulen %s installerad. Data kommer inte att krypteras."
 
-#: dayplanner:2549 dayplanner:2562 dayplanner:2629 dayplanner:2644
+#: dayplanner:2549
+#: dayplanner:2562
+#: dayplanner:2629
+#: dayplanner:2644
 msgid "Password"
 msgstr "Lösenord"
 
-#: dayplanner:2556 dayplanner:2597 dayplanner:2603
+#: dayplanner:2556
+#: dayplanner:2597
+#: dayplanner:2603
 msgid "Please enter a password."
 msgstr "Ange ett lösenord."
 
@@ -463,7 +432,8 @@ msgstr "Lösenordet måste vara åtminstone 6 tecken långt."
 msgid "The passwords do not match."
 msgstr "Lösenorden stämmer inte överens."
 
-#: dayplanner:2637 dayplanner:2674
+#: dayplanner:2637
+#: dayplanner:2674
 msgid "This file is password protected."
 msgstr "Denna fil är lösenordsskyddad."
 
@@ -482,28 +452,22 @@ msgstr "%s verkar inte vara en datafil för Dagplanerare"
 
 #: dayplanner:3095
 #, perl-format
-msgid ""
-"%s contains version %s of the day planner data format. This version of day "
-"planner only supports version 1"
-msgstr ""
-"%s innehåller version %s av Dagplanerarens dataformat. Denna version av "
-"Dagplanerare har endast stöd för version 1"
+msgid "%s contains version %s of the day planner data format. This version of day planner only supports version 1"
+msgstr "%s innehåller version %s av Dagplanerarens dataformat. Denna version av Dagplanerare har endast stöd för version 1"
 
 #: dayplanner:3130
 msgid ""
-"Conflicting events were detected. Day planner has attempted to resolve the "
-"conflicts.\n"
+"Conflicting events were detected. Day planner has attempted to resolve the conflicts.\n"
 "\n"
-"However, some of the data may be incorrect or not imported. See the details "
-"below for information about the conflicting events."
+"However, some of the data may be incorrect or not imported. See the details below for information about the conflicting events."
 msgstr ""
-"Konfliktande händelser har påträffats. Dagplanerare har försökt att lösa "
-"konflikterna.\n"
+"Konfliktande händelser har påträffats. Dagplanerare har försökt att lösa konflikterna.\n"
 "\n"
-"Dock kan viss data vara felaktig eller inte importerad. Se detaljerna nedan "
-"för information om de konfliktande händelserna."
+"Dock kan viss data vara felaktig eller inte importerad. Se detaljerna nedan för information om de konfliktande händelserna."
 
-#: dayplanner:3148 dayplanner:3283 dayplanner:3290
+#: dayplanner:3148
+#: dayplanner:3283
+#: dayplanner:3290
 msgid "Import data"
 msgstr "Importera data"
 
@@ -513,43 +477,40 @@ msgstr "Importera data från:"
 
 #: dayplanner:3166
 msgid "A file"
-msgstr ""
+msgstr "En fil"
 
 #: dayplanner:3167
 msgid "Other applications"
-msgstr ""
+msgstr "Andra program"
 
 #: dayplanner:3205
-#, fuzzy
 msgid "Import data from a file"
-msgstr "Importera data från:"
+msgstr "Importera data från en fil"
 
 #: dayplanner:3206
-#, fuzzy
 msgid "Import data from various other applications"
-msgstr "Importera data från programvaran \"plan\"."
+msgstr "Importera data från andra program"
 
 #: dayplanner:3207
 msgid "Cancel importing and return to day planner"
 msgstr "Avbryt importering och återvänd till Dagplanerare"
 
 #: dayplanner:3208
-#, fuzzy
 msgid "Continue"
-msgstr "Ansluter"
+msgstr "Fortsätt"
 
-#: dayplanner:3223 dayplanner:3388
-#, fuzzy
+#: dayplanner:3223
+#: dayplanner:3388
 msgid "Preparing"
-msgstr "Reparerar"
+msgstr "Förbereder"
 
 #: dayplanner:3223
 msgid "Preparing to import"
-msgstr ""
+msgstr "Förbereder för importering"
 
 #: dayplanner:3265
 msgid "Could not detect data from any application to import."
-msgstr ""
+msgstr "Kunde inte identifiera data från något program att importera."
 
 #: dayplanner:3300
 msgid ""
@@ -560,15 +521,20 @@ msgid ""
 "press Ok to continue, press Cancel if you don't want\n"
 "to import anything."
 msgstr ""
+"Välkommen till Dagplanerare.\n"
+"\n"
+"Du kan nu välja att importera data från andra program.\n"
+"Kryssa för de program som du vill importera från och\n"
+"tryck på Ok för att fortsätta, tryck Avbryt om du inte vill\n"
+"importera någonting."
 
 #: dayplanner:3300
 msgid "Which application(s) do you want to import data from?"
-msgstr ""
+msgstr "Vilka program vill du importera data från?"
 
 #: dayplanner:3388
-#, fuzzy
 msgid "Importing..."
-msgstr "MIgrerar..."
+msgstr "Importerar..."
 
 #: dayplanner:3477
 msgid "All supported file formats"
@@ -596,13 +562,8 @@ msgstr "XHTML (exporterar till en katalog)"
 
 #: dayplanner:3588
 #, perl-format
-msgid ""
-"There are already files in the directory \"%s\". If you continue any "
-"existing exported day planner data in that directory will be overwritten. Do "
-"you want to continue?"
-msgstr ""
-"Det finns redan filer i katalogen \"%s\". Om du fortsätter kommer "
-"existerande data i denna katalog att skrivas över. Vill du fortsätta?"
+msgid "There are already files in the directory \"%s\". If you continue any existing exported day planner data in that directory will be overwritten. Do you want to continue?"
+msgstr "Det finns redan filer i katalogen \"%s\". Om du fortsätter kommer existerande data i denna katalog att skrivas över. Vill du fortsätta?"
 
 #: dayplanner:3597
 #, perl-format
@@ -660,7 +621,8 @@ msgstr "Imorgon"
 msgid "At"
 msgstr "Klockan"
 
-#: dayplanner:3790 dayplanner:3859
+#: dayplanner:3790
+#: dayplanner:3859
 msgid "(nothing)"
 msgstr "(ingenting)"
 
@@ -668,22 +630,21 @@ msgstr "(ingenting)"
 msgid "No upcoming events exist for the next seven days"
 msgstr "Inga uppkommande händelser finns för de närmaste sju dagarna"
 
-#: dayplanner:3851 dayplanner:3854
+#: dayplanner:3851
+#: dayplanner:3854
 msgid "and"
 msgstr "och"
 
-#: dayplanner:3917 dayplanner:4446
+#: dayplanner:3917
+#: dayplanner:4446
 #, perl-format
-msgid ""
-"This is a predefined \"holiday\" event. This event can not be edited "
-"directly from within day planner. In order to change these events use a text "
-"editor and edit the file %s."
-msgstr ""
-"Detta är en fördefinierad \"helgdags\"-händelse. Denna händelse kan inte "
-"redigeras direkt innefrån Dagplanerare. För att ändra dessa händelser kan du "
-"använda en textredigerare och redigera filen %s."
+msgid "This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."
+msgstr "Detta är en fördefinierad \"helgdags\"-händelse. Denna händelse kan inte redigeras direkt innefrån Dagplanerare. För att ändra dessa händelser kan du använda en textredigerare och redigera filen %s."
 
-#: dayplanner:3994 dayplanner:4541 dayplanner:4823 dayplanner:4837
+#: dayplanner:3994
+#: dayplanner:4541
+#: dayplanner:4823
+#: dayplanner:4837
 #: dayplanner-notifier:307
 msgid "Details"
 msgstr "Detaljer"
@@ -696,7 +657,8 @@ msgstr "Vissa filer kunde inte sparas korrekt. Avsluta ändå?"
 msgid "Quit anyway?"
 msgstr "Avsluta ändå?"
 
-#: dayplanner:4264 dayplanner:5022
+#: dayplanner:4264
+#: dayplanner:5022
 msgid "Event"
 msgstr "Händelse"
 
@@ -779,21 +741,18 @@ msgstr "Namn:"
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Ange namnet här på den person som har födelsedag"
 
-#: dayplanner:4657 dayplanner:4663
+#: dayplanner:4657
+#: dayplanner:4663
 #, perl-format
-msgid ""
-"There is already an event at %s on %s %s. Please select another time for "
-"this event."
-msgstr ""
-"Det finns redan en händelse den %s klockan %s.%s. Välj en annan tid för "
-"denna händelse."
+msgid "There is already an event at %s on %s %s. Please select another time for this event."
+msgstr "Det finns redan en händelse den %s klockan %s.%s. Välj en annan tid för denna händelse."
 
 #: dayplanner:4668
 msgid "There is no summary for this event. Please enter a summary."
-msgstr ""
-"Det finns ingen sammanfattning av denna händelse. Ange en sammanfattning."
+msgstr "Det finns ingen sammanfattning av denna händelse. Ange en sammanfattning."
 
-#: dayplanner:4711 dayplanner:4717
+#: dayplanner:4711
+#: dayplanner:4717
 #, perl-format
 msgid "A Birthday already exists for \"%s\" on %s %s"
 msgstr "En födelsedag finns redan för \"%s\" den %s %s"
@@ -802,11 +761,13 @@ msgstr "En födelsedag finns redan för \"%s\" den %s %s"
 msgid "A name is required to add a birthday"
 msgstr "Ett namn krävs för att lägga till en födelsedag"
 
-#: dayplanner:4758 dayplanner:5097
+#: dayplanner:4758
+#: dayplanner:5097
 msgid "Day planner"
 msgstr "Dagplanerare"
 
-#: dayplanner:4769 dayplanner:4770
+#: dayplanner:4769
+#: dayplanner:4770
 msgid "THE NAMES OF THE TRANSLATORS"
 msgstr "Daniel Nylander <po@danielnylander.se>"
 
@@ -821,12 +782,8 @@ msgstr "Expandera \"%s\" som standard"
 
 #: dayplanner:4837
 #, perl-format
-msgid ""
-"Check this if you want the \"%s\" to be expanded by default in the add and "
-"edit event dialog"
-msgstr ""
-"Kryssa denna om du vill att \"%s\" ska expanderas som standard i dialogrutan "
-"för att lägga till och redigera händelser"
+msgid "Check this if you want the \"%s\" to be expanded by default in the add and edit event dialog"
+msgstr "Kryssa denna om du vill att \"%s\" ska expanderas som standard i dialogrutan för att lägga till och redigera händelser"
 
 #: dayplanner:4878
 msgid "General events"
@@ -844,7 +801,10 @@ msgstr "Använd notifieringar före händelser"
 msgid "Time before the event to display the notification"
 msgstr "Hur lång tid före händelsen som notifieringen ska visas"
 
-#: dayplanner:4915 dayplanner:4916 dayplanner:4917 dayplanner:4918
+#: dayplanner:4915
+#: dayplanner:4916
+#: dayplanner:4917
+#: dayplanner:4918
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minuter"
@@ -854,7 +814,9 @@ msgstr "%s minuter"
 msgid "%s hour"
 msgstr "%s timme"
 
-#: dayplanner:4920 dayplanner:4921 dayplanner:4922
+#: dayplanner:4920
+#: dayplanner:4921
+#: dayplanner:4922
 #, perl-format
 msgid "%s hours"
 msgstr "%s timmar"
@@ -863,7 +825,10 @@ msgstr "%s timmar"
 msgid "Remind one day in advance"
 msgstr "Påminn en dag i förväg"
 
-#: dayplanner:5141 dayplanner:5142 dayplanner:5143 dayplanner:5144
+#: dayplanner:5141
+#: dayplanner:5142
+#: dayplanner:5143
+#: dayplanner:5144
 #: dayplanner:5145
 msgid "_Calendar"
 msgstr "_Kalender"
@@ -880,29 +845,30 @@ msgstr "_Exportera"
 msgid "_Add an event"
 msgstr "_Lägg till en händelse"
 
-#: dayplanner:5149 dayplanner:5170
+#: dayplanner:5149
+#: dayplanner:5170
 msgid "_Edit this event"
 msgstr "_Redigera denna händelse"
 
-#: dayplanner:5150 dayplanner:5174
+#: dayplanner:5150
+#: dayplanner:5174
 msgid "_Delete this event"
 msgstr "_Ta bort denna händelse"
 
-#: dayplanner:5394 dayplanner:5395
+#: dayplanner:5394
+#: dayplanner:5395
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Miljövariabeln %s är inte inställd! Kan inte fortsätta\n"
 
-#: dayplanner:5399 dayplanner:5401
+#: dayplanner:5399
+#: dayplanner:5401
 #, perl-format
-msgid ""
-"The home directory of the user %s doesn't exist at %s! Please verify that "
-"the environment variable %s is properly set. Unable to continue\n"
-msgstr ""
-"Hemkatalogen för användaren %s finns inte (%s)! Verifiera att miljövariabeln "
-"%s är korrekt inställd. Kan inte fortsätta\n"
+msgid "The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"
+msgstr "Hemkatalogen för användaren %s finns inte (%s)! Verifiera att miljövariabeln %s är korrekt inställd. Kan inte fortsätta\n"
 
-#: dayplanner-notifier:264 dayplanner-notifier:357
+#: dayplanner-notifier:264
+#: dayplanner-notifier:357
 #, perl-format
 msgid ""
 "Today at %s:\n"
@@ -911,7 +877,8 @@ msgstr ""
 "Idag klockan %s:\n"
 "%s"
 
-#: dayplanner-notifier:266 dayplanner-notifier:359
+#: dayplanner-notifier:266
+#: dayplanner-notifier:359
 #, perl-format
 msgid ""
 "Tomorrow at %s:\n"
@@ -920,7 +887,8 @@ msgstr ""
 "Imorgon klockan %s:\n"
 "%s"
 
-#: dayplanner-notifier:268 dayplanner-notifier:361
+#: dayplanner-notifier:268
+#: dayplanner-notifier:361
 #, perl-format
 msgid ""
 "At %s on %s:\n"
@@ -944,7 +912,6 @@ msgstr "Flytta fram notifieringen 10 minuter"
 #, fuzzy
 #~ msgid "Gnome Calendar"
 #~ msgstr "_Kalender"
-
 #~ msgid ""
 #~ "Welcome to day planner.\n"
 #~ "\n"
@@ -957,10 +924,8 @@ msgstr "Flytta fram notifieringen 10 minuter"
 #~ "Dagplanerare har identifierat att du har existerande kalenderdata från "
 #~ "\"plan\". Vill du att Dagplanerare ska importera denna data? Plandatan "
 #~ "kommer dock att lämnas kvar."
-
 #~ msgid "Migrating plan to day planner..."
 #~ msgstr "Migrerar plan till dagplanerare..."
-
 #~ msgid ""
 #~ "The plan data has been successfully migrated to Day Planner.\n"
 #~ "\n"
@@ -973,22 +938,16 @@ msgstr "Flytta fram notifieringen 10 minuter"
 #~ "Observera dock att inte alla av de avancerade funktionerna i plan stöds i "
 #~ "Dagplanerare så vissa inställningar (specifikt upprepade möten och "
 #~ "skript) kanske inte helt har migrerats över."
-
 #~ msgid "Day planner was unable to detect any plan data-files."
 #~ msgstr "Dagplanerare kunde inte identifiera några datafiler från plan."
-
 #~ msgid "From a file (day planner or iCalendar)"
 #~ msgstr "Från en fil (Dagplanerare eller iCalendar)"
-
 #~ msgid "From the \"plan\" software"
 #~ msgstr "Från programvaran \"plan\""
-
 #~ msgid "Import data from a day planner data file"
 #~ msgstr "Importera data från en Dagplanerare-datafil"
-
 #~ msgid "Import the selected data"
 #~ msgstr "Importera markerat data"
-
 #~ msgid ""
 #~ "Day planner has imported the iCalendar data as well as it can.\n"
 #~ "\n"
@@ -999,3 +958,4 @@ msgstr "Flytta fram notifieringen 10 minuter"
 #~ "\n"
 #~ "Notera dock att Dagplanerare inte har stöd för alla funktioner som finns "
 #~ "i iCalendar-formatet så vissa data kan ha gått förlorade."
+
