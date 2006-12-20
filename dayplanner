@@ -1949,12 +1949,6 @@ sub CLI_Import {
 		} else {
 			print "Importing failed.\n";
 		}
-	} elsif ($Type =~ /dpf/) {
-		if(LoadDayplannerDataFile($Source)) {
-			print "Imported day planner data from $Source\n";
-		} else {
-			print "Importing failed.\n";
-		}
 	}
 	# Save the data
 	SaveMainData();
@@ -2981,160 +2975,6 @@ sub iCal_ParseDateTime {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Day planner data format functions
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# DEPRECATED
-
-# Purpose: Parse day planner data encoded in base64
-# Usage: my($PossibleCorruption, @Conflicts) = DPF_ParseData(BASE64_ENCODED_DATA, DATAMD5, CRYPT);
-sub DPF_ParseData {
-	my ($ContainedData, $DP_DataMD5, $DP_Crypt) = @_;
-	my (@Conflicts, $PossibleCorruption);
-	$ContainedData = decode_base64($ContainedData);
-	if($DP_Crypt) {
-		$ContainedData = DecryptData($ContainedData, $DP_DataMD5);
-		# If the returned data is undef then the user pressed cancel.
-		unless(defined($ContainedData)) {
-			return(undef);
-		}
-	} else {
-		# Verify the md5 sum (the decryption function does that for us, so it's not needed
-		#  for encrypted files).
-		my $ContainedMD5 = md5_base64($ContainedData);
-		unless($ContainedMD5 eq $DP_DataMD5) {
-			DPIntWarn("Checksumming failed! The input data is almost certainly corrupt!");
-			$PossibleCorruption = 1;
-		}
-	}
-	$ContainedData .= "1;";
-	my ($DP_OnlyBirthdays, $DP_Exportedby, $DP_ExportedAt, %BirthdayCalendarContent, %MainCalendarContent);
-	eval($ContainedData) or do {
-		DPIntWarn("FAILED to parse data!");
-		return(undef);
-	};
-	# First insert the birthdays. We do this mindlessly as there won't be any
-	# conflicts anyway
-	foreach my $Month (keys(%BirthdayCalendarContent)) {
-		foreach my $Day (keys(%{$BirthdayCalendarContent{$Month}})) {
-				foreach my $Name (keys(%{$BirthdayCalendarContent{$Month}{$Day}})) {
-					$BirthdayContents{$Month}{$Day}{$Name} = 1;
-				}
-			}
-		}
-	unless($DP_OnlyBirthdays) {
-		# Process the main calendar content. Here conflicts may arise.
-		foreach my $Year (keys(%MainCalendarContent)) {
-			foreach my $Month (keys(%{$MainCalendarContent{$Year}})) {
-				foreach my $Day (keys(%{$MainCalendarContent{$Year}{$Month}})) {
-					foreach my $Time(keys(%{$MainCalendarContent{$Year}{$Month}{$Day}})) {
-						my $summary = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{summary};
-						my $fulltext = $MainCalendarContent{$Year}{$Month}{$Day}{$Time}{fulltext};
-						my $ConflictText;
-						($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$summary,$fulltext);
-						if($Time) {
-							$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $summary;
-							$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $fulltext;
-						}
-						if($ConflictText) {
-							push(@Conflicts,$ConflictText);
-						}
-					}
-				}
-			}
-		}
-	}
-	return(@Conflicts, $PossibleCorruption);
-}
-
-# Purpose: Import data from a day planner data file
-# Usage: LoadDayplannerDataFile(FILE);
-sub LoadDayplannerDataFile {
-	# NOTE: This function MUST be able to work without the GUI initialized
-	my $File = $_[0];
-	
-	# Identify it
-	open(READFILE, "<", $File) or do {
-		DPIntWarn("Unable to open $File for writing: $!");
-		if($MainWindow) {
-			DPError(sprintf($Gettext->get("Unable to open %s for writing: %s"), $File, $!));
-		}
-		return(undef);
-	};
-	while(<READFILE>) {	# Don't know how to otherwise read only *one* line.
-		if($_ =~ /^# Content-type: text\/x-dayplanner$/ ) {
-			last;
-		} else {
-			DPIntWarn("$File does not seem to be a day planner data file");
-			if($MainWindow) {
-				DPError(sprintf($Gettext->get("%s does not seem to be a day planner data file"), $File));
-			}
-			return(undef);
-		}
-	}
-	# Data strings
-	my($DP_FormatVersion, $DP_Crypt, $DP_DataMD5, $ContainedData, $ContainerMode, $PossibleCorruption);
-
-	# Parse the entire thing
-	while(<READFILE>) {
-		next unless /\S/;
-		chomp;
-		unless($ContainerMode) {
-			next if /^\s*#/;
-			next unless m/=/;
-			# Get the values
-			my $Name = $_;
-			$Name =~ s/^(\w+)\s*=.*$/$1/;
-			s/^\w+\s*=\s*//;
-			s/;$//;
-			if($Name eq 'ContainedData') {
-				$ContainedData = $_;
-				$ContainerMode = 1;
-			} elsif ($Name eq 'DP_FormatVersion') {
-				unless($_ =~ /^\s*1\s*$/) {
-					DPIntWarn("$File contains version $_ of the day planner data format. This version only supports version 1");
-					if($MainWindow) {
-						DPError(sprintf($Gettext->get("%s contains version %s of the day planner data format. This version of day planner only supports version 1"), $File, $_));
-					}
-					return(undef);
-				}
-			} elsif ($Name eq 'DP_Crypt') {
-				$DP_Crypt = $_;
-			} elsif ($Name eq 'DP_DataMD5') {
-				$DP_DataMD5 = $_;
-			} elsif ($Name) {
-				DPIntWarn("Unknown setting in data file: $Name (=$_). This might be bad.");
-				$PossibleCorruption = 1;
-			} else {
-				DPIntWarn("Unknown line in data file: $_. This might be bad.");
-				$PossibleCorruption = 1;
-			}
-		} else {
-			if(/^#/) {
-				$ContainerMode = 0;
-			} else {
-				$ContainedData .= $_;
-			}
-		}
-	}
-	close(READFILE);
-	unless(defined($ContainedData)) {
-		DPIntWarn("\$ContainedData turned out undef! Corrupt input data?");
-		return(undef);
-	}
-	my (@Conflicts, $Corruption) = DPF_ParseData($ContainedData, $DP_DataMD5, $DP_Crypt);
-	$PossibleCorruption = $Corruption ? 1 : $PossibleCorruption;
-	if(@Conflicts) {
-		my $Message;
-		foreach(@Conflicts) {
-			$Message .= "$_\n";
-		}
-		DPInfo($Gettext->get("Conflicting events were detected. Day planner has attempted to resolve the conflicts.\n\nHowever, some of the data may be incorrect or not imported. See the details below for information about the conflicting events."), $Message);
-	}
-	return(1);
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI import/export dialogs and helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -3473,7 +3313,6 @@ sub ImportDataFromFile {
 	$ImportWindow->set_local_only(1);
 	$ImportWindow->set_default_response('accept');
 	my $filter = Gtk2::FileFilter->new;
-	$filter->add_pattern('*.dpf');
 	$filter->add_pattern('*.ics');
 	$filter->add_pattern('*.vcf');
 	$filter->set_name($Gettext->get('All supported file formats'));
@@ -3481,10 +3320,7 @@ sub ImportDataFromFile {
 	my $Response = $ImportWindow->run();
 	if($Response eq 'accept') {
 		my $Filename = $ImportWindow->get_filename();
-		if($Filename =~ /\.dpf$/i) {
-			LoadDayplannerDataFile($Filename);
-			UpdatedData();
-		} elsif($Filename =~ /\.(ics|vcf)$/i) {
+		if($Filename =~ /\.(ics|vcf)$/i) {
 			iCal_LoadFile($Filename);
 			UpdatedData();
 		} else {
