@@ -89,7 +89,7 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 );
 
 # Hashes
-my %CalendarContents;		# The contents of the main calendar (DEPRECATED)
+#my %CalendarContents;		# The contents of the main calendar (DEPRECATED)
 my %BirthdayContents;		# The contents of the birthday file (DEPRECATED)
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
@@ -571,8 +571,8 @@ sub DPS_GetData {
 				$MainData =~ s/\r//g;
 				push(@DataArray, $_) foreach(split(/\n/,$MainData));
 				$MainData = undef;
-				%BirthdayContents = ();
-				%CalendarContents = ();
+				%RawCalendar = ();
+				%InternalCalendar = ();
 				iCal_LoadFile(\@DataArray);
 				UpdatedData();
 			}
@@ -1074,72 +1074,19 @@ sub iCal_UID {
 # TODO: Progress bars
 sub iCal_SaveData {
 	my $File = $_[0];
-	my $BirthdaysOnly = $_[1];
+	my $BirthdaysOnly = $_[1];	# FIXME: This is mostly useless now.
 	my $DontWriteFile = $_[2];
 	my $iCalendar;
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EskildHustvedt//NONSGML Day Planner $Version//EN\r\nCALSCALE:GREGORIAN\r\n";
 
-	# Begin exporting birthdays
-	foreach my $Month (sort keys(%BirthdayContents)) {
-		foreach my $Day (sort keys(%{$BirthdayContents{$Month}})) {
-				foreach my $Name (sort keys(%{$BirthdayContents{$Month}{$Day}})) {
-					$Month = AppendZero($Month);
-					$Day = AppendZero($Day);
-					$iCalendar .= "BEGIN:VEVENT\r\n";
-					# The unix epoch starts in 1970 so we put that in here as the start time
-					# for the event (we have no idea when a person was born)
-					$iCalendar .= "DTSTART:1970$Month${Day}T000000\r\n";
-					$iCalendar .= "DTEND:1970$Month${Day}T235959\r\n";
-					# Day planner-style recurrance
-					$iCalendar .= "RRULE:FREQ=YEARLY\r\n";
-					# The summary is the name +'s birthday (localized).
-					$iCalendar .= "SUMMARY:" . iCal_GetSafe(sprintf($Gettext->get("%s's birthday"), $Name)) . "\r\n";
-					# X-DP-BIRTHDAY = TRUE will make day planner know more easily it's a birthday.
-					$iCalendar .= "X-DP-BIRTHDAY:TRUE\r\n";
-					# If X-DP-BIRTHDAY is TRUE then day planner will ignore SUMMARY: and use
-					# X-DP-BIRTHDAYNAME instead.
-					$iCalendar .= "X-DP-BIRTHDAYNAME:" . iCal_GetSafe($Name) . "\r\n";
-
-					# Most (maybe all) other calendars will happily ignore X-DP-BIRTHDAY*. It will be
-					# useful for day planner importing though.
-
-					# Get a unique identifier
-					$iCalendar .= iCal_UID("$Month$Day", $Name);
-					$iCalendar .= "END:VEVENT\r\n";
-				}
-			}
+	foreach my $UID (keys(%RawCalendar)) {
+		$iCalendar .= "BEGIN:VEVENT\r\n";
+		$iCalendar .= "UID:$UID\r\n";
+		foreach my $setting (keys(%{$RawCalendar{$UID}})) {
+			$iCalendar .= "$setting:" . iCal_GetSafe($RawCalendar{$UID}{$setting}) . "\r\n";
 		}
-	# Export the rest of the data if needed
-	unless($BirthdaysOnly) {
-		foreach my $Year (keys(%CalendarContents)) {
-			foreach my $Month (keys(%{$CalendarContents{$Year}})) {
-				foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
-					foreach my $Time(keys(%{$CalendarContents{$Year}{$Month}{$Day}})) {
-						# Fix the month and day
-						my $iCalMonth = AppendZero($Month);
-						my $iCalDay = AppendZero($Day);
-
-						# Get the time
-						my $Hour = $Time;
-						my $Minute = $Time;
-						$Hour =~ s/^(\d+):\d+$/$1/;
-						$Minute =~ s/^\d+:(\d+)$/$1/;
-						
-						$iCalendar .= "BEGIN:VEVENT\r\n";
-						$iCalendar .= "DTSTART:$Year$iCalMonth${iCalDay}T$Hour${Minute}00\r\n";
-						$iCalendar .= "DTEND:$Year$iCalMonth${iCalDay}T$Hour${Minute}59\r\n";
-						$iCalendar .= "SUMMARY:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) . "\r\n";
-						if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-							$iCalendar .= "DESCRIPTION:" . iCal_GetSafe($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) . "\r\n";
-						}
-						$iCalendar .= iCal_UID("$Year$Month$Day$Time", $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
-						$iCalendar .= "END:VEVENT\r\n";
-
-					}
-				}
-			}
-		}
+		$iCalendar .= "END:VEVENT\r\n";
 	}
 	$iCalendar .= "END:VCALENDAR\r\n";
 	if($DontWriteFile) {
@@ -1262,7 +1209,7 @@ sub iCal_LoadFile {
 			$UID = $Current->{UID};
 		}
 		delete($Current->{UID});
-		if(defined($RawCalendar{UID})) {
+		if(defined($RawCalendar{$UID})) {
 			# FIXME: This WILL produce false warnings
 			DPIntWarn("Duplicate UID detected! Reassigning.");
 			# We try extra hard to get a unique one here
@@ -1295,6 +1242,7 @@ sub iCal_LoadFile {
 				}
 				next unless defined($Current->{DESCRIPTION});
 			} else {
+				DPIntWarn("Unhandled RRULE: $Current->{RRULE}");
 				next unless defined($Current->{DESCRIPTION});
 			}
 		}
@@ -1318,6 +1266,7 @@ sub iCal_LoadFile {
 				}
 			}
 		}
+=cut
 		# TODO: Conflict resolution no longer required after migration to %InternalCalendar
 		my $ConflictText;
 		($ConflictText,$Time) = Import_ResolveConflict($Year,$Month,$Day,$Time,$Summary,$Fulltext);
@@ -1328,10 +1277,11 @@ sub iCal_LoadFile {
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{summary} = $Summary;
 			$CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext} = $Fulltext;
 		}
+=cut
 	}
 	$Data::Dumper::Purity = 1;$Data::Dumper::Sortkeys = 1;$Data::Dumper::Indent = 1;
-	print Dumper(\%InternalCalendar);
-	print Dumper(\%RawCalendar);
+	#print Dumper(\%InternalCalendar);
+	#print Dumper(\%RawCalendar);
 	if(@Conflicts) {
 		return(@Conflicts);
 	} else {
@@ -1374,6 +1324,8 @@ sub iCal_ParseDateTime {
 # Usage: CalendarDelete(year,month,day,time);
 # TODO: Rewrite to simplify for the new data system
 sub CalendarDelete {
+	warn("CalendarDelete: STUB");
+=cut
 	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
 	unless(CalendarDefined(@_)) {
 		DPIntWarn("CalendarDelete: Unable to find an event at $EventYear/$EventMonth/$EventDay/$EventTime");
@@ -1389,6 +1341,7 @@ sub CalendarDelete {
 						}
 			}
 	}
+=cut
 }
 
 # Purpose: Delete keys from %BirthdayContents, recusively if needed
@@ -1417,11 +1370,14 @@ sub BirthdayDelete {
 # Purpose: Recursively test for defined data in %CalendarContents
 # Usage: CalendarDefined(year,month,day,time);
 sub CalendarDefined {
+	warn("CalendarDefined: STUB");
+=cut
 	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
 	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
 			return(1)
 		}
 	return(0);
+=cut
 }
 
 # Purpose: Recursively test for defined data in %BirthdayContents
@@ -1437,11 +1393,14 @@ sub BirthdayDefined {
 # Purpose: Recursively test for defined data in %CalendarContents
 # Usage: CalendarDayDefined(year,month,day);
 sub CalendarDayDefined {
+	warn("CalendarDayDefined: STUB");
+=cut
 	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
 	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay})) {
 			return(1)
 		}
 	return(0);
+=cut
 }
 
 # Purpose: Recursively test for defined data in %BirthdayContents
@@ -2047,6 +2006,8 @@ sub AMPM_From24 {
 # Purpose: Resolve a conflict during an import
 # Usage: my (message, newtime) = Import_ResolveConflict(Year,Month,Day,Time,summary,fulltext);
 sub Import_ResolveConflict {
+	warn("Import_ResolveConflict: STUBBED, NOW USELESS");
+=cut
 	my($Year,$Month,$Day,$Time,$summary,$fulltext) = @_;
 	my($Attempts,$ConflictMessage,$Conflict);
 	my $OrigTime = $Time;
@@ -2095,6 +2056,7 @@ sub Import_ResolveConflict {
 		}
 	}
 	return($ConflictMessage,$Time);
+=cut
 }
 
 # Purpose: Commandline wrapper around the export functions
@@ -2297,6 +2259,8 @@ sub HTML_DayToHtml {
 		}
 	}
 	# Write standard events
+	warn("HTML_DayToHtml: STUBBED, won't write proper calendar contents");
+=cut
 	foreach my $Time (sort(keys(%{$CalendarContents{$Year}{$Month}{$Day}}))) {
 		print $FILE "<tr><td>" . HTML_Encode($Time) . "</td><td>" . HTML_Encode($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
 		if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
@@ -2306,6 +2270,7 @@ sub HTML_DayToHtml {
 		}
 		print $FILE "</td></tr>\n";
 	}
+=cut
 	# Prepare and write holidays
 	unless(defined($HolidayParser)) {
 		$HolidayParser = Date::HolidayParser->new($HolidayFile);
@@ -2348,12 +2313,15 @@ sub HTML_MonthToHtml {
 	};
 	print $FILE HTML_Header($Year, "$MonthNames{$Month} $Year");
 	my $HadContent;
+	warn("HTML_MonthToHtml: STUBBED, won't write proper files");
+=cut
 	if(defined($CalendarContents{$Year}{$Month})) {
 		foreach my $Day (sort {$a <=> $b } keys(%{$CalendarContents{$Year}{$Month}})) {
 			$HadContent = 1;
 			print $FILE "<a href='dp_$Year$Month$Day.html'>" . HTML_Encode("$Day. $MonthNames{$Month} $Year") . "</a><br/>\n";
 		}
 	}
+=cut
 	unless($HadContent) {
 		print $FILE "<i>" . HTML_Encode($Gettext->get("There are no events this month")) . "</i>";
 	}
@@ -2440,9 +2408,12 @@ sub HTML_YearList {
 	};
 	print $FILE HTML_Header("", "Day planner", "M");
 	print $FILE HTML_Encode($Gettext->get("Select the year to view:")) . "<br />\n";
+	warn("HTML_YearList: STUBBED - unable to create one");
+=cut
 	foreach(sort { $b <=> $a } keys(%CalendarContents)) {
 		print $FILE "<a href='$_.html'>" . HTML_Encode($_) . "</a><br />\n";
 	}
+=cut
 	print $FILE HTML_Footer();
 }
 
@@ -2492,6 +2463,8 @@ sub HTML_Export {
 			return(undef);
 		}
 	}
+	warn("HTML_Export: Won't create proper files, unable to get year/month list");
+=cut
 	foreach my $Year (keys(%CalendarContents)) {
 		HTML_YearHtml($Year,$Dir);
 		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
@@ -2503,6 +2476,7 @@ sub HTML_Export {
 			HTML_MonthToHtml($Year,$_,$Dir);
 		}
 	}
+=cut
 	HTML_YearList($Dir);
 	HTML_PHPIndex($Dir);
 	HTML_BirthdayList($Dir);
@@ -2562,6 +2536,7 @@ sub PHP_Export {
 			return(undef);
 		}
 	}
+=cut
 	foreach my $Year (keys(%CalendarContents)) {
 		HTML_YearHtml($Year,$Dir);
 		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
@@ -2573,6 +2548,8 @@ sub PHP_Export {
 			HTML_MonthToHtml($Year,$_,$Dir);
 		}
 	}
+=cut
+	warn("PHP_Export: STUBBED");
 	HTML_BirthdayList($Dir);
 	$HTML_PHP = 0;
 	PHP_WriteFiles($BaseDir, $Dir);
@@ -2613,6 +2590,8 @@ sub PHP_WriteFiles {
 # Purpose: Purge the current $PlanConvertHash-> buffer and put it into %CalendarContents
 # Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
 sub PlanConvert_PurgeBuffer {
+	warn("PlanConvert_PurgeBuffer: Uses CalendarContents - STUBBED, won't actually work");
+=cut
 	my $PlanConvertHash = $_[0];
 	my $ErrorMessage;
 	if(defined($PlanConvertHash->{Day})) {
@@ -2649,6 +2628,7 @@ sub PlanConvert_PurgeBuffer {
 		}
 		$PlanConvertHash->{Type} = 'normal';
 	}
+=cut
 }
 
 # Purpose: Convert the file supplied
@@ -3516,10 +3496,13 @@ sub PopulateUpcomingEvents {
 		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
+			warn("PopulateUpcomingEvents: STUBBED, using the old CalendarContents");
+=cut
 			foreach(sort keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
 				$HasEvents = 1;
 				$h->{text} .= "\n" . $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
 			}
+=cut
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
 			foreach my $Birthday (sort keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
@@ -3810,6 +3793,8 @@ sub QuitSub {
 # Purpose: Sets the active calendar items in the $CalendarWidget
 # Usage: SetActiveCalItems(YEAR, NUMERICAL_MONTH[1-12]);
 sub SetActiveCalItems {
+	warn("SetActiveCalItems: STUBBED, not using the new hashes");
+=cut
 	$CalendarWidget->clear_marks;			# Clear the current marks
 	# Calendar contents
 	if (defined($CalendarContents{$_[0]}) and defined($CalendarContents{$_[0]}{$_[1]})) {
@@ -3823,6 +3808,7 @@ sub SetActiveCalItems {
 			$CalendarWidget->mark_day($Day);	# Mark this day
 		}
 	}
+=cut
 }
 
 # Purpose: Sets the date/time variables to the current date/time
@@ -4225,10 +4211,13 @@ sub NormalEventWindow {
 	# Check if the event is already defined, if it is then we assume that we're editing
 	if(CalendarDefined($EventYear,$EventMonth,$EventDay,$EventTime)) {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
+		warn("NormalEventWindow: Editmode: STUBBED, won't work");
+=cut
 		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
 		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
+=cut
 	}
 
 	if ($EventTime eq 'NULL') {
@@ -4394,7 +4383,8 @@ sub NormalEvent_OK {
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
 	my $OldEventTime = ${$TimeHash}{OldEventTime};
 	
-	# Make sure it's not a dupe (that would end up overwriting data)
+	# Make sure it's not a dupe (that would end up overwriting data) (TODO: Drop, replace by simpler checking for *complete* dupes)
+=cut
 	if ($IsEditing) {
 		if (defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time})) {
 			unless ($EventYear eq $OldEventYear and $EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Time eq $OldEventTime) {
@@ -4408,6 +4398,7 @@ sub NormalEvent_OK {
 				$Error = 1;
 			}
 	}
+=cut
 	unless ($Summary) {
 		DPError($Gettext->get("There is no summary for this event. Please enter a summary."));
 		$Error = 1;
@@ -4418,9 +4409,12 @@ sub NormalEvent_OK {
 		if($IsEditing) {
 			CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
 		}
+		warn("NormalEvent_OK: Uses Calendarcontents");
+=cut
 		# Add them to the hash
 		$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
 		$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
+=cut
 		# Call UpdatedData to tell Day planner to save the data and redraw widgets
 		UpdatedData();
 		# Destroy our window, it will get the signal and do anything it needs to
@@ -4750,20 +4744,24 @@ sub PopulateEventList {
 	# TODO: Do some magic to calculate yearly stuff here
 
 	# Main calendar contents
-	if (defined($CalendarContents{$Year}) and defined($CalendarContents{$Year}{$Month}) and defined($CalendarContents{$Year}{$Month}{$Day})) {
-		foreach my $Time (sort keys %{$CalendarContents{$Year}{$Month}{$Day}}) {
-			unless (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"})) {
-				DPIntWarn("Found no summary for entry: $Time");
-			} else {
-				push (@{$EventlistWidget->{data}}, [0,AMPM_From24($Time), $CalendarContents{$Year}{$Month}{$Day}{$Time}{"summary"}]);
+	if (defined($InternalCalendar{Single}{$Year}) and defined($InternalCalendar{Single}{$Year}{$Month}) and defined($InternalCalendar{Single}{$Year}{$Month}{$Day})) {
+		foreach my $Time (sort keys %{$InternalCalendar{Single}{$Year}{$Month}{$Day}}) {
+			foreach my $UID (@{$InternalCalendar{Single}{$Year}{$Month}{$Day}{$Time}}) {
+				unless (defined($RawCalendar{$UID}{SUMMARY})) {
+					DPIntWarn("Found no summary for entry: $Time/$UID");
+				} else {
+					push (@{$EventlistWidget->{data}}, [$UID,AMPM_From24($Time), $RawCalendar{$UID}{SUMMARY}]);
+				}
 			}
 		}
 	}
+	# Fetch the birthdays
 	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
 		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
 			push (@{$EventlistWidget->{data}}, [0,"", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
 		}
 	}
+	# Fetch the Holidays if the year is above 1970 (UNIX epoch) and 2037 (UNIX epoch overflow)
 	unless($Year > 2037) {
 		unless($Year < 1970) {
 			unless(defined($HolidayParser)) {
