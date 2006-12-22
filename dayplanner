@@ -1374,14 +1374,11 @@ sub BirthdayDelete {
 # Purpose: Recursively test for defined data in %CalendarContents
 # Usage: CalendarDefined(year,month,day,time);
 sub CalendarDefined {
-	warn("CalendarDefined: STUB");
-=cut
 	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
-	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
+	if(defined($InternalCalendar{$EventYear}) and defined($InternalCalendar{$EventYear}{$EventMonth}) and defined($InternalCalendar{$EventYear}{$EventMonth}{$EventDay}) and defined($InternalCalendar{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
 			return(1)
 		}
 	return(0);
-=cut
 }
 
 # Purpose: Recursively test for defined data in %BirthdayContents
@@ -4098,7 +4095,6 @@ sub EditEvent {
 	# Initialize
 	my $EventUID = $EventlistWidget->{data}[$Selected][0];
 	my $Time = AMPM_To24($EventlistWidget->{data}[$Selected][1]);
-	my $Summary = $EventlistWidget->{data}[$Selected][2];
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
@@ -4122,24 +4118,17 @@ sub EditEvent {
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		
-		if(CalendarDefined($EventYear,$EventMonth,$EventDay,$Time)) {
-			($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($Gettext->get("Editing an event"), $Gettext->get('Editing an event on the %s. %s %s'), 'gtk-ok');
-
-			# Create the widgets for the normal event selection
-			my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($Time, $OKButton, $VBox_HBoxContainer, $Window);
-	
-			$OKButton->signal_connect('clicked' => sub {
-					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 1);
-			});
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($Gettext->get("Editing an event"), $Gettext->get('Editing an event on the %s. %s %s'), 'gtk-ok');
+		# Create the widgets for the normal event selection
+		my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
+		$OKButton->signal_connect('clicked' => sub {
+				NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 1);
+		});
 		
-			# Show the default widget (Normal event)
-			$NE_MainWidget->show();
-		} else {
-			DPIntWarn("BUG!: EditEvent: Unable to edit $Type event: $EventYear/$EventMonth/$EventDay/$Time. Please report this");
-			$MainWindow->set_sensitive(1);
-			return(0);
-		}
+		# Show the default widget (Normal event)
+		$NE_MainWidget->show();
 	} elsif ($Type eq 'bday') {
+=cut
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4156,8 +4145,8 @@ sub EditEvent {
 			DPIntWarn("BUG!: EditEvent: Unable to edit $Type event: $EventMonth/$EventDay/$Summary. Please report this");
 			$MainWindow->set_sensitive(1);
 			return(0);
-		}
-			
+		}			
+=cut
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf($Gettext->get("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
@@ -4186,24 +4175,22 @@ sub NormalEventWindow {
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
-	my ($EventTime, $OKButton, $ParentVBox, $MyWindow) = @_;
+	my ($EventUID, $OKButton, $ParentVBox, $MyWindow) = @_;
 
 	my $IsEditing = 0;
 	
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($EventSummary, $EventFulltext);
+	my ($EventSummary, $EventFulltext,$EventTime);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
-	if(CalendarDefined($EventYear,$EventMonth,$EventDay,$EventTime)) {
+	if(not $EventUID eq "NULL") {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		warn("NormalEventWindow: Editmode: STUBBED, won't work");
-=cut
-		$EventSummary = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"summary"};
-		$EventFulltext = $CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime}{"fulltext"};
+		$EventSummary = $RawCalendar{$EventUID}{SUMMARY};
+		$EventFulltext = $RawCalendar{$EventUID}{DESCRIPTION};
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
-=cut
 	}
 
 	if ($EventTime eq 'NULL') {
