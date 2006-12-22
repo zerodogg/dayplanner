@@ -90,7 +90,7 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 
 # Hashes
 #my %CalendarContents;		# The contents of the main calendar (DEPRECATED)
-my %BirthdayContents;		# The contents of the birthday file (DEPRECATED)
+#my %BirthdayContents;		# The contents of the birthday file (DEPRECATED)
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
@@ -1349,6 +1349,8 @@ sub CalendarDelete {
 # Usage: BirthdayDelete(month,day,name);
 # TODO: Drop. Birthdays aren't special in the new data system
 sub BirthdayDelete {
+	warn("USELESS FUNCTION CALLED");
+=cut
 	my ($EventMonth,$EventDay,$Name) = @_;
 	unless(BirthdayDefined(@_)) {
 		DPIntWarn("BirthdayDelete: Unable to find an event at $EventMonth/$EventDay/$Name");
@@ -1361,6 +1363,7 @@ sub BirthdayDelete {
 					delete($BirthdayContents{$EventMonth});
 			}
 	}
+=cut
 }
 
 # If a single test is run then invalid data might get inserted into the data hashes.
@@ -1384,11 +1387,7 @@ sub CalendarDefined {
 # Purpose: Recursively test for defined data in %BirthdayContents
 # Usage: BirthdayDefined(month,day,summary);
 sub BirthdayDefined {
-	my ($EventMonth, $EventDay, $EventSummary) = @_;
-	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay}) and defined($BirthdayContents{$EventMonth}{$EventDay}{$EventSummary})) {
-			return(1)
-		}
-	return(0);
+	warn("USELESS FUNCTION CALLED!");
 }
 
 # Purpose: Recursively test for defined data in %CalendarContents
@@ -1404,11 +1403,7 @@ sub CalendarDayDefined {
 # Purpose: Recursively test for defined data in %BirthdayContents
 # Usage: BirthdayDayDefined(month,day);
 sub BirthdayDayDefined {
-	my ($EventMonth, $EventDay, $EventSummary) = @_;
-	if(defined($BirthdayContents{$EventMonth}) and defined($BirthdayContents{$EventMonth}{$EventDay})) {
-			return(1)
-		}
-	return(0);
+	warn("USELESS FUNCTION CALLED!")
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2250,12 +2245,15 @@ sub HTML_DayToHtml {
 	print $FILE HTML_Header($Year,"$Day-$Month-$Year");
 	print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
 	print $FILE "<tbody><tr><td>" . HTML_Encode($Gettext->get("Time")) . "</td><td>" . HTML_Encode($Gettext->get("Description")) . "</td></tr>\n";
+	warn("HTML_DayToHtml: STUB: Won't write proper bdays");
+=cut
 	# Write birthdays
 	if(BirthdayDayDefined($Month,$Day)) {
 		foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
 			print $FILE "<tr><td></td><td>" . HTML_Encode(sprintf($Gettext->get("%s's birthday"), $Name)) . "</td></tr>\n";
 		}
 	}
+=cut
 	# Write standard events
 	warn("HTML_DayToHtml: STUBBED, won't write proper calendar contents");
 =cut
@@ -2323,6 +2321,8 @@ sub HTML_MonthToHtml {
 	unless($HadContent) {
 		print $FILE "<i>" . HTML_Encode($Gettext->get("There are no events this month")) . "</i>";
 	}
+	warn("HTML_MonthToHtml: STUB: \%BirthdayContents");
+=cut
 	if(keys(%BirthdayContents) and keys(%{$BirthdayContents{$Month}})) {
 		print $FILE '<br /><h3>' . HTML_Encode($Gettext->get("Birthdays this month:")) . "</h3>";
 		print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">' . "\n";
@@ -2334,6 +2334,7 @@ sub HTML_MonthToHtml {
 		}
 		print $FILE '</tbody></table>';
 	}
+=cut
 	# Prepare and write holidays
 	unless(defined($HolidayParser)) {
 		$HolidayParser = Date::HolidayParser->new($HolidayFile);
@@ -2356,6 +2357,8 @@ sub HTML_MonthToHtml {
 # Purpose: Output all birthdays to a file
 # Usage: HTML_BirthdayList(DIRECTORY);
 sub HTML_BirthdayList {
+	warn("HTML_BirthdayList: STUBBED, using \%BirthdayContents!");
+=cut
 	my($Directory) = @_;
 	open(my $FILE, ">", "$Directory/birthdays.html") or do {
 		DPIntWarn("Unable to open $Directory/birthdays.html for writing: $!");
@@ -2379,6 +2382,7 @@ sub HTML_BirthdayList {
 		print $FILE . "<i>" .  HTML_Encode($Gettext->get("No birthdays are defined.")) . "</i><br/>";
 	}
 	print $FILE HTML_Footer();
+=cut
 }
 
 # Purpose: Output a year information page to HTML
@@ -3501,12 +3505,6 @@ sub PopulateUpcomingEvents {
 				}
 			}
 		}
-		if(BirthdayDayDefined($getmonth, $getmday)) {
-			foreach my $Birthday (sort keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
-					$HasEvents = 1;
-					$h->{text} .= "\n" .  sprintf($Gettext->get("%s's birthday"), $Birthday);
-			}
-		}
 		unless($HasEvents) {
 			$h->{text} .= "\n" . $Gettext->get("(nothing)");
 			$h->{noevents} = 1;
@@ -4417,6 +4415,8 @@ sub NormalEvent_OK {
 # IS_EDITING is either true or false, false when it's a new one being added, true when it's an
 # old one being edited
 sub BirthdayEvent_OK {
+	warn("BirthdayEvent_OK: BROKEN: USES \%BirthdayContents");
+=cut
 	my ($MyWindow, $SummaryEntry, $TimeHash, $IsEditing) = @_;
 	my $Error = 0;
 	
@@ -4462,6 +4462,7 @@ sub BirthdayEvent_OK {
 		$MyWindow->destroy;
 		$MainWindow->set_sensitive(1);
 	}
+=cut
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
