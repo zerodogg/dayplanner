@@ -1394,14 +1394,11 @@ sub BirthdayDefined {
 # Purpose: Recursively test for defined data in %CalendarContents
 # Usage: CalendarDayDefined(year,month,day);
 sub CalendarDayDefined {
-	warn("CalendarDayDefined: STUB");
-=cut
 	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
-	if(defined($CalendarContents{$EventYear}) and defined($CalendarContents{$EventYear}{$EventMonth}) and defined($CalendarContents{$EventYear}{$EventMonth}{$EventDay})) {
+	if(defined($InternalCalendar{$EventYear}) and defined($InternalCalendar{$EventYear}{$EventMonth}) and defined($InternalCalendar{$EventYear}{$EventMonth}{$EventDay})) {
 			return(1)
 		}
 	return(0);
-=cut
 }
 
 # Purpose: Recursively test for defined data in %BirthdayContents
@@ -3497,13 +3494,12 @@ sub PopulateUpcomingEvents {
 		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
 		my $HasEvents;
 		if(CalendarDayDefined($Year+1900, $getmonth, $getmday)) {
-			warn("PopulateUpcomingEvents: STUBBED, using the old CalendarContents");
-=cut
-			foreach(sort keys(%{$CalendarContents{$HumanYear}{$getmonth}{$getmday}})) {
-				$HasEvents = 1;
-				$h->{text} .= "\n" . $Gettext->get("At") . " " . AMPM_From24($_) . ": $CalendarContents{$HumanYear}{$getmonth}{$getmday}{$_}{summary}";
+			foreach my $time (sort keys(%{$InternalCalendar{$HumanYear}{$getmonth}{$getmday}})) {
+				foreach my $UID (@{$InternalCalendar{$HumanYear}{$getmonth}{$getmday}{$time}}) {
+					$HasEvents = 1;
+					$h->{text} .= "\n" . $Gettext->get("At") . " " . AMPM_From24($time) . ": " . $RawCalendar{$UID}{SUMMARY};
+				}
 			}
-=cut
 		}
 		if(BirthdayDayDefined($getmonth, $getmday)) {
 			foreach my $Birthday (sort keys(%{$BirthdayContents{$getmonth}{$getmday}})) {
