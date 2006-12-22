@@ -1232,9 +1232,10 @@ sub iCal_LoadFile {
 						next;
 					}
 				}
-				push(@{$InternalCalendar{Recurring}{Yearly}{$Month}{$Day}{DAY}},$UID);
-				$BirthdayContents{$Month}{$Day}{$Summary} = 1;
-				push(@{$InternalCalendar{Single}{$Year}{$Month}{$Day}{$Time}}, $UID);
+				my $CurrYear = 2006;	# FIXME!
+				push(@{$InternalCalendar{$CurrYear}{$Month}{$Day}{DAY}},$UID);
+#				$BirthdayContents{$Month}{$Day}{$Summary} = 1;
+#				push(@{$InternalCalendar{$Year}{$Month}{$Day}{$Time}}, $UID);
 				foreach(keys(%{$Current})) {
 					if(not /^X-PARSER/) {
 						$RawCalendar{$UID}{$_} = iCal_UnSafe($Current->{$_});
@@ -1259,7 +1260,7 @@ sub iCal_LoadFile {
 			}
 		}
 		if($Time) {
-			push(@{$InternalCalendar{Single}{$Year}{$Month}{$Day}{$Time}}, $UID);
+			push(@{$InternalCalendar{$Year}{$Month}{$Day}{$Time}}, $UID);
 			foreach(keys(%{$Current})) {
 				if(not /^X-PARSER/) {
 					$RawCalendar{$UID}{$_} = iCal_UnSafe($Current->{$_});
@@ -3793,22 +3794,13 @@ sub QuitSub {
 # Purpose: Sets the active calendar items in the $CalendarWidget
 # Usage: SetActiveCalItems(YEAR, NUMERICAL_MONTH[1-12]);
 sub SetActiveCalItems {
-	warn("SetActiveCalItems: STUBBED, not using the new hashes");
-=cut
 	$CalendarWidget->clear_marks;			# Clear the current marks
 	# Calendar contents
-	if (defined($CalendarContents{$_[0]}) and defined($CalendarContents{$_[0]}{$_[1]})) {
-		foreach my $Day (keys %{$CalendarContents{$_[0]}{$_[1]}}) {
+	if (defined($InternalCalendar{$_[0]}) and defined($InternalCalendar{$_[0]}{$_[1]})) {
+		foreach my $Day (keys %{$InternalCalendar{$_[0]}{$_[1]}}) {
 			$CalendarWidget->mark_day($Day);	# Mark this day
 		}
 	}
-	# Birthdays
-	if (defined($BirthdayContents{$_[1]})) {
-		foreach my $Day (keys %{$BirthdayContents{$_[1]}}) {
-			$CalendarWidget->mark_day($Day);	# Mark this day
-		}
-	}
-=cut
 }
 
 # Purpose: Sets the date/time variables to the current date/time
@@ -4744,9 +4736,13 @@ sub PopulateEventList {
 	# TODO: Do some magic to calculate yearly stuff here
 
 	# Main calendar contents
-	if (defined($InternalCalendar{Single}{$Year}) and defined($InternalCalendar{Single}{$Year}{$Month}) and defined($InternalCalendar{Single}{$Year}{$Month}{$Day})) {
-		foreach my $Time (sort keys %{$InternalCalendar{Single}{$Year}{$Month}{$Day}}) {
-			foreach my $UID (@{$InternalCalendar{Single}{$Year}{$Month}{$Day}{$Time}}) {
+	if (defined($InternalCalendar{$Year}) and defined($InternalCalendar{$Year}{$Month}) and defined($InternalCalendar{$Year}{$Month}{$Day})) {
+		foreach my $Time (sort keys %{$InternalCalendar{$Year}{$Month}{$Day}}) {
+			foreach my $UID (@{$InternalCalendar{$Year}{$Month}{$Day}{$Time}}) {
+				# Don't add Time = DAY.
+				if($Time eq 'DAY') {
+					$Time = "";
+				}
 				unless (defined($RawCalendar{$UID}{SUMMARY})) {
 					DPIntWarn("Found no summary for entry: $Time/$UID");
 				} else {
@@ -4756,11 +4752,11 @@ sub PopulateEventList {
 		}
 	}
 	# Fetch the birthdays
-	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
-		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
-			push (@{$EventlistWidget->{data}}, [0,"", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
-		}
-	}
+#	if (defined($BirthdayContents{$Month}) and defined($BirthdayContents{$Month}{$Day})) {
+#		foreach my $Birthday (sort keys %{$BirthdayContents{$Month}{$Day}}) {
+#			push (@{$EventlistWidget->{data}}, [0,"", sprintf($Gettext->get("%s's birthday"), $Birthday)]);
+#		}
+#	}
 	# Fetch the Holidays if the year is above 1970 (UNIX epoch) and 2037 (UNIX epoch overflow)
 	unless($Year > 2037) {
 		unless($Year < 1970) {
