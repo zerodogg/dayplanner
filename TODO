@@ -15,6 +15,7 @@ may be subject to change.
 	- Add support for
 		- Repeat every X [days|months]
 		- Repeat until
+- Better HOME detection
 - Finalize Day Planner services
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
