@@ -1317,6 +1317,22 @@ sub iCal_ParseDateTime {
 	return($Year,$Month,$Day,AppendZero($Hour) . ":" . AppendZero($Minutes));
 }
 
+# Purpose: Generate an iCalendar date-time from multiple values
+# Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
+# TODO: Time should probably not be enforced
+sub iCal_GenDateTime {
+	my ($Year, $Month, $Day, $Time) = @_;
+	# Fix the month and day
+	my $iCalMonth = AppendZero($Month);
+	my $iCalDay = AppendZero($Day);
+	# Get the time
+	my $Hour = $Time;
+	my $Minute = $Time;
+	$Hour =~ s/^(\d+):\d+$/$1/;
+	$Minute =~ s/^\d+:(\d+)$/$1/;
+	return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4184,17 +4200,16 @@ sub NormalEventWindow {
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
-	if(not $EventUID eq "NULL") {
+	if($EventUID eq "NULL") {
+		$EventTime = "00:00";
+	} else {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
-		warn("NormalEventWindow: Editmode: STUBBED, won't work");
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($RawCalendar{$EventUID}{DTSTART});
+		$EventTime = $Time;
 		$EventSummary = $RawCalendar{$EventUID}{SUMMARY};
 		$EventFulltext = $RawCalendar{$EventUID}{DESCRIPTION};
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
-	}
-
-	if ($EventTime eq 'NULL') {
-		$EventTime = "00:00";
 	}
 
 	# Create the tooltips widget
@@ -4338,7 +4353,12 @@ sub BirthdayEventWindow {
 # IS_EDITING is either true or false, false when it's a new one being added, true when it's an
 # old one being edited
 sub NormalEvent_OK {
+	my $EventUID; # TODO: Editing is broekn
 	my ($MyWindow, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing) = @_;
+	if($IsEditing) {
+		warn("NormalEvent_OK: EDITING IS BROKEN - refusing to continue!");
+		return(0);
+	}
 	my $Error = 0;
 	
 	# Get the contents
@@ -4382,12 +4402,17 @@ sub NormalEvent_OK {
 		if($IsEditing) {
 			CalendarDelete($OldEventYear,$OldEventMonth,$OldEventDay,$OldEventTime);
 		}
-		warn("NormalEvent_OK: Uses Calendarcontents");
-=cut
+		# Assign an UID if none is given
+		if(not defined($EventUID)) {
+			$EventUID = iCal_UID("$EventYear$EventMonth$EventDay$Time");
+		}
 		# Add them to the hash
-		$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'summary'} = $Summary;
-		$CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$Time}{'fulltext'} = $Fulltext;
-=cut
+		$RawCalendar{$EventUID}{SUMMARY} = $Summary;
+		$RawCalendar{$EventUID}{DESCRIPTION} = $Summary;
+		$RawCalendar{$EventUID}{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
+		$RawCalendar{$EventUID}{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
+		
+		push(@{$InternalCalendar{$EventYear}{$EventMonth}{$EventDay}{$Time}}, $EventUID);
 		# Call UpdatedData to tell Day planner to save the data and redraw widgets
 		UpdatedData();
 		# Destroy our window, it will get the signal and do anything it needs to
