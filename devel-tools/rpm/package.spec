@@ -1,7 +1,5 @@
 %define include_holidayparser	0
-%define old_menu		0
 %{?_with_holidayparser: %{expand: %%global include_holidayparser 1}}
-%{?_with_oldmenu: %{expand: %%global old_menu 1}}
 
 %define	name	dayplanner
 %define	version [DAYPLANNER_VERSION]
@@ -75,16 +73,6 @@ install -m644 ./art/dayplanner_HC48.png -D $RPM_BUILD_ROOT%{_liconsdir}/dayplann
 
 # Menu
 mkdir -p $RPM_BUILD_ROOT%{_menudir}
-%if %old_menu
-cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
-?package(%{name}):command="%{_bindir}/dayplanner" \
-	icon="dayplanner.png" \
-	needs="x11" \
-	section="Office/Time Management" \
-	title="Day planner" \
-	longtitle="An easy to use graphical day planner"
-EOF
-%else
 cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 ?package(%{name}):command="%{_bindir}/dayplanner" \
 	icon="dayplanner.png" \
@@ -94,20 +82,8 @@ cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 	longtitle="An easy to use graphical day planner" \
 	xdg="true"
 EOF
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/applications
-cat << EOF > $RPM_BUILD_ROOT%{_datadir}/applications/%{name}.desktop
-[DESKTOP ENTRY]
-Name=Day planner
-Name[nb]=Dagsplanlegger
-Name[no]=Dagsplanlegger
-Name[nn]=Dagsplanleggar
-StartupNotify=true
-Terminal=False
-Type=Application
-Exec=%{_bindir}/dayplanner
-Categories=X-MandrivaLinux-Office-TimeManagement;Office;Calendar;GTK;GNOME;
-EOF
-%endif
+./devel-tools/GenDesktop %{_bindir}
+install -m644 ./doc/%{name}.desktop -D $RPM_BUILD_ROOT%{_datadir}/applications/%{name}.desktop
 
 ./devel-tools/BuildLocale $RPM_BUILD_ROOT/%{_datadir}/locale/
 
@@ -135,12 +111,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_iconsdir}/dayplanner*.png
 %{_miconsdir}/dayplanner*.png
 %{_liconsdir}/dayplanner*.png
-%if %old_menu
-%{_menudir}/%{name}
-%else
 %{_menudir}/%{name}
 %{_datadir}/applications/%{name}.desktop
-%endif
 
 %files tools
 %{_bindir}/dayplanner-commander
