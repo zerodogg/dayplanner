@@ -39,10 +39,17 @@ sub SetLocale {
 
 my %Languages;
 
-my($BinDir, $DPDir) = @ARGV;
+my($BinDir, $IconsDir) = @ARGV;
+my $Icon;
 
-unless(defined($BinDir) and defined($DPDir)) {
-	die("Usage: $0 [DIRECTORY CONTAINING THE dayplanner BINARY] [DIRECTORY CONTAINING THE DAY PLANNER DATA (holidays, art)]\n");
+unless(defined($BinDir)) {
+	die("Usage: $0 [DIRECTORY CONTAINING THE dayplanner BINARY] [ICONS DIR]\n The binary dir is mandatory, icons dir optional.");
+}
+
+if(defined($IconsDir)) {
+	$Icon = "$IconsDir/dayplanner_48.png";
+} else {
+	$Icon = "dayplanner_48.png";
 }
 
 # Set dirs
@@ -75,7 +82,7 @@ binmode($Desktop, ':utf8');
 print $Desktop "[Desktop Entry]\n";
 print $Desktop "Categories=X-MandrivaLinux-Office-TimeManagement;Office;Calendar;GTK;GNOME;\n";
 print $Desktop "Exec=$BinDir/dayplanner\n";
-print $Desktop "Icon=$DPDir/art/dayplanner_48.png\n";
+print $Desktop "Icon=$Icon\n";
 print $Desktop "Name=Day planner\n";
 print $Desktop "StartupNotify=true\n";
 print $Desktop "Terminal=false\n";
