@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+# GenDesktop
+# Generates the .desktop file for Day Planner
+# $Id$
+# Copyright (C) Eskild Hustvedt 2006
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;			# Force strict coding
+use warnings;			# Tell perl to warn about things
+use Locale::gettext;		# Allow the program to be translated
+use FindBin;			# So that we can detect stuff at runtime
+use POSIX;
+use utf8;
+
+sub SetLocale {
+	foreach(keys(%ENV)) {
+		next unless /^(LC|LANG)/;
+		$ENV{$_} = $_[0];
+	}
+	$ENV{LC_ALL} = $_[0];
+	setlocale(LC_ALL, "" );
+	textdomain("dayplanner");
+	bindtextdomain("dayplanner", "./");
+	return(Locale::gettext->domain("dayplanner"));
+}
+
+my %Languages;
+
+my($BinDir, $DPDir) = @ARGV;
+
+unless(defined($BinDir) and defined($DPDir)) {
+	die("Usage: $0 [DIRECTORY CONTAINING THE dayplanner BINARY] [DIRECTORY CONTAINING THE DAY PLANNER DATA (holidays, art)]\n");
+}
+
+# Set dirs
+chdir($FindBin::RealBin);
+chdir("..");
+
+print "Running ./devel-tools/BuildLocale\n";
+system("./devel-tools/BuildLocale");
+
+print "Generating .desktop...:\n";
+chdir("locale");
+foreach(<*>) {
+	if(-d $_ and not -l $_) {
+		my $Gettext = SetLocale($_);
+		$Languages{$_} = $Gettext->get("Day Planner");
+		if($Languages{$_} eq "Day Planner") {
+			delete($Languages{$_});
+			print "$_: No valid translation of \"Day Planner\" found\n";
+		} else {
+			print "$_: OK\n";
+		}
+	}
+}
+# Create the file
+chdir("..");
+print "Writing...";
+open(my $Desktop, ">", "./doc/dayplanner.desktop");
+print ".";
+binmode($Desktop, ':utf8');
+print $Desktop "[Desktop Entry]\n";
+print $Desktop "Categories=X-MandrivaLinux-Office-TimeManagement;Office;Calendar;GTK;GNOME;\n";
+print $Desktop "Exec=$BinDir/dayplanner\n";
+print $Desktop "Icon=$DPDir/art/dayplanner_48.png\n";
+print $Desktop "Name=Day planner\n";
+print $Desktop "StartupNotify=true\n";
+print $Desktop "Terminal=false\n";
+print $Desktop "Type=Application\n";
+print ".";
+print $Desktop "Name[$_]=$Languages{$_}\n" foreach(keys(%Languages));
+print ".";
+close($Desktop);
+print "done\n";
+print "Wrote ./doc/dayplanner.desktop\n";
