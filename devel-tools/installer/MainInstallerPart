@@ -206,6 +206,7 @@ if(-d "$ENV{HOME}/Desktop") {
 	print DESKTOP "Type=Application\n";
 	print DESKTOP "Name[nb]=Dagsplanlegger\n";
 	print DESKTOP "Name[no]=Dagsplanlegger\n";
+	print DESKTOP "Name[nn]=Dagsplanleggar\n";
 	close(DESKTOP);
 }
 ProgressMade($TotalSteps, 8, $ProgressWin);
