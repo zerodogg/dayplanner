@@ -1341,24 +1341,23 @@ sub iCal_GenDateTime {
 # Usage: CalendarDelete(year,month,day,time);
 # TODO: Rewrite to simplify for the new data system
 sub CalendarDelete {
-	warn("CalendarDelete: STUB");
-=cut
-	my ($EventYear,$EventMonth,$EventDay,$EventTime) = @_;
-	unless(CalendarDefined(@_)) {
-		DPIntWarn("CalendarDelete: Unable to find an event at $EventYear/$EventMonth/$EventDay/$EventTime");
-		return(undef);
+	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventUID) = @_;
+	#unless(CalendarDefined(@_)) {
+	#	DPIntWarn("CalendarDelete: Unable to find an event at $EventYear/$EventMonth/$EventDay/$EventTime");
+	#	return(undef);
+	#}
+	# FIXME: We need to regenerate the hash properly - this is hacky and doesn't do what's proper
+	# 	for recurring events.
+	my $Number = 0;
+	foreach(@{$InternalCalendar{$EventYear}{$EventMonth}{$EventDay}{$EventTime}}) {
+		if($_ eq $EventUID) {
+			splice(@{$InternalCalendar{$EventYear}{$EventMonth}{$EventDay}{$EventTime}}, $Number);
+		} else {
+			$Number++;
+		}
 	}
-	delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay}{$EventTime});
-		unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}{$EventDay}})) {
-			delete($CalendarContents{$EventYear}{$EventMonth}{$EventDay});
-				unless (keys(%{$CalendarContents{$EventYear}{$EventMonth}})) {
-					delete($CalendarContents{$EventYear}{$EventMonth});
-						unless(keys(%{$CalendarContents{$EventYear}})) {
-							delete($CalendarContents{$EventYear});
-						}
-			}
-	}
-=cut
+	delete($RawCalendar{$EventUID});
+	UpdatedData();
 }
 
 # Purpose: Delete keys from %BirthdayContents, recusively if needed
@@ -3633,19 +3632,7 @@ sub DeleteEvent {
 	my $EventSummary = $EventlistWidget->{data}[$Selected][2];
 
 	if($Type eq 'normal') {
-		if (defined($EventTime)) {
-			CalendarDelete($EventYear,$EventMonth,$EventDay,AMPM_To24($EventTime));
-			UpdatedData();
-		} else {
-			DPIntWarn("DeleteEvent() didn't find the event time of the event to be deleted");
-		}
-	} elsif ($Type eq 'bday') {
-		if (defined($EventSummary)) {
-			BirthdayDelete($EventMonth, $EventDay, GetRealBirthdayName($EventSummary));
-			UpdatedData();
-		} else {
-			DPIntWarn("DeleteEvent() didn't find the name of the person whose birthday it was suppose to delete");
-		}
+		CalendarDelete($EventYear,$EventMonth,$EventDay,AMPM_To24($EventTime),$EventUID);
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf($Gettext->get("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	} else {
@@ -4748,6 +4735,10 @@ sub PopulateEventList {
 	if (defined($InternalCalendar{$Year}) and defined($InternalCalendar{$Year}{$Month}) and defined($InternalCalendar{$Year}{$Month}{$Day})) {
 		foreach my $Time (sort keys %{$InternalCalendar{$Year}{$Month}{$Day}}) {
 			foreach my $UID (@{$InternalCalendar{$Year}{$Month}{$Day}{$Time}}) {
+				unless(defined($RawCalendar{$UID})) {
+					DPIntWarn("UID $UID missing from \%RawCalendar! Skipping.");
+					next;
+				}
 				# Don't add Time = DAY.
 				if($Time eq 'DAY') {
 					$Time = "";
@@ -4818,6 +4809,8 @@ sub DrawEventlist {
 			$ToolbarEditButton->set_sensitive(1);
 			$MenuEditEntry->set_sensitive(1);
 			$MenuDeleteEntry->set_sensitive(1);
+			my $EventUID = $EventlistWidget->{data}[$Selected][0];
+			print("DEBUG: $EventUID selected\n");
 		}
 	});
 	$EventlistWidget->signal_connect('button-release-event' => sub {
