@@ -29,7 +29,7 @@ my $ProgressWin;
 my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner";
 
 my $AutoInstaller;
-my $TotalSteps = 12;
+my $TotalSteps = 9;
 
 # Purpose: Create a progresswindow
 # Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
@@ -188,17 +188,15 @@ ProgressMade($TotalSteps, 3, $ProgressWin);
 
 my @BINLINKS;
 
-my $BinDirCount;
 foreach(@BINDIRS) {
-	$BinDirCount++;
 	if(-e $_ and -d $_ and -w $_) {
 		symlink("$InstallDirectory/dayplanner", "$_/dayplanner");
 		symlink("$InstallDirectory/dayplanner-daemon", "$_/dayplanner-daemon");
 		symlink("$InstallDirectory/dayplanner-notifier", "$_/dayplanner-notifier");
 		push(@BINLINKS, $_)
 	}
-	ProgressMade($TotalSteps, $TotalSteps + 2, $ProgressWin);
 }
+ProgressMade($TotalSteps, 4, $ProgressWin);
 # Write uninstall script
 open(UNINSTALL, ">$InstallDirectory/uninstall.sh");
 print UNINSTALL "#!/bin/sh\n";
@@ -220,21 +218,21 @@ print UNINSTALL "echo \"Day planner has been uninstalled.\"\n";
 close(UNINSTALL);
 SystemChild("chmod +x $InstallDirectory/uninstall.sh");
 
-ProgressMade($TotalSteps, 8, $ProgressWin);
+ProgressMade($TotalSteps, 5, $ProgressWin);
 
 # Write the XDG-style menu item
 if(-e "$InstallDirectory/doc/dayplanner.desktop") {
 	SystemChild("perl","-pi","-e","s#DAYPLANNER_INST_DIR#$InstallDirectory#g","$InstallDirectory/doc/dayplanner.desktop");
-	ProgressMade($TotalSteps, 9, $ProgressWin);
+	ProgressMade($TotalSteps, 6, $ProgressWin);
 	mkpath("$ENV{HOME}/.local/share/applications/");
 	copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/.local/share/applications/dayplanner.desktop");
-	ProgressMade($TotalSteps, 10, $ProgressWin);
+	ProgressMade($TotalSteps, 7, $ProgressWin);
 	if(-d "$ENV{HOME}/Desktop/") {
 		copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/Desktop/");
 	}
 }
 
-ProgressMade($TotalSteps, 11, $ProgressWin);
+ProgressMade($TotalSteps, 8, $ProgressWin);
 # Write Debian-style menu item
 if(InPath("update-menus")) {
 	mkdir("$ENV{HOME}/.menu/") unless -d "$ENV{HOME}/.menu/";
@@ -245,7 +243,7 @@ if(InPath("update-menus")) {
 	# SystemChild().
 	system("update-menus &>/dev/null");
 }
-ProgressMade($TotalSteps, 12, $ProgressWin);
+ProgressMade($TotalSteps, 9, $ProgressWin);
 
 print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
