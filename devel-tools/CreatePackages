@@ -238,8 +238,11 @@ if($BuildInstaller) {
 		print ".";
 	}
 	print "done\n";
-	print " Running tools/BuildLocale...";
+	print " Running devel-tools/BuildLocale...";
 	system("$tempdir/installer/dayplanner-data/devel-tools/BuildLocale > /dev/null");
+	print "done\n";
+	print " Running devel-tools/GenDesktop...";
+	system("$tempdir/installer/dayplanner-data/devel-tools/GenDesktop > /dev/null");
 	print "done\n";
 	# Find makeself
 	print " Detecting makeself...";
