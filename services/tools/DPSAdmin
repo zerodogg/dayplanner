@@ -177,12 +177,32 @@ sub DaemonReloadUsers {
 # Usage: DaemonUptime();
 sub DaemonUptime {
 	my $Reply = SendDaemonCommand("UPTIME");
-	if($Reply eq "REFUSED") {
-		print "Permission denied.\n";
+	if ( defined($_[0]) and $_[0] eq "SILENT" ) {
+		print "Daemon uptime: $Reply\n" if not $Reply eq "REFUSED";
 	} else {
-		print "Uptime: $Reply\n";
+		if($Reply eq "REFUSED") {
+			print "Permission denied.\n";
+		} else {
+			print "Uptime: $Reply\n";
+		}
+		WaitContinue();
 	}
-	WaitContinue();
+}
+
+# Purpose: Display the version of the daemon
+# Usage: DaemonVersion();
+sub DaemonVersion {
+	my $Reply = SendDaemonCommand("VERSION");
+	if ( defined($_[0]) and $_[0] eq "SILENT" ) {
+		print "Daemon version: $Reply\n" if not $Reply eq "REFUSED";
+	} else {
+		if($Reply eq "REFUSED") {
+			print "Permission denied.\n";
+		} else {
+			print "Version: $Reply\n";
+		}
+		WaitContinue();
+	}
 }
 
 # Purpose: Print prompt, get input and validate the input
@@ -535,7 +555,10 @@ sub MainMenu {
 	LoadData();
 	while(1) {
 		ClearScreen();
-		print "Welcome to the day planner services administration console\n\n";
+		print "Welcome to the day planner services administration console\n";
+		DaemonUptime("SILENT");
+		DaemonVersion("SILENT");
+		print "\n";
 		print "Menu:\n";
 		print "A - Add a new user\nD - Delete a user\n";
 		print "E - Edit a user\n";
@@ -545,7 +568,7 @@ sub MainMenu {
 		print "R - Tell the day planner services daemon to reload the userlist\n";
 		print "U - Display the daemon uptime\n";
 		print "X - View the expert menu\n";
-		print "Q - Quit and save\n";
+		print "Q - Quit\n";
 		my $Input = GetInput("Selection: ", "ADECVIQRUX");
 		if($Input =~ /q/i) {
 			exit(0);
