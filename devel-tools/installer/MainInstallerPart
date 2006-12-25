@@ -21,11 +21,15 @@
 use strict;
 use warnings;
 use Gtk2;
+use File::Copy;
+use File::Path;
+use POSIX ":sys_wait_h";
 
 my $ProgressWin;
 my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner";
 
-my $TotalSteps = 9;
+my $AutoInstaller;
+my $TotalSteps = 12;
 
 # Purpose: Create a progresswindow
 # Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
@@ -62,9 +66,10 @@ sub DPCreateProgressWin {
 }
 
 # Purpose: Set the progress of a progressbar
-# Usage: ProgressMade(FUNCTIONS TO PERFORM, FUNCTIONS PERFORMED, $ProgressWindowHashref, NewText?);
+# Usage: ProgressMade(FUNCTIONS TO PERFORM, FUNCTIONS PERFORMED, $ProgressWindowHashref, NewText?, No_Dot?);
 sub ProgressMade {
-	my ($ToPerform, $Performed, $ProgressHash,$Text) = @_;
+	my ($ToPerform, $Performed, $ProgressHash,$Text,$NoDot) = @_;
+	print "." unless(defined($NoDot));
 	return unless defined($ProgressHash);
 	my $Bar = $ProgressHash->{ProgressBar};
 	my $Result = sprintf("%d", ($Performed / $ToPerform) * 100);
@@ -80,7 +85,32 @@ sub ProgressMade {
 	Gtk2->main_iteration while Gtk2->events_pending;
 	Gtk2->main_iteration while Gtk2->events_pending;
 	Gtk2->main_iteration while Gtk2->events_pending;
+	Gtk2->main_iteration_do(0);
+	Gtk2->main_iteration_do(0);
+	Gtk2->main_iteration_do(0);
 	return(1, $Result);
+}
+
+# Purpose: Run a system() in a child
+# Usage: SystemChild(OPTIONS);
+#  OPTIONS are identical to system();
+sub SystemChild {
+	my $PID = fork;
+	my $Return;
+	if($PID) {
+		if($AutoInstaller) {
+			while(not waitpid($PID, WNOHANG)) {
+				Gtk2->main_iteration while Gtk2->events_pending;
+				Gtk2->main_iteration_do(0);
+			}
+		} else {
+			waitpid($PID,0);
+		}
+		$Return = $?;
+	} else {
+		exec(@_);
+	}
+	return($Return);
 }
 
 $| = 1;
@@ -108,6 +138,7 @@ sub InPath {
 
 if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	print "Using automatic install - skipping prompts\n";
+	$AutoInstaller = 1;
 } else {
 	Gtk2->init();
 	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
@@ -122,30 +153,29 @@ if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 
 	$ProgressWin = DPCreateProgressWin("Installing", "Installing Day Planner...", 0);
 }
-
-
 if(-d $InstallDirectory) {
 	print "Found old install, running uninstaller first...\n";
+	Gtk2->main_iteration_do(0) foreach(1..15);;
 	if(-e "$InstallDirectory/uninstall.sh") {
-		system("sh '$InstallDirectory/uninstall.sh'") and print "Uninstaller failed, expect trouble.\n";
+		SystemChild("sh '$InstallDirectory/uninstall.sh'") and print "Uninstaller failed, expect trouble.\n";
 	} else {
 		print "Failed to run uninstaller, expect trouble.\n";
 	}
 }
+ProgressMade($TotalSteps, 1, $ProgressWin,undef,1);
 
 print "Installing...";
-system("mkdir -p $InstallDirectory");
+SystemChild("mkdir -p $InstallDirectory");
 
 if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS} eq 'TRUE') {
 	# When using the local installer we might get svn files which will make cp display
 	# harmless errors. Setting DAYPLANNER_CP_SILENTERRORS to TRUE silences cp
-	system("cp -r $InstallerData/* $InstallDirectory/ &>/dev/null");
+	SystemChild("cp -r $InstallerData/* $InstallDirectory/ &>/dev/null");
 } else {
-	system("cp -r $InstallerData/* $InstallDirectory/");
+	SystemChild("cp -r $InstallerData/* $InstallDirectory/");
 }
 
-print ".";
-ProgressMade($TotalSteps, 1, $ProgressWin);
+ProgressMade($TotalSteps, 2, $ProgressWin);
 
 my @BINDIRS = (
 	"$ENV{HOME}/bin",
@@ -154,8 +184,7 @@ my @BINDIRS = (
 	"/usr/local/bin",
 );
 
-print ".";
-ProgressMade($TotalSteps, 2, $ProgressWin);
+ProgressMade($TotalSteps, 3, $ProgressWin);
 
 my @BINLINKS;
 
@@ -184,40 +213,39 @@ foreach(@BINLINKS) {
 print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/dayplanner.menu && update-menus &> /dev/null\n";
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
+print UNINSTALL "echo -n \".\"\n";
+print UNINSTALL '[ -e "$HOME/.local/share/applications/dayplanner.desktop" ] && rm -f  "$HOME/.local/share/applications/dayplanner.desktop"' . "\n";
 print UNINSTALL "echo \"done\"\n";
 print UNINSTALL "echo \"Day planner has been uninstalled.\"\n";
 close(UNINSTALL);
-system("chmod +x $InstallDirectory/uninstall.sh");
+SystemChild("chmod +x $InstallDirectory/uninstall.sh");
 
-print ".";
-ProgressMade($TotalSteps, 7, $ProgressWin);
-
-# TODO: xdg menu support and xdg (portland-project-style) desktop icon support
-
-# Write desktop item
-if(-d "$ENV{HOME}/Desktop") {
-	open(DESKTOP, ">$ENV{HOME}/Desktop/dayplanner.desktop");
-	print DESKTOP "[Desktop Entry]\n";
-	print DESKTOP "Exec=$InstallDirectory/dayplanner\n";
-	print DESKTOP "Icon=$InstallDirectory/art/dayplanner_48.png\n";
-	print DESKTOP "Name=Day planner\n";
-	print DESKTOP "StartupNotify=true\n";
-	print DESKTOP "Terminal=false\n";
-	print DESKTOP "Type=Application\n";
-	print DESKTOP "Name[nb]=Dagsplanlegger\n";
-	print DESKTOP "Name[no]=Dagsplanlegger\n";
-	close(DESKTOP);
-}
 ProgressMade($TotalSteps, 8, $ProgressWin);
-# Write menu item
+
+# Write the XDG-style menu item
+if(-e "$InstallDirectory/doc/dayplanner.desktop") {
+	SystemChild("perl","-pi","-e","s#DAYPLANNER_INST_DIR#$InstallDirectory#g","$InstallDirectory/doc/dayplanner.desktop");
+	ProgressMade($TotalSteps, 9, $ProgressWin);
+	mkpath("$ENV{HOME}/.local/share/applications/");
+	copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/.local/share/applications/dayplanner.desktop");
+	ProgressMade($TotalSteps, 10, $ProgressWin);
+	if(-d "$ENV{HOME}/Desktop/") {
+		copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/Desktop/");
+	}
+}
+
+ProgressMade($TotalSteps, 11, $ProgressWin);
+# Write Debian-style menu item
 if(InPath("update-menus")) {
 	mkdir("$ENV{HOME}/.menu/") unless -d "$ENV{HOME}/.menu/";
 	open(MENU, ">$ENV{HOME}/.menu/dayplanner.menu");
 	print MENU "?package(%{name}):command=\"$InstallDirectory/dayplanner\"  icon=\"$InstallDirectory/art/dayplanner_48.png\"         needs=\"x11\"         section=\"Office/Time Management\"         title=\"Day planner\"         longtitle=\"An easy to use graphical day planner\"\n";
 	close(MENU);
+	# update-menus doesn't block, so it does more harm than good to use
+	# SystemChild().
 	system("update-menus &>/dev/null");
 }
-ProgressMade($TotalSteps, 9, $ProgressWin);
+ProgressMade($TotalSteps, 12, $ProgressWin);
 
 print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
