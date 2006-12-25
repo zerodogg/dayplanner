@@ -150,7 +150,7 @@ print $HtAccess "AuthType Basic\nAuthName 'Day planner for $User'\nAuthUserFile 
 close($HtAccess);
 my $HtPasswd;
 open($HtPasswd, ">", "$Dir/.htpasswd");
-print $HtPasswd "$User:" . crypt($Password,"123");	# TODO: Proper salt
+print $HtPasswd "$User:" . crypt($Password,rand(200000));
 close($HtPasswd);
 
 # Create the temp dir
@@ -173,5 +173,5 @@ open(my $TempHtml, ">", "$Dir/index.html");
 print $TempHtml "HTML is currently being generated...";
 close($TempHtml);
 system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --exporthtml $Dir/");
-system("rm -rf $Dir/.tmp");
+system("rm -rf $Dir/.tmp");		# TODO: Don't use rm
 UnlockFile("$Dir/.DP_GenHTML.lock");
