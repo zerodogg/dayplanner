@@ -4,19 +4,9 @@
 echo -n "Building po/dayplanner.pot..."
 # Get our current year
 YEAR="`date +%Y`"
-# Copy dayplanner to a temporary file
-TEMPDIR="./dayplanner_$$_TEMP_$RANDOM-$RANDOM-buildpot.tempdir"
-if ! mkdir $TEMPDIR; then
-	exit 1
-fi
-cp -f ./dayplanner ./dayplanner-notifier $TEMPDIR/
-cd $TEMPDIR
-echo -n "."
-# Change gettext stuff to something xgettext understands
-perl -pi -e 's#\$Gettext->get#gettext#g;' ./dayplanner ./dayplanner-notifier
 echo -n "."
 # Create the pot-file
-xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ../po/dayplanner.pot -k=Gettext -k='get' -d dayplanner --language perl ./dayplanner ./dayplanner-notifier
+xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ../po/dayplanner.pot --keyword --keyword=DP_gettext -d dayplanner --add-comments="TRANSLATORS" --language perl ./dayplanner ./dayplanner-notifier
 rm -f ./dayplanner
 echo -n "."
 # Fix the headers using perl
