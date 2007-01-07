@@ -6,13 +6,12 @@ echo -n "Building po/dayplanner.pot..."
 YEAR="`date +%Y`"
 echo -n "."
 # Create the pot-file
-xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ../po/dayplanner.pot --keyword --keyword=DP_gettext -d dayplanner --add-comments="TRANSLATORS" --language perl ./dayplanner ./dayplanner-notifier
-rm -f ./dayplanner
+xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ./po/dayplanner.pot --keyword --keyword=DP_gettext -d dayplanner --add-comments="TRANSLATORS" --language perl ./dayplanner ./dayplanner-notifier
 echo -n "."
 # Fix the headers using perl
 perl -pi -e "s%^# SOME DESCRIPTIVE TITLE.%# PO file for Day Planner%g;
 s%^# This file is distributed under the same license as the PACKAGE package.%# This file is distributed under the GNU General Public License\\n# as published by the Free Software Foundation; either version 2 of the license\\n# or (at your option) any later version (the same license as Day Planner)\\n#%g;
-s%^(#.+) YEAR %\$1 $YEAR %g" ../po/dayplanner.pot
+s%^(#.+) YEAR %\$1 $YEAR %g" ./po/dayplanner.pot
 echo -n "."
 cd ..
 rm -rf $TEMPDIR
