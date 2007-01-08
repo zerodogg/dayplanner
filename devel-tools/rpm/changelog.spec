@@ -1,4 +1,7 @@
 %changelog
+* Mon Jan 08 2007 Eskild Hustvedt <eskild@mandriva.org> 0.4.1-1mdv
+- New version 0.4.1 (see NEWS for changelog)
+
 * Sun Jan 07 2007 Eskild Hustvedt <eskild@mandriva.org> 0.4-1mdv
 - New version 0.4 (see NEWS for changelog)
 
