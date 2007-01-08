@@ -1,6 +1,13 @@
 Day planner version history
 **************************
 
+Version 0.4.1 (Released on the 8th of January 2007)
+------------------------
+
+* Client (dayplanner)
+- Fixed an issue where it would crash on first startup if it couldn't
+  find any data to import.
+
 Version 0.4 (Released on the 7th of January 2007)
 ------------------------
 
