@@ -3037,7 +3037,6 @@ sub ImportDataFromProgram {
 	if(not $Programs{ImportPossible}) {
 		unless($FirstTime) {
 			DPInfo(DP_gettext("Could not detect data from any application to import."));
-		} else {
 			$MainWindow->show();
 		}
 		return(0);
