@@ -18,13 +18,13 @@ use POSIX;
 use Data::Dumper;
 
 # Exported functions
-our @EXPORT = qw(iCal_GetSafe iCal_UnSafe iCal_UID iCal_SaveData iCal_ParseData iCal_LoadFile iCal_ParseDateTime iCal_GenDateTime GenerateCalendar);
+our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime);
 
 # Version number
 my $VERSION;
 $VERSION = 0.1;
 
-# - User callable functions
+# - Public methods
 
 # Purpose: Create a new object, call _LoadFile and  _parse_file on it
 # Usage: my $object = Date::HolidayParser->new(/FILE/);
@@ -221,23 +221,37 @@ sub exists {
 	return(0);
 }
 
-# - Internal functions
-
-# Purpose: Make changes to the raw calendar (append or change)
-# Usage: $self->_ChangeEntry(UID,%Hash);
-sub _ChangeEntry {
-	my($self,$UID,%Hash) = @_;
-	foreach my $key (keys(%Hash)) {
-		$self->{RawCalendar}{$UID}{$key} = _GetSafe($Hash{$key});
+# Purpose: Add another file
+# Usage: $object->addfile(FILE);
+sub addfile {
+	my ($self,$File);
+	if(ref($File)) {	# If we got a reference
+		$self->{FILETYPE} = "ref";
+		if(not ref($File) eq "ARRAY") {
+			carp("Supplied a reference, but the reference is not a ARRAYREF.");
+		}
+	} else {		# If we don't have a reference, treat it as a scalar
+				# filepath argument
+		unless(defined($File)) {
+			carp("Needs an option: path to the iCalendar file");
+			return(undef);
+		}
+		unless(-e $File) {
+			carp("\"$File\": does not exist");
+			return(undef);
+		}
+		$self->{FILETYPE} = "file";
+		$self->{FILE} = $File;
 	}
-	return(1);
+	return($self->_LoadFile($File));
 }
 
+# - Public functions
 
 # Purpose: Generate an iCalendar date-time from multiple values
-# Usage: my $iCalDateTime = _GenDateTime(YEAR, MONTH, DAY, TIME);
+# Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
 # TODO: Time should probably not be enforced
-sub _GenDateTime {
+sub iCal_GenDateTime {
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
 	my $iCalMonth = AppendZero($Month);
@@ -253,7 +267,7 @@ sub _GenDateTime {
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
 # TODO: Handle VALUE=DATE:YYYYMMDD 
-sub _ParseDateTime {
+sub iCal_ParseDateTime {
 	my $Year = $_[0];
 	my $Month = $_[0];
 	my $Day = $_[0];
@@ -275,6 +289,18 @@ sub _ParseDateTime {
 		$Minutes = 0;
 	}
 	return($Year,$Month,$Day,_AppendZero($Hour) . ":" . _AppendZero($Minutes));
+}
+
+# - Internal functions
+
+# Purpose: Make changes to the raw calendar (append or change)
+# Usage: $self->_ChangeEntry(UID,%Hash);
+sub _ChangeEntry {
+	my($self,$UID,%Hash) = @_;
+	foreach my $key (keys(%Hash)) {
+		$self->{RawCalendar}{$UID}{$key} = _GetSafe($Hash{$key});
+	}
+	return(1);
 }
 
 # Purpose: Output warning
@@ -314,7 +340,7 @@ sub _LoadFile {
 		# FIXME: Don't blindly assume $Time is set.
 		# Assign an UID if it is missing
 		unless($Current->{UID}) {
-			my ($Year, $Month, $Day, $Time) = _ParseDateTime($Current->{'DTSTART'});
+			my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 			$Year =~ s/^0*//;
 			$Month =~ s/^0*//;
 			$Day =~ s/^0*//;
@@ -324,10 +350,8 @@ sub _LoadFile {
 		}
 		delete($Current->{UID});
 		if(defined($self->{RawCalendar}{$UID})) {
-			# FIXME: This WILL produce false warnings
-			_WarnOut("Duplicate UID detected! Reassigning.");
-			# We try extra hard to get a unique one here
-			$UID = _UID(time() . int(rand(10000)) . int(rand(10000)) . int(rand(10000)));
+			# Just overwrite it with this one
+			$self->{RawCalendar}{$UID} = {};
 		}
 		# Unsafe various values if needed
 		foreach(qw(X-DP-BIRTHDAYNAME SUMMARY DESCRIPTION)) {
@@ -475,7 +499,7 @@ sub _GenerateCalendar {
 	$self->{OrderedCalendar}{$EventYear} = {};
 	foreach my $UID (keys(%{$self->{RawCalendar}})) {
 		my $Current = $self->{RawCalendar}{$UID};
-		my ($Year, $Month, $Day, $Time) = _ParseDateTime($Current->{'DTSTART'});
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
@@ -528,9 +552,10 @@ TODO: FIX THIS
 
 =head1 EXPORT
 
-This module doesn't export anything.
+This module doesn't export anything by default.
+You can tell it to export the iCal_ParseDateTime and iCal_GenDateTime functions.
 
-=head1 FUNCTIONS
+=head1 METHODS
 
 =head2 $object = DP::iCalendar->new(FILE OR REF);
 
@@ -590,6 +615,24 @@ and makes changes to an existing entry instead of adding a new one.
 =head2 $object->exists(UID);
 
 Returns 1 if the supplied UID exists. 0 if it doesn't.
+
+=head2 $object->addfile(FILE);
+
+Just like ->new except it adds the data to the current object
+instead of creating a new one. This does NOT change the file used
+for functions such as ->write();.
+
+=head1 FUNCTIONS
+
+=head2 my($Year,$Month,$Day,$Time) = iCal_ParseDateTime(DATE TIME);
+
+Parses the DATETIME value supplied. Can be used for parsing entries
+such as DTSTART.
+
+=head2 my $DATETIME = iCal_GenDateTime(Year,Month,Day,Time);
+
+Generates an iCalendar DATETIME value from the date supplied.
+Can be used for creating entries such as DTSTART.
 
 =head1 ICALENDAR HASH
 
