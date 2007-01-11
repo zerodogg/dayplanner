@@ -59,6 +59,24 @@ sub new {
 	return($self);
 }
 
+# Purpose: Get information for the supplied month (list of days there are events)
+# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
+sub get_monthinfo {
+	my($self, $Year, $Month) = @_;	# TODO: verify that they are set
+	if(not defined($self->{OrderedCalendar}{$Year})) {
+		# Generate the calendar for this year
+		$self->_GenerateCalendar($Year);
+	}
+	my @DAYS;
+	if(defined($self->{OrderedCalendar}{$Year}{$Month})) {
+		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}})) {
+				push(@DAYS, $_);
+		}
+		return(\@DAYS) if @DAYS;
+	}
+	return(undef);
+}
+
 # Purpose: Get information for the supplied date (list of times in the day there are events)
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
 sub get_dateinfo {
@@ -92,6 +110,17 @@ sub get_timeinfo {
 		}
 		return(\@UIDs) if @UIDs;
 	}
+	return(undef);
+}
+
+# Purpose: Get information for a supplied UID
+# Usage: my $Info = $object->get_info(UID);
+sub get_info {
+	my($self,$UID) = @_;
+	if(defined($self->{RawCalendar}{$UID})) {
+		return($self->{RawCalendar}{$UID});
+	}
+	carp("get_info got invalid UID");
 	return(undef);
 }
 
@@ -129,11 +158,11 @@ sub get_rawdata {
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$self->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
 
-	foreach my $UID (keys(%main::RawCalendar)) {
+	foreach my $UID (keys(%{$self->{RawCalendar}})) {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
-		foreach my $setting (keys(%{$main::RawCalendar{$UID}})) {
-			$iCalendar .= "$setting:" . iCal_GetSafe($main::RawCalendar{$UID}{$setting}) . "\r\n";
+		foreach my $setting (keys(%{$self->{RawCalendar}{$UID}})) {
+			$iCalendar .= "$setting:" . _GetSafe(${$self->{RawCalendar}}{$UID}{$setting}) . "\r\n";
 		}
 		$iCalendar .= "END:VEVENT\r\n";
 	}
@@ -165,13 +194,45 @@ sub add {
 		return(undef);
 	}
 	my $UID = _UID($Hash{DTSTART});
+	$self->_ChangeEntry($UID,%Hash);
+	return(1);
+}
+
+# Purpose: Change an iCalendar entry
+# Usage: $object->change(%EntryHash);
+sub change {
+	my ($self, $UID, %Hash) = @_;
+	unless(defined($Hash{DTSTART})) {
+		carp("Refusing to change a iCalendar entry without a DTSTART.");
+		return(undef);
+	}
+	$self->_ChangeEntry($UID,%Hash);
+	return(1);
+}
+
+# Purpose: Check if an UID exists
+# Usage: $object->exists($UID);
+sub exists {
+	my($self,$UID) = @_;
+	if(defined($self->{RawCalendar}{$UID})) {
+		return(1);
+	}
+	delete($self->{RawCalendar}{$UID});
+	return(0);
+}
+
+# - Internal functions
+
+# Purpose: Make changes to the raw calendar (append or change)
+# Usage: $self->_ChangeEntry(UID,%Hash);
+sub _ChangeEntry {
+	my($self,$UID,%Hash) = @_;
 	foreach my $key (keys(%Hash)) {
 		$self->{RawCalendar}{$UID}{$key} = _GetSafe($Hash{$key});
 	}
 	return(1);
 }
 
-# - Internal functions
 
 # Purpose: Generate an iCalendar date-time from multiple values
 # Usage: my $iCalDateTime = _GenDateTime(YEAR, MONTH, DAY, TIME);
@@ -479,6 +540,11 @@ path to a file containing iCalendar data, or an arrayref containing
 iCalendar data (one line per entry in the array). If it is the path
 to a file it must be a fully qualified path.
 
+=head2 $DayArray = $object->get_monthinfo(YEAR,MONTH);
+
+Returns a reference to an array containing a list of days in this
+month that contains events, or undef if there are no events.
+
 =head2 $TimeArray = $object->get_dateinfo(YEAR,MONTH,DAY);
 
 Returns a reference to an array containing a list of times on this day
@@ -515,6 +581,15 @@ Delete the UID supplied from the calendar. Returns true on success.
 Add the contents of the ICALENDAR HASH to the calendar. See the section
 ICALENDAR HASH for information on the syntax. An UID is automagically
 assigned.
+
+=head2 $object->change(UID, ICALENDAR HASH);
+
+The same as ->add, except this takes an additional UID argument
+and makes changes to an existing entry instead of adding a new one.
+
+=head2 $object->exists(UID);
+
+Returns 1 if the supplied UID exists. 0 if it doesn't.
 
 =head1 ICALENDAR HASH
 
