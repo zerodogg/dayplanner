@@ -1,0 +1,9 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/DP-iCalendar.t
+lib/DP/iCalendar.pm
+COPYING
+COPYING.gpl
+COPYING.artistic
