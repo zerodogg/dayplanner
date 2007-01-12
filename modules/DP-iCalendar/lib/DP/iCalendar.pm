@@ -429,7 +429,6 @@ sub _LoadFile {
 		unless(defined($Current->{SUMMARY})) {
 			_WarnOut("Dangerous: SUMMARY missing from iCalendar import. Dumping data:");
 			print Dumper(\$Current);
-			$Current->{SUMMARY} = DP_gettext("Unknown");
 		}
 		foreach(keys(%{$Current})) {
 				if(not /^X-PARSER/) {
@@ -495,8 +494,8 @@ sub _ParseData {
 		} else {
 			my $Name = $_;
 			my $Value = $_;
-			$Name =~ s/(.+):(.*)$/$1/;
-			$Value =~ s/(.+):(.*)$/$2/;
+			$Name =~ s/^(\S):(.*)$/$1/;
+			$Value =~ s/^(\S):(.*)$/$2/;
 			if($Name =~ /^BEGIN/) {
 				$CurrentStructure++;
 				$Name = "X-PARSER_ENTRYTYPE";
