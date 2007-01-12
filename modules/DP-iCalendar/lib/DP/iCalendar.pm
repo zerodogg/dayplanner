@@ -54,6 +54,7 @@ sub new {
 	}
 	$self->{RawCalendar} = {};
 	$self->{OrderedCalendar} = {};
+	# FIXME: $VERSION doesn't output nicely
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	$self->_LoadFile($File);
 	return($self);
@@ -290,6 +291,27 @@ sub reload {
 	}
 	$self->clean();
 	return($self->addfile($self->{FILE}));
+}
+
+# Purpose: Set the prodid
+# Usage: $object->set_prodid(PRODID);
+sub set_prodid {
+	my($self, $ProdId) = @_;
+	if(not defined($ProdId) or not length($ProdId)) {
+		croak("Emtpy/undef ProdId used in ->set_prodid");
+		return(undef);
+	}
+	# Warn about excessively long prodids
+	if(length($ProdId) > 100) {
+		croak("ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.");
+	}
+	# Verify that it is nicely formatted
+	unless($ProdId =~ m#^-//.+//NONSGML\s.+//EN$#) {
+		croak("ProdId is not nicely formatted, see the DP::iCalendar documentation.");
+	}
+	# Set the prodid
+	$self->{PRODID} = $ProdId;
+	return(1);
 }
 
 # - Public functions
@@ -712,6 +734,15 @@ with a filename, not a reference. Same return values as ->addfile();
 
 Enables or disables a specific feature. Read the section OPTIONAL
 FEATURES for more information on the features available.
+
+=head2 $object->set_prodid(PRODID);
+
+Sets the PRODID: used in the iCalendar file (a DP::iCalendar
+PRODID is used by default). It should be formatted like this:
+-//Perlfoo Software//NONSGML Foo Calendar 1.0//EN
+
+It is used for identifying the program that created the
+iCalendar file. See the iCalendar RFC for more information.
 
 =head1 FUNCTIONS
 
