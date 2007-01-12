@@ -224,9 +224,8 @@ sub exists {
 # Purpose: Add another file
 # Usage: $object->addfile(FILE);
 sub addfile {
-	my ($self,$File);
+	my ($self,$File) = @_;
 	if(ref($File)) {	# If we got a reference
-		$self->{FILETYPE} = "ref";
 		if(not ref($File) eq "ARRAY") {
 			carp("Supplied a reference, but the reference is not a ARRAYREF.");
 		}
@@ -240,10 +239,43 @@ sub addfile {
 			carp("\"$File\": does not exist");
 			return(undef);
 		}
-		$self->{FILETYPE} = "file";
-		$self->{FILE} = $File;
 	}
 	return($self->_LoadFile($File));
+}
+
+# Purpose: Remove all loaded data
+# Usage: $object->clean()
+sub clean {
+	my $self = shift;
+	$self->{RawCalendar} = {};
+	$self->{OrderedCalendar} = {};
+	return(1);
+}
+
+# Purpose: Enable a feature
+# Usage: $object->enable(FEATURE);
+sub enable {
+	my($self, $feature) = @_;
+	foreach(qw(SMART_MERGE)) {
+		next unless($feature eq $_);
+		$self->{FEATURE}{$_} = 1;
+		return(1);
+	}
+	carp("Attempted to enable unknown feature: $feature");
+	return(undef);
+}
+
+# Purpose: Disable a feature
+# Usage: $object->disable(FEATURE);
+sub disable {
+	my($self, $feature) = @_;
+	foreach(qw(SMART_MERGE)) {
+		next unless($feature eq $_);
+		$self->{FEATURE}{$_} = 0;
+		return(1);
+	}
+	carp("Attempted to disable unknown feature: $feature");
+	return(undef);
 }
 
 # - Public functions
@@ -350,8 +382,29 @@ sub _LoadFile {
 		}
 		delete($Current->{UID});
 		if(defined($self->{RawCalendar}{$UID})) {
-			# Just overwrite it with this one
-			$self->{RawCalendar}{$UID} = {};
+			# If SMART_MERGE is enabled run a set of tests
+			if($self->{FEATURE}{SMART_MERGE}) {
+				my $Reassign = 0;
+				# Verify that DTSTART and DTEND are set and identical.
+				# If not then assign a new UID.
+				foreach my $check(qw(DTSTART DTEND)) {
+					if($self->{RawCalendar}{$UID}{$check} or $Current->{$check}) {
+						if($self->{RawCalendar}{$UID}{$check} and $Current->{$check}) {
+							if(not $self->{RawCalendar}{$UID}{$check} eq $Current->{$check}) {
+								$Reassign = 1;
+								last;
+							}
+						} else {
+							last;
+							$Reassign = 1;
+						}
+					}
+				}
+				$UID = _UID($Current->{DTSTART}) if($Reassign);
+			} else {
+				# Just overwrite it with this one
+				$self->{RawCalendar}{$UID} = {};
+			}
 		}
 		# Unsafe various values if needed
 		foreach(qw(X-DP-BIRTHDAYNAME SUMMARY DESCRIPTION)) {
@@ -472,9 +525,14 @@ sub _UnSafe {
 # Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
 # TODO: Make sure it is unique!
 sub _UID {
-	chomp(@_);
-	$_[0] =~ s/\D//g;
-	return("dayplanner-" . time() . $_[0] . int(rand(10000)));
+	my $NonRandom = shift;
+	chomp($NonRandom);
+	if($NonRandom) {
+		$NonRandom =~ s/\D//g;
+	} else {
+		$NonRandom = int(rand(10000));
+	}
+	return("dayplanner-" . time() . $NonRandom . int(rand(10000)));
 }
 
 # Purpose: Append a "0" to a number if it is only one digit.
@@ -622,6 +680,18 @@ Just like ->new except it adds the data to the current object
 instead of creating a new one. This does NOT change the file used
 for functions such as ->write();.
 
+=head2 $object->clean();
+
+Removes loaded data from the object, while still retaining a working
+object and working metadata (the metadata being information such as
+the filename used in ->write()). Use $object->addfile() to add data
+to it again.
+
+=head2 $object->enable(FEATURE); $object->disable(FEATURE);
+
+Enables or disables a specific feature. Read the section OPTIONAL
+FEATURES for more information on the features available.
+
 =head1 FUNCTIONS
 
 =head2 my($Year,$Month,$Day,$Time) = iCal_ParseDateTime(DATE TIME);
@@ -633,6 +703,19 @@ such as DTSTART.
 
 Generates an iCalendar DATETIME value from the date supplied.
 Can be used for creating entries such as DTSTART.
+
+=head1 OPTIONAL FEATURES
+
+All of these features are DISABLED by default. You use the
+->enable and ->disable methods to enable/disable them.
+
+=head2 SMART_MERGE
+
+When this feature is enabled, already existing UIDs will not
+be replaced when adding files containing the same UIDs.
+It is first checked if the DTSTART and DTEND are identical,
+if they are then it will be replaced, if not the UID will be
+reassigned and the existing one not replaced.
 
 =head1 ICALENDAR HASH
 
