@@ -1042,11 +1042,13 @@ sub SaveMainData {
 }
 
 # Purpose: Save the data file and redraw the needed windows
-# Usage: UpdatedData(DONT_SAVE?);
+# Usage: UpdatedData(DONT_SAVE?, DONT_REDRAW_EVENTLIST);
 sub UpdatedData {
-	my $DontSave = $_[0];
-	# Redraw the event list
-	PopulateEventList();
+	my ($DontSave,$DontRedrawEventList) = @_;
+	if(not $DontRedrawEventList) {
+		# Redraw the event list
+		PopulateEventList();
+	}
 	# Repopulate the upcoming events
 	PopulateUpcomingEvents();
 	# Redraw the calendar
@@ -3294,14 +3296,25 @@ sub DeleteEvent {
 		return(0);
 	}
 	my $Type = GetEventListType();
-	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my $EventUID = $EventlistWidget->{data}[$Selected][0];
-	my $EventTime = $EventlistWidget->{data}[$Selected][1];
-	my $EventSummary = $EventlistWidget->{data}[$Selected][2];
 
 	if($Type eq 'normal') {
+		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+		my $EventUID = $EventlistWidget->{data}[$Selected][0];
+		my $EventTime = $EventlistWidget->{data}[$Selected][1];
+		my $EventSummary = $EventlistWidget->{data}[$Selected][2];
+
+		# This redraws the event list for us. This is faster
+		# than doing the redrawing using the DrawEventlist function.
+		my $Array = $EventlistWidget->{data};
+		splice(@{$Array},$Selected,1);
+		$EventlistWidget->{data} = $Array;
+		$ToolbarEditButton->set_sensitive(0);
+		$MenuEditEntry->set_sensitive(0);
+		$MenuDeleteEntry->set_sensitive(0);
+		Gtk2->main_iteration while Gtk2->events_pending;
 		$iCalendar->delete($EventUID);
-		UpdatedData();
+
+		UpdatedData(0,1);
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	} else {
@@ -3864,7 +3877,7 @@ sub NormalEventWindow {
 	if($EventUID eq "NULL") {
 		$EventTime = "00:00";
 	} else {
-		my $EventHash = $iCalendar->get($EventUID);
+		my $EventHash = $iCalendar->get_info($EventUID);
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($EventHash->{DTSTART});
 		$EventTime = $Time;
@@ -4451,16 +4464,11 @@ sub DrawEventlist {
 	$EventlistWin->add($EventlistWidget);
 	# Handle making the toolbar edit button sensitive
 	$EventlistWidget->signal_connect('focus-in-event' => sub {
-		my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 		# If there is something in that data array then there is something selected on focus-in-event
 		if(@{$EventlistWidget->{data}}) {
 			$ToolbarEditButton->set_sensitive(1);
 			$MenuEditEntry->set_sensitive(1);
 			$MenuDeleteEntry->set_sensitive(1);
-			my $EventUID = $EventlistWidget->{data}[$Selected][0];
-			chomp($EventUID);
-			$EventUID =~ s/\r//g;
-			print("DEBUG: $EventUID selected\n");
 		}
 	});
 	$EventlistWidget->signal_connect('button-release-event' => sub {
