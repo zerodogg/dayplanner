@@ -221,6 +221,16 @@ sub DaemonInit {
 			return(1);
 		} elsif ($ConnectionAttempt eq '1') {
 			$DaemonOnline = 1;
+			my $DaemonVersion = Daemon_DataSegment("VERSION");
+			chomp($DaemonVersion);
+			unless($DaemonVersion eq $Version) {
+				if(Daemon_DataSegment("SHUTDOWN") eq "okay\n") {
+					$DaemonOnline = 0;
+					return(StartDaemon());
+				} else {
+					DPIntWarn("Wanted to restart the daemon but was unable to!");
+				}
+			}
 			return(1);
 		} 
 	}
@@ -533,7 +543,10 @@ sub DPS_DataSegment {
 sub DPS_RepairData {
 	my $ProgressWin = DPCreateProgressWin(DP_gettext("Repairing"),DP_gettext("Getting data"),0);
 	my $RawData = DPS_Perform("GET_RAW");
-	return(1) if $RawData eq "MATCHED";
+	if($RawData eq "MATCHED") {
+		$ProgressWin->{Window}->destroy();
+		return(1);
+	}
 	if(defined($RawData)) {
 		$ProgressWin->{ProgressBar}->set_fraction(0.4);
 		$ProgressWin->{ProgressBar}->set_text(DP_gettext("Parsing and repairing"));
@@ -4105,7 +4118,7 @@ sub NormalEvent_OK {
 		$EntryHash{SUMMARY} = $Summary;
 		$EntryHash{DESCRIPTION} = $Fulltext;
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
-		$EntryHash{$EventUID}{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
+		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
 		} else {
