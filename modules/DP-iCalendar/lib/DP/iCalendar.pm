@@ -194,6 +194,8 @@ sub add {
 		return(undef);
 	}
 	my $UID = _UID($Hash{DTSTART});
+	# FIXME: There are much more efficient ways to do this.
+	$self->{OrderedCalendar} = {};
 	$self->_ChangeEntry($UID,%Hash);
 	return(1);
 }
@@ -298,8 +300,8 @@ sub reload {
 sub iCal_GenDateTime {
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
-	my $iCalMonth = AppendZero($Month);
-	my $iCalDay = AppendZero($Day);
+	my $iCalMonth = _AppendZero($Month);
+	my $iCalDay = _AppendZero($Day);
 	# Get the time
 	my $Hour = $Time;
 	my $Minute = $Time;
