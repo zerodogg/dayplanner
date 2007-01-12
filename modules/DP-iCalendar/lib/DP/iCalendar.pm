@@ -438,7 +438,7 @@ sub _LoadFile {
 		}
 	}
 	$Data = undef;
-	return(0);	# FIXME: Why are we returning 0 on success?
+	return(1);
 }
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
@@ -560,10 +560,6 @@ sub _AppendZero {
 
 # Purpose: Generate the formatted calendar from the raw calendar
 # Usage: GenerateCalendar(YEAR);
-#  TODO: Seemlessly handle this:
-# NOTE: If you need to regenerate %InternalCalendar completely then call
-#  RegenerateCalendar(YEAR);
-#  If you need to just generate an additional year just call GenerateCalendar(YEAR);
 sub _GenerateCalendar {
 	my $self = shift;
 	my $EventYear = $_[0];
@@ -610,17 +606,23 @@ DP::iCalendar - Parser for iCalendar files
 
 This module parses iCalendar files.
 
-	TODO: FIX THIS!
 	use Date::HolidayParser;
+	use DP::iCalendar;
 
-	my $Holidays = Date::HolidayParser->new("$ENV{HOME}/.holiday");
-	my $Holidays_2006 = $Holidays->get(2006);
-	
+	my $iCalendar = DP::iCalendar->new("$ENV{HOME}/.dayplanner/calendar.ics");
 	...
 
 =head1 DESCRIPTION
 
-TODO: FIX THIS
+DP::iCalendar is a module that parses files in the iCalendar format, version 2.0.
+It loads the files into internal data structures and is able to return simple
+date/time hashes and arrays to the caller, which can then do whatever is needed
+with the data. It seemlessly handles the addition and removal of quoting as required
+by the iCalendar standard.
+
+The main functions are accessed through the object-oriented interface.
+It can also export two helper functions which can be helpful in making use
+of the returned iCalendar data.
 
 =head1 EXPORT
 
@@ -739,15 +741,28 @@ reassigned and the existing one not replaced.
 
 =head1 ICALENDAR HASH
 
-TODO!
+The hash referred to as the ICALENDAR HASH in the above documentation
+is structured like this:
+
+	%Hash = (
+		ICAL_ENTRY => "ENTRY_VALUE",
+		ANOTHER_ENTRY => "ANOTHER_VALUE",
+	);
+
+An example might look like this:
+
+	%Hash = (
+		DTSTART => "20060301T130000",
+		DTEND => "20060301T130059",
+		SUMMARY => "Call Lisbeth",
+	);
+
+That's a simple event on the 1st of March 2006 at 13:00 reminding
+you to call Lisbeth.
 
 =head1 EXAMPLE
 
-TODO
-
-=head2 Explenation
-
-TODO
+See DP::iCalendar::Example
 
 =head1 AUTHOR
 
