@@ -1094,82 +1094,6 @@ sub DataLoadTest {
 # Data helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-# Purpose: Re-generate %InternalCalendar from %RawCalendar. Calls GenerateCalendar()
-# 	after performing some magic.
-# Usage: RegenerateCalendar(YEAR);
-#sub RegenerateCalendar {
-#	my $Year = $_[0];
-#	%InternalCalendar = ();
-#	GenerateCalendar($Year);
-#}
-
-# Purpose: Delete keys from %CalendarContents, recusively if needed
-# Usage: CalendarDelete(UID);
-#sub CalendarDelete {
-#	my $EventUID = shift;
-#	delete($RawCalendar{$EventUID});
-#	UpdatedData();
-#}
-
-# Purpose: Delete keys from %BirthdayContents, recusively if needed
-# Usage: BirthdayDelete(month,day,name);
-# TODO: Drop. Birthdays aren't special in the new data system
-#sub BirthdayDelete {
-#	warn("USELESS FUNCTION CALLED");
-=cut
-	my ($EventMonth,$EventDay,$Name) = @_;
-	unless(BirthdayDefined(@_)) {
-		DPIntWarn("BirthdayDelete: Unable to find an event at $EventMonth/$EventDay/$Name");
-		return(undef);
-	}
-	delete($BirthdayContents{$EventMonth}{$EventDay}{$Name});
-		unless (keys(%{$BirthdayContents{$EventMonth}{$EventDay}})) {
-			delete($BirthdayContents{$EventMonth}{$EventDay});
-				unless (keys(%{$BirthdayContents{$EventMonth}})) {
-					delete($BirthdayContents{$EventMonth});
-			}
-	}
-=cut
-#}
-
-# If a single test is run then invalid data might get inserted into the data hashes.
-# Using the *Defined functions avoids this.
-
-# TODO: Replace these with a single test
-
-# Purpose: Recursively test for defined data in %CalendarContents
-# Usage: CalendarDefined(year,month,day,time);
-#sub CalendarDefined {
-#	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
-#	if(defined($InternalCalendar{$EventYear}) and defined($InternalCalendar{$EventYear}{$EventMonth}) and defined($InternalCalendar{$EventYear}{$EventMonth}{$EventDay}) and defined($InternalCalendar{$EventYear}{$EventMonth}{$EventDay}{$EventTime})) {
-#			return(1)
-#		}
-#	return(0);
-#}
-
-# Purpose: Recursively test for defined data in %BirthdayContents
-# Usage: BirthdayDefined(month,day,summary);
-sub BirthdayDefined {
-	warn("USELESS FUNCTION CALLED!");
-}
-
-# Purpose: Recursively test for defined data in %CalendarContents
-# Usage: CalendarDayDefined(year,month,day);
-#sub CalendarDayDefined {
-#	my ($EventYear,$EventMonth,$EventDay,$EventTime,$EventType) = @_;
-#	if(defined($InternalCalendar{$EventYear}) and defined($InternalCalendar{$EventYear}{$EventMonth}) and defined($InternalCalendar{$EventYear}{$EventMonth}{$EventDay})) {
-#			return(1)
-#		}
-#	return(0);
-#}
-
-# Purpose: Recursively test for defined data in %BirthdayContents
-# Usage: BirthdayDayDefined(month,day);
-sub BirthdayDayDefined {
-	warn("USELESS FUNCTION CALLED!")
-}
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # General helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3374,7 +3298,7 @@ sub DeleteEvent {
 	my $EventSummary = $EventlistWidget->{data}[$Selected][2];
 
 	if($Type eq 'normal') {
-		CalendarDelete($EventUID);
+		$iCalendar->delete($EventUID);
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	} else {
@@ -3395,14 +3319,14 @@ sub GetEventListType {
 	if(not $EventlistWidget->{data}[$Selected][0] eq "NULL" and $iCalendar->exists($EventlistWidget->{data}[$Selected][0])) {
 		my $Dummy = $EventlistWidget->{data}[$Selected][0];
 		print $Dummy,"\n";
-		$Event = $iCalendar->get($EventlistWidget->{data}[$Selected][0]);
+		$Event = $iCalendar->get_info($EventlistWidget->{data}[$Selected][0]);
 		print "$Event\n";
 		print "NON_NULL\n";
 	}
 
 	# Detect the event type
 	if($Event) {
-		if ($Event->{"X-DP-BIRTHDAY"} eq "TRUE") {
+		if (defined($Event->{"X-DP-BIRTHDAY"}) and $Event->{"X-DP-BIRTHDAY"} eq "TRUE") {
 			return('bday');
 		} elsif ($Event->{SUMMARY}) {
 			# Assume normal since SUMMARY is set
