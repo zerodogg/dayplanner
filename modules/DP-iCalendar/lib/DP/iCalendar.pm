@@ -278,6 +278,18 @@ sub disable {
 	return(undef);
 }
 
+# Purpose: Reload the data
+# Usage: $object->reload();
+sub reload {
+	my $self = shift;
+	if($self->{FILETYPE} eq "ref") {
+		carp("reload called on object created from array ref");
+		return(undef);
+	}
+	$self->clean();
+	return($self->addfile($self->{FILE}));
+}
+
 # - Public functions
 
 # Purpose: Generate an iCalendar date-time from multiple values
@@ -686,6 +698,12 @@ Removes loaded data from the object, while still retaining a working
 object and working metadata (the metadata being information such as
 the filename used in ->write()). Use $object->addfile() to add data
 to it again.
+
+=head2 $object->reload();
+
+The same as $object->clean(); $object->addfile(FILE); where FILE is
+the filename you called ->new with. Only works when ->new was called
+with a filename, not a reference. Same return values as ->addfile();
 
 =head2 $object->enable(FEATURE); $object->disable(FEATURE);
 
