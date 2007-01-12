@@ -28,20 +28,24 @@ use Cwd;			# We need Cwd::realpath to find the notifier
 use File::Basename;		# Ditto
 use Data::Dumper;		# We need to be able to dump data
 use POSIX qw/setsid/;		# We need setsid();
+use FindBin;			# So that we can detect module dirs during runtime
+# So that we can use locally shipped modules
+use lib "$FindBin::RealBin/modules/";
+use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
+use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 
 Getopt::Long::Configure ("bundling", 'prefix_pattern=(--|-)');
 
 # Scalars
 my $Version = '0.5';
 my $RCSRev = '$Id$';
-my $MainEventsFile = "events.dpd";		# The filename to read events from
-my $BirthdayFile = "birthdays.dpd";		# The filename to read birthdays from
-my $SpecialEventsFile = "events_special.dpd";	# The filename to read special events from
 my $DaemonFile = 'daemondata.dpd';		# The filename to save and read daemon data from
 my $LogfileName = "daemon.log";			# The filename to log to
+my $iCalFile = "calendar.ics";			# The filename containing the iCalendar data
 my $ConfigFile = "dayplanner.conf";		# The dayplanner config
 my $SocketName = "dayplannerd";			# The name of the socket to use
 my $NotifierName = "dayplanner-notifier";	# The name of the dayplanner notifier
+my $iCalendar;					# The iCalendar object
 my $Self = $0;
 my (
 	$NoFork,	$DayplannerDir,		$DaemonSocket,
@@ -55,9 +59,9 @@ my (
 ) = (0,0,0);
 
 # Hashes
-my %CalendarContents;		# Contents of the main calendar
-my %BirthdayContents;		# Contents of the birthday calendar
-my %SpecialEvents;		# Contents of the speical events calendar
+#my %CalendarContents;		# Contents of the main calendar
+#my %BirthdayContents;		# Contents of the birthday calendar
+#my %SpecialEvents;		# Contents of the speical events calendar
 my %NotificationHash;		# The internal hash data
 my %Config;			# The configuration hash
 my %CurrentNotification;
@@ -140,14 +144,10 @@ sub SetStatus {
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
 sub LoadCalendar {
-	if(DataLoadTest("$DayplannerDir/$MainEventsFile")) {
-		%CalendarContents = do("$DayplannerDir/$MainEventsFile");
-	}
-	if(DataLoadTest("$DayplannerDir/$BirthdayFile")) {
-		%BirthdayContents = do("$DayplannerDir/$BirthdayFile");
-	}
-	if(DataLoadTest("$DayplannerDir/$SpecialEventsFile")) {
-		%SpecialEvents = do("$DayplannerDir/$SpecialEventsFile");
+	if($iCalendar) {
+		$iCalendar->reload();
+	} else {
+		$iCalendar = DP::iCalendar->new("$DayplannerDir/$iCalFile");
 	}
 	# Calculate the notification hash
 	CalculateNotificationHash();
@@ -183,7 +183,6 @@ sub FindSleepDuration {
 	
 	# Push the keys onto the @Keys array
 	foreach(keys(%NotificationHash)) {
-		s/^(prenot|tomorrow)_//;
 		push(@Keys, $_);
 	}
 	my ($hours, $minutes);
@@ -432,59 +431,48 @@ sub DayplannerAlarm {
 	$curryear += 1900;
 	$currmonth++;
 	if(defined($NotificationHash{"$currhour:$currmin"})) {
-		# TODO: Do we need the check for PreNotification?
-		unless(defined($NotificationHash{"$currhour:$currmin"}{PreNotification})) {
-			RunNotifier($NotificationHash{"$currhour:$currmin"}{summary},
-				$NotificationHash{"$currhour:$currmin"}{fulltext},
-				'today',
-				"$currhour:$currmin",
-				0);
-			$NotifierStarted = 1;
-		} 
+		foreach my $UID (@{$NotificationHash{"$currhour:$currmin"}}) {
+			RunNotifier($UID,$curryear,$currmonth,$currmday,"$currhour:$currmin");
+		}
 	} 
-	if(defined($NotificationHash{"prenot_$currhour:$currmin"})) {
-		RunNotifier($NotificationHash{"prenot_$currhour:$currmin"}{summary},
-			$NotificationHash{"prenot_$currhour:$currmin"}{fulltext},
-			'today',
-			$NotificationHash{"prenot_$currhour:$currmin"}{PreNotification},
-			1);
-		$NotifierStarted = 1;
-	} 
-	if(defined($NotificationHash{"tomorrow_$currhour:$currmin"})) {
-		RunNotifier($NotificationHash{"tomorrow_$currhour:$currmin"}{summary},
-			$NotificationHash{"tomorrow_$currhour:$currmin"}{fulltext},
-			'tomorrow',
-			"$currhour:$currmin",
-			1);
-		$NotifierStarted = 1;
-	}
        unless($NotifierStarted) {
 		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin") if($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday");
 	}
 }
 
 # Purpose: Run the notifier itself with the correct parameters
-# Usage: RunNotifier(SUMMARY, FULLTEXT, DATE, TIME);
+# Usage: RunNotifier(UID);
 sub RunNotifier {
 	# Notifier
-	my ($Summary, $Fulltext, $Date, $Time, $IsPreNot) = @_;
-	IntDebug("Alarm! Task: $Summary at $Time on $Date");
+	my ($UID,$CurrYear,$CurrMonth,$CurrMday,$CurrTime) = @_;
+	my $UIDInfo = $iCalendar->get_info($UID);
+	my($Year,$Month,$Day,$Time) = iCal_ParseDateTime($UIDInfo->{DTSTART});
+	my $IsPreNot = 0;
+	my $Date = 'today';
+	# Detect pre-notifications
+	if(not $Time eq $CurrTime) {
+		$IsPreNot = 1;
+		if(not $Day eq $CurrMday) {
+			$Date = 'tomorrow';
+		}
+	}
 	foreach(split(/:/, sprintf("%s:%s", $ENV{PATH}, dirname(Cwd::realpath($Self))))) {
 		if ( -x "$_/$NotifierName") {
 			$NotificationID++;
-			$CurrentNotification{$NotificationID}{Summary} = $Summary;
-			$CurrentNotification{$NotificationID}{Fulltext} = $Fulltext;
+			# TODO: Debugout this info?
+			$CurrentNotification{$NotificationID}{Summary} = $UIDInfo->{SUMMARY};
+			$CurrentNotification{$NotificationID}{Fulltext} = $UIDInfo->{DESCRIPTION};
 			$CurrentNotification{$NotificationID}{Time} = $Time;
 			$CurrentNotification{$NotificationID}{Date} = $Date;
 			$CurrentNotification{$NotificationID}{PreNot} = $IsPreNot;
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
 			# and 1-255 on FALSE, so it's the other way around from perl
-			unless(system("$_/$NotifierName --socket \"$DaemonSocket\" --id \"$NotificationID\"")) {
+			unless(system("$_/$NotifierName", "--socket", "$DaemonSocket", "--id", "$NotificationID")) {
 				return(1);
 			}
 		}
 	}
-	IntWarn("Unable to start the notifier! Task: $Summary at $Time on $Date");
+	IntWarn("Unable to start the notifier! Task: $UIDInfo->{SUMMARY} at $Time, $Date");
 }
 
 # Purpose: Handle commands
@@ -645,9 +633,6 @@ sub CommandHandler {
 			if(/^(DUMP_HASHES|DUMP_MAINHASH)/) {
 				$Return = Data::Dumper->Dump([\%NotificationHash], ["*NotificationHash"]);
 				if (/^DUMP_HASHES/) {
-					$Return = $Return . Data::Dumper->Dump([\%CalendarContents], ["*CalendarContents"]);
-					$Return = $Return . Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayContents"]);
-					$Return = $Return . Data::Dumper->Dump([\%SpecialEvents], ["*SpecialEvents"]);
 					$Return = $Return . Data::Dumper->Dump([\%CurrentNotification], ["*CurrentNotification"]);
 				}
 			} elsif (/^DUMP_CONFIG/) {
@@ -792,23 +777,16 @@ sub CalculateNotificationHash {
 	$LastCalculate = "$curryear-$currmonth-$curryday-$currmday";
 	
 	# First, calculate todays part of the %CalendarContents hash
-	if (defined($CalendarContents{$curryear}{$currmonth}{$currmday})) {
-		foreach my $Time (keys(%{$CalendarContents{$curryear}{$currmonth}{$currmday}})) {
-			$NotificationHash{$Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
-			if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext})) {
-				$NotificationHash{$Time}{fulltext} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext};
-			}
-			my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 0);
-			if(defined($PreNot_Time)) {
-				$PreNot_Time = "prenot_$PreNot_Time";
-				# TODO: We need to make sure another event isn't ocurring at the same time (append a digit or something to it?)
-				$NotificationHash{$PreNot_Time}{summary} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{summary};
-				if(defined($CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext})) {
-					$NotificationHash{$PreNot_Time}{fulltext} = $CalendarContents{$curryear}{$currmonth}{$currmday}{$Time}{fulltext};
+	my $Today = $iCalendar->get_dateinfo($curryear,$currmonth,$currmday);
+	if($Today) {
+		foreach my $Time (@{$Today}) {
+			foreach my $UID (@{$iCalendar->get_timeinfo($curryear,$currmonth,$currmday,$Time)}) {
+				push(@{$NotificationHash{$Time}}, $UID);
+				my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 0);
+				if(defined($PreNot_Time)) {
+					push(@{$NotificationHash{$PreNot_Time}}, $UID);
 				}
-				$NotificationHash{$PreNot_Time}{PreNotification} = $Time;
 			}
-				
 		}
 	}
 	# Now, calculate tomorrows part of the %CalendarContents hash
@@ -817,34 +795,20 @@ sub CalculateNotificationHash {
 	#  none-the-less.
 	my ($tomorrowsec,$tomorrowmin,$tomorrowhour,$tomorrowmday,$tomorrowmonth,$tomorrowyear,$tomorrowwday,$tomorrowyday,$tomorrowisdst) = localtime(time+86_400);
 	$tomorrowyear += 1900; $tomorrowmonth++;
-	if (defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday})) {
-		foreach my $Time (keys(%{$CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}})) {
-			my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 1);
+	my $Tomorrow = $iCalendar->get_dateinfo($tomorrowyear,$tomorrowmonth,$tomorrowmday);
+	if ($Tomorrow) {
+		foreach my $Time (@{$Tomorrow}) {
+			foreach my $UID (@{$iCalendar->get_timeinfo($tomorrowyear,$tomorrowmonth,$tomorrowmday,$Time)}) {
+				my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 1);
 				if(defined($PreNot_Time)) {
-					$PreNot_Time = "prenot_$PreNot_Time";
-					# TODO: We need to make sure another event isn't ocurring at the same time (append a digit or something to it?)
-					$NotificationHash{$PreNot_Time}{summary} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{summary};
-					if(defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext})) {
-						$NotificationHash{$PreNot_Time}{fulltext} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext};
-					}
-					$NotificationHash{$PreNot_Time}{PreNotification} = $Time;
+					push(@{$NotificationHash{$PreNot_Time}}, $UID);
 				}
-		}
-	}
-
-	# Now append tomorrows events if Events_DayNotify is true
-	if($Config{Events_DayNotify} eq '1') {
-		if (defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday})) {
-			foreach my $Time (keys(%{$CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}})) {
-				my $SetTime = "tomorrow_$Time";
-				$NotificationHash{$SetTime}{summary} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{summary};
-				if(defined($CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext})) {
-					$NotificationHash{$SetTime}{fulltext} = $CalendarContents{$tomorrowyear}{$tomorrowmonth}{$tomorrowmday}{$Time}{fulltext};
+				if($Config{Events_DayNotify} eq '1') {
+					push(@{$NotificationHash{$Time}}, $UID);
 				}
 			}
 		}
 	}
-
 }
 
 # Purpose: Wrap multiline packets correctly
