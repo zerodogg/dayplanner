@@ -113,6 +113,8 @@ $SIG{TERM} = \&DP_SigHandler;
 # I18n functions (Day Planner Locale::gettext wrapper)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# TODO: Support Locale::Gettext-less mode.
+
 # Purpose: Wrapper around the gettext functions that does the right thing(tm)
 # Usage: DP_gettext(STANDARD_GETTEXT_SYNTAX);
 sub DP_gettext {
@@ -123,6 +125,8 @@ sub DP_gettext {
 	}
 }
 
+# Purpose: Initialize the i18n subsystem
+# Usage: DP_InitI18n();
 sub DP_InitI18n {
 	setlocale(LC_ALL, "" );
 	my $BindTo;
