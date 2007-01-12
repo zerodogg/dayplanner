@@ -4,12 +4,25 @@ Day planner version history
 Version 0.5 (Unreleased)
 ------------------------
 * Client (dayplanner)
+- Now uses the DP::iCalendar module for iCalendar stuff
+- iCalendar is now the main internal data format
+- Cleanups
+- Multiple events can now share the same time
 
 * Notifier (dayplanner-notified)
 
 * Daemon (dayplanner-daemon)
+- Cleanups
+- iCalendar is now the main internal data format
 
-Version 0.4 (Unreleased)
+Version 0.4.1 (Released on the 8th of January 2007)
+------------------------
+
+* Client (dayplanner)
+- Fixed an issue where it would crash on first startup if it couldn't
+  find any data to import.
+
+Version 0.4 (Released on the 7th of January 2007)
 ------------------------
 
 * Client (dayplanner)
