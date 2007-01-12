@@ -42,7 +42,7 @@ use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use Date::HolidayParser;	# Parsing of .holiday files
-use DP::iCalendar;		# iCalendar support
+use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 
 # Scalars
 my $Version = "0.5";
@@ -91,7 +91,6 @@ my (
 my $HolidayParser;	# The Date::HolidayParser object
 my $Gtk2Init;		# Info about if gtk2 is initialized or not
 my $ShutdownDaemon;	# If we should shut down the daemon on exit
-my $CurrentYear;	# The current year
 my($AM_String, $PM_String, $ClockSystem);	# Time/date info
 
 # Global date variables
@@ -424,7 +423,7 @@ sub IO_Socket_INET_Errors {
 # Usage: DPS_BackupData();
 sub DPS_BackupData {
 	my $Target = "$SaveToDir/dps_backup" . time() . ".ics";
-	iCal_SaveData($Target, 0);
+	$iCalendar->write($Target);
 	DPS_Log("Backup written to $Target");
 	DPIntInfo("DPS: Backup written to $Target");
 	return($Target);
@@ -528,26 +527,22 @@ sub DPS_DataSegment {
 # Usage: DPS_RepairData();
 # 	returns true on success, false on failure
 sub DPS_RepairData {
-	DPIntWarn("DPS_RepairData: BROKEN! FIXME!");
-	return(1);
 	my $ProgressWin = DPCreateProgressWin(DP_gettext("Repairing"),DP_gettext("Getting data"),0);
 	my $RawData = DPS_Perform("GET_RAW");
+	return(1) if $RawData eq "MATCHED";
 	if(defined($RawData)) {
 		$ProgressWin->{ProgressBar}->set_fraction(0.4);
 		$ProgressWin->{ProgressBar}->set_text(DP_gettext("Parsing and repairing"));
 		my @DataArray;
 		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
 		$RawData = undef;
-		my @Conflicts = iCal_LoadFile(\@DataArray);
 		$InternalConfig{DPS_LastMD5} = DPS_Perform("GET_MD5");
+		$iCalendar->enable("SMART_MERGE");	# SMART_MERGE is required to ensure no data is lost
+		$iCalendar->addfile(\@DataArray);
+		$iCalendar->disable("SMART_MERGE");	# but we don't want to use it by default
 		UpdatedData();
 		$ProgressWin->{ProgressBar}->set_fraction(1);
 		$ProgressWin->{Window}->destroy();
-		if(@Conflicts) {
-			foreach(@Conflicts) {
-				DPS_Log("Conflicts during repair: $_");
-			}
-		}
 		return(1);
 	} else {
 		$ProgressWin->{Window}->destroy();
@@ -592,7 +587,7 @@ sub DPS_GetData {
 		DPS_Log("Skipping download, the data on the server matched our data ($InternalConfig{DPS_LastMD5} = $ServerMD5)");
 		DPS_Disconnect();
 		DPS_Status(DP_gettext("Done"), 1);
-		return(1);
+		return("MATCHED");
 	}
 	if(defined($InternalConfig{DPS_LastMD5})) {
 		DPS_Log("The server had $ServerMD5, I had $InternalConfig{DPS_LastMD5} - downloading data");
@@ -619,12 +614,9 @@ sub DPS_GetData {
 				$MainData =~ s/\r//g;
 				push(@DataArray, $_) foreach(split(/\n/,$MainData));
 				$MainData = undef;
-				#%RawCalendar = ();
-				#%InternalCalendar = ();
-				# FIXME: Use the new system
-				#iCal_LoadFile(\@DataArray);
-				#UpdatedData();
-				DPIntWarn("DPS: NOT(!) working. FIXME!");
+				$iCalendar->clean();
+				$iCalendar->addfile(\@DataArray);
+				UpdatedData();
 			}
 		}
 	} else {
@@ -1040,8 +1032,6 @@ sub UpdatedData {
 		# Save the data
 		SaveMainData();
 	}
-	# Regenerate the internal calendar hash
-	RegenerateCalendar(2006);	# FIXME: Year should be dynamic
 	# Redraw the event list
 	PopulateEventList();
 	# Repopulate the upcoming events
@@ -1813,7 +1803,7 @@ sub CLI_Export {
 			die("$Target: is a directory\n");
 		}
 		if($Type =~ /(ical|ics_dps)/) {
-			if(iCal_SaveData($Target)) {
+			if($iCalendar->write($Target)) {
 				print "iCalendar data written to $Target\n";
 			}
 		}
@@ -1852,7 +1842,7 @@ sub CLI_Import {
 	# Initialize the daemon (we need it)
 	DaemonInit() or die();
 	if($Type =~ /ical/) {
-		if(iCal_LoadFile($Source)) {
+		if($iCalendar->addfile($Source)) {
 			print "Imported iCalendar data from $Source\n";
 		} else {
 			print "Importing failed.\n";
@@ -2900,19 +2890,19 @@ sub ImportProgData {
 	# Begin with gnome
 	if($ImportGnome) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Gnome Calendar");
-		iCal_LoadFile("$ENV{HOME}/.gnome/user-cal.vcf");
+		$iCalendar->addfile("$ENV{HOME}/.gnome/user-cal.vcf");
 		$CurrentProgress++;
 	}
 	# Continue with evolution
 	foreach(@EvolutionFiles) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Evolution");
-		iCal_LoadFile($_);
+		$iCalendar->addfile($_);
 		$CurrentProgress++;
 	}
 	# Then do korganizer
 	if($ImportKorganizer) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Korganizer");
-		iCal_LoadFile("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
+		$iCalendar->addfile("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
 		$CurrentProgress++;
 	}
 	# End with plan
@@ -2953,7 +2943,7 @@ sub ImportDataFromFile {
 	if($Response eq 'accept') {
 		my $Filename = $ImportWindow->get_filename();
 		if($Filename =~ /\.(ics|vcf)$/i) {
-			iCal_LoadFile($Filename);
+			$iCalendar->addfile($Filename);
 			UpdatedData();
 		} else {
 			DPIntWarn("Unknown filetype: $Filename");
@@ -3027,7 +3017,7 @@ sub ExportData {
 			my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
 			if ($ActiveIndex == 0) {
 				if(PromptOverwrite("$Filename.ics")) {
-					iCal_SaveData("$Filename.ics", $OnlyBirthdays);
+					$iCalendar->write("$Filename.ics");
 					last;
 				}
 			} elsif ($ActiveIndex == 1) {
@@ -3550,10 +3540,6 @@ sub GetDate {
 # Purpose: Calls SetActiveCalItems on the current year/month displayed in the $CalendarWidget
 # Usage: CalendarChange();
 sub CalendarChange {
-	if(not defined($CurrentYear) or not $CurrentYear eq $CalendarWidget->year) {
-		GenerateCalendar($CalendarWidget->year);
-		$CurrentYear = $CalendarWidget->year;
-	}
 	my $Month = $CalendarWidget->month;
 	$Month++;
 	SetActiveCalItems($CalendarWidget->year, $Month);
