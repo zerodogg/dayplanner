@@ -1045,16 +1045,18 @@ sub SaveMainData {
 # Usage: UpdatedData(DONT_SAVE?);
 sub UpdatedData {
 	my $DontSave = $_[0];
-	if(not $DontSave) {
-		# Save the data
-		SaveMainData();
-	}
 	# Redraw the event list
 	PopulateEventList();
 	# Repopulate the upcoming events
 	PopulateUpcomingEvents();
 	# Redraw the calendar
 	CalendarChange();
+	# Lastly, save the main data if needed.
+	# We do this last because that speeds up redrawing the calendar
+	if(not $DontSave) {
+		# Save the data
+		SaveMainData();
+	}
 }
 
 # Purpose: Load the calendar contents
@@ -3299,6 +3301,7 @@ sub DeleteEvent {
 
 	if($Type eq 'normal') {
 		$iCalendar->delete($EventUID);
+		UpdatedData();
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	} else {
