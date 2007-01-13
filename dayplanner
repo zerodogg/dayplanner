@@ -1066,6 +1066,7 @@ sub UpdatedData {
 sub LoadCalendar {
 	if(-e "$SaveToDir/$ICSFile") {
 		$iCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
+		$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
 	}
 	# TODO: Do something when the file doesn't exist? Such as check if
 	# migration is needed.
