@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # DP::iCalendar
-# $Id: HolidayParser.pm 516 2006-08-04 12:00:18Z zero_dogg $
+# $Id$
 # An iCalendar parser/loader.
 # Copyright (C) Eskild Hustvedt 2007
 #
@@ -318,45 +318,62 @@ sub set_prodid {
 
 # Purpose: Generate an iCalendar date-time from multiple values
 # Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
-# TODO: Time should probably not be enforced
 sub iCal_GenDateTime {
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
 	my $iCalMonth = _AppendZero($Month);
 	my $iCalDay = _AppendZero($Day);
-	# Get the time
-	my $Hour = $Time;
-	my $Minute = $Time;
-	$Hour =~ s/^(\d+):\d+$/$1/;
-	$Minute =~ s/^\d+:(\d+)$/$1/;
-	return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
+	if($Time) {
+		# Get the time
+		my $Hour = $Time;
+		my $Minute = $Time;
+		$Hour =~ s/^(\d+):\d+$/$1/;
+		$Minute =~ s/^\d+:(\d+)$/$1/;
+		return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
+	} else {
+		# FIXME: This might not be fully valid. Needs to be checked with the spec.
+		# Might need to be VALUE=DATE:$Year$iCalMonth$iCalDay
+		return("$Year$iCalMonth$iCalDay");
+	}
 }
 
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
-# TODO: Handle VALUE=DATE:YYYYMMDD 
 sub iCal_ParseDateTime {
-	my $Year = $_[0];
-	my $Month = $_[0];
-	my $Day = $_[0];
-	my $Hour = $_[0];
-	my $Minutes = $_[0];
+	my $Value = shift;
+
+	# Handling of VALUE=DATE:YYYYMMDD
+	if($Value =~ /^VALUE/) {
+		# Alternate value definition. Processing here can
+		# probably be improved.
+		if(not $Value =~ s/^VALUE=DATE://) {
+			_ErrOut("Unhandled value in iCal_ParseDateTime(): $Value. This is a bug!");
+			_WarnOut("Returning 2000,01,01,00:00");
+			# We don't return undef in order to not break programs that expect
+			# this function to return something usable.
+			return(2000,"01","01","00:00");
+		}
+
+
+	my $Year = $Value;
+	my $Month = $Value;
+	my $Day = $Value;
+	my $Hour = $Value;
+	my $Minutes = $Value;
+	my $Time;
 
 	$Year =~ s/^(\d\d\d\d).*$/$1/;
 	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
 	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
 
-	# This is here to support events where there is no time set.
+	# Test if the time is set, if it is then process it.
 	if($Hour =~ s/^.+T//) {
-		$Hour =~ s/^.+T//;
 		$Hour =~ s/^(\d\d).*$/$1/;
 		$Minutes =~ s/^.+T//;
 		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
-	} else {
-		$Hour = 0;
-		$Minutes = 0;
+		$Time = _AppendZero($Hour) . ":" . _AppendZero($Minutes);
 	}
-	return($Year,$Month,$Day,_AppendZero($Hour) . ":" . _AppendZero($Minutes));
+	return($Year,$Month,$Day,$Time);
 }
 
 # - Internal functions
@@ -375,6 +392,12 @@ sub _ChangeEntry {
 # Usage: _WarnOut(MESSAGE)
 sub _WarnOut {
 	warn("DP::iCalendar: WARNING: $_[0]\n");
+}
+
+# Purpose: Output error
+# Usage: _ErrOut(MESSAGE)
+sub _WarnOut {
+	warn("DP::iCalendar: ERROR: $_[0]\n");
 }
 
 # Purpose: Imports data in the iCalendar format into day planner
