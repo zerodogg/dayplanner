@@ -353,7 +353,7 @@ sub iCal_ParseDateTime {
 			# this function to return something usable.
 			return(2000,"01","01","00:00");
 		}
-
+	}
 
 	my $Year = $Value;
 	my $Month = $Value;
@@ -396,7 +396,7 @@ sub _WarnOut {
 
 # Purpose: Output error
 # Usage: _ErrOut(MESSAGE)
-sub _WarnOut {
+sub _ErrOut {
 	warn("DP::iCalendar: ERROR: $_[0]\n");
 }
 
