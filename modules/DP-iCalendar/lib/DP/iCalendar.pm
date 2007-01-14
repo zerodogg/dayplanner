@@ -626,7 +626,9 @@ sub _GenerateCalendar {
 			}
 		} else {
 			# Not recurring
-			# FIXME: Don't trust that Time is set!
+			if(not $Time) {
+				$Time = 'DAY';
+			}
 			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
 		}
 	}
@@ -692,6 +694,8 @@ month that contains events, or undef if there are no events.
 
 Returns a reference to an array containing a list of times on this day
 that contains events or undef if there are no events.
+Note that the time can also be "DAY". If a time is DAY then it means
+that the event doesn't have a time set but lasts that entire day.
 
 =head2 $UID_List = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
 
