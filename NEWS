@@ -8,6 +8,9 @@ Version 0.5 (Unreleased)
 - iCalendar is now the main internal data format
 - Cleanups
 - Multiple events can now share the same time
+- Fixed a major bug which caused event summaries and
+  descriptions containing ":" to be parsed wrong and not
+  be read correctly (or displayed at all in some cases).
 
 * Notifier (dayplanner-notified)
 
