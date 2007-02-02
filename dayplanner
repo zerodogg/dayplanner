@@ -3775,7 +3775,7 @@ sub AddEvent {
 				$BE_MainWidget->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					BirthdayEvent_OK($Window, $BE_NameWidget, \%TimeHash, 0)});
+					AllDayEvent_OK($Window, $BE_NameWidget, undef, \%TimeHash, 0,1)});
 			}
 		});
 
@@ -3827,7 +3827,7 @@ sub EditEvent {
 		# Create the widgets for the normal event selection
 		my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub {
-				NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 1, $EventUID);
+				NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, $EventUID);
 		});
 		
 		# Show the default widget (Normal event)
@@ -4188,19 +4188,19 @@ sub NormalEvent_OK {
 	}
 }
 
-# Purpose: Handle the OK button for the all day event widget
-# Usage: $OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($MainWindow, $SummaryEntry, $FulltextEntry, \%TimeHash, IS_EDITING, EventUID)});
+# Purpose: Handle the OK button for the all day event widget and birthday event widget
+# Usage: $OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($MainWindow, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID)});
 #
-# IS_EDITING is either true or false, false when it's a new one being added, true when it's an
-# old one being edited
+# EventUID can be empty. If empty then add-mode is used.
+#
+# IS_BIRTHDAY can be either true or false. If the entry being changed/added is a birthday
+# then it should be true.
 sub AllDayEvent_OK {
-	my ($MyWindow, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing, $EventUID) = @_;
+	my ($MyWindow, $SummaryEntry, $FulltextEntry, $TimeHash, $EventUID,$IsBirthday) = @_;
 	my $Error = 0;
 	
-	# Get the contents
+	# Get the contents of the summary
 	my $Summary = $SummaryEntry->get_text;
-	my $FulltextBuff = $FulltextEntry->get_buffer;
-	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 
 	# Get variables from the TimeHash
 	my $EventYear = ${$TimeHash}{EventYear};
@@ -4210,7 +4210,7 @@ sub AllDayEvent_OK {
 	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
 	
-	# TODO: Add tests for an event that is *identical*
+	# TODO: Add tests for an event that is *identical* (wouldn't this be a job for DP::iCalendar ?)
 	unless ($Summary) {
 		DPError(DP_gettext("There is no summary for this event. Please enter a summary."));
 		$Error = 1;
@@ -4220,9 +4220,18 @@ sub AllDayEvent_OK {
 		my %EntryHash;
 		# Add them to the hash
 		$EntryHash{SUMMARY} = $Summary;
-		$EntryHash{DESCRIPTION} = $Fulltext;
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay);
+		if($IsBirthday) {
+			$EntryHash{'X-DP-BIRTHDAY'} = 'TRUE';
+			$EntryHash{'X-DP-BIRTHDAYNAME'} = $Summary;
+			$EntryHash{RRULE} = 'FREQ=YEARLY';
+		} else {
+			# Get and add content to the fulltext
+			my $FulltextBuff = $FulltextEntry->get_buffer;
+			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
+			$EntryHash{DESCRIPTION} = $Fulltext;
+		}
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
 		} else {
@@ -4235,62 +4244,6 @@ sub AllDayEvent_OK {
 		$MyWindow->destroy;
 		$MainWindow->set_sensitive(1);
 	}
-}
-
-# Purpose: Handle the OK button for the birthday event widget
-# Usage: $OKButton->signal_connect('clicked' => sub { BirthdayEvent_OK ($MainWindow, $SummaryEntry, \%TimeHash, IS_EDITING)});
-#
-# IS_EDITING is either true or false, false when it's a new one being added, true when it's an
-# old one being edited
-sub BirthdayEvent_OK {
-	warn("BirthdayEvent_OK: BROKEN: USES \%BirthdayContents");
-=cut
-	my ($MyWindow, $SummaryEntry, $TimeHash, $IsEditing) = @_;
-	my $Error = 0;
-	
-	# Get the contents
-	my $Summary = $SummaryEntry->get_text;
-
-	# Get variables from the TimeHash
-	my $EventMonth = ${$TimeHash}{EventMonth};
-	my $EventDay = ${$TimeHash}{EventDay};
-	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
-	my $OldEventDay = ${$TimeHash}{OldEventDay};
-	my $OldEventSummary = ${$TimeHash}{OldEventSummary};
-	
-	# Make sure it's not a dupe (that would end up overwriting data)
-	if ($IsEditing) {
-		if (defined($BirthdayContents{$EventMonth}{$EventDay}{$Summary})) {
-			unless ($EventMonth eq $OldEventMonth  and $EventDay eq $OldEventDay and $Summary eq $OldEventSummary) {
-				DPError(DP_gettext(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
-				$Error = 1;
-			}
-		}
-	} else {
-		if (defined($BirthdayContents{$EventMonth}{$EventDay}{$Summary})) {
-			DPError(DP_gettext(sprintf("A Birthday already exists for \"%s\" on %s %s", $Summary, $EventDay, $MonthNames{$EventMonth})));
-			$Error = 1;
-		}
-	}
-	unless ($Summary) {
-		DPError(DP_gettext("A name is required to add a birthday"));
-		$Error = 1;
-	}
-	# We don't do this if an error occurred
-	unless ($Error) {
-		# Delete old hash if needed
-		if($IsEditing) {
-			BirthdayDelete($OldEventMonth,$OldEventDay,$OldEventSummary);
-		}
-		# Add them to the hash
-		$BirthdayContents{$EventMonth}{$EventDay}{$Summary} = 1;
-		# Call UpdatedData to tell Day planner to save the data and redraw widgets
-		UpdatedData();
-		# Destroy our window, it will get the signal and do anything it needs to
-		$MyWindow->destroy;
-		$MainWindow->set_sensitive(1);
-	}
-=cut
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
