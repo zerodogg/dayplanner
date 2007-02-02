@@ -603,7 +603,7 @@ sub _AppendZero {
 }
 
 # Purpose: Generate the formatted calendar from the raw calendar
-# Usage: GenerateCalendar(YEAR);
+# Usage: _GenerateCalendar(YEAR);
 sub _GenerateCalendar {
 	my $self = shift;
 	my $EventYear = $_[0];
@@ -618,7 +618,7 @@ sub _GenerateCalendar {
 		# Recurring?
 		if($Current->{RRULE}) {
 			if($Current->{RRULE} =~ /YEARLY/) {
-				push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{DAY}},$UID);
+				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
 				next unless defined($Current->{DESCRIPTION});
 			} else {
 				_WarnOut("Unhandled RRULE: $Current->{RRULE}");
