@@ -3835,25 +3835,22 @@ sub EditEvent {
 		# Show the default widget (Normal event)
 		$NE_MainWidget->show();
 	} elsif ($Type eq 'bday') {
-=cut
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext("Editing a birthday"), DP_gettext('Editing a birthday on the %s. %s %s'), 'gtk-ok');
 		
-		$Summary = GetRealBirthdayName($Summary);
-		$TimeHash{OldEventSummary} = $Summary;
-		if(BirthdayDefined($EventMonth, $EventDay, $Summary)) {
-			# Create the widgets for the birthday event selection
-			my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow($Summary, $VBox_HBoxContainer, $Window);
-			$BE_MainWidget->show();
-			$OKButton->signal_connect('clicked' => sub { BirthdayEvent_OK ($Window, $BE_NameWidget, \%TimeHash, 1)});
-		} else {
-			DPIntWarn("BUG!: EditEvent: Unable to edit $Type event: $EventMonth/$EventDay/$Summary. Please report this");
-			$MainWindow->set_sensitive(1);
-			return(0);
-		}			
-=cut
+		my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
+		$BE_MainWidget->show();
+		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BE_NameWidget, undef, \%TimeHash, $EventUID, 1)});
+	} elsif ($Type eq 'allday') {
+		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		# ALL DAY EVENT
+		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext("Editing an all day event"), DP_gettext('Editing an all day event on the %s. %s %s'), 'gtk-ok');
+		my ($AD_MainWidget, $AD_SummaryWidget, $AD_DetailsWidget) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
+		$AD_MainWidget->show();
+		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AD_SummaryWidget, $AD_DetailsWidget, \%TimeHash, $EventUID, 0)});
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
@@ -3982,10 +3979,9 @@ sub NormalEventWindow {
 }
 
 # Purpose: Create the widgets for editing an all-day event
-# Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = NormalEventWindow(UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = AllDayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
 # UID is the UID of the event you're editing or undef
-# OK_BUTTON is the OK button widget to attach to
 # VBOX_WIDGET is the widget you want to pack our table into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
 #
@@ -3995,10 +3991,8 @@ sub AllDayEventWindow {
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
-	my ($EventUID, $OKButton, $ParentVBox, $MyWindow) = @_;
+	my ($EventUID, $ParentVBox, $MyWindow) = @_;
 
-	my $IsEditing = 0;
-	
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext,$EventTime);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
@@ -4011,7 +4005,6 @@ sub AllDayEventWindow {
 		$EventSummary = $EventHash->{SUMMARY};
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		($OldEventYear, $OldEventMonth,$OldEventDay) = ($EventYear,$EventMonth,$EventDay);
-		$IsEditing = 1;
 	}
 
 	# Create the tooltips widget
@@ -4082,27 +4075,17 @@ sub AllDayEventWindow {
 }
 
 # Purpose: Create the widgets for editing a birthday(birthdays.dpd) event (%BirthdayContents)
-# Usage: my ($BirthdayEventWidget, $SummaryWidget) = NormalEventWindow(SUMMARY, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my ($BirthdayEventWidget, $SummaryWidget) = NormalEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
-# SUMMARY is the birthday you're editing or undef
+# UID is the event UID of the event being edited or undef
 # VBOX_WIDGET is the widget you want to pack our widgets into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
 sub BirthdayEventWindow {
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
-	my ($EventSummary, $ParentVBox, $MyWindow) = @_;
-
-	my $IsEditing = 0;
-	
+	my ($UID, $ParentVBox, $MyWindow) = @_;
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($OldEventMonth,$OldEventDay,$OldEventSummary);
-	
-	# Check if the event is already defined, if it is then we assume that we're editing
-	if(defined($EventSummary) and length($EventSummary)) {
-		($OldEventMonth,$OldEventDay,$OldEventSummary) = ($EventMonth,$EventDay,$EventSummary);
-		$IsEditing = 1;
-	}
 	
 	# Create our main vbox
 	my $MainVBox = Gtk2::VBox->new();
@@ -4128,8 +4111,9 @@ sub BirthdayEventWindow {
 
 	# Create the summary entry box
 	my $SummaryEntry = Gtk2::Entry->new();
-	if (defined($EventSummary) and length($EventSummary)) {
-		$SummaryEntry->set_text($EventSummary);
+	if (defined($UID) and length($UID)) {
+		my $Info = $iCalendar->get_info($UID);
+		$SummaryEntry->set_text($Info->{'X-DP-BIRTHDAYNAME'});
 	}
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
@@ -4191,7 +4175,7 @@ sub NormalEvent_OK {
 }
 
 # Purpose: Handle the OK button for the all day event widget and birthday event widget
-# Usage: $OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($MainWindow, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID)});
+# Usage: $OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($MainWindow, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID, IS_BIRTHDAY)});
 #
 # EventUID can be empty. If empty then add-mode is used.
 #
