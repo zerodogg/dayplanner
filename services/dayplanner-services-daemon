@@ -64,7 +64,7 @@ my %Servers;
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = "0.4 ALPHA";
+my $Version = "0.5 ALPHA";
 
 $SIG{INT} = sub {
 	foreach(keys(%Servers)) {
@@ -453,7 +453,7 @@ sub CommandHandler {
 	if($Command =~ /^APILEVEL/) {
 		my $API = $Command;
 		$API =~ s/^APILEVEL\s+(\S*).*$/$1/;
-		unless($API eq "04B") {
+		unless($API eq "05A") {
 			IntVerbose("APILEVEL mismatch from $Handle (got $API)");
 			return("ERR Unsupported");
 		} else {
