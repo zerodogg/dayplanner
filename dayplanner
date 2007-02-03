@@ -292,7 +292,7 @@ sub Daemon_SendData {
 	if($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
 			DPIntWarn("\$DaemonSocket is suddenly undef, attempting reconnect");
-			if(Daemon_AttemptReconnect()) {
+			if(not Daemon_AttemptReconnect()) {
 				       DPIntWarn("Unable to reconnect, expect trouble");
 				       return(0);
 		       }
