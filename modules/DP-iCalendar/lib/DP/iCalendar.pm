@@ -27,18 +27,17 @@ $VERSION = 0.1;
 # - Public methods
 
 # Purpose: Create a new object, call _LoadFile and  _parse_file on it
-# Usage: my $object = Date::HolidayParser->new(/FILE/);
+# Usage: my $object = DP::iCalendar->new(/FILE/);
 sub new {
 	my $File = $_[1];
-	my $self = {};
-	bless($self);
+	my $self;
 	if(ref($File)) {	# If we got a reference
-		$self->{FILETYPE} = "ref";
 		if(ref($File) eq "ARRAY") {
 			# Do stuff
 		} else {
 			carp("Supplied a reference, but the reference is not a ARRAYREF.");
 		}
+		$self = _NewObj();
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
 		unless(defined($File)) {
@@ -49,15 +48,25 @@ sub new {
 			carp("\"$File\": does not exist");
 			return(undef);
 		}
-		$self->{FILETYPE} = "file";
-		$self->{FILE} = $File;
+		$self = _NewObj($File);
 	}
-	$self->{RawCalendar} = {};
-	$self->{OrderedCalendar} = {};
-	# FIXME: $VERSION doesn't output nicely
-	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	$self->_LoadFile($File);
 	return($self);
+}
+
+# Purpose: Create a new object using file
+# Usage: my $object = DP::iCalendar->newfile(/FILE/);
+sub newfile {
+	my $File = shift;
+	if(not defined($File)) {
+		carp("Needs an option: path to the iCalendar file");
+		return(undef);
+	}
+	if(ref($File)) {
+		carp("Doesn't take a reference");
+		return(undef);
+	}
+	return(_NewObj($File));
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
@@ -378,6 +387,26 @@ sub iCal_ParseDateTime {
 
 # - Internal functions
 
+# Purpose: Create a new object.
+# Usage: my $object = _NewObj(FILE?);
+#  FILE is the path to a file or undef. undef if working in ref mode.
+sub _NewObj {
+	my $File = shift;
+	my $self = {};
+	bless($self);
+	$self->{RawCalendar} = {};
+	$self->{OrderedCalendar} = {};
+	# FIXME: $VERSION doesn't output nicely
+	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
+	if($File) {
+		$self->{FILETYPE} = "file";
+		$self->{FILE} = $File;
+	} else {
+		$self->{FILETYPE} = "ref";
+	}
+	return($self);
+}
+
 # Purpose: Make changes to the raw calendar (append or change)
 # Usage: $self->_ChangeEntry(UID,%Hash);
 sub _ChangeEntry {
@@ -652,7 +681,6 @@ DP::iCalendar - Parser for iCalendar files
 
 This module parses iCalendar files.
 
-	use Date::HolidayParser;
 	use DP::iCalendar;
 
 	my $iCalendar = DP::iCalendar->new("$ENV{HOME}/.dayplanner/calendar.ics");
@@ -684,6 +712,14 @@ The function requires exactly one parameter, which is either the
 path to a file containing iCalendar data, or an arrayref containing
 iCalendar data (one line per entry in the array). If it is the path
 to a file it must be a fully qualified path.
+
+=head2 $object = DP::iCalendar->newfile(FILE);
+
+This is an alternative for ->new();. It creates a new DP::iCalendar object.
+It takes exactly one parameter, which is the path to the file you wish
+to write the iCalendar data to. The difference from ->new is that it does
+not load nor parse FILE. So FILE may or may not exist. If it exists and you
+call ->write then it will overwrite it.
 
 =head2 $DayArray = $object->get_monthinfo(YEAR,MONTH);
 
