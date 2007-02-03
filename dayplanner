@@ -292,8 +292,11 @@ sub Daemon_SendData {
 	if($DaemonOnline) {
 		unless(defined($DaemonSocket)) {
 			DPIntWarn("\$DaemonSocket is suddenly undef, attempting reconnect");
-			Daemon_AttemptReconnect() or DPIntWarn("Unable to reconnect, expect trouble") and return(0);
-		}
+			if(Daemon_AttemptReconnect()) {
+				       DPIntWarn("Unable to reconnect, expect trouble");
+				       return(0);
+		       }
+	       }
 		if(print $DaemonSocket "$$ $_[0]","\n") {
 			return(1);
 		} else {
@@ -306,7 +309,17 @@ sub Daemon_SendData {
 # Purpose: Reconnect after $DaemonSocket for some reason has gone undef
 # Usage: Daemon_AttemptReconnect();
 sub Daemon_AttemptReconnect {
-	if(ConnectToDaemon("$SaveToDir/$DaemonSocketName", undef) eq 'NOHI') {
+	my $ConnectionReply = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
+	if($ConnectionReply eq 'NOCONNECT') {
+		DPIntWarn("Unable to reconnect to the daemon, attempting to restart it");
+		if(StartDaemon()) {
+			DPIntInfo("Daemon started");
+		} else {
+			$DaemonOnline = 0;
+			return(undef);
+		}
+	}
+	if($ConnectionReply eq 'NOHI') {
 		return(undef);
 	} else {
 		return(1);
