@@ -18,6 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+# TODO: Can't upgrade from 0.4 yet!
+
 require 5.6.0;			# We need perl 5.6.0 at the very least
 				# and even this is mostly untested.
 use strict;			# Force strict coding
@@ -3749,7 +3751,7 @@ sub AddEvent {
 	# Create the widgets for the normal event selection
 	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the all day event selection
-	my ($AE_MainWidget, $AE_SummaryWidget, $AE_DetailsWidget) = AllDayEventWindow("NULL", $OKButton, $VBox_HBoxContainer, $Window);
+	my ($AE_MainWidget, $AE_SummaryWidget, $AE_DetailsWidget) = AllDayEventWindow("NULL", $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
 	my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
