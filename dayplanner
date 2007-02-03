@@ -4221,14 +4221,15 @@ sub AllDayEvent_OK {
 	unless ($Error) {
 		my %EntryHash;
 		# Add them to the hash
-		$EntryHash{SUMMARY} = $Summary;
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay);
 		if($IsBirthday) {
 			$EntryHash{'X-DP-BIRTHDAY'} = 'TRUE';
 			$EntryHash{'X-DP-BIRTHDAYNAME'} = $Summary;
 			$EntryHash{RRULE} = 'FREQ=YEARLY';
+			$EntryHash{SUMMARY} = sprintf(DP_gettext("%s's birthday"), $Summary);
 		} else {
+			$EntryHash{SUMMARY} = $Summary;
 			# Get and add content to the fulltext
 			my $FulltextBuff = $FulltextEntry->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
