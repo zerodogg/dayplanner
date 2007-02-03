@@ -3297,7 +3297,9 @@ sub DeleteEvent {
 	}
 	my $Type = GetEventListType();
 
-	if($Type eq 'normal') {
+	my @StandardTypes = ( 'normal', 'allday','bday' );
+
+	if(grep($Type, @StandardTypes)) {
 		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 		my $EventUID = $EventlistWidget->{data}[$Selected][0];
 		my $EventTime = $EventlistWidget->{data}[$Selected][1];
@@ -3339,7 +3341,7 @@ sub GetEventListType {
 
 	# Detect the event type
 	if($Event) {
-		if (defined($Event->{"X-DP-BIRTHDAY"}) and $Event->{"X-DP-BIRTHDAY"} eq "TRUE") {
+		if (defined($Event->{'X-DP-BIRTHDAY'}) and $Event->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 			return('bday');
 		} elsif (not $Event->{DTSTART} =~ /\dT\d/) {
 			# Assume all day since there is no T parameter
@@ -4517,14 +4519,24 @@ sub PopulateEventList {
 	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
 		foreach my $Time (sort @{$TimeArray}) {
 			foreach my $UID (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)}) {
+				my $EventInfo = $iCalendar->get_info($UID);
+				my $EventSummary = $EventInfo->{SUMMARY};
+				if(defined($EventInfo->{'X-DP-BIRTHDAY'}) and $EventInfo->{'X-DP-BIRTHDAY'} eq "TRUE") {
+					if(not defined($EventInfo->{'X-DP-BIRTHDAYNAME'}) or not length($EventInfo->{'X-DP-BIRTHDAYNAME'})) {
+						DPIntWarn("Birthday event with no name ($UID), using default summary.!");
+					} else {
+						$EventSummary = sprintf(DP_gettext("%s's birthday"), $EventInfo->{'X-DP-BIRTHDAYNAME'});
+					}
+				}
+
 				# Don't add Time = DAY.
 				if($Time eq 'DAY') {
-					$Time = "";
+					$Time = '';
 				}
 				unless (defined(${$iCalendar->get_info($UID)}{SUMMARY})) {
 					DPIntWarn("Found no summary for entry: $Time/$UID");
 				} else {
-					push (@{$EventlistWidget->{data}}, [$UID,AMPM_From24($Time), ${$iCalendar->get_info($UID)}{SUMMARY}]);
+					push (@{$EventlistWidget->{data}}, [$UID,AMPM_From24($Time), $EventSummary]);
 				}
 			}
 		}
