@@ -57,7 +57,7 @@ sub new {
 # Purpose: Create a new object using file
 # Usage: my $object = DP::iCalendar->newfile(/FILE/);
 sub newfile {
-	my $File = shift;
+	my $File = $_[1];
 	if(not defined($File)) {
 		carp("Needs an option: path to the iCalendar file");
 		return(undef);
