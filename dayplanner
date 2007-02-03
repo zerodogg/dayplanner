@@ -940,6 +940,8 @@ sub LoadStateFile {
 		if(not defined($InternalConfig{LastVersion}) or not $InternalConfig{LastVersion} eq $Version) {
 			UpgradeVersion();
 		}
+	} else {
+		$InternalConfig{LastVersion} = $Version;
 	}
 }
 
@@ -1065,12 +1067,13 @@ sub UpdatedData {
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
 sub LoadCalendar {
+	my $IsFirstStartup = shift;
 	if(-e "$SaveToDir/$ICSFile") {
 		$iCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
-		$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
+	} else {
+		$iCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
-	# TODO: Do something when the file doesn't exist? Such as check if
-	# migration is needed.
+	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
 	return(1);
 }
 
@@ -1180,12 +1183,13 @@ sub GetRealBirthdayName {
 	return($Name);
 }
 
-# Purpose: Upgrade from one version to another (upgrades the holiday file)
+# Purpose: Upgrade from one version to another
 # Usage: UpgradeVersion();
 sub UpgradeVersion () {
 	my $ProgressWin = DPCreateProgressWin(DP_gettext("Upgrading"), "", 1);
 	$InternalConfig{LastVersion} = $Version;
-	my $Total = 5;
+	my $Total = 6;
+	# Upgrade the holiday file if needed
 	if(-e $HolidayFile) {
 		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
 		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
@@ -1206,10 +1210,55 @@ sub UpgradeVersion () {
 			}
 		}
 	}
-	if(-e "$SaveToDir/special_events.dpd") {
-		unlink("$SaveToDir/special_events.dpd");
+	# Upgrade the old data files if needed
+	if(not -e "$SaveToDir/$ICSFile") {
+		# Normal events (events.dpd)
+		if(-e "$SaveToDir/events.dpd") {
+			my %CalendarContents = do("$SaveToDir/events.dpd");
+			foreach my $Year(keys(%CalendarContents)) {
+				foreach my $Month (keys(%{$CalendarContents{$Year}})) {
+					foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
+						foreach my $Time (keys(%{$CalendarContents{$Year}{$Month}{$Day}})) {
+							# Create the data hash
+							my %iCalData;
+							$iCalData{SUMMARY} = $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary};
+							if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
+								$iCalData{DESCRIPTION} = $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext};
+							}
+							$iCalData{DTSTART} = iCal_GenDateTime($Year, $Month, $Day, $Time);
+							$iCalData{DTEND} = $iCalData{DTSTART};
+							$iCalendar->add(%iCalData);
+						}
+					}
+				}
+			}
+		}
+		ProgressMade(4, $Total, $ProgressWin) if($Gtk2Init);
+		# Birthday events (birthdays.dpd)
+		if(-e "$SaveToDir/birthdays.dpd") {
+			my %BirthdayContents = do("$SaveToDir/$BirthdayFile");
+			foreach my $Month (keys(%BirthdayContents)) {
+				foreach my $Day (keys(%{$BirthdayContents{$Month}})) {
+					foreach my $Name (keys(%{$BirthdayContents{$Month}{$Day}})) {
+						# Create the data hash
+						my %iCalData;
+						$iCalData{DTSTART} = iCal_GenDateTime(1970, $Month, $Day, "00:00");
+						$iCalData{DTEND} = $iCalData{DTSTART};
+						$iCalData{'X-DP-BIRTHDAY'} = 'TRUE';
+						$iCalData{'X-DP-BIRTHDAYNAME'} = $Name;
+						$iCalData{RRULE} = 'FREQ=YEARLY';
+						$iCalData{SUMMARY} = sprintf(DP_gettext("%s's birthday"), $Name);
+						$iCalendar->add(%iCalData);
+					}
+				}
+			}
+		}
+		ProgressMade(5, $Total, $ProgressWin) if($Gtk2Init);
 	}
-	ProgressMade(4, $Total, $ProgressWin) if($Gtk2Init);
+	foreach(qw/special_events.dpd events.dpd birthdays.dpd/) {
+		unlink("$SaveToDir/$_") if -e "$SaveToDir/$_";
+	}
+	ProgressMade(6, $Total, $ProgressWin) if($Gtk2Init);
 	$ProgressWin->{Window}->destroy();
 }
 
@@ -1616,10 +1665,10 @@ sub MainInit {
 
 	# Load the configuration file
 	LoadConfig();
-	# Load the internal state file
-	LoadStateFile();
 	# Load the calendar
 	LoadCalendar();
+	# Load the internal state file
+	LoadStateFile();
 	# Set up holidays
 	HolidaySetup();
 	return($FirstStartup);
