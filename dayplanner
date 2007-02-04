@@ -1201,7 +1201,7 @@ sub GetRealBirthdayName {
 sub UpgradeVersion () {
 	my $ProgressWin = DPCreateProgressWin(DP_gettext("Upgrading"), "", 1);
 	$InternalConfig{LastVersion} = $Version;
-	my $Total = 6;
+	my $Total = 7;
 	# Upgrade the holiday file if needed
 	if(-e $HolidayFile) {
 		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
@@ -1267,11 +1267,14 @@ sub UpgradeVersion () {
 			}
 		}
 		ProgressMade(5, $Total, $ProgressWin) if($Gtk2Init);
+		# Write the iCalendar file.
+		$iCalendar->write();
+		ProgressMade(6, $Total, $ProgressWin) if($Gtk2Init);
 	}
 	foreach(qw/special_events.dpd events.dpd birthdays.dpd/) {
 		unlink("$SaveToDir/$_") if -e "$SaveToDir/$_";
 	}
-	ProgressMade(6, $Total, $ProgressWin) if($Gtk2Init);
+	ProgressMade(7, $Total, $ProgressWin) if($Gtk2Init);
 	$ProgressWin->{Window}->destroy();
 }
 
