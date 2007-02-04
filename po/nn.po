@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2007-02-03 16:28+0100\n"
-"PO-Revision-Date: 2007-02-03 16:29+0100\n"
+"PO-Revision-Date: 2007-02-04 22:56+0100\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -641,7 +641,7 @@ msgstr "Normal"
 #. TRANSLATORS: Context: Event type: THIS STRING
 #: dayplanner:3736
 msgid "All day"
-msgstr "Heile dagen"
+msgstr "Heildags"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
 #: dayplanner:3738
