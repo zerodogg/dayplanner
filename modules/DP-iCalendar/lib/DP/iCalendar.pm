@@ -568,8 +568,8 @@ sub _ParseData {
 		} else {
 			my $Name = $_;
 			my $Value = $_;
-			$Name =~ s/^(\S+):(.*)$/$1/;
-			$Value =~ s/^(\S+):(.*)$/$2/;
+			$Name =~ s/^(\w+):(.*)$/$1/;
+			$Value =~ s/^(\w+):(.*)$/$2/;
 			if($Name =~ /^BEGIN/) {
 				$CurrentStructure++;
 				$Name = "X-PARSER_ENTRYTYPE";
