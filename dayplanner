@@ -27,18 +27,17 @@ use warnings;			# Tell perl to warn about things
 use Locale::gettext;		# Allow the program to be translated
 use POSIX;			# We need strftime
 use Gtk2; 			# Use Gtk2 :)
-use Data::Dumper;		# Our save format is that of Data::Dumper
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
-use Getopt::Long;		# Commandline options
-use Cwd;			# We need Cwd::Realpath to find out which directory we live in
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
-use IO::Socket;			# Network layer to communicate with the daemon
 use File::Copy;			# We need to copy the holiday file
-use FindBin;			# So that we can detect module dirs during runtime
-use MIME::Base64;		# Used for import/export
-use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
 use File::Path qw/mkpath/;	# We need mkpath
+use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
+use MIME::Base64;		# Used for import/export
+use Getopt::Long;		# Commandline options
+use IO::Socket;			# Network layer to communicate with the daemon
+use FindBin;			# So that we can detect module dirs during runtime
+use Cwd;			# We need Cwd::Realpath to find out which directory we live in
 # So that we can use a local Date::HolidayParser
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
@@ -1199,7 +1198,7 @@ sub GetRealBirthdayName {
 
 # Purpose: Upgrade from one version to another
 # Usage: UpgradeVersion();
-sub UpgradeVersion () {
+sub UpgradeVersion {
 	my $ProgressWin = DPCreateProgressWin(DP_gettext("Upgrading"), "", 1);
 	$InternalConfig{LastVersion} = $Version;
 	my $Total = 7;
@@ -4861,7 +4860,7 @@ GetOptions (
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser Crypt::CBC Crypt::Blowfish IO::Select/) {
+		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser Crypt::CBC Crypt::Blowfish IO::Select DP::iCalendar/) {
 			if(eval("use $_; 1")) {
 				push(@AvailModules, $_);
 			} else {
