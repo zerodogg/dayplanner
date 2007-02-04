@@ -450,7 +450,8 @@ sub IO_Socket_INET_Errors {
 # Purpose: Back up data to ~/.dayplanner/ before getting data
 # Usage: DPS_BackupData();
 sub DPS_BackupData {
-	my $Target = "$SaveToDir/dps_backup" . time() . ".ics";
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	my $Target = "$SaveToDir/dps_backup-$curryear.$currmonth.$currmday-$currhour$currmin$currsec.ics";
 	$iCalendar->write($Target);
 	DPS_Log("Backup written to $Target");
 	DPIntInfo("DPS: Backup written to $Target");
