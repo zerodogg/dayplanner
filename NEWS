@@ -11,6 +11,7 @@ Version 0.5 (Unreleased)
 - Fixed a major bug which caused event summaries and
   descriptions containing ":" to be parsed wrong and not
   be read correctly (or displayed at all in some cases).
+- Will now attempt to restart the daemon if it can't reconnect to it
 
 * Notifier (dayplanner-notified)
 
