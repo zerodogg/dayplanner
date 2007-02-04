@@ -145,9 +145,17 @@ sub SetStatus {
 # Usage: LoadCalendar();
 sub LoadCalendar {
 	if($iCalendar) {
-		$iCalendar->reload();
+		# Only reload if the file exists
+		if(-e "$DayplannerDir/$iCalFile") {
+			$iCalendar->reload();
+		}
 	} else {
-		$iCalendar = DP::iCalendar->new("$DayplannerDir/$iCalFile");
+		# Use ->new if the file exists. ->newfile if it doesn't
+		if(-e "$DayplannerDir/$iCalFile" ) {
+			$iCalendar = DP::iCalendar->new("$DayplannerDir/$iCalFile");
+		} else {
+			$iCalendar = DP::iCalendar->newfile("$DayplannerDir/$iCalFile");
+		}
 	}
 	# Calculate the notification hash
 	CalculateNotificationHash();
