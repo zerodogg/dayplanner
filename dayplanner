@@ -1747,62 +1747,6 @@ sub AMPM_From24 {
 # Various utility functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Resolve a conflict during an import
-# Usage: my (message, newtime) = Import_ResolveConflict(Year,Month,Day,Time,summary,fulltext);
-sub Import_ResolveConflict {
-	warn("Import_ResolveConflict: STUBBED, NOW USELESS");
-=cut
-	my($Year,$Month,$Day,$Time,$summary,$fulltext) = @_;
-	my($Attempts,$ConflictMessage,$Conflict);
-	my $OrigTime = $Time;
-	while(CalendarDefined($Year, $Month, $Day, $Time)) {
-		my $ThisConflicted;
-		$Attempts++;
-		my $Hour = $Time;
-		my $Min = $Time;
-		$Hour =~ s/^(\d+):.*$/$1/;
-		$Min =~ s/^\d+:(\d+)$/$1/;
-		if($Attempts > 19) {
-			$Time = undef;
-			DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would move the event more than 20 minutes.");
-			$Conflict = 1;
-			last;
-		}
-		if($summary eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary}) {
-			if(defined($fulltext) and defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-				unless($fulltext eq $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) {
-					$ThisConflicted = 1;
-				}
-			}
-		} else {
-			$ThisConflicted = 1;
-		}
-		if($ThisConflicted) {
-			$Min++;
-			if($Min > 59) {
-				$Conflict = 1;
-				DPIntWarn("Unable to resolve \"$summary\" at $Day.$Month.$Year $OrigTime - would require hour switching.");
-				$Time = undef;
-				last;
-			}
-			$Conflict = 1;
-			$Time = "$Hour:" . AppendZero($Min);
-		} else {
-			# If it didn't conflict that must mean it worked out.
-			last;
-		}
-	}
-	if($Conflict) {
-		if(defined($Time)) {
-			$ConflictMessage = sprintf(DP_gettext('"%s" at %s has been moved to %s'),$summary,"$Day.$Month.$Year $OrigTime", $Time);
-		} else {
-			$ConflictMessage = sprintf(DP_gettext('"%s" at %s did not get imported'),$summary,"$Day.$Month.$Year $OrigTime");
-		}
-	}
-	return($ConflictMessage,$Time);
-=cut
-}
-
 # Purpose: Commandline wrapper around the export functions
 # Usage: 'x|yzx' => \&CLI_Export,
 sub CLI_Export {
