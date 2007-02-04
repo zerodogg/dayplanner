@@ -8,18 +8,18 @@ may be subject to change.
 
 * Version 0.5
 - - - - - - -
-- Switch to using iCalendar as data format
-	- Use UIDs internally in the data hash
-	- Add support to DP for full-day events
-	- Add support for choosing how long an event lasts
-	- Add support for
-		- Repeat every X [days|months]
-		- Repeat until
 - Better HOME detection
-- Finalize Day Planner services
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
 * Version 0.6
+- - - - - - -
+- Add support for choosing how long an event lasts
+- Add support for
+	- Repeat every X [days|months]
+	- Repeat until
+- Finalize Day Planner services
+
+* Version 0.7
 - - - - - - -
 - Try to get a formal HIG-review
