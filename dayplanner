@@ -4867,6 +4867,8 @@ GetOptions (
 				push(@UnavailModules, $_);
 			}
 		}
+		@AvailModules = sort(@AvailModules);
+		@UnavailModules = sort(@UnavailModules);
 		print "Available modules:";
 		print " $_" foreach(@AvailModules);
 		print " (none)" unless(@AvailModules);
