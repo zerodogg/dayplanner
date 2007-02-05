@@ -123,6 +123,17 @@ sub get_timeinfo {
 	return(undef);
 }
 
+# Purpose: Get a list of years which have events (those with *only* recurring not counted)
+# Usage: my $ArrayRef = $object->get_years();
+sub get_years {
+	my $self = shift;
+	if(not defined($self->{OrderedCalendar})) {
+		return(undef);
+	}
+	my @Years = sort keys(%{$self->{OrderedCalendar}});
+	return(\@Years);
+}
+
 # Purpose: Get information for a supplied UID
 # Usage: my $Info = $object->get_info(UID);
 sub get_info {
@@ -720,6 +731,11 @@ It takes exactly one parameter, which is the path to the file you wish
 to write the iCalendar data to. The difference from ->new is that it does
 not load nor parse FILE. So FILE may or may not exist. If it exists and you
 call ->write then it will overwrite it.
+
+=head2 $YearArray = $object->get_years();
+
+Returns an array reference containing a sorted list of which years
+contain events.
 
 =head2 $DayArray = $object->get_monthinfo(YEAR,MONTH);
 
