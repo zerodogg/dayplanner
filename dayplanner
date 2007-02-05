@@ -2095,12 +2095,9 @@ sub HTML_YearList {
 	};
 	print $FILE HTML_Header("", "Day planner", "M");
 	print $FILE HTML_Encode(DP_gettext("Select the year to view:")) . "<br />\n";
-	warn("HTML_YearList: STUBBED - unable to create one");
-=cut
-	foreach(sort { $b <=> $a } keys(%CalendarContents)) {
+	foreach(@{$iCalendar->get_years()}) {
 		print $FILE "<a href='$_.html'>" . HTML_Encode($_) . "</a><br />\n";
 	}
-=cut
 	print $FILE HTML_Footer();
 }
 
@@ -2151,12 +2148,9 @@ sub HTML_Export {
 		}
 	}
 	foreach my $Year (@{$iCalendar->get_years}) {
-		print "Y=$Year\n";
 		HTML_YearHtml($Year,$Dir);
 		foreach my $Month (@{$iCalendar->get_months($Year)}) {
-			print "M=$Month\n";
 			foreach my $Day (@{$iCalendar->get_monthinfo($Year,$Month)}) {
-				print "D=$Day\n";
 				HTML_DayToHtml($Year, $Month, $Day, $Dir);
 			}
 		}
