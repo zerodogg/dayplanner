@@ -121,8 +121,10 @@ $SIG{TERM} = \&DP_SigHandler;
 sub DP_gettext {
 	if($DP_I18N_Mode == 1) {	# 1 is Legacy
 		return(gettext(@_));
-	} else {			# Others is the new OO-interface
+	} elsif ($Gettext) {			# Others is the new OO-interface
 		return($Gettext->get(@_));
+	} else {
+		return(@_);
 	}
 }
 
@@ -1749,6 +1751,9 @@ sub AMPM_From24 {
 # Purpose: Commandline wrapper around the export functions
 # Usage: 'x|yzx' => \&CLI_Export,
 sub CLI_Export {
+	# First initialize the i18n system
+	DP_InitI18n();
+	# Then initialize the data
 	my($Type,$Target) = @_;
 	MainInit(1);
 	if($Type =~ /(ical|ics_dps)/) {
@@ -1821,10 +1826,11 @@ sub CLI_Import {
 sub HTML_Encode {
 	my $String = shift;
 	study($String);
-	$String =~ s/&/&amp;/;
-	$String =~ s/</&lt;/;
-	$String =~ s/>/&gt;/;
-	$String =~ s/"/&quot;/;
+	$String =~ s#\n#<br />#g;
+	$String =~ s/&/&amp;/g;
+	$String =~ s/</&lt;/g;
+	$String =~ s/>/&gt;/g;
+	$String =~ s/"/&quot;/g;
 	return($String);
 }
 
@@ -1930,6 +1936,7 @@ sub HTML_Footer {
 # Usage: HTML_DayToHtml(YEAR,MONTH,DAY,DIRECTORY);
 sub HTML_DayToHtml {
 	my ($Year,$Month,$Day,$Directory) = @_;
+	my (@AllDay, @OtherEvents);
 	open(my $FILE, ">", "$Directory/dp_$Year$Month$Day.html") or do {
 		DPIntWarn("Unable to open $Directory/dp_$Year$Month$Day.html for writing: $!");
 		DPError(sprintf(DP_gettext("Unable to open %s for writing: %s"), "$Directory/dp_$Year$Month$Day.html", $!));
@@ -1939,28 +1946,30 @@ sub HTML_DayToHtml {
 	print $FILE HTML_Header($Year,"$Day-$Month-$Year");
 	print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
 	print $FILE "<tbody><tr><td>" . HTML_Encode(DP_gettext("Time")) . "</td><td>" . HTML_Encode(DP_gettext("Description")) . "</td></tr>\n";
-	warn("HTML_DayToHtml: STUB: Won't write proper bdays");
-=cut
-	# Write birthdays
-	if(BirthdayDayDefined($Month,$Day)) {
-		foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
-			print $FILE "<tr><td></td><td>" . HTML_Encode(sprintf(DP_gettext("%s's birthday"), $Name)) . "</td></tr>\n";
-		}
-	}
-=cut
-	# Write standard events
-	warn("HTML_DayToHtml: STUBBED, won't write proper calendar contents");
-=cut
-	foreach my $Time (sort(keys(%{$CalendarContents{$Year}{$Month}{$Day}}))) {
-		print $FILE "<tr><td>" . HTML_Encode($Time) . "</td><td>" . HTML_Encode($CalendarContents{$Year}{$Month}{$Day}{$Time}{summary});
-		if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
-			my $HTML_Fulltext = HTML_Encode($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext});
-			$HTML_Fulltext =~ s#\n#<br />#g;
-			print $FILE "<br/><i>$HTML_Fulltext</i>";
+	# Write allday and birthdays
+	foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,"DAY")})) {
+		my $EventInfo = $iCalendar->get_info($Event);
+		# TODO: i18n
+		print $FILE "<tr><td></td><td>" . HTML_Encode($EventInfo->{SUMMARY});
+		if(defined($EventInfo->{DESCRIPTION})) {
+			my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
+			print $FILE "<br /><i>$HTML_Fulltext</i>";
 		}
 		print $FILE "</td></tr>\n";
 	}
-=cut
+	# Write others
+	foreach my $Time (sort(@{$iCalendar->get_dateinfo($Year,$Month,$Day)})) {
+		next if $Time eq 'DAY';
+		foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})) {
+			my $EventInfo = $iCalendar->get_info($Event);
+			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode($EventInfo->{SUMMARY});
+			if(defined($EventInfo->{DESCRIPTION})) {
+				my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
+				print $FILE "<br /><i>$HTML_Fulltext</i>";
+			}
+			print $FILE "</td></tr>\n";
+		}
+	}
 	# Prepare and write holidays
 	unless(defined($HolidayParser)) {
 		$HolidayParser = Date::HolidayParser->new($HolidayFile);
@@ -2003,32 +2012,14 @@ sub HTML_MonthToHtml {
 	};
 	print $FILE HTML_Header($Year, "$MonthNames{$Month} $Year");
 	my $HadContent;
-	warn("HTML_MonthToHtml: STUBBED, won't write proper files");
-=cut
-	if(defined($CalendarContents{$Year}{$Month})) {
-		foreach my $Day (sort {$a <=> $b } keys(%{$CalendarContents{$Year}{$Month}})) {
-			$HadContent = 1;
-			print $FILE "<a href='dp_$Year$Month$Day.html'>" . HTML_Encode("$Day. $MonthNames{$Month} $Year") . "</a><br/>\n";
-		}
+	my $MonthInfo = $iCalendar->get_monthinfo($Year,$Month);
+	foreach my $Day (sort @{$MonthInfo}) {
+		$HadContent = 1;
+		print $FILE "<a href='dp_$Year$Month$Day.html'>" . HTML_Encode("$Day. $MonthNames{$Month} $Year") . "</a><br/>\n";
 	}
-=cut
 	unless($HadContent) {
 		print $FILE "<i>" . HTML_Encode(DP_gettext("There are no events this month")) . "</i>";
 	}
-	warn("HTML_MonthToHtml: STUB: \%BirthdayContents");
-=cut
-	if(keys(%BirthdayContents) and keys(%{$BirthdayContents{$Month}})) {
-		print $FILE '<br /><h3>' . HTML_Encode(DP_gettext("Birthdays this month:")) . "</h3>";
-		print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">' . "\n";
-		print $FILE "<tbody><tr><td>" . HTML_Encode(DP_gettext("Date")) . "</td><td>" . HTML_Encode(DP_gettext("Name")) . "</td></tr>\n";
-		foreach my $Day (sort {$a <=> $b} keys(%{$BirthdayContents{$Month}})) {
-			foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
-				print $FILE "<tr><td>" . HTML_Encode("$Day. $MonthNames{$Month}") . "</td><td>" . HTML_Encode($Name) . "</td></tr>\n";
-			}
-		}
-		print $FILE '</tbody></table>';
-	}
-=cut
 	# Prepare and write holidays
 	unless(defined($HolidayParser)) {
 		$HolidayParser = Date::HolidayParser->new($HolidayFile);
@@ -2159,12 +2150,13 @@ sub HTML_Export {
 			return(undef);
 		}
 	}
-	warn("HTML_Export: Won't create proper files, unable to get year/month list");
-=cut
-	foreach my $Year (keys(%CalendarContents)) {
+	foreach my $Year (@{$iCalendar->get_years}) {
+		print "Y=$Year\n";
 		HTML_YearHtml($Year,$Dir);
-		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
-			foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
+		foreach my $Month (@{$iCalendar->get_months($Year)}) {
+			print "M=$Month\n";
+			foreach my $Day (@{$iCalendar->get_monthinfo($Year,$Month)}) {
+				print "D=$Day\n";
 				HTML_DayToHtml($Year, $Month, $Day, $Dir);
 			}
 		}
@@ -2172,7 +2164,6 @@ sub HTML_Export {
 			HTML_MonthToHtml($Year,$_,$Dir);
 		}
 	}
-=cut
 	HTML_YearList($Dir);
 	HTML_PHPIndex($Dir);
 	HTML_BirthdayList($Dir);
