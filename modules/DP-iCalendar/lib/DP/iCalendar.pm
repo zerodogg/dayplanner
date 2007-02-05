@@ -127,11 +127,29 @@ sub get_timeinfo {
 # Usage: my $ArrayRef = $object->get_years();
 sub get_years {
 	my $self = shift;
-	if(not defined($self->{OrderedCalendar})) {
-		return(undef);
-	}
 	my @Years = sort keys(%{$self->{OrderedCalendar}});
+	# Yes this will call _GenerateCalendar when it is not needed (that is,
+	# when there are NO events) - but still, that will be very rare.
+	if(not @Years) {
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+		$curryear += 1900;
+		# Generate the calendar for the current year so that we return something useable.
+		$self->_GenerateCalendar($curryear);
+		@Years = sort keys(%{$self->{OrderedCalendar}});
+	}
 	return(\@Years);
+}
+
+# Purpose: Get a list of months which have events (those with *only* recurring not counted)
+# Usage: my $ArrayRef = $object->get_months();
+sub get_months {
+	my ($self, $Year) = @_;
+	if(not defined($self->{OrderedCalendar}{$Year})) {
+		# Generate the calendar for this year
+		$self->_GenerateCalendar($Year);
+	}
+	my @Months = sort keys(%{$self->{OrderedCalendar}{$Year}});
+	return(\@Months);
 }
 
 # Purpose: Get information for a supplied UID
@@ -644,6 +662,8 @@ sub _AppendZero {
 
 # Purpose: Generate the formatted calendar from the raw calendar
 # Usage: _GenerateCalendar(YEAR);
+#  Note: This will generate the calendar including recurring stuff for YEAR.
+#  It will create the normal calendar for all events.
 sub _GenerateCalendar {
 	my $self = shift;
 	my $EventYear = $_[0];
@@ -736,6 +756,11 @@ call ->write then it will overwrite it.
 
 Returns an array reference containing a sorted list of which years
 contain events.
+
+=head2 $MonthArray = $object->get_months(YEAR);
+
+Returns an array reference containing a sorted list of which months
+in YEaR contain events.
 
 =head2 $DayArray = $object->get_monthinfo(YEAR,MONTH);
 
