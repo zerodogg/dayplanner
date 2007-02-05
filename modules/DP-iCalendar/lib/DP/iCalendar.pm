@@ -82,9 +82,8 @@ sub get_monthinfo {
 		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}})) {
 				push(@DAYS, $_);
 		}
-		return(\@DAYS) if @DAYS;
 	}
-	return(undef);
+	return(\@DAYS);
 }
 
 # Purpose: Get information for the supplied date (list of times in the day there are events)
@@ -100,9 +99,8 @@ sub get_dateinfo {
 		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}{$Day}})) {
 				push(@TIME, $_);
 		}
-		return(\@TIME) if @TIME;
 	}
-	return(undef);
+	return(\@TIME);
 }
 
 # Purpose: Get the list of UIDs for the supplied time
@@ -118,9 +116,8 @@ sub get_timeinfo {
 		foreach(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}) {
 				push(@UIDs, $_);
 		}
-		return(\@UIDs) if @UIDs;
 	}
-	return(undef);
+	return(\@UIDs);
 }
 
 # Purpose: Get a list of years which have events (those with *only* recurring not counted)
@@ -765,12 +762,12 @@ in YEaR contain events.
 =head2 $DayArray = $object->get_monthinfo(YEAR,MONTH);
 
 Returns a reference to an array containing a list of days in this
-month that contains events, or undef if there are no events.
+month that contains events, or an empty arrayref if there are no events.
 
 =head2 $TimeArray = $object->get_dateinfo(YEAR,MONTH,DAY);
 
 Returns a reference to an array containing a list of times on this day
-that contains events or undef if there are no events.
+that contains events or an empty arrayref if there are no events.
 Note that the time can also be "DAY". If a time is DAY then it means
 that the event doesn't have a time set but lasts that entire day.
 
