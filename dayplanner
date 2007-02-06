@@ -2269,7 +2269,6 @@ sub PHP_WriteFiles {
 # Purpose: Purge the current $PlanConvertHash-> buffer and put it into %CalendarContents
 # Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
 sub PlanConvert_PurgeBuffer {
-	warn("PlanConvert_PurgeBuffer: Uses CalendarContents - STUBBED, won't actually work");
 	my $PlanConvertHash = $_[0];
 	my $ErrorMessage;
 	if(defined($PlanConvertHash->{Day})) {
@@ -2282,8 +2281,8 @@ sub PlanConvert_PurgeBuffer {
 			delete($PlanConvertHash->{Year});
 			delete($PlanConvertHash->{Time});
 			if (not defined($PlanConvertHash->{Summary})) {
-				DPIntWarn("PlanConvert_PurgeBuffer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
-				next;
+				DPIntWarn("Plan importer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
+				return(undef);
 			}
 			$TargetEvent{SUMMARY} = $PlanConvertHash->{Summary};
 			if (defined($PlanConvertHash->{Fulltext})) {
@@ -2300,7 +2299,7 @@ sub PlanConvert_PurgeBuffer {
 			delete($PlanConvertHash->{Month});
 			delete($PlanConvertHash->{Year});
 			if (not defined($PlanConvertHash->{Summary})) {
-				DPIntWarn("PlanConvert_PurgeBuffer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
+				DPIntWarn("Plan importer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
 				next;
 			}
 			$TargetEvent{'X-DP-BIRTHDAY'} = 'TRUE';
@@ -2309,6 +2308,7 @@ sub PlanConvert_PurgeBuffer {
 			$TargetEvent{SUMMARY} = sprintf(DP_gettext("%s's birthday"), $PlanConvertHash->{Summary});
 			delete($PlanConvertHash->{Fulltext});
 			delete($PlanConvertHash->{Summary});
+			$iCalendar->add(%TargetEvent);
 		} else {
 			DPIntWarn("BUG!!! Invalid type: $PlanConvertHash->{Type}. This could result in dangerous errors.");
 		}
@@ -2801,7 +2801,7 @@ sub ImportProgData {
 		foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
 			if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
 				foreach my $File (<$Dir/*>) {
-					next if $File =~ /(lock\.pland|pland|holiday)$/;
+					next if $File =~ m#/(lock\.pland|pland|holiday)$#;
 					push(@PlanFiles, $File);
 				}
 			}
