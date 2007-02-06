@@ -52,15 +52,20 @@ my $NoFork;
 # I18n functions (Day Planner Locale::gettext wrapper)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# TODO: Support Locale::Gettext-less mode.
-
 # Purpose: Wrapper around the gettext functions that does the right thing(tm)
 # Usage: DP_gettext(STANDARD_GETTEXT_SYNTAX);
 sub DP_gettext {
 	if($DP_I18N_Mode == 1) {	# 1 is Legacy
 		return(gettext(@_));
-	} else {			# Others is the new OO-interface
+	} elsif ($DP_I18N_Mode == 2 ) {	# 2 is new Locale::gettext OO-interface
 		return($Gettext->get(@_));
+	} else {			# Neither of those means it's not available, just return
+					# a scalar of the supplied data.
+		my $String;
+		foreach(@_) {
+			$String .= $_;
+		}
+		return($String);
 	}
 }
 
@@ -68,49 +73,55 @@ sub DP_gettext {
 # Usage: DP_InitI18n();
 sub DP_InitI18n {
 	setlocale(LC_ALL, "" );
-	my $BindTo;
-	my $Legacy;
-	if($Locale::gettext::VERSION > "1.04") {
-		$Legacy = 0;
+	if(eval("use Locale::gettext;1")) {
+		my $BindTo;
+		my $Legacy;
+		if($Locale::gettext::VERSION > "1.04") {
+			$Legacy = 0;
+		} else {
+			$Legacy = 1;
+		}
+		if(defined($ENV{DP_FORCE_LEGACY_I18N}) and $ENV{DP_FORCE_LEGACY_I18N} eq "1") {
+			$Legacy = 1;
+		}
+		# Find out if we have a locale directory in our main dir
+		if (-d "$FindBin::RealBin/locale/") {
+			if(defined($ENV{LC_ALL}) or defined($ENV{LANG})) {
+				my $I18N;
+				if(defined($ENV{LC_ALL}) and length($ENV{LC_ALL})) {
+					$I18N = $ENV{LC_ALL};
+				} else {
+					$I18N = $ENV{LANG};
+				}
+				if($I18N =~ /:/) {
+					$I18N =~ s/^(.+):.*$/$1/;
+				}
+				if (-e "$FindBin::RealBin/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
+					$BindTo = "$FindBin::RealBin/locale";
+				}
+			}
+		}
+		# Set up the i18n fetching type
+		if($Legacy) {
+			DPIntWarn("Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters");
+			$DP_I18N_Mode = 1;
+			bindtextdomain("dayplanner", "$FindBin::RealBin/locale");
+			textdomain("dayplanner");
+			# This is a hack, but works in many cases
+			foreach my $EnvVar(qw(LANG LC_CTYPE LC_ALL LC_ADDRESS LC_NAME)) {
+				bind_textdomain_codeset("dayplanner","ISO-8859-15");
+			}
+		} else {
+			$DP_I18N_Mode = 2;
+			$Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
+			if($BindTo) {
+				$Gettext->dir($BindTo);
+			}
+		}
 	} else {
-		$Legacy = 1;
-	}
-	if(defined($ENV{DP_FORCE_LEGACY_I18N}) and $ENV{DP_FORCE_LEGACY_I18N} eq "1") {
-		$Legacy = 1;
-	}
-	# Find out if we have a locale directory in our main dir
-	if (-d "$FindBin::RealBin/locale/") {
-		if(defined($ENV{LC_ALL}) or defined($ENV{LANG})) {
-			my $I18N;
-			if(defined($ENV{LC_ALL}) and length($ENV{LC_ALL})) {
-				$I18N = $ENV{LC_ALL};
-			} else {
-				$I18N = $ENV{LANG};
-			}
-			if($I18N =~ /:/) {
-				$I18N =~ s/^(.+):.*$/$1/;
-			}
-			if (-e "$FindBin::RealBin/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
-				$BindTo = "$FindBin::RealBin/locale";
-			}
-		}
-	}
-	# Set up the i18n fetching type
-	if($Legacy) {
-		DPIntWarn("Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters");
-		$DP_I18N_Mode = 1;
-		bindtextdomain("dayplanner", "$FindBin::RealBin/locale");
-		textdomain("dayplanner");
-		# This is a hack, but works in many cases
-		foreach my $EnvVar(qw(LANG LC_CTYPE LC_ALL LC_ADDRESS LC_NAME)) {
-			bind_textdomain_codeset("dayplanner","ISO-8859-15");
-		}
-	} else {
-		$DP_I18N_Mode = 2;
-		$Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
-		if($BindTo) {
-			$Gettext->dir($BindTo);
-		}
+		$DP_I18N_Mode = 0;
+		# No Locale::Gettext available
+		DPIntWarn("Locale::gettext is not available. This will work, but localization will *not* be available");
 	}
 	# The reason we do not use strftime() or I18N::Langinfo is that these return
 	# values in random encodings. By using Gettext->get() we get values
