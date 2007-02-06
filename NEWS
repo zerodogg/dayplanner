@@ -12,12 +12,16 @@ Version 0.5 (Unreleased)
   descriptions containing ":" to be parsed wrong and not
   be read correctly (or displayed at all in some cases).
 - Will now attempt to restart the daemon if it can't reconnect to it
+- Can now be used with old versions of Locale::gettext
+- No longer *requires* Locale::gettext (although it is recommended)
 
 * Notifier (dayplanner-notified)
 
 * Daemon (dayplanner-daemon)
 - Cleanups
 - iCalendar is now the main internal data format
+- Can now be used with old versions of Locale::gettext
+- No longer *requires* Locale::gettext (although it is recommended)
 
 Version 0.4.1 (Released on the 8th of January 2007)
 ------------------------
