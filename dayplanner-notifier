@@ -28,10 +28,7 @@ use POSIX;			# setlocale()
 use Cwd;
 use File::Basename;
 
-my $Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
-setlocale(LC_ALL, "" );
-textdomain("dayplanner");
-
+my $Gettext;			# Global Gettext object
 my $Version = "0.5";
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
