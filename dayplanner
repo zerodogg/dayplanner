@@ -18,8 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-# TODO: Can't upgrade from 0.4 yet!
-
 require 5.6.0;			# We need perl 5.6.0 at the very least
 				# and even this is mostly untested.
 use strict;			# Force strict coding
@@ -93,11 +91,6 @@ my $HolidayParser;	# The Date::HolidayParser object
 my $Gtk2Init;		# Info about if gtk2 is initialized or not
 my $ShutdownDaemon;	# If we should shut down the daemon on exit
 my($AM_String, $PM_String, $ClockSystem);	# Time/date info
-
-# Global date variables
-my (
-	$currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst
-);
 
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
@@ -1879,7 +1872,6 @@ sub HTML_Menu {
 			11 => 'index.php?year=<?php print "$Year" ?>&amp;month=11',
 			12 => 'index.php?year=<?php print "$Year" ?>&amp;month=12',
 			yearindex => "index.php?page=yearindex",
-			birthdays => "index.php?page=birthdays",
 		);
 	} else {
 		# HTML-style links
@@ -1897,15 +1889,12 @@ sub HTML_Menu {
 			11 => "november-$Year.html",
 			12 => "december-$Year.html",
 			yearindex => "index.html",
-			birthdays => "birthdays.html",
 		);
 	}
-	if(defined($NonDateMode) and $NonDateMode eq "M") {
-		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{birthdays}'>" . HTML_Encode(DP_gettext("View a list of birthdays")) . "</a><br />\n";
-	} elsif($NonDateMode) {
+	if(defined($NonDateMode) and not $NonDateMode eq "M") {
 		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode(DP_gettext("View the main page")) . "</a><br/>\n";
-	} else {
-		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode(DP_gettext("Change to another year")) . "</a> (" . HTML_Encode(sprintf(DP_gettext("current: %s"), $Year)) . ") - <a href='$Links{birthdays}'>" . HTML_Encode(DP_gettext("View a list of birthdays")) . "</a><br />\n";
+	} elsif(not defined($NonDateMode) or not $NonDateMode eq "M") {
+		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode(DP_gettext("Change to another year")) . "</a> (" . HTML_Encode(sprintf(DP_gettext("current: %s"), $Year)) . ") - </a><br />\n";
 		$Menu .= HTML_Encode(DP_gettext("Months")) .
 			": <a href='$Links{1}'>" . HTML_Encode($MonthNames{1}) .
 			"</a> - <a href='$Links{2}'>" . HTML_Encode($MonthNames{2}) .
@@ -2160,7 +2149,8 @@ sub HTML_Export {
 	}
 	HTML_YearList($Dir);
 	HTML_PHPIndex($Dir);
-	HTML_BirthdayList($Dir);
+	# TODO: Either FIXME or DROPME!
+#	HTML_BirthdayList($Dir);
 }
 
 # Purpose: Function to detect todays day using php
@@ -3482,14 +3472,15 @@ sub SetActiveCalItems {
 	}
 }
 
-# Purpose: Sets the date/time variables to the current date/time
-# Usage: GetDate();
-# TODO: This is abuse of global variables. Should be dropped and replaced
-# by proper ones.
+# Purpose: The same as localtime(TIME?); but returns proper years and months
+# Usage: my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(TIME);
+#  TIME is optional. If not present then the builtin time function is called.
 sub GetDate {
-	($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
+	my $Time = $_[0] ? $_[0] : time;
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime($Time);
 	$curryear += 1900;						# Fix the year format
 	$currmonth++;							# Fix the month format
+	return($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst);
 }
 
 # Purpose: Calls SetActiveCalItems on the current year/month displayed in the $CalendarWidget
@@ -4727,6 +4718,8 @@ sub DrawMainWindow {
 	$RightHandVBox->show();
 
 	# CALENDAR
+	# Get the current time
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
 	# Create the calendar
 	$CalendarWidget = Gtk2::Calendar->new;
 	GetDate();
