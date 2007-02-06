@@ -4499,8 +4499,6 @@ sub PopulateEventList {
 	$MenuEditEntry->set_sensitive(0);
 	$MenuDeleteEntry->set_sensitive(0);
 	
-	# TODO: Do some magic to calculate yearly stuff here
-
 	# Main calendar contents
 	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
 		foreach my $Time (sort @{$TimeArray}) {
