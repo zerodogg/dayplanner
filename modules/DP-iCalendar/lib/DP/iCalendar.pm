@@ -422,7 +422,6 @@ sub _NewObj {
 	bless($self);
 	$self->{RawCalendar} = {};
 	$self->{OrderedCalendar} = {};
-	# FIXME: $VERSION doesn't output nicely
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	if($File) {
 		$self->{FILETYPE} = "file";
