@@ -2270,44 +2270,50 @@ sub PHP_WriteFiles {
 # Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
 sub PlanConvert_PurgeBuffer {
 	warn("PlanConvert_PurgeBuffer: Uses CalendarContents - STUBBED, won't actually work");
-=cut
 	my $PlanConvertHash = $_[0];
 	my $ErrorMessage;
 	if(defined($PlanConvertHash->{Day})) {
 		if ($PlanConvertHash->{Type} eq 'normal') {
-			# Check for conflicts
-			if (defined($CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}})) {
-				# Try to fix it
-				($ErrorMessage, $PlanConvertHash->{Time}) = Import_ResolveConflict($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time}, $PlanConvertHash->{Summary}, $PlanConvertHash->{Fulltext});
+			my %TargetEvent;
+			$TargetEvent{DTSTART} = iCal_GenDateTime($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time});
+			$TargetEvent{DTEND} = $TargetEvent{DTSTART};
+			delete($PlanConvertHash->{Day});
+			delete($PlanConvertHash->{Month});
+			delete($PlanConvertHash->{Year});
+			delete($PlanConvertHash->{Time});
+			if (not defined($PlanConvertHash->{Summary})) {
+				DPIntWarn("PlanConvert_PurgeBuffer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
+				next;
 			}
-			if (defined($PlanConvertHash->{Summary})) {
-				$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{summary} = $PlanConvertHash->{Summary};
-				delete($PlanConvertHash->{Summary});
-			}
+			$TargetEvent{SUMMARY} = $PlanConvertHash->{Summary};
 			if (defined($PlanConvertHash->{Fulltext})) {
-				$CalendarContents{$PlanConvertHash->{Year}}{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Time}}{fulltext} = $PlanConvertHash->{Fulltext};
+				$TargetEvent{DESCRIPTION} = $PlanConvertHash->{Fulltext};
 				delete($PlanConvertHash->{Fulltext});
 			}
-			delete($PlanConvertHash->{Day});
-			delete($PlanConvertHash->{Month});
-			delete($PlanConvertHash->{Year});
-			delete($PlanConvertHash->{Time});
+			delete($PlanConvertHash->{Summary});
+			$iCalendar->add(%TargetEvent);
 		} elsif ($PlanConvertHash->{Type} eq 'bday') {
-			if (defined($PlanConvertHash->{Summary})) {
-				$BirthdayContents{$PlanConvertHash->{Month}}{$PlanConvertHash->{Day}}{$PlanConvertHash->{Summary}} = 1;
-				delete($PlanConvertHash->{Summary});
-			}
+			my %TargetEvent;
+			$TargetEvent{DTSTART} = iCal_GenDateTime($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day});
+			$TargetEvent{DTEND} = $TargetEvent{DTSTART};
 			delete($PlanConvertHash->{Day});
 			delete($PlanConvertHash->{Month});
 			delete($PlanConvertHash->{Year});
-			delete($PlanConvertHash->{Time});
+			if (not defined($PlanConvertHash->{Summary})) {
+				DPIntWarn("PlanConvert_PurgeBuffer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
+				next;
+			}
+			$TargetEvent{'X-DP-BIRTHDAY'} = 'TRUE';
+			$TargetEvent{'X-DP-BIRTHDAYNAME'} = $PlanConvertHash->{Summary};
+			$TargetEvent{RRULE} = 'FREQ=YEARLY';
+			$TargetEvent{SUMMARY} = sprintf(DP_gettext("%s's birthday"), $PlanConvertHash->{Summary});
 			delete($PlanConvertHash->{Fulltext});
+			delete($PlanConvertHash->{Summary});
 		} else {
 			DPIntWarn("BUG!!! Invalid type: $PlanConvertHash->{Type}. This could result in dangerous errors.");
 		}
 		$PlanConvertHash->{Type} = 'normal';
 	}
-=cut
 }
 
 # Purpose: Convert the file supplied
