@@ -2759,9 +2759,9 @@ sub ExportData {
 	#$EncryptionCheckbox->show();
 	#$ExportVBox->pack_end($EncryptionCheckbox,0,0,0);
 	# Only birthdays checkbox
-	my $BirthdaysOnlyCheckbox = Gtk2::CheckButton->new(DP_gettext("Only export birthdays"));
-	$BirthdaysOnlyCheckbox->show();
-	$ExportVBox->pack_end($BirthdaysOnlyCheckbox,0,0,0);
+	#my $BirthdaysOnlyCheckbox = Gtk2::CheckButton->new(DP_gettext("Only export birthdays"));
+	#$BirthdaysOnlyCheckbox->show();
+	#$ExportVBox->pack_end($BirthdaysOnlyCheckbox,0,0,0);
 
 	# Label
 	my $ActiveIndex;
@@ -2785,10 +2785,10 @@ sub ExportData {
 		#	$EncryptionCheckbox->set_sensitive(1);
 		#}
 		if($ActiveIndex == 1) {
-			$BirthdaysOnlyCheckbox->set_sensitive(0);
+			#$BirthdaysOnlyCheckbox->set_sensitive(0);
 			$ExportWindow->set_action('select-folder');
 		} else {
-			$BirthdaysOnlyCheckbox->set_sensitive(1);
+			#$BirthdaysOnlyCheckbox->set_sensitive(1);
 			$ExportWindow->set_action('save');
 		}
 	});
@@ -2798,7 +2798,7 @@ sub ExportData {
 		my $Response = $ExportWindow->run();
 		my $Filename = $ExportWindow->get_filename();
 		if($Response eq 'accept') {
-			my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
+			#my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
 			if ($ActiveIndex == 0) {
 				if(PromptOverwrite("$Filename.ics")) {
 					$iCalendar->write("$Filename.ics");
