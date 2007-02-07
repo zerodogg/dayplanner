@@ -4692,15 +4692,13 @@ GetOptions (
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser Crypt::CBC Crypt::Blowfish IO::Select DP::iCalendar/) {
+		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar/) {
 			if(eval("use $_; 1")) {
 				push(@AvailModules, $_);
 			} else {
 				push(@UnavailModules, $_);
 			}
 		}
-		@AvailModules = sort(@AvailModules);
-		@UnavailModules = sort(@UnavailModules);
 		print "Available modules:";
 		print " $_" foreach(@AvailModules);
 		print " (none)" unless(@AvailModules);
