@@ -439,6 +439,9 @@ sub _ChangeEntry {
 	foreach my $key (keys(%Hash)) {
 		$self->{RawCalendar}{$UID}{$key} = _GetSafe($Hash{$key});
 	}
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
+	$curryear += 1900;
+	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ":" . _AppendZero($currmin));
 	return(1);
 }
 
