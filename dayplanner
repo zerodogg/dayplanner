@@ -3019,10 +3019,17 @@ sub PopulateUpcomingEvents {
 		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
 		my $HasEvents;
 		if(my $DateHash = $iCalendar->get_dateinfo($Year+1900, $getmonth, $getmday)) {
+			# FIXME: This sort should be so that alphabetical chars come first, then numbers
+			# This so that DAY comes before the normal events.
 			foreach my $time (sort(@{$iCalendar->get_dateinfo($HumanYear,$getmonth,$getmday)})) {
 				foreach my $UID (@{$iCalendar->get_timeinfo($HumanYear,$getmonth,$getmday,$time)}) {
 					$HasEvents = 1;
-					$h->{text} .= "\n" . DP_gettext("At") . " " . AMPM_From24($time) . ": " . ${$iCalendar->get_info($UID)}{SUMMARY};
+					# If the time is DAY then it lasts the entire day
+					if($time eq 'DAY') {
+						$h->{text} .= "\n" . ${$iCalendar->get_info($UID)}{SUMMARY};
+					} else {
+						$h->{text} .= "\n" . DP_gettext("At") . " " . AMPM_From24($time) . ": " . ${$iCalendar->get_info($UID)}{SUMMARY};
+					}
 				}
 			}
 		}
