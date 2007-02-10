@@ -35,6 +35,22 @@ sub InPath ($) {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {	return 1; } } return 0;
 }
 
+# Purpose: Run a system() in a child (silencing it without using /bin/sh)
+# Usage: SilentSystem(OPTIONS);
+#  OPTIONS are identical to system();
+sub SilentSystem {
+	my $PID = fork;
+	my $Return;
+	if($PID) {
+		waitpid($PID,0);
+	} else {
+		open(STDOUT, ">", "/dev/null");
+		open(STDERR, ">", "/dev/null");
+		exec(@_);
+	}
+	return($Return);
+}
+
 $| = 1;
 print "Preparing...\n";
 my $tempdir = File::Temp::tempdir( 
@@ -65,7 +81,14 @@ if(defined($ENV{DP_NOINSTALLER}) and $ENV{DP_NOINSTALLER}  eq '1') {
 if(defined($ENV{DP_SAVERPMLOG}) and $ENV{DP_SAVERPMLOG}  eq '1') {
 	$SaveRPMLog = 1;
 }
-
+print " Verifying sanity...";
+foreach (qw(dayplanner dayplanner-notifier dayplanner-daemon modules/DP-iCalendar/lib/DP/iCalendar.pm modules/Date-HolidayParser/lib/Date/HolidayParser.pm tools/commander devel-tools/GenDesktop devel-tools/buildpot devel-tools/updatepo devel-tools/installer/MainInstallerPart)) {
+	print ".";
+	if(SilentSystem("perl","-c","$OrigDir/$_")) {
+		die("$_ does not verify properly (perl -c $_). Refusing to build packages of broken software\n");
+	}
+}
+print "okay\n";
 print " Verifying required components...";
 
 my @RequiredComponents;
