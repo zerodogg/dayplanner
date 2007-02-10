@@ -180,9 +180,6 @@ print "done\n";
 if($BuildRPM) {
 	print "Building rpm...\n";
 	print " Checking for required files...";
-	unless (-e "$OrigDir/devel-tools/rpm/changelog.spec") {
-		die "failed - $OrigDir/devel-tools/rpm/changelog.spec does not exist\n";
-	}
 	unless (-e "$OrigDir/devel-tools/rpm/package.spec") {
 		die "failed - $OrigDir/devel-tools/rpm/package.spec does not exist\n";
 	}
@@ -209,13 +206,10 @@ if($BuildRPM) {
 	close(SPECFILE);
 	print ".";
 
-	# Read the changelog (changelog.spec)
-	open(SPECFILE, "<$OrigDir/devel-tools/rpm/changelog.spec") or die "failed - unable to open $OrigDir/devel-tools/rpm/changelog.spec for reading: $!\n";
-
-	foreach(<SPECFILE>) {
-		push(@RPM_SPECFILE, $_);
-	}
-	close(SPECFILE);
+	# Add an rpm changelog entry to the rpm
+	my $DateEntry = qx(LC_ALL=C /bin/date +"%a %b %d %Y"); # No this isn't pretty, but it does the job.
+	chomp($DateEntry);
+	push(@RPM_SPECFILE, "\n%changelog\n* $DateEntry Eskild Hustvedt <eskild a t mandriva d 0 t org> $DPVersion\n- New version $DPVersion\n- See the file NEWS for full changelog.");
 	print ".";
 
 	# Write it
@@ -223,8 +217,6 @@ if($BuildRPM) {
 	print SPECFILE @RPM_SPECFILE;
 	print "done\n";
 	close(SPECFILE);
-
-	print " NOTE: Remember to add a changelog entry in $OrigDir/devel-tools/rpm/changelog.spec\n";
 
 	# Build the RPM package
 	print " Building RPM...";
