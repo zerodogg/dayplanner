@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-10 22:07+0100\n"
-"PO-Revision-Date: 2007-02-10 22:56+0100\n"
+"POT-Creation-Date: 2007-02-10 23:00+0100\n"
+"PO-Revision-Date: 2007-02-10 23:00+0100\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -572,8 +572,7 @@ msgstr ""
 "redigerast i dagsplanleggaren. For å endra desse hendingane må du endra fila "
 "%s i eit skriveprogram."
 
-#: dayplanner:3251 dayplanner:3906 dayplanner:4177 dayplanner:4191
-#: dayplanner-notifier:371
+#: dayplanner:3251 dayplanner:3906 dayplanner-notifier:371
 msgid "Details"
 msgstr "Detaljar"
 
@@ -713,17 +712,15 @@ msgid "Interface"
 msgstr "Brukargrensesnitt"
 
 #: dayplanner:4177
-#, perl-format
-msgid "Expand \"%s\" by default"
-msgstr "Utvid «%s» som standard"
+msgid "Show details by default"
+msgstr "Vis detaljar som standard"
 
 #: dayplanner:4191
-#, perl-format
 msgid ""
-"Check this if you want the \"%s\" to be expanded by default in the add and "
-"edit event dialog"
+"Check this if you want to show the details by default in the add and edit "
+"event dialog."
 msgstr ""
-"Vel dette viss du vil at «%s» skal vera utvida som standard i dialogvindauga "
+"Vel dette viss du vil visa detaljane som standard i dialogvindauga "
 "for tillegging og redigering av hendingar"
 
 #: dayplanner:4232
@@ -838,6 +835,9 @@ msgstr "Utsett"
 #: dayplanner-notifier:359
 msgid "Postpone this notification for 10 minutes"
 msgstr "Utsett denne varslinga ti minuttar"
+
+#~ msgid "Expand \"%s\" by default"
+#~ msgstr "Utvid «%s» som standard"
 
 #~ msgid "The perl module %s is not installed. The data will not be encrypted."
 #~ msgstr ""
