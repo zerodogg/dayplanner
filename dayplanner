@@ -4174,7 +4174,7 @@ sub PreferencesWindow {
 	$UI_Label->show();
 
 	# EDITOR VERBOSE DEFAULT
-	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(sprintf(DP_gettext("Expand \"%s\" by default"), DP_gettext("Details")));
+	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label(DP_gettext("Show details by default"));
 	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
 	$EDVDefaultCheckbox->show();
 	if ($UserConfig{EditorVerboseDefault}) {
@@ -4188,7 +4188,7 @@ sub PreferencesWindow {
 			}
 		});
 	
-	$Tooltips->set_tip($EDVDefaultCheckbox, sprintf(DP_gettext("Check this if you want the \"%s\" to be expanded by default in the add and edit event dialog"), DP_gettext("Details")));
+	$Tooltips->set_tip($EDVDefaultCheckbox, DP_gettext("Check this if you want to show the details by default in the add and edit event dialog."));
 
 	# ==================================================================
 	# EVENTS
