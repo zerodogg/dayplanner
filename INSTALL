@@ -5,6 +5,7 @@ Index:
 1	Local install (single user)
 2	Global install (multi user and packagers)
 2.1	Special notes concerning the Date::HolidayParser module and packaging
+2.2	Special notes concerning the DP::iCalendar module and packaging
 
 1 - LOCAL INSTALL (SINGLE USER)
 -------------------------------
@@ -64,5 +65,15 @@ check your distributions perl module packaging guidelines.
 
 For an example of how Date::HolidayParser is bundled inside a distribution
 package have a look at devel-tools/rpm/package.spec
+
+2.2 - SPECIAL NOTES CONCERNING THE DP::iCalendar MODULE AND PACKAGING
+---------------------------------------------------------------------------
+How to handle this is a bit less certain than the handling of
+Date::HolidayParser. As this module is much more Day Planner-centric.
+You should have the module in a tree identical to modules/
+in the source distribution. You do not, however, have to bundle any
+files except the ones in lib/. Have a look at devel-tools/rpm/package.spec
+for an example of how DP::iCalendar is bundled inside a distribution
+package.
 
 $Id$
