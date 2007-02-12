@@ -458,7 +458,7 @@ sub RunNotifier {
 	my $IsPreNot = 0;
 	my $Date = 'today';
 	# Detect pre-notifications
-	if(not $Time eq $CurrTime) {
+	if(not $Time eq $CurrTime or not $Day eq $CurrMday) {
 		$IsPreNot = 1;
 		if(not $Day eq $CurrMday) {
 			$Date = 'tomorrow';
