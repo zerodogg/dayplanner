@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-10 23:00+0100\n"
+"POT-Creation-Date: 2007-02-10 23:04+0100\n"
 "PO-Revision-Date: 2007-01-07 02:40+0100\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
@@ -723,8 +723,9 @@ msgstr ""
 "pridávaní a úprave udalosti"
 
 #: dayplanner:4232
-msgid "General events"
-msgstr "V¹eobecné udalosti"
+#, fuzzy
+msgid "Event notifications"
+msgstr "Pou¾i» upozornenia na udalosti"
 
 #: dayplanner:4239
 msgid "Start the day planner reminder automatically when logging in"
@@ -834,6 +835,9 @@ msgstr "Odlo¾i» na neskôr"
 #: dayplanner-notifier:359
 msgid "Postpone this notification for 10 minutes"
 msgstr "Odlo¾i» toto upozornenie o 10 minút"
+
+#~ msgid "General events"
+#~ msgstr "V¹eobecné udalosti"
 
 #~ msgid "Expand \"%s\" by default"
 #~ msgstr "©tandardne expandova» \"%s\""

@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: day planner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-10 23:00+0100\n"
+"POT-Creation-Date: 2007-02-10 23:04+0100\n"
 "PO-Revision-Date: 2006-12-20 09:11+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -721,8 +721,9 @@ msgstr ""
 "för att lägga till och redigera händelser"
 
 #: dayplanner:4232
-msgid "General events"
-msgstr "Allmänna händelser"
+#, fuzzy
+msgid "Event notifications"
+msgstr "Använd notifieringar före händelser"
 
 #: dayplanner:4239
 msgid "Start the day planner reminder automatically when logging in"
@@ -832,6 +833,9 @@ msgstr "Flytta fram"
 #: dayplanner-notifier:359
 msgid "Postpone this notification for 10 minutes"
 msgstr "Flytta fram notifieringen 10 minuter"
+
+#~ msgid "General events"
+#~ msgstr "Allmänna händelser"
 
 #~ msgid "Expand \"%s\" by default"
 #~ msgstr "Expandera \"%s\" som standard"

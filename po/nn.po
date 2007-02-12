@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-10 23:00+0100\n"
-"PO-Revision-Date: 2007-02-10 23:00+0100\n"
+"POT-Creation-Date: 2007-02-10 23:04+0100\n"
+"PO-Revision-Date: 2007-02-10 23:05+0100\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -720,12 +720,12 @@ msgid ""
 "Check this if you want to show the details by default in the add and edit "
 "event dialog."
 msgstr ""
-"Vel dette viss du vil visa detaljane som standard i dialogvindauga "
-"for tillegging og redigering av hendingar"
+"Vel dette viss du vil visa detaljane som standard i dialogvindauga for "
+"tillegging og redigering av hendingar"
 
 #: dayplanner:4232
-msgid "General events"
-msgstr "Generelle hendingar"
+msgid "Event notifications"
+msgstr "Hendingspåminningar"
 
 #: dayplanner:4239
 msgid "Start the day planner reminder automatically when logging in"
@@ -835,6 +835,9 @@ msgstr "Utsett"
 #: dayplanner-notifier:359
 msgid "Postpone this notification for 10 minutes"
 msgstr "Utsett denne varslinga ti minuttar"
+
+#~ msgid "General events"
+#~ msgstr "Generelle hendingar"
 
 #~ msgid "Expand \"%s\" by default"
 #~ msgstr "Utvid «%s» som standard"
