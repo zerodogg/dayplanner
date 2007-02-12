@@ -61,6 +61,9 @@ install -m644 ./art/dayplanner-about.png $RPM_BUILD_ROOT%{_datadir}/%name/
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/modules/Date-HolidayParser/lib/
 cp -r ./modules/Date-HolidayParser/lib/* $RPM_BUILD_ROOT%{_datadir}/%name/modules/Date-HolidayParser/lib/
 %endif
+# Install DP::iCalendar
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/modules/DP-iCalendar/lib/
+cp -r ./modules/DP-iCalendar/lib/* $RPM_BUILD_ROOT%{_datadir}/%name/modules/DP-iCalendar/lib/
 
 # Install the icons
 install -m644 ./art/dayplanner_24.png -D $RPM_BUILD_ROOT%{_iconsdir}/dayplanner.png
