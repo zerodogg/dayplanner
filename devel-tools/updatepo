@@ -23,6 +23,15 @@ use Fatal;
 sub InPath ($) {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
+sub SetLocale {
+	foreach(keys(%ENV)) {
+		next unless /^(LC|LANG)/;
+		$ENV{$_} = $_[0];
+	}
+	$ENV{LC_ALL} = $_[0];
+}
+
+SetLocale("C");
 
 unless(-d "./po" and -e "./devel-tools/buildpot") {
 	die("Please run me from the base of the day planner source tree (not the devel-tools/ dir)\n");
