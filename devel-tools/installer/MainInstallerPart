@@ -28,7 +28,8 @@ use POSIX ":sys_wait_h";
 my $ProgressWin;
 my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner";
 my $AutoInstaller;
-my $TotalSteps = 9;
+my $TotalSteps = 10;
+my $Performed = 0;
 
 # Purpose: Create a progresswindow
 # Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
@@ -112,6 +113,19 @@ sub SystemChild {
 	return($Return);
 }
 
+# Purpose: Display an error dialog or warn() it
+# Usage: DPError("Error message");
+sub DPError {
+	if(not defined($ARGV[1]) and $ARGV[1] eq 'auto') {
+		my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'error', 'ok', $_[0]);
+		$Dialog->run();
+		$Dialog->destroy();
+	} else {
+		warn($_[0],"\n");
+	}
+	return(1);
+}
+
 $| = 1;
 
 print "Perl installer part...\n";
@@ -157,16 +171,30 @@ if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$ProgressWin->{Window}->set_skip_pager_hint(0);
 	$ProgressWin->{Window}->set_skip_taskbar_hint(0);
 }
+print "Verifying dependencies...";
+foreach(qw(POSIX Getopt::Long Cwd File::Basename IO::Socket IO::Select)) {
+	print ".";
+	if(not eval("use $_; 1")) {
+		DPError("You appear to be missing the perl module \"$_\". This module is required for Day Planner to work. Please install the module and then restart this installer");
+		exit(0);
+	}
+}
+print "okay\n";
+
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+
 if(-d $InstallDirectory) {
 	print "Found old install, running uninstaller first...\n";
-	Gtk2->main_iteration_do(0) foreach(1..15);;
 	if(-e "$InstallDirectory/uninstall.sh") {
-		SystemChild("sh","$InstallDirectory/uninstall.sh") and print "Uninstaller failed, expect trouble.\n";
+		SystemChild("sh","$InstallDirectory/uninstall.sh","quick") and print "Uninstaller failed, expect trouble.\n";
 	} else {
 		print "Failed to run uninstaller, expect trouble.\n";
 	}
 }
-ProgressMade($TotalSteps, 1, $ProgressWin,undef,1);
+
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 
 print "Installing...";
 SystemChild("mkdir -p $InstallDirectory");
@@ -179,7 +207,8 @@ if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS
 	SystemChild("cp -r $InstallerData/* $InstallDirectory/");
 }
 
-ProgressMade($TotalSteps, 2, $ProgressWin);
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 
 my @BINDIRS = (
 	"$ENV{HOME}/bin",
@@ -188,7 +217,8 @@ my @BINDIRS = (
 	"/usr/local/bin",
 );
 
-ProgressMade($TotalSteps, 3, $ProgressWin);
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 
 my @BINLINKS;
 
@@ -200,43 +230,53 @@ foreach(@BINDIRS) {
 		push(@BINLINKS, $_)
 	}
 }
-ProgressMade($TotalSteps, 4, $ProgressWin);
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 # Write uninstall script
 open(UNINSTALL, ">$InstallDirectory/uninstall.sh");
 print UNINSTALL "#!/bin/sh\n";
 print UNINSTALL "echo -n \"Uninstalling...\"\n";
 print UNINSTALL "cd \$HOME\n";
-print UNINSTALL "rm -rf $InstallDirectory\n";
+print UNINSTALL "rm -rf '$InstallDirectory'\n";
 print UNINSTALL "echo -n \".\"\n";
+my $BinLinkRm;
 foreach(@BINLINKS) {
-	print UNINSTALL "rm -f $_/dayplanner $_/dayplanner-daemon $_/dayplanner-notifier\n";
-	print UNINSTALL "echo -n \".\"\n";
+	$BinLinkRm .= "'$_/dayplanner' '$_/dayplanner-daemon' '$_/dayplanner-notifier' ";
 }
-print UNINSTALL "[ -e \$HOME/.menu/dayplanner.menu ] && rm -f \$HOME/.menu/dayplanner.menu && update-menus &> /dev/null\n";
+print UNINSTALL "rm -f $BinLinkRm\n";
+print UNINSTALL "echo -n \".\"\n";
+print UNINSTALL "if [ -e \$HOME/.menu/dayplanner.menu ]; then\n\trm -f \$HOME/.menu/dayplanner.menu\n\t[ \"\$1\" != \"quick\" ] && update-menus &> /dev/null\nfi\n";
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL '[ -e "$HOME/.local/share/applications/dayplanner.desktop" ] && rm -f  "$HOME/.local/share/applications/dayplanner.desktop"' . "\n";
 print UNINSTALL "echo \"done\"\n";
-print UNINSTALL "echo \"Day planner has been uninstalled.\"\n";
+print UNINSTALL "[ \"\$1\" != \"quick\" ] && echo \"Day planner has been uninstalled.\"\n";
+print UNINSTALL "exit 0\n";
 close(UNINSTALL);
 SystemChild("chmod +x $InstallDirectory/uninstall.sh");
 
-ProgressMade($TotalSteps, 5, $ProgressWin);
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 
 # Write the XDG-style menu item
 if(-e "$InstallDirectory/doc/dayplanner.desktop") {
 	SystemChild("perl","-pi","-e","s#DAYPLANNER_INST_DIR#$InstallDirectory#g","$InstallDirectory/doc/dayplanner.desktop");
-	ProgressMade($TotalSteps, 6, $ProgressWin);
+	$Performed++;
+	ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 	mkpath("$ENV{HOME}/.local/share/applications/");
 	copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/.local/share/applications/dayplanner.desktop");
-	ProgressMade($TotalSteps, 7, $ProgressWin);
+	$Performed++;
+	ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 	if(-d "$ENV{HOME}/Desktop/") {
 		copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/Desktop/");
 	}
+} else {
+	$Performed += 2;
 }
 
-ProgressMade($TotalSteps, 8, $ProgressWin);
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 # Write Debian-style menu item
 if(InPath("update-menus")) {
 	mkdir("$ENV{HOME}/.menu/") unless -d "$ENV{HOME}/.menu/";
@@ -247,7 +287,8 @@ if(InPath("update-menus")) {
 	# SystemChild().
 	system("update-menus &>/dev/null");
 }
-ProgressMade($TotalSteps, 9, $ProgressWin);
+$Performed++;
+ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 
 print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
