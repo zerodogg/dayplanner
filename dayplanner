@@ -4229,7 +4229,7 @@ sub PreferencesWindow {
 	$Config_VBox->pack_start($Events_VBox,0,0,0);
 
 	# The label
-	my $Events_Label = Gtk2::Label->new("<b>" . DP_gettext("General events") . "</b>");
+	my $Events_Label = Gtk2::Label->new("<b>" . DP_gettext("Event notifications") . "</b>");
 	$Events_Label->set_use_markup(1);
 	$Events_Label->set_alignment(0,1);
 	$Events_VBox->pack_start($Events_Label,0,0,0);
