@@ -74,17 +74,9 @@ fi
 
 echo -n "."
 
-if ! perl -e 'use Locale::gettext; exit(0);' &>/dev/null; then
-	SI_Error "You don't have the perl module \"Locale::gettext\" installed. Please install it then re-start this installer. (Tip: the package name can be perl-Locale-gettext)"
+if ! perl -e 'use File::Copy; use File::Path; use POSIX;exit(0);' &>/dev/null; then
+	SI_Error "You appear to be missing a base perl module (one of File::Copy, File::Path or POSIX). Please check your installation of perl"
 fi
-
-
-for a in POSIX Data::Dumper Getopt::Long Cwd File::Basename IO::Socket IO::Select; do
-	echo -n "."
-	if ! perl -e "use $a; exit(0);" &>/dev/null; then
-		SI_Error "You are missing the perl module \"$a\". Please install this perl module and then re-start this installer."
-	fi
-done
 
 echo -n "."
 
