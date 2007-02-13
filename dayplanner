@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# Day planner
-# A graphical day planner written in perl that uses Gtk2
+# Day Planner
+# A graphical Day Planner written in perl that uses Gtk2
 # Copyright (C) Eskild Hustvedt 2006, 2007
 # $Id$
 #
@@ -75,7 +75,7 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
-my %DPServices;			# Day planner services hash
+my %DPServices;			# Day Planner services hash
 my %MonthNames;			# The names of the months.
 
 # Gtk2 objects
@@ -240,7 +240,7 @@ sub DaemonInit {
 	return(StartDaemon());
 }
 
-# Purpose: Start the day planner daemon
+# Purpose: Start the Day Planner daemon
 # Usage: StartDaemon();
 sub StartDaemon {
 	foreach(split(/:/, sprintf("%s:%s", dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
@@ -401,7 +401,7 @@ sub DaemonConnectionErrorHandler {
 						'destroy-with-parent',
 						'error',
 						'none',
-						 DP_gettext("Another instance of day planner appears to be running. Please quit the currently running instance of day planner before continuing\n\nRunning two instances of day planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
+						 DP_gettext("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nRunning two instances of Day Planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
 
 		$ErrorDialog->add_buttons(
 			DP_gettext('_Force') => 'reject',
@@ -415,12 +415,12 @@ sub DaemonConnectionErrorHandler {
 		} else {
 			$ErrorDialog->destroy;
 			unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-					DPError(DP_gettext("Unable to force the start. This is likely due to a bug in the application, please contact the day planner developers."));
+					DPError(DP_gettext("Unable to force the start. This is likely due to a bug in the application, please contact the Day Planner developers."));
 					exit(1);
 				}
 		}
 	} else {
-		die("Another instance of day planner appears to be running, unable to continue\n");
+		die("Another instance of Day Planner appears to be running, unable to continue\n");
 	}
 }
 
@@ -460,7 +460,7 @@ sub DPS_BackupData {
 	return($Target);
 }
 
-# Purpose: Connect to a day planner services server.
+# Purpose: Connect to a Day Planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
 # 		The arguments are optional and will be read from %DPServices if not supplied
 sub DPS_Connect {
@@ -511,7 +511,7 @@ sub DPS_Connect {
 
 	# Authenticate
 	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf(DP_gettext("The day planner services server you are connecting to does not support this version of day planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
+	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf(DP_gettext("The Day Planner services server you are connecting to does not support this version of Day Planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
 	DPS_Status(DP_gettext("Connecting"),0.2);
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	DPS_Status(DP_gettext("Connecting"),0.4);
@@ -532,7 +532,7 @@ sub DPS_ErrorIfNeeded {
 	}
 }
 
-# Purpose: Disconnect from a day planner services daemon
+# Purpose: Disconnect from a Day Planner services daemon
 # Usage: DPS_Disconnect();
 sub DPS_Disconnect {
 	my $Socket = $DPServices{socket};
@@ -541,7 +541,7 @@ sub DPS_Disconnect {
 	return(1);
 }
 
-# Purpose: Send data to a day planner services daemon and get the reply
+# Purpose: Send data to a Day Planner services daemon and get the reply
 # Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
 sub DPS_DataSegment {
 	my $Socket = $DPServices{socket};
@@ -581,12 +581,12 @@ sub DPS_RepairData {
 	} else {
 		$ProgressWin->{Window}->destroy();
 		my $BackedUpTo = DPS_BackupData();
-		DPS_Error(sprintf(DP_gettext("Unable to download the raw day planner data from the server. Repairing is not possible! Backup written to %s."), $BackedUpTo), "Unable to retrieve the raw data - repairing is impossible. Backup written to $BackedUpTo.");
+		DPS_Error(sprintf(DP_gettext("Unable to download the raw Day Planner data from the server. Repairing is not possible! Backup written to %s."), $BackedUpTo), "Unable to retrieve the raw data - repairing is impossible. Backup written to $BackedUpTo.");
 		return(0);
 	}
 }
 
-# Purpose: Get day planner data from a services server
+# Purpose: Get Day Planner data from a services server
 # Usage: DPS_GetData(RAW?);
 sub DPS_GetData {
 	my $Raw = $_[0] ? 1 : 0;
@@ -793,7 +793,7 @@ sub DPS_GUIPerform {
 	my $Return = DPS_Perform($Function);
 	$DPServices{ProgressWin}->{Window}->destroy();
 	if(defined($DPServices{Error})) {
-		DPError(sprintf(DP_gettext("An error ocurred with the day planner services:\n\n%s"), $DPServices{Error}));
+		DPError(sprintf(DP_gettext("An error ocurred with the Day Planner services:\n\n%s"), $DPServices{Error}));
 		delete($DPServices{Error});
 	}
 	delete($DPServices{ProgressWar});
@@ -916,10 +916,10 @@ sub WriteStateFile {
 		MainWin_X => "The X-axis position of the main window",
 		MainWin_Y => "The Y-axist position of the main window",
 		AutostartOn => "If the preferences setting for autostarting the daemon on login is on or not",
-		AddedAutostart => "If day planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
-		Holiday_Attempted => "The last day planner version the holiday file was attempted set up (but failed)",
+		AddedAutostart => "If Day Planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
+		Holiday_Attempted => "The last Day Planner version the holiday file was attempted set up (but failed)",
 		Holiday_Setup => "If the holiday file has been properly set up or not (ie. not a dummy file)",
-		LastVersion => "The last day planner version used",
+		LastVersion => "The last Day Planner version used",
 		# All except DPS_LastMD5 and DPS_ParanoidBackups actually belongs in dayplanner.conf
 		# and not in state.conf. Maybe we should add an dps.conf/services.conf ?
 		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
@@ -929,7 +929,7 @@ sub WriteStateFile {
 		DPS_port => "The port to connect to on the DPS server",
 		DPS_user => "The username",
 		DPS_ParanoidBackups => "Writes a backup of the internal data to $Dir every time DPS is used.\n# This is useful when DPS is being debugged, in order to avoid data loss",
-		HEADER => "This file contains internal configuration used by day planner\n# In most cases you really don't want to edit this file manually",
+		HEADER => "This file contains internal configuration used by Day Planner\n# In most cases you really don't want to edit this file manually",
 	);
 
 	
@@ -978,9 +978,9 @@ sub WriteConfig {
 	}
 	my %Explanations = (
 		EditorVerboseDefault => "If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand",
-		Events_NotifyPre => "If day planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
-		Events_DayNotify => "If day planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
-		HEADER => "Day planner $Version configuration file",
+		Events_NotifyPre => "If Day Planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
+		Events_DayNotify => "If Day Planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
+		HEADER => "Day Planner $Version configuration file",
 	);
 	
 	# Write the actual file
@@ -1049,7 +1049,7 @@ sub SaveMainData {
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	unless(Daemon_DataSegment("RELOAD_DATA") eq "done\n") {
 		if($Gtk2Init) {
-			DPWarning(DP_gettext("<b><big>Day planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of day planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
+			DPWarning(DP_gettext("<b><big>Day Planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of Day Planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
 		} else {
 			DPWarning("Unable to tell the daemon to reload its data. This *could* be bad.");
 		}
@@ -1316,11 +1316,11 @@ sub DP_SigHandler {
 # Purpose: Make sure we have a .holiday set up
 # Usage: HolidaySetup();
 sub HolidaySetup {
-	# If Holiday_Setup is true and the file exists then day planner has properly set up
+	# If Holiday_Setup is true and the file exists then Day Planner has properly set up
 	# a holiday-file.
 	#
 	# If Holiday_Attempted is defined and equal to $Version then we've attempted and failed
-	# to set up a holiday file in this version of day planner so we'll skip trying again.
+	# to set up a holiday file in this version of Day Planner so we'll skip trying again.
 	if($InternalConfig{Holiday_Setup} and -e $HolidayFile) {
 		return(1);
 	} elsif(defined($InternalConfig{Holiday_Attempted}) and $InternalConfig{Holiday_Attempted} eq $Version) {
@@ -1384,11 +1384,11 @@ sub HolidaySetup {
 		}
 	}
 	open(my $DUMMY_FILE, ">", "$HolidayFile");
-	print $DUMMY_FILE ": This is a dummy .holiday file for day planner. It couldn't detect a proper\n";
+	print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. It couldn't detect a proper\n";
 	print $DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
 	print $DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
-	print $DUMMY_FILE ":  of the day planner distribution for examples of the syntax).\n";
-	print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run day planner";
+	print $DUMMY_FILE ":  of the Day Planner distribution for examples of the syntax).\n";
+	print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run Day Planner";
 	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
 	$InternalConfig{Holiday_Attempted} = $Version;
@@ -1457,9 +1457,9 @@ sub RemoveAutostart {
 				open($GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
 				close($GNOME2SESS);
 			} elsif($Nullout) {
-				DPIntWarn("Unable to properly remove the GNOME2 day planner entry from $ENV{HOME}/.gnome2/session-manual. A workaround to disable the daemon startup has been applied but you may want to use the GNOME2 session manager to remove it completely.");
+				DPIntWarn("Unable to properly remove the GNOME2 Day Planner entry from $ENV{HOME}/.gnome2/session-manual. A workaround to disable the daemon startup has been applied but you may want to use the GNOME2 session manager to remove it completely.");
 				foreach(@Gnome2Session) {
-					s/=.*$DaemonName.*/perl -e '# Removed by day planner'/;
+					s/=.*$DaemonName.*/perl -e '# Removed by Day Planner'/;
 				}
 				open($GNOME2SESS, ">", "$ENV{HOME}/.gnome2/session-manual");
 				foreach(@Gnome2Session) {
@@ -1504,7 +1504,7 @@ sub AddAutostart {
 	if(-d "$ENV{HOME}/.kde/") {
 		mkdir("$ENV{HOME}/.kde/Autostart/") unless -e "$ENV{HOME}/.kde/Autostart/";
 		open(my $KDESCRIPT, ">", "$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh");
-		print $KDESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
+		print $KDESCRIPT "#!/bin/sh\n# Autogenerated startup script written by Day Planner\n";
 		print $KDESCRIPT "$DaemonExec\n";
 		close($KDESCRIPT);
 	}
@@ -1512,11 +1512,11 @@ sub AddAutostart {
 	if(-d "$ENV{HOME}/.config/") {
 		mkdir("$ENV{HOME}/.config/autostart/") unless -e "$ENV{HOME}/.config/autostart";
 		open(my $XDGSTART, ">", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop");
-		print $XDGSTART "# Autogenerated startup desktop file written by day planner\n";
+		print $XDGSTART "# Autogenerated startup desktop file written by Day Planner\n";
 		print $XDGSTART "[DESKTOP ENTRY]\n";
 		print $XDGSTART "Type=Application\n";
-		print $XDGSTART "Name=Day planner daemon autostart\n";
-		print $XDGSTART "Comment=Automatically start the day planner daemon on session startup\n";
+		print $XDGSTART "Name=Day Planner daemon autostart\n";
+		print $XDGSTART "Comment=Automatically start the Day Planner daemon on session startup\n";
 		print $XDGSTART "Exec=$DaemonExec\n";
 		print $XDGSTART "StartupNotify=false\n";
 		print $XDGSTART "StartupWMClass=fales\n";
@@ -1535,7 +1535,7 @@ sub AddAutostart {
 			my @G2H;
 			open(my $GNOMESESS, "<", "$ENV{HOME}/.gnome2/session-manual");
 			while(<$GNOMESESS>) {
-				if(s/perl -e '# Removed by day planner'/$DaemonExec/i) {
+				if(s/perl -e '# Removed by Day Planner'/$DaemonExec/i) {
 					$RETURN = "okay";
 				}
 				push(@G2H, $_);
@@ -1552,7 +1552,7 @@ sub AddAutostart {
 	if(-d "$ENV{HOME}/.config/xfce4/" and -d "$ENV{HOME}/Desktop/") {
 		mkdir("$ENV{HOME}/Desktop/Autostart") unless -e "$ENV{HOME}/Desktop/Autostart";
 		open(my $XFCESCRIPT, ">", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh");
-		print $XFCESCRIPT "#!/bin/sh\n# Autogenerated startup script written by day planner\n";
+		print $XFCESCRIPT "#!/bin/sh\n# Autogenerated startup script written by Day Planner\n";
 		print $XFCESCRIPT "$DaemonExec\n";
 		close($XFCESCRIPT);
 	}
@@ -1617,7 +1617,7 @@ sub DP_AddAutostart {
 		# error.
 		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
 			# It's set, so the user is running GNOME - display the error
-			DPError(DP_gettext("A problem occurred while setting up automatic startup of the day planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
+			DPError(DP_gettext("A problem occurred while setting up automatic startup of the Day Planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
 		}
 	} else {
 		DPIntWarn("Unknown return value from AddAutostart(): $Result");
@@ -1628,7 +1628,7 @@ sub DP_AddAutostart {
 # Purpose: Wrapper around RemoveAutostart that sets the config vars
 # Usage: DP_RemoveAutostart();
 sub DP_RemoveAutostart {
-	if(DPQuestion(DP_gettext("Disabling automatic startup of the reminder will prevent notifications unless day planner has been manually started. Disable the automatic startup?"))) {
+	if(DPQuestion(DP_gettext("Disabling automatic startup of the reminder will prevent notifications unless Day Planner has been manually started. Disable the automatic startup?"))) {
 		$InternalConfig{AutostartOn} = 1;
 		return(RemoveAutostart());
 	}
@@ -1835,7 +1835,7 @@ sub HTML_Encode {
 	return($String);
 }
 
-# Purpose: Output the header for all day planner HTML files
+# Purpose: Output the header for all Day Planner HTML files
 # Usage: print $FILE HTML_Header(YEAR,DATE,NONDATEMODE?);
 sub HTML_Header {
 	return('') if $HTML_PHP;
@@ -1843,22 +1843,22 @@ sub HTML_Header {
 	my $Header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
 	$Header .= "<html><head>\n";
 	$Header .= '<meta content="text/html; charset=iso-8859-1" http-equiv="content-type" />';
-	$Header .= "<meta name='generator' content='Day planner $Version - http://www.day-planner.org' />\n";;
+	$Header .= "<meta name='generator' content='Day Planner $Version - http://www.day-planner.org' />\n";;
 	if($NonDateMode) {
 		$Header .= "<title>" . HTML_Encode($Date) . "</title>";
 	} else {
-		$Header .= "<title>" . HTML_Encode(sprintf(DP_gettext("Day planner for %s"),$Date)) . "</title>";
+		$Header .= "<title>" . HTML_Encode(sprintf(DP_gettext("Day Planner for %s"),$Date)) . "</title>";
 	}
 	$Header .= "</head>\n";
 	$Header .= '<body>';
 	$Header .= "<h2>" . HTML_Encode($Date) . "</h2>";
-	$Header .= "<!-- Generated by day planner version $Version - $RCSRev -->\n";
+	$Header .= "<!-- Generated by Day Planner version $Version - $RCSRev -->\n";
 	$Header .= '<hr />';
 	$Header .= HTML_Menu(@_);
 	return($Header);
 }
 
-# Purpose: Print the menu for a day planner HTML doc
+# Purpose: Print the menu for a Day Planner HTML doc
 # Usage: print $FILE HTML_Menu(YEAR,DATE,NONDATEMODE?);
 sub HTML_Menu {
 	my ($Year,$Date,$NonDateMode) = @_;
@@ -1920,7 +1920,7 @@ sub HTML_Menu {
 	return($Menu);
 }
 
-# Purpose: Print the footer of all day planner HTML documents
+# Purpose: Print the footer of all Day Planner HTML documents
 # Usage: print $FILE HTML_Footer();
 sub HTML_Footer {
 	return('') if $HTML_PHP;
@@ -2090,7 +2090,7 @@ sub HTML_YearList {
 		DPError(sprintf(DP_gettext("Unable to open %s for writing: %s"), "$Directory/index.html", $!));
 		return(undef);
 	};
-	print $FILE HTML_Header("", "Day planner", "M");
+	print $FILE HTML_Header("", "Day Planner", "M");
 	print $FILE HTML_Encode(DP_gettext("Select the year to view:")) . "<br />\n";
 	foreach(@{$iCalendar->get_years()}) {
 		print $FILE "<a href='$_.html'>" . HTML_Encode($_) . "</a><br />\n";
@@ -2099,7 +2099,7 @@ sub HTML_YearList {
 }
 
 # Purpose: Output a php file that adds autodetection of todays date to
-# 	day planner HTML exports. (NOTE: Not used for actual PHP exporting)
+# 	Day Planner HTML exports. (NOTE: Not used for actual PHP exporting)
 # Usage: HTML_PHPIndex(DIRECTORY);
 sub HTML_PHPIndex {
 	my ($Directory) = @_;
@@ -2108,7 +2108,7 @@ sub HTML_PHPIndex {
 		DPError(sprintf(DP_gettext("Unable to open %s for writing: %s"), "$Directory/index.php", $!));
 		return(undef);
 	};
-	print $FILE "<?php\n// This is a simple script written by day planner to add autodetection of\n// the current day to exported day planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of day planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as day planer\n";
+	print $FILE "<?php\n// This is a simple script written by Day Planner to add autodetection of\n// the current day to exported Day Planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of Day Planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as day planer\n";
 	print $FILE HTML_PHP_DayDetectFunc();
 	print $FILE '$file = DayDetectFunc("./");' . "\n";
 	print $FILE 'if($file) {' . "\n";
@@ -2118,7 +2118,7 @@ sub HTML_PHPIndex {
 	print $FILE "}\n?>";
 }
 
-# Purpose: Export day planner data to HTML
+# Purpose: Export Day Planner data to HTML
 # Usage: HTML_Export(DIRECTORY);
 sub HTML_Export {
 	my %RawMonthNames = (
@@ -2185,7 +2185,7 @@ sub HTML_PHP_DayDetectFunc {
 # PHP export functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Export day planner data to PHP/HTML
+# Purpose: Export Day Planner data to PHP/HTML
 # Usage: PHP_Export(DIRECTORY);
 sub PHP_Export {
 	$HTML_PHP = 1;
@@ -2234,7 +2234,7 @@ sub PHP_Export {
 	PHP_WriteFiles($BaseDir, $Dir);
 }
 
-# Purpose: Create the PHP files used by the day planner PHP/HTML UI
+# Purpose: Create the PHP files used by the Day Planner PHP/HTML UI
 # Usage: PHP_WriteFiles(DIRECTORY);
 sub PHP_WriteFiles {
 	my ($BaseDir, $DataDir) = @_;
@@ -2453,7 +2453,7 @@ sub ImportData {
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->set_tip($FromFileButton, DP_gettext("Import data from a file"));
 	$Tooltips->set_tip($FromProgramButton, DP_gettext("Import data from various other applications"));
-	$Tooltips->set_tip($CancelButton, DP_gettext('Cancel importing and return to day planner'));
+	$Tooltips->set_tip($CancelButton, DP_gettext('Cancel importing and return to Day Planner'));
 	$Tooltips->set_tip($OKButton, DP_gettext('Continue'));
 
 	# Show it all
@@ -2829,7 +2829,7 @@ sub PromptOverwrite {
 			if(-d $File) {
 				foreach(<$File/*>) {
 					unless($_ =~ /^\./) {
-						if(DPQuestion(sprintf(DP_gettext("There are already files in the directory \"%s\". If you continue any existing exported day planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
+						if(DPQuestion(sprintf(DP_gettext("There are already files in the directory \"%s\". If you continue any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
 							return(1);
 						} else {
 							return(undef);
@@ -3166,7 +3166,7 @@ sub DeleteEvent {
 
 		UpdatedData(0,1);
 	} elsif ($Type eq 'holiday') {
-		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
+		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	} else {
 		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
 	}
@@ -3718,7 +3718,7 @@ sub EditEvent {
 		$AD_MainWidget->show();
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AD_SummaryWidget, $AD_DetailsWidget, \%TimeHash, $EventUID, 0)});
 	} elsif ($Type eq 'holiday') {
-		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within day planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
+		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
 		return(1);
 	} else {
@@ -4030,7 +4030,7 @@ sub NormalEvent_OK {
 			$iCalendar->add(%EntryHash);
 		}
 		
-		# Call UpdatedData to tell Day planner to save the data and redraw widgets
+		# Call UpdatedData to tell Day Planner to save the data and redraw widgets
 		UpdatedData();
 		# Destroy our window, it will get the signal and do anything it needs to
 		$MyWindow->destroy;
@@ -4089,7 +4089,7 @@ sub AllDayEvent_OK {
 			$iCalendar->add(%EntryHash);
 		}
 		
-		# Call UpdatedData to tell Day planner to save the data and redraw widgets
+		# Call UpdatedData to tell Day Planner to save the data and redraw widgets
 		UpdatedData();
 		# Destroy our window, it will get the signal and do anything it needs to
 		$MyWindow->destroy;
@@ -4114,10 +4114,10 @@ sub AboutBox {
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006, 2007");
 	$AboutDialog->set_website("http://www.day-planner.org/");
-	$AboutDialog->set_name(DP_gettext("Day planner"));
+	$AboutDialog->set_name(DP_gettext("Day Planner"));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
-	$AboutDialog->set_license("Day planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with day planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
+	$AboutDialog->set_license("Day Planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with Day Planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
 	# Logo
 	my $LogoImage = DetectImage("dayplanner-about.png","dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
 	if ($LogoImage) {
@@ -4241,7 +4241,7 @@ sub PreferencesWindow {
 	$Events_Label->show();
 
 	# If the reminder should autostart on login or not
-	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label(DP_gettext("Start the day planner reminder automatically when logging in"));
+	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label(DP_gettext("Start the Day Planner reminder automatically when logging in"));
 	$AutostartReminder_Checkbox->show();
 	$Events_VBox->pack_start($AutostartReminder_Checkbox,0,0,0);
 	$AutostartReminder_Checkbox->set_active(1) if $InternalConfig{AddedAutostart};
@@ -4471,7 +4471,7 @@ sub DrawMainWindow {
 	# ==================================================================
 	# Create the main window widget
 	$MainWindow = Gtk2::Window->new('toplevel');
-	$MainWindow->set_title(DP_gettext("Day planner"));
+	$MainWindow->set_title(DP_gettext("Day Planner"));
 	$MainWindow->set_default_size ($InternalConfig{MainWin_Width},$InternalConfig{MainWin_Height});
 	$MainWindow->maximize if ($InternalConfig{MainWin_Maximized});
 	if($InternalConfig{MainWin_X} and $InternalConfig{MainWin_Y}) {
@@ -4658,7 +4658,7 @@ sub DrawMainWindow {
 sub InitDPCore {
 	DP_InitI18n();
 	my $Exception =  Glib->install_exception_handler(sub {
-		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the day planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
+		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
 		1;
 	});
 	
@@ -4683,27 +4683,27 @@ sub InitDPCore {
 # Get commandline options
 GetOptions (
 	'help|h' => sub {
-		print "Day planner version $Version\n\n";
+		print "Day Planner version $Version\n\n";
 		PrintHelp("-h","--help","Display this help screen and exit");
 		PrintHelp("-v","--version", "Display version information and exit");
 		PrintHelp("-t","--test","Use a seperate debug/ configuration directory");
 		PrintHelp("", "--confdir", "Use the directory supplied as configuration directory");
-		PrintHelp("-s", "--shutdaemon", "Shutdown the daemon when day planner is closed");
-		PrintHelp("", "--exportical", "Export the day planner data in the iCalendar format");
+		PrintHelp("-s", "--shutdaemon", "Shutdown the daemon when Day Planner is closed");
+		PrintHelp("", "--exportical", "Export the Day Planner data in the iCalendar format");
 		PrintHelp("", "", "to the filename supplied");
-		PrintHelp("", "--exporthtml", "Export the day planner data in the HTML format to the");
+		PrintHelp("", "--exporthtml", "Export the Day Planner data in the HTML format to the");
 		PrintHelp("", "", "directory supplied");
 		PrintHelp("", "--importical", "Import data from the iCalendar file specified");
 		PrintHelp("","--debuginfo", "Display information useful for debugging and exit");
 		exit(0);
 	},
 	'version|v' => sub {
-		print "Day planner version $Version\n";
+		print "Day Planner version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
 	'debuginfo' => sub {
-		print "Day planner version $Version\n";
+		print "Day Planner version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		if(eval("use Locale::gettext;1")) {
