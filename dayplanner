@@ -3378,9 +3378,6 @@ sub CreateDetailsWidget {
 				$FT_Expander->set_label(DP_gettext('Show details'));
 			}
 		});
-	if ($UserConfig{EditorVerboseDefault}) {
-		$FT_Expander->set_expanded(1);
-	}
 	return($FT_Expander);
 }
 
@@ -3818,6 +3815,9 @@ sub NormalEventWindow {
 	my $FulltextWindow;
 	
 	my $FT_Expander = CreateDetailsWidget();
+	if ($UserConfig{EditorVerboseDefault}) {
+		$FT_Expander->set_expanded(1);
+	}
 	$Tooltips->set_tip($FT_Expander, DP_gettext("Additional information"));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	
@@ -3910,6 +3910,9 @@ sub AllDayEventWindow {
 	my $FulltextWindow;
 	
 	my $FT_Expander = CreateDetailsWidget();
+	if ($UserConfig{EditorVerboseDefault}) {
+		$FT_Expander->set_expanded(1);
+	}
 	$Tooltips->set_tip($FT_Expander, DP_gettext("Additional information"));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	
