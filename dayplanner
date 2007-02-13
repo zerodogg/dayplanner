@@ -3248,8 +3248,7 @@ sub DPInfo {
 		my $Dialog = Gtk2::MessageDialog->new($MainWindow, "modal", 'info', 'ok', "$_[0]");
 		if($_[1]) {
 			# The expander
-			my $FT_Expander = Gtk2::Expander->new(DP_gettext("Details"));
-			$FT_Expander->show();
+			my $FT_Expander = CreateDetailsWidget();
 			$Dialog->vbox->add($FT_Expander);
 			# The textview field
 			my $FulltextView = Gtk2::TextView->new();
@@ -3363,6 +3362,27 @@ sub Get_DateInfo {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI event adding and editing functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Create the details widget
+# Usage: my $ExpanderWidget = CreateDetailsWidget();
+sub CreateDetailsWidget {
+	my $FT_Expander = Gtk2::Expander->new(DP_gettext("Show details"));
+	$FT_Expander->show();
+	$FT_Expander->signal_connect("activate" => sub {
+			# Yes, it is weird to use not here, but in the callback it appears
+			# to return "" if it is expanded and 1 if it isn't.
+			# Possibly a race condition within gtk2. This appears to work anyway.
+			if(not $FT_Expander->get_expanded) {
+				$FT_Expander->set_label(DP_gettext('Hide details'));
+			} else {
+				$FT_Expander->set_label(DP_gettext('Show details'));
+			}
+		});
+	if ($UserConfig{EditorVerboseDefault}) {
+		$FT_Expander->set_expanded(1);
+	}
+	return($FT_Expander);
+}
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
 # Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner, $AMPM);
@@ -3797,23 +3817,9 @@ sub NormalEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my $FT_Expander = Gtk2::Expander->new(DP_gettext("Show details"));
-	$MainVBox->pack_start($FT_Expander,0,0,0);
-	$FT_Expander->show();
-	$FT_Expander->signal_connect("activate" => sub {
-			# Yes, it is weird to use not here, but in the callback it appears
-			# to return "" if it is expanded and 1 if it isn't.
-			# Possibly a race condition within gtk2. This appears to work anyway.
-			if(not $FT_Expander->get_expanded) {
-				$FT_Expander->set_label(DP_gettext('Hide details'));
-			} else {
-				$FT_Expander->set_label(DP_gettext('Show details'));
-			}
-		});
-	if ($UserConfig{EditorVerboseDefault}) {
-		$FT_Expander->set_expanded(1);
-	}
+	my $FT_Expander = CreateDetailsWidget();
 	$Tooltips->set_tip($FT_Expander, DP_gettext("Additional information"));
+	$MainVBox->pack_start($FT_Expander,0,0,0);
 	
 	# Add the extended entry box
 	my $FulltextEntry = Gtk2::TextView->new();
@@ -3903,13 +3909,9 @@ sub AllDayEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my $FT_Expander = Gtk2::Expander->new(DP_gettext("Details"));
-	$MainVBox->pack_start($FT_Expander,0,0,0);
-	$FT_Expander->show();
-	if ($UserConfig{EditorVerboseDefault}) {
-		$FT_Expander->set_expanded(1);
-	}
+	my $FT_Expander = CreateDetailsWidget();
 	$Tooltips->set_tip($FT_Expander, DP_gettext("Additional information"));
+	$MainVBox->pack_start($FT_Expander,0,0,0);
 	
 	# Add the extended entry box
 	my $FulltextEntry = Gtk2::TextView->new();
