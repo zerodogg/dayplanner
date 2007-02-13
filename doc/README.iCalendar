@@ -1,0 +1,21 @@
+Specification of Day Planner-specific additions to iCalendar
+by Eskild Hustvedt
+$Id$
+------------------------------------------------------
+
+Index:
+1 - Birthdays
+
+1 - Birthdays
+-------------
+Day Planner defines birthdays with additional settings. It is fully
+compatible with iCalendar and has a iCalendar-standard SUMMARY tag
+containing the name of the person and a localized birthday string.
+But in addition to that it includes additional options in order to
+support dynamic re-localization of strings. It sets:
+
+X-DP-BIRTHDAY:TRUE
+X-DP-BIRTHDAYNAME:[NAME]
+
+X-DP-BIRTHDAYNAME is set to the name of the person whose birthday it is,
+and quoted according to iCalendar quoting standards.
