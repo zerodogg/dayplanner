@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-13 18:57+0100\n"
-"PO-Revision-Date: 2007-02-13 18:58+0100\n"
+"POT-Creation-Date: 2007-02-13 19:00+0100\n"
+"PO-Revision-Date: 2007-02-13 19:00+0100\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -818,7 +818,7 @@ msgstr ""
 "%s"
 
 #: dayplanner-notifier:365
-msgid "Day planner event"
+msgid "Day Planner event"
 msgstr "Dagsplanleggar-hending"
 
 #: dayplanner-notifier:370
