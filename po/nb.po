@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2007-02-13 19:28+0100\n"
-"PO-Revision-Date: 2007-02-06 18:31+0100\n"
+"PO-Revision-Date: 2007-02-13 19:30+0100\n"
 "Last-Translator: Jørgen Grønlund <jorgenhg@broadpark.no>\n"
 "Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -76,7 +76,6 @@ msgid "December"
 msgstr "desember"
 
 #: dayplanner:404
-#, fuzzy
 msgid ""
 "Another instance of Day Planner appears to be running. Please quit the "
 "currently running instance of Day Planner before continuing\n"
@@ -95,7 +94,6 @@ msgid "_Force"
 msgstr "_Tving"
 
 #: dayplanner:418
-#, fuzzy
 msgid ""
 "Unable to force the start. This is likely due to a bug in the application, "
 "please contact the Day Planner developers."
@@ -132,12 +130,12 @@ msgid "If this problem persists, please contact your service provider"
 msgstr "Kontakt levrandøren hvis problemet fortsetter"
 
 #: dayplanner:514
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "The Day Planner services server you are connecting to does not support this "
 "version of Day Planner (%s)."
 msgstr ""
-"Tjeneste tjenerern du kobler deg til støtter ikke denne versjonen av "
+"Tjeneste tjenereren du kobler deg til støtter ikke denne versjonen av "
 "dagsplanleggeren (%s)."
 
 #: dayplanner:518
@@ -157,7 +155,7 @@ msgid "Parsing and repairing"
 msgstr "Tolker og reparerer"
 
 #: dayplanner:584
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "Unable to download the raw Day Planner data from the server. Repairing is "
 "not possible! Backup written to %s."
@@ -241,7 +239,7 @@ msgid "Initializing"
 msgstr "Klargjør"
 
 #: dayplanner:796
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "An error ocurred with the Day Planner services:\n"
 "\n"
@@ -266,7 +264,6 @@ msgstr ""
 "Opprett denne mappa manuelt før du lukker dette dialogvinduet."
 
 #: dayplanner:1053
-#, fuzzy
 msgid ""
 "<b><big>Day Planner encountered an error while saving events</big></b>.\n"
 "\n"
@@ -299,7 +296,6 @@ msgid "Upgrading"
 msgstr "Oppgraderer"
 
 #: dayplanner:1621
-#, fuzzy
 msgid ""
 "A problem occurred while setting up automatic startup of the Day Planner "
 "reminder.\n"
@@ -317,7 +313,6 @@ msgstr ""
 "trykk «OK». Automatisk oppstart av påminneren er nå satt opp."
 
 #: dayplanner:1632
-#, fuzzy
 msgid ""
 "Disabling automatic startup of the reminder will prevent notifications "
 "unless Day Planner has been manually started. Disable the automatic startup?"
@@ -327,7 +322,7 @@ msgstr ""
 "oppstart?"
 
 #: dayplanner:1850
-#, fuzzy, perl-format
+#, perl-format
 msgid "Day Planner for %s"
 msgstr "Dagsplanlegger for %s"
 
@@ -424,7 +419,6 @@ msgid "Import data from various other applications"
 msgstr "Importer data fra diverse andre programmer"
 
 #: dayplanner:2456
-#, fuzzy
 msgid "Cancel importing and return to Day Planner"
 msgstr "Avbryt importering og gå tilbake til dagsplanleggeren"
 
@@ -489,7 +483,7 @@ msgid "XHTML (exports to a directory)"
 msgstr "XHTML (eksporterer til en mappe)"
 
 #: dayplanner:2833
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "There are already files in the directory \"%s\". If you continue any "
 "existing exported Day Planner data in that directory will be overwritten. Do "
@@ -570,7 +564,7 @@ msgid "and"
 msgstr "og"
 
 #: dayplanner:3170 dayplanner:3722
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
 "directly from within Day Planner. In order to change these events use a text "
@@ -590,14 +584,12 @@ msgstr "Avslutt uansett?"
 
 #: dayplanner:3370 dayplanner:3379 dayplanner-notifier:274
 #: dayplanner-notifier:283
-#, fuzzy
 msgid "Show details"
-msgstr "Detaljer"
+msgstr "Vis detaljer"
 
 #: dayplanner:3377 dayplanner-notifier:281
-#, fuzzy
 msgid "Hide details"
-msgstr "Detaljer"
+msgstr "Skjul detaljer"
 
 #: dayplanner:3535 dayplanner:4437
 msgid "Event"
@@ -715,12 +707,10 @@ msgid "Interface"
 msgstr "Brukergrensesnitt"
 
 #: dayplanner:4183
-#, fuzzy
 msgid "Show details by default"
-msgstr "Detaljer"
+msgstr "Vis detaljer som standard"
 
 #: dayplanner:4197
-#, fuzzy
 msgid ""
 "Check this if you want to show the details by default in the add and edit "
 "event dialog."
@@ -729,12 +719,10 @@ msgstr ""
 "dialogvinduene for tillegging og redigering av hendelser"
 
 #: dayplanner:4238
-#, fuzzy
 msgid "Event notifications"
-msgstr "Varsle meg om hendelser før hendelsestidspunktet"
+msgstr "Hendingsvarsler"
 
 #: dayplanner:4245
-#, fuzzy
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "Start påminneren automatisk ved innlogging"
 
@@ -832,7 +820,6 @@ msgstr ""
 "%s"
 
 #: dayplanner-notifier:365
-#, fuzzy
 msgid "Day Planner event"
 msgstr "Dagsplanlegger-hendelse"
 
