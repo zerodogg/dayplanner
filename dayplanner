@@ -1037,8 +1037,9 @@ sub FirstStartup {
 	$InternalConfig{LastVersion} = $Version;
 	if(not $_[0]) {
 		# Attempt to import data
-		ImportDataFromProgram(1);
+		return(ImportDataFromProgram(1));
 	}
+	return(0);
 }	
 
 # Purpose: Save the main data files
@@ -1678,8 +1679,7 @@ sub MainInit {
 	$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
 
 	unless(-d $SaveToDir) {
-		$FirstStartup = 1;
-		FirstStartup($NoGui);
+		$FirstStartup =	FirstStartup($NoGui);
 	}
 
 	# Load the configuration file
@@ -2510,9 +2510,9 @@ sub ImportDataFromProgram {
 
 	$ProgressWindow->{Window}->destroy();
 	if(not $Programs{ImportPossible}) {
-		unless($FirstTime) {
-			DPInfo(DP_gettext("Could not detect data from any application to import."));
+		if(not $FirstTime) {
 			$MainWindow->show();
+			DPInfo(DP_gettext("Could not detect data from any application to import."));
 		}
 		return(0);
 	}
@@ -2623,6 +2623,7 @@ sub ImportDataFromProgram {
 		});
 	$ImportVBox->show();
 	$ImportWindow->show();
+	return(1);
 }
 
 # Purpose: Import data from other programs
@@ -4662,6 +4663,8 @@ sub InitDPCore {
 		1;
 	});
 	
+	# MainInit() returns 1 if we're in "FirstStartup" mode AND are displaying the import window.
+	# If we're not displaying the import window it returns 0 in any case.
 	my $FirstStartup = MainInit();
 	# Draw the main window
 	DrawMainWindow();
