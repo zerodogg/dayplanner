@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# Dayplanner daemon
-# The notification daemon for day planner
+# Day Planner daemon
+# The notification daemon for Day Planner
 # Copyright (C) Eskild Hustvedt 2006
 # $Id$
 #
@@ -742,9 +742,9 @@ sub MainLoop {
 					$ConnectionSelect->remove($Handle);
 					# Make sure that the handle is removed from our current users list.
 					# This so that connections that don't BYE is removed properly anyway.
-					# This usually happens when day planner is killed or maybe even crashes,
+					# This usually happens when Day Planner is killed or maybe even crashes,
 					# and then when started again displays a false message about an already running
-					# day planner.
+					# Day Planner.
 					if($AccessStatus{HandlePIDS}{$Handle} eq $AccessStatus{Connected}) {
 						$AccessStatus{Connected} = 0;
 					}
@@ -848,7 +848,7 @@ sub PackageMultiLine {
 
 GetOptions (
 	'help|h' => sub {
-		print "Day planner daemon version $Version\n\n";
+		print "Day Planner daemon version $Version\n\n";
 		PrintHelp("-d", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
 		PrintHelp("", "--version", "Display version information and exit");
 		PrintHelp("-h,", "--help", "Display this help screen");
@@ -888,7 +888,7 @@ GetOptions (
 		$SocketName = $_[1];
 	},
 	'version' => sub {
-		print "Day planner daemon version $Version\n";
+		print "Day Planner daemon version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# dayplanner-notifier
+# Day Planner notifier
 # Sends a notification to the user
 # Copyright (C) Eskild Hustvedt 2006
 # $Id$
@@ -362,7 +362,7 @@ sub GtkNotifier {
 		# and on all desktops
 		$NotifyDialog->set_keep_above(1);
 		$NotifyDialog->stick;
-		$NotifyDialog->set_title(DP_gettext("Day planner event"));
+		$NotifyDialog->set_title(DP_gettext("Day Planner event"));
 		$NotifyDialog->set_skip_pager_hint(0);
 		# TODO: Set the urgency hint in GTK2 versions that support it
 		
@@ -481,7 +481,7 @@ sub WriteTo {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 GetOptions (
 	'help|h' => sub {
-		print "Day planner notifier version $Version\n";
+		print "Day Planner notifier version $Version\n";
 		print "This program is for use by the dayplanner daemon.\n\n";
 		print "Use a --time/--message/--date (and --fulltext) combo if you want to call it manually,\n";
 		print "the daemon uses --id.\n\n";
@@ -504,7 +504,7 @@ GetOptions (
 	'id|i=s' => \$MessageID,
 	'n|nofork' => \$NoFork,
 	'v|version' => sub {
-		print "Day planner notifier version $Version\n";
+		print "Day Planner notifier version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
