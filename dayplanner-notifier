@@ -364,7 +364,10 @@ sub GtkNotifier {
 		$NotifyDialog->stick;
 		$NotifyDialog->set_title(DP_gettext("Day Planner event"));
 		$NotifyDialog->set_skip_pager_hint(0);
-		# TODO: Set the urgency hint in GTK2 versions that support it
+		$NotifyDialog->set_skip_taskbar_hint(0);
+		if(Gtk2->CHECK_VERSION(2,10,0)) {
+			$NotifyDialog->set_urgency_hint(1);
+		}
 		
 		my $Tooltips = Gtk2::Tooltips->new();
 		my $PostponeButton = Gtk2::Button->new_with_label(DP_gettext('Postpone'));
