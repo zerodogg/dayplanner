@@ -1117,10 +1117,6 @@ sub DataLoadTest {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Data helper functions
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # General helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -1189,6 +1185,27 @@ sub GetDistVer {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Get the SUMMARY string for an UID
+# Usage: my $Summary = GetSummaryString(UID);
+#  The returned summary string is properly formatted (ie. it will return
+#  a properly localized birthday string if needed).
+sub GetSummaryString {
+	my $UID = shift;
+	my $UID_Obj = $iCalendar->get_info($UID);
+	if($UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
+		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
+			return(sprintf(DP_gettext("%s's birthday"),$UID_Obj->{'X-DP-BIRTHDAYNAME'}));
+		} else {
+			DPIntWarn("UID $UID is set to be a birthday but is missing X-DP-BIRTHDAYNAME, using SUMMARY string");
+		}
+	}
+	if(not $UID_Obj->{SUMMARY}) {
+		DPIntWarn("No SUMMARY found for the UID $UID");
+		return(DP_gettext("Unknown"));
+	}
+	return($UID_Obj->{SUMMARY});
+}
 
 # Purpose: Get the real name of the person whose birthday it is
 # Usage: my $Name = GetRealBirthdayName(NAME);
@@ -1945,9 +1962,8 @@ sub HTML_DayToHtml {
 	print $FILE "<tbody><tr><td>" . HTML_Encode(DP_gettext("Time")) . "</td><td>" . HTML_Encode(DP_gettext("Description")) . "</td></tr>\n";
 	# Write allday and birthdays
 	foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,"DAY")})) {
+		print $FILE "<tr><td></td><td>" . HTML_Encode(GetSummaryString($Event));
 		my $EventInfo = $iCalendar->get_info($Event);
-		# TODO: i18n
-		print $FILE "<tr><td></td><td>" . HTML_Encode($EventInfo->{SUMMARY});
 		if(defined($EventInfo->{DESCRIPTION})) {
 			my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
 			print $FILE "<br /><i>$HTML_Fulltext</i>";
@@ -1958,8 +1974,8 @@ sub HTML_DayToHtml {
 	foreach my $Time (sort(@{$iCalendar->get_dateinfo($Year,$Month,$Day)})) {
 		next if $Time eq 'DAY';
 		foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})) {
+			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event));
 			my $EventInfo = $iCalendar->get_info($Event);
-			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode($EventInfo->{SUMMARY});
 			if(defined($EventInfo->{DESCRIPTION})) {
 				my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
 				print $FILE "<br /><i>$HTML_Fulltext</i>";
@@ -3027,9 +3043,9 @@ sub PopulateUpcomingEvents {
 					$HasEvents = 1;
 					# If the time is DAY then it lasts the entire day
 					if($time eq 'DAY') {
-						$h->{text} .= "\n" . ${$iCalendar->get_info($UID)}{SUMMARY};
+						$h->{text} .= "\n" . GetSummaryString($UID);
 					} else {
-						$h->{text} .= "\n" . DP_gettext("At") . " " . AMPM_From24($time) . ": " . ${$iCalendar->get_info($UID)}{SUMMARY};
+						$h->{text} .= "\n" . DP_gettext("At") . " " . AMPM_From24($time) . ": " . GetSummaryString($UID);
 					}
 				}
 			}
@@ -3762,7 +3778,7 @@ sub NormalEventWindow {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($EventHash->{DTSTART});
 		$EventTime = $Time;
-		$EventSummary = $EventHash->{SUMMARY};
+		$EventSummary = GetEventSummary($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
@@ -3868,7 +3884,7 @@ sub AllDayEventWindow {
 		my $EventHash = $iCalendar->get_info($EventUID);
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		my ($Year, $Month, $Day) = iCal_ParseDateTime($EventHash->{DTSTART});
-		$EventSummary = $EventHash->{SUMMARY};
+		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		($OldEventYear, $OldEventMonth,$OldEventDay) = ($EventYear,$EventMonth,$EventDay);
 	}
@@ -4367,25 +4383,12 @@ sub PopulateEventList {
 	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
 		foreach my $Time (sort @{$TimeArray}) {
 			foreach my $UID (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)}) {
-				my $EventInfo = $iCalendar->get_info($UID);
-				my $EventSummary = $EventInfo->{SUMMARY};
-				if(defined($EventInfo->{'X-DP-BIRTHDAY'}) and $EventInfo->{'X-DP-BIRTHDAY'} eq "TRUE") {
-					if(not defined($EventInfo->{'X-DP-BIRTHDAYNAME'}) or not length($EventInfo->{'X-DP-BIRTHDAYNAME'})) {
-						DPIntWarn("Birthday event with no name ($UID), using default summary.!");
-					} else {
-						$EventSummary = sprintf(DP_gettext("%s's birthday"), $EventInfo->{'X-DP-BIRTHDAYNAME'});
-					}
-				}
-
+				my $EventSummary = GetSummaryString($UID);
 				# Don't add Time = DAY.
 				if($Time eq 'DAY') {
 					$Time = '';
 				}
-				unless (defined(${$iCalendar->get_info($UID)}{SUMMARY})) {
-					DPIntWarn("Found no summary for entry: $Time/$UID");
-				} else {
-					push (@{$EventlistWidget->{data}}, [$UID,AMPM_From24($Time), $EventSummary]);
-				}
+				push (@{$EventlistWidget->{data}}, [$UID,AMPM_From24($Time), $EventSummary]);
 			}
 		}
 	}
