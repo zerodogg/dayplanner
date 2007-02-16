@@ -59,9 +59,6 @@ my (
 ) = (0,0,0);
 
 # Hashes
-#my %CalendarContents;		# Contents of the main calendar
-#my %BirthdayContents;		# Contents of the birthday calendar
-#my %SpecialEvents;		# Contents of the speical events calendar
 my %NotificationHash;		# The internal hash data
 my %Config;			# The configuration hash
 my %CurrentNotification;
@@ -828,16 +825,16 @@ sub PackageMultiLine {
 	foreach(split(/\n/,$Message)) {
 		$Lines++;
 		chomp;
-		$NewMessage = $NewMessage . "ML $_\n";
+		$NewMessage .= "ML $_\n";
 	}
 	unless($Lines > 1) {
 		return($Message);
 	}
 	unless($Message =~ /\n$/) {
 		# The preceeding line doesn't end with \n so set a "last line didn't end with \n" option
-		$NewMessage = $NewMessage . "NNL\n";
+		$NewMessage .= "NNL\n";
 	}
-	$NewMessage = $NewMessage . "\nEND MULTILINE";
+	$NewMessage .= "\nEND MULTILINE";
 
 	return($NewMessage);
 }
