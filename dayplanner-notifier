@@ -27,6 +27,7 @@ use Locale::gettext;		# Translation layer
 use POSIX;			# setlocale()
 use Cwd;
 use File::Basename;
+use FindBin;
 
 my $Gettext;			# Global Gettext object
 my $Version = "0.5";
@@ -301,15 +302,29 @@ sub PrintHelp {
 # Purpose: Test if X is available
 # Usage: if(X_Available()) { Available } else { Not available }
 sub X_Available {
-	# This might look a bit weird, but remember that for commandline programs 0 is true
-	# and anything else is false.
+	# Check if we've got a gtk2 version above 2.10.0, if we do then we
+	# use the builtin Gtk2->init_check function. If not, we fall back to using
+	# the uglier, slower and less portable system() test
 	#
-	# The reason we use a seperate perl instance is becuase Gtk2 dies at *C level*
-	# (below perl) so we can't trap it with eval.
-	if(system("perl -e 'use Gtk2; open(STDERR, \">/dev/null\"); Gtk2->init;'")) {
-		return(0);
+	# We can't eval() or similar the ->init function because it dies at library (C)
+	# level, which is below perl and can't be caught and handled properly.
+	if(Gtk2->CHECK_VERSION(2,10,0)) {
+		# Use the Gtk2->init_check function
+		if(Gtk2->init_check()) {
+			return(1);
+		} else {
+			return(0);
+		}
 	} else {
-		return(1);
+		# Fall back to using the ugly system()-based test.
+
+		# This statement might look a bit weird, but remember that for commandline
+		# programs 0 is true and anything else is false.
+		if(system("perl -e 'use Gtk2; open(STDERR, \">/dev/null\"); Gtk2->init;'")) {
+			return(0);
+		} else {
+			return(1);
+		}
 	}
 }
 
