@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-16 23:09+0100\n"
+"POT-Creation-Date: 2007-02-17 19:51+0100\n"
 "PO-Revision-Date: 2007-01-07 02:40+0100\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=iso-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: dayplanner:170 dayplanner-notifier:113
+#: dayplanner:170 dayplanner-notifier:114
 msgid "dayplanner"
 msgstr "Plánovaè"
 
@@ -588,13 +588,13 @@ msgstr ""
 msgid "Quit anyway?"
 msgstr "Ukonèi» napriek tomu program?"
 
-#: dayplanner:3386 dayplanner:3395 dayplanner-notifier:274
-#: dayplanner-notifier:283
+#: dayplanner:3386 dayplanner:3395 dayplanner-notifier:275
+#: dayplanner-notifier:284
 #, fuzzy
 msgid "Show details"
 msgstr "Podrobnosti"
 
-#: dayplanner:3393 dayplanner-notifier:281
+#: dayplanner:3393 dayplanner-notifier:282
 #, fuzzy
 msgid "Hide details"
 msgstr "Podrobnosti"
@@ -801,7 +801,7 @@ msgstr ""
 "Domovský adresár u¾ívateµa %s neexistuje v %s! Ubezpeète sa prosím, ¾e máte "
 "správne nastavenú premennú prostredia %s. Nemô¾em pokraèova»\n"
 
-#: dayplanner-notifier:346 dayplanner-notifier:438
+#: dayplanner-notifier:361 dayplanner-notifier:456
 #, perl-format
 msgid ""
 "Today at %s:\n"
@@ -810,7 +810,7 @@ msgstr ""
 "Dnes o %s:\n"
 "%s"
 
-#: dayplanner-notifier:348 dayplanner-notifier:440
+#: dayplanner-notifier:363 dayplanner-notifier:458
 #, perl-format
 msgid ""
 "Tomorrow at %s:\n"
@@ -819,7 +819,7 @@ msgstr ""
 "Zajtra o %s:\n"
 "%s"
 
-#: dayplanner-notifier:350 dayplanner-notifier:442
+#: dayplanner-notifier:365 dayplanner-notifier:460
 #, perl-format
 msgid ""
 "At %s on %s:\n"
@@ -828,16 +828,16 @@ msgstr ""
 "O %s dòa %s:\n"
 "%s"
 
-#: dayplanner-notifier:365
+#: dayplanner-notifier:380
 #, fuzzy
 msgid "Day Planner event"
 msgstr "Udalos» plánovaèa"
 
-#: dayplanner-notifier:370
+#: dayplanner-notifier:388
 msgid "Postpone"
 msgstr "Odlo¾i» na neskôr"
 
-#: dayplanner-notifier:377
+#: dayplanner-notifier:395
 msgid "Postpone this notification for 10 minutes"
 msgstr "Odlo¾i» toto upozornenie o 10 minút"
 
