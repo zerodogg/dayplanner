@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-02-16 23:09+0100\n"
+"POT-Creation-Date: 2007-02-17 19:51+0100\n"
 "PO-Revision-Date: 2007-02-14 00:12+0100\n"
 "Last-Translator: zerodogg\n"
 "Language-Team:  <en@li.org>\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Vim 70.00\n"
 
-#: dayplanner:170 dayplanner-notifier:113
+#: dayplanner:170 dayplanner-notifier:114
 msgid "dayplanner"
 msgstr "dayplanner"
 
@@ -584,12 +584,12 @@ msgstr "Nokre filer kunne ikkje lagrast. Er du sikker på at du vil avslutta?"
 msgid "Quit anyway?"
 msgstr "Avslutt uansett?"
 
-#: dayplanner:3386 dayplanner:3395 dayplanner-notifier:274
-#: dayplanner-notifier:283
+#: dayplanner:3386 dayplanner:3395 dayplanner-notifier:275
+#: dayplanner-notifier:284
 msgid "Show details"
 msgstr "Vis detaljar"
 
-#: dayplanner:3393 dayplanner-notifier:281
+#: dayplanner:3393 dayplanner-notifier:282
 msgid "Hide details"
 msgstr "Skjul detaljar"
 
@@ -794,7 +794,7 @@ msgstr ""
 "Heimemappa til brukaren %s finst ikkje (%s). Sjekk at miljøvariabelen %s er "
 "sett. Kan ikkje halda fram.\n"
 
-#: dayplanner-notifier:346 dayplanner-notifier:438
+#: dayplanner-notifier:361 dayplanner-notifier:456
 #, perl-format
 msgid ""
 "Today at %s:\n"
@@ -803,7 +803,7 @@ msgstr ""
 "I dag klokka %s:\n"
 "%s"
 
-#: dayplanner-notifier:348 dayplanner-notifier:440
+#: dayplanner-notifier:363 dayplanner-notifier:458
 #, perl-format
 msgid ""
 "Tomorrow at %s:\n"
@@ -812,7 +812,7 @@ msgstr ""
 "I morgon klokka %s:\n"
 "%s"
 
-#: dayplanner-notifier:350 dayplanner-notifier:442
+#: dayplanner-notifier:365 dayplanner-notifier:460
 #, perl-format
 msgid ""
 "At %s on %s:\n"
@@ -821,15 +821,15 @@ msgstr ""
 "Klokka %s den %s:\n"
 "%s"
 
-#: dayplanner-notifier:365
+#: dayplanner-notifier:380
 msgid "Day Planner event"
 msgstr "Dagsplanleggar-hending"
 
-#: dayplanner-notifier:370
+#: dayplanner-notifier:388
 msgid "Postpone"
 msgstr "Utsett"
 
-#: dayplanner-notifier:377
+#: dayplanner-notifier:395
 msgid "Postpone this notification for 10 minutes"
 msgstr "Utsett denne varslinga ti minuttar"
 
