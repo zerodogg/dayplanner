@@ -30,7 +30,7 @@ use File::Basename;
 use FindBin;
 
 my $Gettext;			# Global Gettext object
-my $Version = "0.5";
+my $Version = "0.6";
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 
