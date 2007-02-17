@@ -15,7 +15,9 @@ Version 0.5 (Unreleased)
 - Can now be used with old versions of Locale::gettext
 - No longer *requires* Locale::gettext (although it is recommended)
 
-* Notifier (dayplanner-notified)
+* Notifier (dayplanner-notifier)
+- Now doesn't set the skip_taskbar_hint on the notification window
+- Now sets the urgency hint on the notification window when possible
 
 * Daemon (dayplanner-daemon)
 - Cleanups
