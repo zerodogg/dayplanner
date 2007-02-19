@@ -1193,7 +1193,7 @@ sub GetDistVer {
 sub GetSummaryString {
 	my $UID = shift;
 	my $UID_Obj = $iCalendar->get_info($UID);
-	if($UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
+	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
 			return(sprintf(DP_gettext("%s's birthday"),$UID_Obj->{'X-DP-BIRTHDAYNAME'}));
 		} else {
