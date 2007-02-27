@@ -3778,7 +3778,7 @@ sub NormalEventWindow {
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($EventHash->{DTSTART});
 		$EventTime = $Time;
-		$EventSummary = GetEventSummary($EventUID);
+		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
@@ -4005,12 +4005,11 @@ sub BirthdayEventWindow {
 }
 
 # Purpose: Handle the OK button for the Normal event widget
-# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, \%TimeHash, IS_EDITING, EventUID)});
+# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID)});
 #
-# IS_EDITING is either true or false, false when it's a new one being added, true when it's an
-# old one being edited
+# EventUID can be undef.
 sub NormalEvent_OK {
-	my ($MyWindow, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry, $TimeHash, $IsEditing, $EventUID) = @_;
+	my ($MyWindow, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry, $TimeHash, $EventUID) = @_;
 	my $Error = 0;
 	
 	# Get the contents
@@ -4738,9 +4737,10 @@ GetOptions (
 		print "\n";
 		exit(0);
 	},
-	'test|t' => sub {
-		DPIntInfo("Running in test mode");
-		$SaveToDir = "$ENV{HOME}/.dayplanner/debug";
+	'test|t:i' => sub {
+		my $NumberPrefix = $_[1] ? $_[1] : "";
+		DPIntInfo("Running in test mode (using ~/.dayplanner/debug$NumberPrefix)");
+		$SaveToDir = "$ENV{HOME}/.dayplanner/debug$NumberPrefix";
 	},
 	'confdir=s' => sub {
 		if (-e $_[1]) {
