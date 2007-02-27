@@ -240,6 +240,10 @@ sub add {
 # Usage: $object->change(%EntryHash);
 sub change {
 	my ($self, $UID, %Hash) = @_;
+	unless(defined($UID)) {
+		carp("Refusing to change a iCalendar entry without a UID to change.");
+		return(undef);
+	}
 	unless(defined($Hash{DTSTART})) {
 		carp("Refusing to change a iCalendar entry without a DTSTART.");
 		return(undef);
