@@ -437,7 +437,7 @@ sub _NewObj {
 sub _ChangeEntry {
 	my($self,$UID,%Hash) = @_;
 	foreach my $key (keys(%Hash)) {
-		$self->{RawCalendar}{$UID}{$key} = _GetSafe($Hash{$key});
+		$self->{RawCalendar}{$UID}{$key} = $Hash{$key};
 	}
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
@@ -629,10 +629,10 @@ sub _GetSafe {
 # Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
 sub _UnSafe {
 	my $Data = $_[0];
-	$Data =~ s/\\\\/\\/g;
+	$Data =~ s/\\n/\n/g;
 	$Data =~ s/\\,/,/g;
 	$Data =~ s/\\;/;/g;
-	$Data =~ s/\\n/\n/g;
+	$Data =~ s/\\\\/\\/g;
 	return($Data);
 }
 
