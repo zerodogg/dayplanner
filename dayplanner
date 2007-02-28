@@ -560,6 +560,11 @@ sub DPS_DataSegment {
 sub DPS_RepairData {
 	my $ProgressWin = DPCreateProgressWin(DP_gettext("Repairing"),DP_gettext("Getting data"),0);
 	my $RawData = DPS_Perform("GET_RAW");
+	if(not $RawData) {
+		DPIntWarn("GET_RAW failed, errornious call to DPS_RepairData()?");
+		$ProgressWin->{Window}->destroy();
+		return(undef);
+	}
 	if($RawData eq "MATCHED") {
 		$ProgressWin->{Window}->destroy();
 		return(1);
