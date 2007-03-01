@@ -428,131 +428,9 @@ sub DaemonConnectionErrorHandler {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Return better errors than IO::Socket::INET does.
-# Usage: my $ERROR = IO_Socket_INET_Errors($@);
-# 	Errors:
-#		OFFLINE = Network is unreachable
-#		REFUSED = Connection refused
-#		BADHOST = Bad hostname (should often be handled as OFFLINE)
-#		* = Anything else simply returns $@
-sub IO_Socket_INET_Errors {
-	my $Error = shift;
-	# TODO: There are probably quite a few unhandled errors. At least timeout.
-	if($Error =~ /Network is unreachable/) {
-		return("OFFLINE");
-	} elsif ($Error =~ /Bad hostname/) {
-		return("BADHOST");
-	} elsif ($Error =~ /Connection refused/) {
-		return("REFUSED");
-	} else {
-		return($Error);
-	}
-}
-
-# Purpose: Back up data to ~/.dayplanner/ before getting data
-# Usage: DPS_BackupData();
-sub DPS_BackupData {
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-	my $Target = "$SaveToDir/dps_backup-$curryear.$currmonth.$currmday-$currhour$currmin$currsec.ics";
-	$iCalendar->write($Target);
-	DPS_Log("Backup written to $Target");
-	DPIntInfo("DPS: Backup written to $Target");
-	return($Target);
-}
-
-# Purpose: Connect to a Day Planner services server.
-# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
-# 		The arguments are optional and will be read from %DPServices if not supplied
-sub DPS_Connect {
-	my ($Host, $Port, $User, $Password) = @_;
-	$Host = $Host ? $Host : $DPServices{host};
-	$Port = $Port ? $Port : $DPServices{port};
-	$User = $User ? $User : $DPServices{user};
-	$Password = $Password ? $Password : $DPServices{pass};
-	my $Error;
-	# Connect
-	DPS_Status(DP_gettext("Connecting"),0);
-	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
-	$DPServices{socket} = IO::Socket::INET->new(
-					PeerAddr => $Host,
-					PeerPort => $Port,
-					Timeout => 30,
-			) or do { $Error = $@; };
-			
-	setlocale(LC_ALL, ""); #, $OLDLocale);	# Reset the locale
-	# Process errors if any occurred
-	if($Error) {
-		# If we have already displayed an error to the user this session, don't do it again
-		if(defined($DPServices{Offline}) and $DPServices{Offline} eq 1) {
-			DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
-			return(undef);
-		}
-
-		$Error = IO_Socket_INET_Errors($Error);	# Get errors that are easier to process
-
-			# Process network unreachable and bad hostname
-		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
-			$DPServices{Offline} = 1;
-			DPS_Error(sprintf(DP_gettext("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port",) . " " . DP_gettext("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
-		}
-			# Process connection refused
-		elsif($Error eq "REFUSED") {
-			DPS_Error(sprintf(DP_gettext("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . DP_gettext("The connection was refused by the server. Please verify your Day Planner services settings.") . "\n\n" . DP_gettext("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@ ($Error)");
-		} 
-			# Process unknown errors
-		else {
-			DPS_Error(sprintf(DP_gettext("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . DP_gettext("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@");
-		}
-		return(undef);
-	}
-
-	# The connection didn't fail, so delete $DPServices{Offline} if it exists
-	delete($DPServices{Offline});
-
-	# Authenticate
-	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf(DP_gettext("The Day Planner services server you are connecting to does not support this version of Day Planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
-	DPS_Status(DP_gettext("Connecting"),0.2);
-	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
-	DPS_Status(DP_gettext("Connecting"),0.4);
-	return(undef) if DPS_ErrorIfNeeded("OK", $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error(DP_gettext("The username and/or password is incorrect."),"Authentication error");});
-	return("OK");
-}
-
-# Purpose: Do something when an error has occurred
-# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
-# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
-sub DPS_ErrorIfNeeded {
-	my ($Expected, $Recieved, $ErrorSub) = @_;
-	unless($Expected eq $Recieved) {
-		$ErrorSub->($Recieved);
-		return(1);
-	} else {
-		return(0);
-	}
-}
-
-# Purpose: Disconnect from a Day Planner services daemon
-# Usage: DPS_Disconnect();
-sub DPS_Disconnect {
-	my $Socket = $DPServices{socket};
-	close($Socket);
-	delete($DPServices{socket});
-	return(1);
-}
-
-# Purpose: Send data to a Day Planner services daemon and get the reply
-# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
-sub DPS_DataSegment {
-	my $Socket = $DPServices{socket};
-	print $Socket "$_[0]\n";
-	my $Data = <$Socket>;
-	unless(defined($Data)) {
-		$Data = '';
-	}
-	chomp($Data);
-	return($Data);
-}
+# -- OLD LAYER --
+# This is the deprecated old DPS layer. It is the one currently in use.
+# Once the new layer is ready this code can be dropped.
 
 # Purpose: Repair a checksum mismatch
 # Usage: DPS_RepairData();
@@ -750,7 +628,7 @@ sub DPS_Error {
 # 	Function can be one of:
 # 	GET	- Get data from the server
 # 	SEND	- Send data to the server
-sub DPS_Perform {
+sub DPS_OLDPerform {
 	my $Function = $_[0];
 	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
 	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
@@ -788,6 +666,7 @@ sub DPS_Perform {
 # Usage: DPS_GUIPerform(FUNCTION)
 # 	The FUNCTION argument is identical to DPS_Perform's FUNCTION argument
 sub DPS_GUIPerform {
+	DPIntWarn("Deprecated DPS_GUIPerform called. Call DPS_Perform() directly instead");
 	my $Function = $_[0];
 	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
 
@@ -821,6 +700,100 @@ sub DPS_Status {
 	}
 }
 
+# -- NEW SERVICES LAYER --
+
+# Purpose: Download data from a day planner services server
+# Usage: DPS_Download(MERGE?);
+# 	If MERGE is true then it will not overwrite the current data
+# 	with the downloaded data, but rather use the DP::iCalendar merge
+# 	function to merge it into place.
+sub DPS_Download {
+	my $Merge = shift;
+	my $Data = DPS_DataSegment("GETDATA");
+	if($Data =~ /^OK/) {
+		DPS_Log("Downloaded data");
+		my $Initial = $Data;
+		my $MD5 = $Data;
+		my $MainData = $Data;
+		$Initial =~ s/^(\S+)\s+.*$/$1/;
+		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
+		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/) {
+			# FIXME: Rewrite this
+			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
+		}
+		unless(md5_base64($MainData) eq $MD5) {
+			# FIXME: Rewrite this
+			DPS_Error(DP_gettext("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
+		} else {
+			# Decode the base64 encoded data
+			$MainData = decode_base64($MainData);
+			# Remove junk and populate @DataArray
+			my @DataArray;
+			$MainData =~ s/\r//g;
+			push(@DataArray, $_) foreach(split(/\n/,$MainData));
+			$MainData = undef;
+			# If we're in merge mode then enable SMART MERGE and then add
+			# the file, if not then clean and add the file
+			if($Merge) {
+				$iCalendar->enable('SMART_MERGE');
+				$iCalendar->addfile(\@DataArray);
+				$iCalendar->disable('SMART_MERGE');
+			} else {
+				$iCalendar->clean();
+				$iCalendar->addfile(\@DataArray);
+			}
+			UpdatedData();
+			return(1);
+		}
+	} else {
+		DPS_Log("Unable to download data. Server replied: $Data");
+		return(undef);
+	}
+}
+
+# Purpose: Synchronize our local data with the server data
+# Usage: DPS_Sync();
+sub DPS_Sync {
+	# Get information we need
+	# 	The server's data MD5 sum
+	my $ServerMD5 = DPS_DataSegment("GET_MD5");
+	#	The MD5 sum of our current local data
+	my $LocalMD5 = encode_base64($iCalendar->get_rawdata(),"");	# TODO: Does ->get_rawdata actually return static (sorted) data?
+	#	The MD5 sum of the data we last uploaded
+	my $LastUpMD5 = $InternalConfig{DPS_LastMD5};
+
+	# Okay, the required information is available.
+	# First check if our current local MD5 sum matches the one on the server.
+	# If it does then we return without doing anything at all.
+	if($ServerMD5 eq $LocalMD5) {
+		DPS_Log("ServerMD5[$ServerMD5] matched our LocalMD5[$LocalMD5]. Not doing anything");
+		return(1);
+	} 
+	# It didn't match. So now we check if our last uploaded MD5 matches the servers MD5.
+	# If it does then we just upload.
+	elsif ($ServerMD5 eq $LastUpMD5) {
+		DPS_Log("Local data changed, uploading to DPS");
+		return(DPS_Upload());	# FIXME: This function doesn't actually exist yet
+	}
+	# That didn't match either. So we check if our local MD5 is identical to the
+	# last uploaded MD5. If that is the case then we just need to download the
+	# data from the server.
+	elsif ($LastUpMD5 eq $LocalMD5) {
+		DPS_Log("Remote data changed, downloading from DPS");
+		return(DPS_Download());	# FIXME: This function doesn't actually exist yet
+	}
+	# Okay, nothing matched. This means that we have one local MD5 sum,
+	# one remote MD5 sum and one "local last uploaded" MD5 sum - and they all differ.
+	# We must here download the data from the server, merge it with our own and then
+	# upload the new data.
+	else {
+		DPS_Log("Both remote and local data has changed. Downloading, merging and reuploading");
+		if(DPS_Download(1)) {	# FIXME: This function doesn't actually exist yet
+			return(DPS_Upload());
+		}
+	}
+}
+
 # Purpose: Log DPS info
 # Usage: DPS_Log(INFO);
 sub DPS_Log {
@@ -833,6 +806,180 @@ sub DPS_Log {
 		print $FH "[$lhour:$lmin:$lsec] $_[0]\n";
 	}
 	return(1);
+}
+
+# Purpose: High-level API to DPS
+# Usage: DPS_Perform(FUNCTION);
+# 	FUNCTION can be one of:
+# 	SYNC
+# 	...
+sub DPS_Perform {
+	# The function we are going to perform
+	my $Function = shift;
+	# Make sure that DPS is enabled in the config
+	# TODO: Drop DPS_Enable, just verify config settings. If they are empty then
+	# 	it is disabled.
+	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
+	# Check if the user wants to temporarily disable DPS
+	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
+	# Verify that all required options are set in the config
+	foreach my $Option (qw(host port user pass)) {
+		unless(defined($InternalConfig{"DPS_$Option"}) and length($InternalConfig{"DPS_$Option"})) {
+			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. DPS will not be used.");
+			return(undef);
+		} else {
+			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
+		}
+	}
+	# Open up the logfile if it isn't open. This should be left open for the
+	# entirety of the DPS session.
+	if(not defined($DPServices{Log_FH})) {
+		open($DPServices{Log_FH}, ">", "$SaveToDir/services.log");
+		DPS_Log("DPS initialized");
+	}
+	# Connect to the server, if this fails then we return undef without doing anything
+	return(undef) if not DPS_Connect();
+	# Connection established, process $Function
+	if($Function eq 'SYNC') {
+		DPS_DataSync();
+	} else {
+		DPIntWarn("DPS_Perform($Function) called, but the function \"$Function\" is unknown.");
+	}
+	# Disconnect and return
+	DPS_Disconnect();
+	return(1);
+}
+
+# Purpose: Return better errors than IO::Socket::INET does.
+# Usage: my $ERROR = IO_Socket_INET_Errors($@);
+# 	Errors:
+#		OFFLINE = Network is unreachable
+#		REFUSED = Connection refused
+#		BADHOST = Bad hostname (should often be handled as OFFLINE)
+#		* = Anything else simply returns $@
+sub IO_Socket_INET_Errors {
+	my $Error = shift;
+	# TODO: There are probably quite a few unhandled errors. At least timeout.
+	if($Error =~ /Network is unreachable/) {
+		return("OFFLINE");
+	} elsif ($Error =~ /Bad hostname/) {
+		return("BADHOST");
+	} elsif ($Error =~ /Connection refused/) {
+		return("REFUSED");
+	} else {
+		return($Error);
+	}
+}
+
+# Purpose: Back up data to ~/.dayplanner/ before getting data
+# Usage: DPS_BackupData();
+sub DPS_BackupData {
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(time);
+	my $Target = "$SaveToDir/dps_backup-$curryear.$currmonth.$currmday-$currhour$currmin$currsec.ics";
+	$iCalendar->write($Target);
+	DPS_Log("Backup written to $Target");
+	DPIntInfo("DPS: Backup written to $Target");
+	return($Target);
+}
+
+# Purpose: Connect to a Day Planner services server.
+# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
+# 		The arguments are optional and will be read from %DPServices if not supplied
+sub DPS_Connect {
+	my ($Host, $Port, $User, $Password) = @_;
+	$Host = $Host ? $Host : $DPServices{host};
+	$Port = $Port ? $Port : $DPServices{port};
+	$User = $User ? $User : $DPServices{user};
+	$Password = $Password ? $Password : $DPServices{pass};
+	my $Error;
+	# Connect
+	DPS_Status(DP_gettext("Connecting"),0);
+	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
+	$DPServices{socket} = IO::Socket::INET->new(
+					PeerAddr => $Host,
+					PeerPort => $Port,
+					Timeout => 30,
+			) or do { $Error = $@; };
+			
+	setlocale(LC_ALL, ""); #, $OLDLocale);	# Reset the locale
+	# Process errors if any occurred
+	if($Error) {
+		# If we have already displayed an error to the user this session, don't do it again
+		if(defined($DPServices{Offline}) and $DPServices{Offline} eq 1) {
+			DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
+			return(undef);
+		}
+
+		$Error = IO_Socket_INET_Errors($Error);	# Get errors that are easier to process
+
+			# Process network unreachable and bad hostname
+		if($Error eq "OFFLINE" or $Error eq "BADHOST") {
+			$DPServices{Offline} = 1;
+			DPS_Error(sprintf(DP_gettext("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port",) . " " . DP_gettext("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
+		}
+			# Process connection refused
+		elsif($Error eq "REFUSED") {
+			DPS_Error(sprintf(DP_gettext("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . DP_gettext("The connection was refused by the server. Please verify your Day Planner services settings.") . "\n\n" . DP_gettext("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@ ($Error)");
+		} 
+			# Process unknown errors
+		else {
+			DPS_Error(sprintf(DP_gettext("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . DP_gettext("If this problem persists, please contact your service provider"), "Unable to connect to $Host on port $Port: $@");
+		}
+		return(undef);
+	}
+
+	# The connection didn't fail, so delete $DPServices{Offline} if it exists
+	delete($DPServices{Offline});
+
+	# Authentication
+	# First verify the API level
+	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
+	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf(DP_gettext("The Day Planner services server you are connecting to does not support this version of Day Planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
+	DPS_Status(DP_gettext("Connecting"),0.2);
+	# Send AUTH
+	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
+	DPS_Status(DP_gettext("Connecting"),0.4);
+	# If AUTH did not return OK then it failed and we just return undef.
+	return(undef) if DPS_ErrorIfNeeded('OK', $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error(DP_gettext('The username and/or password is incorrect.'),'Authentication error');});
+	DPS_Log("Connected to $Host");
+	return('OK');
+}
+
+# Purpose: Do something when an error has occurred
+# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
+# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
+sub DPS_ErrorIfNeeded {
+	my ($Expected, $Recieved, $ErrorSub) = @_;
+	unless($Expected eq $Recieved) {
+		$ErrorSub->($Recieved);
+		return(1);
+	} else {
+		return(0);
+	}
+}
+
+# Purpose: Disconnect from a Day Planner services daemon
+# Usage: DPS_Disconnect();
+sub DPS_Disconnect {
+	my $Socket = $DPServices{socket};
+	close($Socket);
+	delete($DPServices{socket});
+	DPS_Log("Disconnected");
+	return(1);
+}
+
+# Purpose: Send data to a Day Planner services daemon and get the reply
+# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
+sub DPS_DataSegment {
+	my $Socket = $DPServices{socket};
+	print $Socket "$_[0]\n";
+	my $Data = <$Socket>;
+	if(not defined($Data)) {
+		$Data = '';
+	} else {
+		chomp($Data);
+	}
+	return($Data);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
