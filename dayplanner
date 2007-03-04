@@ -678,6 +678,7 @@ sub DPS_Perform {
 		$GuiEnded->();
 		return(undef);
 	}
+	DPS_Status(DP_gettext("Connected"),0.1);
 	# Connection established, process $Function
 	if($Function eq 'SYNC') {
 		DPS_DataSync();
@@ -754,10 +755,8 @@ sub DPS_Connect {
 	# First verify the API level
 	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
 	return(undef) if DPS_ErrorIfNeeded("OK", $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf(DP_gettext("The Day Planner services server you are connecting to does not support this version of Day Planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
-	DPS_Status(DP_gettext("Connecting"),0.2);
 	# Send AUTH
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
-	DPS_Status(DP_gettext("Connecting"),0.4);
 	# If AUTH did not return OK then it failed and we just return undef.
 	return(undef) if DPS_ErrorIfNeeded('OK', $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error(DP_gettext('The username and/or password is incorrect.'),'Authentication error');});
 	DPS_Log("Connected to $Host on port $Port as user $User");
