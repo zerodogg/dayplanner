@@ -194,10 +194,10 @@ sub get_rawdata {
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$self->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
 
-	foreach my $UID (keys(%{$self->{RawCalendar}})) {
+	foreach my $UID (sort keys(%{$self->{RawCalendar}})) {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
-		foreach my $setting (keys(%{$self->{RawCalendar}{$UID}})) {
+		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
 			$iCalendar .= "$setting:" . _GetSafe(${$self->{RawCalendar}}{$UID}{$setting}) . "\r\n";
 		}
 		$iCalendar .= "END:VEVENT\r\n";
