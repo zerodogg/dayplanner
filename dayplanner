@@ -558,13 +558,14 @@ sub DPS_Download {
 }
 
 # Purpose: Synchronize our local data with the server data
-# Usage: DPS_Sync();
-sub DPS_Sync {
+# Usage: DPS_DataSync();
+sub DPS_DataSync {
+	DPS_Status(DP_gettext("Synchronizing"),0.2);
 	# Get information we need
 	#	The server's data MD5 sum
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	#	The MD5 sum of our current local data
-	my $LocalMD5 = encode_base64($iCalendar->get_rawdata(),"");	# TODO: Does ->get_rawdata actually return static (sorted) data?
+	my $LocalMD5 = md5_base64(encode_base64($iCalendar->get_rawdata(),""));
 	#	The MD5 sum of the data we last uploaded
 	my $LastUpMD5 = $InternalConfig{DPS_LastMD5};
 
@@ -578,15 +579,21 @@ sub DPS_Sync {
 	# It didn't match. So now we check if our last uploaded MD5 matches the servers MD5.
 	# If it does then we just upload.
 	elsif ($ServerMD5 eq $LastUpMD5) {
-		DPS_Log("Local data changed, uploading to DPS");
-		return(DPS_Upload());
+		DPS_Log("Local data changed, uploading to DPS (local MD5 is $LocalMD5 and the servers MD5 is $ServerMD5)");
+		DPS_Status(DP_gettext("Synchronizing"),0.5);
+		my $Return = DPS_Upload();
+		DPS_Status(DP_gettext("Synchronizing"),0.9);
+		return($Return);
 	}
 	# That didn't match either. So we check if our local MD5 is identical to the
 	# last uploaded MD5. If that is the case then we just need to download the
 	# data from the server.
 	elsif ($LastUpMD5 eq $LocalMD5) {
 		DPS_Log("Remote data changed, downloading from DPS");
-		return(DPS_Download());
+		DPS_Status(DP_gettext("Synchronizing"),0.5);
+		my $Return = DPS_Download();
+		DPS_Status(DP_gettext("Synchronizing"),0.9);
+		return($Return);
 	}
 	# Okay, nothing matched. This means that we have one local MD5 sum,
 	# one remote MD5 sum and one "local last uploaded" MD5 sum - and they all differ.
@@ -594,8 +601,12 @@ sub DPS_Sync {
 	# upload the new data.
 	else {
 		DPS_Log("Both remote and local data has changed. Downloading, merging and reuploading");
-		if(DPS_Download(1)) { 
-			return(DPS_Upload());
+		DPS_Status(DP_gettext("Synchronizing"),0.3);
+		if(DPS_Download(1)) {
+			DPS_Status(DP_gettext("Synchronizing"),0.6);
+			my $Return = DPS_Upload();
+			DPS_Status(DP_gettext("Synchronizing"),0.9);
+			return($Return);
 		}
 	}
 }
@@ -631,7 +642,7 @@ sub DPS_Perform {
 			DPError(sprintf(DP_gettext("An error ocurred with the Day Planner services:\n\n%s"), $DPServices{Error}));
 			delete($DPServices{Error});
 		}
-		delete($DPServices{ProgressWar});
+		delete($DPServices{ProgressWin});
 		$MainWindow->set_sensitive(1);
 	};
 
@@ -661,6 +672,7 @@ sub DPS_Perform {
 		open($DPServices{Log_FH}, ">", "$SaveToDir/services.log");
 		DPS_Log("DPS initialized");
 	}
+	DPS_Status(DP_gettext("Connecting"),0);
 	# Connect to the server, if this fails then we return undef without doing anything
 	if(not DPS_Connect()) {
 		$GuiEnded->();
@@ -672,6 +684,7 @@ sub DPS_Perform {
 	} else {
 		DPIntWarn("DPS_Perform($Function) called, but the function \"$Function\" is unknown.");
 	}
+	DPS_Status(DP_gettext("Complete"),1);
 	# Disconnect and return
 	DPS_Disconnect();
 	$GuiEnded->();
@@ -700,7 +713,6 @@ sub DPS_Connect {
 	$Password = $Password ? $Password : $DPServices{pass};
 	my $Error;
 	# Connect
-	DPS_Status(DP_gettext("Connecting"),0);
 	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
 	$DPServices{socket} = IO::Socket::INET->new(
 					PeerAddr => $Host,
@@ -748,8 +760,18 @@ sub DPS_Connect {
 	DPS_Status(DP_gettext("Connecting"),0.4);
 	# If AUTH did not return OK then it failed and we just return undef.
 	return(undef) if DPS_ErrorIfNeeded('OK', $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error(DP_gettext('The username and/or password is incorrect.'),'Authentication error');});
-	DPS_Log("Connected to $Host");
+	DPS_Log("Connected to $Host on port $Port as user $User");
 	return('OK');
+}
+
+# Purpose: Disconnect from a Day Planner services daemon
+# Usage: DPS_Disconnect();
+sub DPS_Disconnect {
+	my $Socket = $DPServices{socket};
+	close($Socket);
+	delete($DPServices{socket});
+	DPS_Log("Disconnected");
+	return(1);
 }
 
 # Purpose: Do something when an error has occurred
@@ -763,16 +785,6 @@ sub DPS_ErrorIfNeeded {
 	} else {
 		return(0);
 	}
-}
-
-# Purpose: Disconnect from a Day Planner services daemon
-# Usage: DPS_Disconnect();
-sub DPS_Disconnect {
-	my $Socket = $DPServices{socket};
-	close($Socket);
-	delete($DPServices{socket});
-	DPS_Log("Disconnected");
-	return(1);
 }
 
 # Purpose: Send data to a Day Planner services daemon and get the reply
@@ -3249,7 +3261,7 @@ sub DPQuestion {
 # Usage: QuitSub();
 sub QuitSub {
 	$MainWindow->set_sensitive(0);
-	DPS_Perform("SEND");
+	DPS_Perform('SYNC');
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
 		unless(DPQuestion(DP_gettext("Some files could not be saved correctly. Quit anyway?"))) {
@@ -4611,7 +4623,7 @@ sub InitDPCore {
 	# Initialize the daemon
 	DaemonInit() or die();
 	# Connect to a DPS server and sync the local data with it if it's enabled
-	DPS_Perform("GET");
+	DPS_Perform('SYNC');
 	# Add autostart if needed
 	unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 		DP_AddAutostart();
