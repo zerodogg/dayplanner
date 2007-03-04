@@ -24,7 +24,7 @@ may be subject to change.
 * Longer term
 - - - - - - -
 - What: Write a dayplanner-daemon wrapper around evolution-data-server to enable
-  Day Planner to take advantage it and integrate better with the GNOME
+  Day Planner to take advantage of it and integrate better with the GNOME
   environment.
   When: This would require dbus support in the evolution-data-server.
    When e-d-s will have support for this is uncertain.
