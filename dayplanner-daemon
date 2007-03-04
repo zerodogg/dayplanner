@@ -785,6 +785,8 @@ sub CalculateNotificationHash {
 	my $Today = $iCalendar->get_dateinfo($curryear,$currmonth,$currmday);
 	if($Today) {
 		foreach my $Time (@{$Today}) {
+			next if $Time eq 'DAY';	# TODO: This has to be changed once day planner is suppose to hav
+						#	alerts for full day events
 			foreach my $UID (@{$iCalendar->get_timeinfo($curryear,$currmonth,$currmday,$Time)}) {
 				push(@{$NotificationHash{$Time}}, $UID);
 				my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 0);
