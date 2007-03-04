@@ -1,4 +1,3 @@
-WARNING: This software is alpha-level. You should NOT rely upon this program.
-It is insecure and unstable. Currently all data passed between the
+WARNING: This program is beta-quality. Currently all data passed between the
 dayplanner-services-daemon and dayplanner is passed in cleartext, so anyone
 can sniff this traffic.
