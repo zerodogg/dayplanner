@@ -23,7 +23,7 @@ require 5.6.0;			# We need perl 5.6.0 at the very least
 use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use POSIX;			# We need strftime
-use Gtk2; 			# Use Gtk2 :)
+use Gtk2;			# Use Gtk2 :)
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
@@ -178,7 +178,7 @@ sub DP_InitI18n {
 		DPIntWarn("Locale::gettext is not available. This will work, but localization will *not* be available");
 	}
 	# The reason we do not use strftime() or I18N::Langinfo is that these return
-	# values in random encodings. By using Gettext->get() we get values
+	# values in random encodings. By using Gettext we get values
 	# in a proper encoding
 	%MonthNames = (
 		1 => DP_gettext("January"),
@@ -428,194 +428,36 @@ sub DaemonConnectionErrorHandler {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# -- OLD LAYER --
-# This is the deprecated old DPS layer. It is the one currently in use.
-# Once the new layer is ready this code can be dropped.
-
-# Purpose: Repair a checksum mismatch
-# Usage: DPS_RepairData();
-# 	returns true on success, false on failure
-sub DPS_RepairData {
-	my $ProgressWin = DPCreateProgressWin(DP_gettext("Repairing"),DP_gettext("Getting data"),0);
-	my $RawData = DPS_Perform("GET_RAW");
-	if(not $RawData) {
-		DPIntWarn("GET_RAW failed, errornious call to DPS_RepairData()?");
-		$ProgressWin->{Window}->destroy();
-		return(undef);
-	}
-	if($RawData eq "MATCHED") {
-		$ProgressWin->{Window}->destroy();
-		return(1);
-	}
-	if(defined($RawData)) {
-		$ProgressWin->{ProgressBar}->set_fraction(0.4);
-		$ProgressWin->{ProgressBar}->set_text(DP_gettext("Parsing and repairing"));
-		my @DataArray;
-		push(@DataArray, $_) foreach(split(/\r\n/,$RawData));
-		$RawData = undef;
-		$InternalConfig{DPS_LastMD5} = DPS_Perform("GET_MD5");
-		$iCalendar->enable("SMART_MERGE");	# SMART_MERGE is required to ensure no data is lost
-		$iCalendar->addfile(\@DataArray);
-		$iCalendar->disable("SMART_MERGE");	# but we don't want to use it by default
-		UpdatedData();
-		$ProgressWin->{ProgressBar}->set_fraction(1);
-		$ProgressWin->{Window}->destroy();
-		return(1);
+# Purpose: Return better errors than IO::Socket::INET does.
+# Usage: my $ERROR = IO_Socket_INET_Errors($@);
+#	Errors:
+#		OFFLINE = Network is unreachable
+#		REFUSED = Connection refused
+#		BADHOST = Bad hostname (should often be handled as OFFLINE)
+#		* = Anything else simply returns $@
+sub IO_Socket_INET_Errors {
+	my $Error = shift;
+	# TODO: There are probably quite a few unhandled errors. At least timeout.
+	if($Error =~ /Network is unreachable/) {
+		return("OFFLINE");
+	} elsif ($Error =~ /Bad hostname/) {
+		return("BADHOST");
+	} elsif ($Error =~ /Connection refused/) {
+		return("REFUSED");
 	} else {
-		$ProgressWin->{Window}->destroy();
-		my $BackedUpTo = DPS_BackupData();
-		DPS_Error(sprintf(DP_gettext("Unable to download the raw Day Planner data from the server. Repairing is not possible! Backup written to %s."), $BackedUpTo), "Unable to retrieve the raw data - repairing is impossible. Backup written to $BackedUpTo.");
-		return(0);
+		return($Error);
 	}
-}
-
-# Purpose: Get Day Planner data from a services server
-# Usage: DPS_GetData(RAW?);
-sub DPS_GetData {
-	my $Raw = $_[0] ? 1 : 0;
-	DPS_Log("DPS_GetData($Raw) called");
-	if(defined($InternalConfig{DPS_ParanoidBackup}) and $InternalConfig{DPS_ParanoidBackup} eq "1") {
-		DPS_BackupData();
-	}
-	my $MainData;
-	DPS_Status(DP_gettext("Verifying data"), 0.3);
-	if(not $DPServices{GET_MD5_Checked}) {
-		$DPServices{GET_MD5_Checked} = 1;
-		$DPServices{StaticUID} = 1;
-		my $Current_DataMD5 = encode_base64($iCalendar->get_rawdata(),"");
-		chomp($Current_DataMD5);
-		$Current_DataMD5 = md5_base64($Current_DataMD5);
-		$DPServices{StaticUID} = 0;
-		if(defined($InternalConfig{DPS_LastMD5})) {
-			unless($Current_DataMD5 eq $InternalConfig{DPS_LastMD5}) {
-				DPS_Log("$Current_DataMD5 (current) did not match DPS_LastMD5 $InternalConfig{DPS_LastMD5}. Forcing data repairing");
-				# NOTE: Forcing this repair here is "kind of" dangerous. It might result
-				# in deleted events reappearing. This will be very very very rare however,
-				# currently it has been judged as the best way to fix this.
-				return(DPS_RepairData());
-			}
-		}
-	}
-	return unless DPS_Connect();
-	DPS_Status(DP_gettext("Downloading data"),0.5);
-	my $ServerMD5 = DPS_DataSegment("GET_MD5");
-	# If the MD5 on the server is identical to ours we don't need to download the data
-	if($ServerMD5 =~ /^(\[NONE\]|ERR)/ or (defined($InternalConfig{DPS_LastMD5}) and $ServerMD5 eq $InternalConfig{DPS_LastMD5})) {
-		DPS_Log("Skipping download, the data on the server matched our data ($InternalConfig{DPS_LastMD5} = $ServerMD5)");
-		DPS_Disconnect();
-		DPS_Status(DP_gettext("Done"), 1);
-		return("MATCHED");
-	}
-	if(defined($InternalConfig{DPS_LastMD5})) {
-		DPS_Log("The server had $ServerMD5, I had $InternalConfig{DPS_LastMD5} - downloading data");
-	} else {
-		DPS_Log("The server had $ServerMD5, I had no MD5 - downloading data");
-	}
-	my $Data = DPS_DataSegment("GETDATA");
-	if($Data =~ /^OK/) {
-		DPS_Log("Got data");
-		my $Initial = $Data;
-		my $MD5 = $Data;
-		$MainData = $Data;
-		$Initial =~ s/^(\S+)\s+.*$/$1/;
-		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
-		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/) {
-			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
-		}
-		unless(md5_base64($MainData) eq $MD5) {
-			DPS_Error(DP_gettext("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
-		} else {
-			$MainData = decode_base64($MainData);
-			unless($Raw) {
-				my @DataArray;
-				$MainData =~ s/\r//g;
-				push(@DataArray, $_) foreach(split(/\n/,$MainData));
-				$MainData = undef;
-				$iCalendar->clean();
-				$iCalendar->addfile(\@DataArray);
-				UpdatedData();
-			}
-		}
-	} else {
-		if($Data =~ /^ERR NO_DATA/) {
-			# No data found on the server, this is fine.
-			DPS_Log("No data found on the server.");
-		} elsif($Data =~ /^ERR MD5_FAILURE/) {
-			DPS_Error(DP_gettext("The data is corrupt on the services server. The administrator has been notified about this. If this problem does not go away within a few days, please contact your services provider"), "MD5 failure on server");
-		} else {
-			DPS_Error("An unknown error occurred (the server replied $Data)", "Unknown error: $Data");
-		}
-	}
-	DPS_Disconnect();
-	DPS_Status(DP_gettext("Downloaded data"),1);
-	if($Raw) {
-		if (defined($MainData) and length($MainData)) {
-			return($MainData);
-		} else {
-			return(undef);
-		}
-	} else {
-		return(1);
-	}
-}
-
-# Purpose: Send data to a services server
-# Usage: DPS_SendData();
-sub DPS_SendData {
-	my $Force = $_[0] ? 1 : 0;
-	DPS_Log("DPS_SendData($Force) called");
-	return if not DPS_Connect();
-	DPS_Status(DP_gettext("Sending data"),0.5);
-	# Force UIDs in the iCalendar file to be static (less random)
-	$DPServices{StaticUID} = 1;
-	my $SendData = encode_base64($iCalendar->get_rawdata(),"");
-	$DPServices{StaticUID} = 0;
-	chomp($SendData);
-	my $MD5 = md5_base64($SendData);
-	my $ServerMD5 = DPS_DataSegment("GET_MD5");
-	# Don't send the data if the checksums match
-	if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and $ServerMD5 eq $MD5) {
-		DPS_Log("Not sending data - checksums matched");
-		DPS_Disconnect();
-	} else {
-		DPS_Log("Sending data to server. My MD5 is $MD5, the one on the server is $ServerMD5.");
-		if (defined($InternalConfig{DPS_LastMD5}) and length($InternalConfig{DPS_LastMD5})) {
-		       	# Fail with an error if the checksums of $ServerMD5 and $InternalConfig{DPS_LastMD5} doesn't match
-			if (not $ServerMD5 =~ /^(\[NONE\]|ERR)/ and not $ServerMD5 eq $InternalConfig{DPS_LastMD5}) {
-				DPS_Disconnect();
-				DPIntWarn("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
-				DPS_Log("ServerMD5[$ServerMD5] does not match DPS_LastMD5[$InternalConfig{DPS_LastMD5}] current MD5[$MD5]. Repair required for successful upload.");
-				return(0) unless DPS_RepairData();
-				return(0) unless DPS_Connect();
-			}
-		}
-		my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
-		my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData $Force");
-		$InternalConfig{DPS_LastMD5} = $MD5;
-		DPS_Disconnect();
-		unless($Reply eq "OK") {
-			# TODO: These need cleaning
-			if($Reply =~ s/^ERR\s+(.*)$/$1/) {
-				DPS_Error(DP_gettext("An error ocurred during uploading of the data"), "An error ocurred during upload of the data: $Reply");
-			} elsif($Reply =~ /^EXPIRED/) {
-				DPS_Error(DP_gettext("Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired."), "Account expired");
-			} else {
-				# Sending the data failed
-				DPS_Error(sprintf(DP_gettext("The server did not accept the uploaded data and replied with an unknwown value: %s"), $Reply, "The server did not accept the uploaded data: $Reply"));
-			}
-			return(undef);
-		}
-	}
-	DPS_Status(DP_gettext("Data sent"),1);
-	return(1);
 }
 
 # Purpose: Output an error occurring with DPS
 # Usage: DPS_Error(User_Error, Technical_Error)
-# 	User_Error is displayed as a pop-up error dialog.
-# 	Technical_Error is DPIntWarn()ed
+#	User_Error is displayed as a pop-up error dialog.
+#	Technical_Error is DPIntWarn()ed, it is optional.
+#	If no technical_error is supplied then User_error is used.
 sub DPS_Error {
-	my ($user_error, $tech_error) = @_;
+	my $user_error = shift;
+	# Tech_error is set to user_error when not supplied
+	my $tech_error = $_[0] ? $_[0] : $user_error;
 	DPIntWarn("DPS: $tech_error");
 	DPS_Log($tech_error);
 	if(defined($user_error)) {
@@ -623,73 +465,11 @@ sub DPS_Error {
 	}
 }
 
-# Purpose: Wrapper around DPS functions setting stuff up correctly
-# Usage: DPS_Perform(FUNCTION)
-# 	Function can be one of:
-# 	GET	- Get data from the server
-# 	SEND	- Send data to the server
-sub DPS_OLDPerform {
-	my $Function = $_[0];
-	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
-	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
-	# Verify that options are set
-	foreach my $Option (qw(host port user pass)) {
-		unless(defined($InternalConfig{"DPS_$Option"}) and length($InternalConfig{"DPS_$Option"})) {
-			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. DPS will not be used.");
-			return(undef);
-		} else {
-			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
-		}
-	}
-	if(not defined($DPServices{Log_FH})) {
-		open($DPServices{Log_FH}, ">", "$SaveToDir/services.log");
-		DPS_Log("DPS initialized");
-	}
-	if($Function eq "GET") {
-		return(DPS_GetData());
-	} elsif ($Function eq "SEND") {
-		return(DPS_SendData());
-	} elsif ($Function eq "GET_RAW") {
-		return(DPS_GetData(1));
-	} elsif ($Function eq "GET_MD5") {
-		return if not DPS_Connect();
-		my $MD5Sum = DPS_DataSegment("GET_MD5");
-		DPS_Disconnect();
-		return($MD5Sum);
-	} else {
-		DPIntWarn("Invalid option to DPS_Perform: $Function. Ignoring");
-		return(undef);
-	}
-}
-
-# Purpose: Wrapper around DPS_Perform that creates the GUI widgets
-# Usage: DPS_GUIPerform(FUNCTION)
-# 	The FUNCTION argument is identical to DPS_Perform's FUNCTION argument
-sub DPS_GUIPerform {
-	DPIntWarn("Deprecated DPS_GUIPerform called. Call DPS_Perform() directly instead");
-	my $Function = $_[0];
-	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
-
-	# Create the progress window
-	$MainWindow->set_sensitive(0);
-	$DPServices{ProgressWin} = DPCreateProgressWin(DP_gettext("Services"), DP_gettext("Initializing"));
-
-	my $Return = DPS_Perform($Function);
-	$DPServices{ProgressWin}->{Window}->destroy();
-	if(defined($DPServices{Error})) {
-		DPError(sprintf(DP_gettext("An error ocurred with the Day Planner services:\n\n%s"), $DPServices{Error}));
-		delete($DPServices{Error});
-	}
-	delete($DPServices{ProgressWar});
-	$MainWindow->set_sensitive(1);
-	return($Return);
-}
-
 # Purpose: Set the status in the DPS GUI Window
 # Usage: DPS_Status(TEXT, COMPLETED);
-# 	COMPLETED is a number between 0 and 1
-# 	0 = 0%
-# 	1 = 100%
+#	COMPLETED is a number between 0 and 1
+#	0 = 0%
+#	1 = 100%
 sub DPS_Status {
 	my ($Text, $Completed) = @_;
 	return unless($Gtk2Init);
@@ -700,13 +480,39 @@ sub DPS_Status {
 	}
 }
 
-# -- NEW SERVICES LAYER --
+# Purpose: Upload data to a day planner services server
+# Usage: DPS_Upload();
+sub DPS_Upload {
+	my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
+	my $SendData = encode_base64($iCalendar->get_rawdata(),"");
+	chomp($SendData);
+	my $MD5 = md5_base64($SendData);
+	my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData 0");
+	if(not $Reply eq "OK") {
+		# TODO: These need cleaning
+		if($Reply =~ s/^ERR\s+(.*)$/$1/) {
+			DPS_Error(DP_gettext("An error ocurred while uploading the data"), "An error ocurred during upload of the data: $Reply");
+		} elsif($Reply =~ /^EXPIRED/) {
+			DPS_Error(DP_gettext("Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired."), "Account expired");
+		} else {
+			# Sending the data failed
+			DPS_Error(sprintf(DP_gettext("The server did not accept the uploaded data and replied with an unknwown value: %s"), $Reply));
+		}
+		return(undef);
+	}
+	# We successfully uploaded the data. So set DPS_LastMD5 and return true
+	$InternalConfig{DPS_LastMD5} = $MD5;
+	return(1);
+}
 
 # Purpose: Download data from a day planner services server
 # Usage: DPS_Download(MERGE?);
-# 	If MERGE is true then it will not overwrite the current data
-# 	with the downloaded data, but rather use the DP::iCalendar merge
-# 	function to merge it into place.
+#	If MERGE is true then it will not overwrite the current data
+#	with the downloaded data, but rather use the DP::iCalendar merge
+#	function to merge it into place.
+# This function itself is stupid, it doesn't know about MD5 sums of local data
+# or anything. It will download the data no matter what, it is up to the caller
+# to check if we actually need to download data or not.
 sub DPS_Download {
 	my $Merge = shift;
 	my $Data = DPS_DataSegment("GETDATA");
@@ -755,7 +561,7 @@ sub DPS_Download {
 # Usage: DPS_Sync();
 sub DPS_Sync {
 	# Get information we need
-	# 	The server's data MD5 sum
+	#	The server's data MD5 sum
 	my $ServerMD5 = DPS_DataSegment("GET_MD5");
 	#	The MD5 sum of our current local data
 	my $LocalMD5 = encode_base64($iCalendar->get_rawdata(),"");	# TODO: Does ->get_rawdata actually return static (sorted) data?
@@ -773,14 +579,14 @@ sub DPS_Sync {
 	# If it does then we just upload.
 	elsif ($ServerMD5 eq $LastUpMD5) {
 		DPS_Log("Local data changed, uploading to DPS");
-		return(DPS_Upload());	# FIXME: This function doesn't actually exist yet
+		return(DPS_Upload());
 	}
 	# That didn't match either. So we check if our local MD5 is identical to the
 	# last uploaded MD5. If that is the case then we just need to download the
 	# data from the server.
 	elsif ($LastUpMD5 eq $LocalMD5) {
 		DPS_Log("Remote data changed, downloading from DPS");
-		return(DPS_Download());	# FIXME: This function doesn't actually exist yet
+		return(DPS_Download());
 	}
 	# Okay, nothing matched. This means that we have one local MD5 sum,
 	# one remote MD5 sum and one "local last uploaded" MD5 sum - and they all differ.
@@ -788,7 +594,7 @@ sub DPS_Sync {
 	# upload the new data.
 	else {
 		DPS_Log("Both remote and local data has changed. Downloading, merging and reuploading");
-		if(DPS_Download(1)) {	# FIXME: This function doesn't actually exist yet
+		if(DPS_Download(1)) { 
 			return(DPS_Upload());
 		}
 	}
@@ -810,15 +616,28 @@ sub DPS_Log {
 
 # Purpose: High-level API to DPS
 # Usage: DPS_Perform(FUNCTION);
-# 	FUNCTION can be one of:
-# 	SYNC
-# 	...
+#	FUNCTION can be one of:
+#	SYNC
+#	...
 sub DPS_Perform {
 	# The function we are going to perform
 	my $Function = shift;
+	# A coderef to the code which we need to run to close the GUI
+	# dialogues used.
+	my $GuiEnded = sub {
+		return unless($Gtk2Init);
+		$DPServices{ProgressWin}->{Window}->destroy();
+		if(defined($DPServices{Error})) {
+			DPError(sprintf(DP_gettext("An error ocurred with the Day Planner services:\n\n%s"), $DPServices{Error}));
+			delete($DPServices{Error});
+		}
+		delete($DPServices{ProgressWar});
+		$MainWindow->set_sensitive(1);
+	};
+
 	# Make sure that DPS is enabled in the config
 	# TODO: Drop DPS_Enable, just verify config settings. If they are empty then
-	# 	it is disabled.
+	#	it is disabled.
 	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
 	# Check if the user wants to temporarily disable DPS
 	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
@@ -831,6 +650,11 @@ sub DPS_Perform {
 			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
 		}
 	}
+	# Create the progress window
+	if($Gtk2Init) {
+		$MainWindow->set_sensitive(0);
+		$DPServices{ProgressWin} = DPCreateProgressWin(DP_gettext("Services"), DP_gettext("Initializing"));
+	}
 	# Open up the logfile if it isn't open. This should be left open for the
 	# entirety of the DPS session.
 	if(not defined($DPServices{Log_FH})) {
@@ -838,7 +662,10 @@ sub DPS_Perform {
 		DPS_Log("DPS initialized");
 	}
 	# Connect to the server, if this fails then we return undef without doing anything
-	return(undef) if not DPS_Connect();
+	if(not DPS_Connect()) {
+		$GuiEnded->();
+		return(undef);
+	}
 	# Connection established, process $Function
 	if($Function eq 'SYNC') {
 		DPS_DataSync();
@@ -847,28 +674,8 @@ sub DPS_Perform {
 	}
 	# Disconnect and return
 	DPS_Disconnect();
+	$GuiEnded->();
 	return(1);
-}
-
-# Purpose: Return better errors than IO::Socket::INET does.
-# Usage: my $ERROR = IO_Socket_INET_Errors($@);
-# 	Errors:
-#		OFFLINE = Network is unreachable
-#		REFUSED = Connection refused
-#		BADHOST = Bad hostname (should often be handled as OFFLINE)
-#		* = Anything else simply returns $@
-sub IO_Socket_INET_Errors {
-	my $Error = shift;
-	# TODO: There are probably quite a few unhandled errors. At least timeout.
-	if($Error =~ /Network is unreachable/) {
-		return("OFFLINE");
-	} elsif ($Error =~ /Bad hostname/) {
-		return("BADHOST");
-	} elsif ($Error =~ /Connection refused/) {
-		return("REFUSED");
-	} else {
-		return($Error);
-	}
 }
 
 # Purpose: Back up data to ~/.dayplanner/ before getting data
@@ -884,7 +691,7 @@ sub DPS_BackupData {
 
 # Purpose: Connect to a Day Planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
-# 		The arguments are optional and will be read from %DPServices if not supplied
+#		The arguments are optional and will be read from %DPServices if not supplied
 sub DPS_Connect {
 	my ($Host, $Port, $User, $Password) = @_;
 	$Host = $Host ? $Host : $DPServices{host};
@@ -947,7 +754,7 @@ sub DPS_Connect {
 
 # Purpose: Do something when an error has occurred
 # Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
-# 	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
+#	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
 sub DPS_ErrorIfNeeded {
 	my ($Expected, $Recieved, $ErrorSub) = @_;
 	unless($Expected eq $Recieved) {
@@ -1244,28 +1051,6 @@ sub LoadCalendar {
 	}
 	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
 	return(1);
-}
-
-# Purpose: Test if a load can be successfully performed of the supplied file
-# Usage: DataLoadTest("/path/to/file");
-sub DataLoadTest {
-	# If the calendar savefile exists
-	if (-e "$_[0]") {
-		# If it isn't readable then we warn and return
-		unless (-r "$_[0]") {
-			DPIntWarn("Unable to read the calendar at $_[0]: It isn't readable by me");
-			return(0);
-		}
-		# If it isn't writeable then we just warn (the file can still be loaded)
-		unless (-w "$_[0]") {
-			DPIntWarn("Unable to write the calendar at $_[0]: It isn't writeable by me. Expect trouble!");
-		}
-		return(1);
-	} else {
-		# If the file doesn't exist then we just assume that it isn't created yet,
-		# so we return false, but do it silently.
-		return(0);
-	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1656,8 +1441,8 @@ sub RemoveAutostart {
 
 # Purpose: Add the daemon to autostart for the various DMs/WMs
 # Usage: AddAutostart(OLD_GNOME?);
-# 	OLD_GNOME is either 1 or 0, defines if the GNOME version used is
-# 	older than 2.13 or not
+#	OLD_GNOME is either 1 or 0, defines if the GNOME version used is
+#	older than 2.13 or not
 sub AddAutostart {
 	my $TryGnome = $_[0];
 	my $DaemonExec;
@@ -1746,8 +1531,8 @@ sub AddAutostart {
 }
 
 # Purpose: Wrapper around AddAutostart that detects if we have an pre-2.14
-# 		version of GNOME and displays an information dialog about the
-# 		inability to add a gnome autostart
+#		version of GNOME and displays an information dialog about the
+#		inability to add a gnome autostart
 # Usage: DP_AddAutostart();
 sub DP_AddAutostart {
 	my $GNOME_Version;
@@ -2075,7 +1860,7 @@ sub HTML_Menu {
 		$Menu .= HTML_Encode(DP_gettext("Months")) .
 			": <a href='$Links{1}'>" . HTML_Encode($MonthNames{1}) .
 			"</a> - <a href='$Links{2}'>" . HTML_Encode($MonthNames{2}) .
-		       	"</a> - <a href='$Links{3}'>" . HTML_Encode($MonthNames{3}) .
+			"</a> - <a href='$Links{3}'>" . HTML_Encode($MonthNames{3}) .
 			"</a> - \n<a href='$Links{4}'>" . HTML_Encode($MonthNames{4}) .
 			"</a> - <a href='$Links{5}'>" . HTML_Encode($MonthNames{5}) .
 			"</a> - <a href='$Links{6}'>" . HTML_Encode($MonthNames{6}) .
@@ -2267,7 +2052,7 @@ sub HTML_YearList {
 }
 
 # Purpose: Output a php file that adds autodetection of todays date to
-# 	Day Planner HTML exports. (NOTE: Not used for actual PHP exporting)
+#	Day Planner HTML exports. (NOTE: Not used for actual PHP exporting)
 # Usage: HTML_PHPIndex(DIRECTORY);
 sub HTML_PHPIndex {
 	my ($Directory) = @_;
@@ -2426,8 +2211,8 @@ sub PHP_WriteFiles {
 	close($INDEX);
 	
 	# TODO: Write a dummy index.html that just redirects to ../
-	# 	maybe this could just be done using a .htaccess file too
-	# 	but if so, have both so that it'll work on non-apache httpds.
+	#	maybe this could just be done using a .htaccess file too
+	#	but if so, have both so that it'll work on non-apache httpds.
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2990,7 +2775,7 @@ sub ExportData {
 
 # Purpose: Prompt the user to overwrite data
 # Usage: PromptOverwrite(PATH, DIR?);
-# 	Returns undef on "don't overwrite". Otherwise true.
+#	Returns undef on "don't overwrite". Otherwise true.
 sub PromptOverwrite {
 	my ($File, $Dir) = @_;
 	if($Dir) {
@@ -3051,9 +2836,9 @@ sub Gtk2Init {
 
 # Purpose: Create a progresswindow
 # Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
-# 	Returns a hashref with the following keys:
-# 		Window = The window
-# 		ProgressBar = The progress bar
+#	Returns a hashref with the following keys:
+#		Window = The window
+#		ProgressBar = The progress bar
 sub DPCreateProgressWin {
 	my ($Name, $Text, $PulsateMode) = @_;
 	my %ProgressHash;
@@ -3288,7 +3073,7 @@ sub PopulateUpcomingEvents {
 }
 
 # Purpose: Detect the path to the image file(s) supplied. Returns the path to the
-# 		first one found or undef
+#		first one found or undef
 # Usage: $Image = DetectImage(image1, image2);
 sub DetectImage {
 	my $I_Am_At = dirname(Cwd::realpath($0));
@@ -3448,7 +3233,7 @@ sub DPInfo {
 
 # Purpose: Display a question dialog
 # Usage: DPQuestion("Question");
-# 	Returns true on yes, false on anything else
+#	Returns true on yes, false on anything else
 sub DPQuestion {
 	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', $_[0]);
 	my $Reply = $Dialog->run();
@@ -3464,7 +3249,7 @@ sub DPQuestion {
 # Usage: QuitSub();
 sub QuitSub {
 	$MainWindow->set_sensitive(0);
-	DPS_GUIPerform("SEND");
+	DPS_Perform("SEND");
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
 		unless(DPQuestion(DP_gettext("Some files could not be saved correctly. Quit anyway?"))) {
@@ -4681,7 +4466,7 @@ sub DrawMainWindow {
 		[ "/$EditStock/" . DP_gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/$EditStock/" . DP_gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
-		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1, 	'<StockItem>', 'gtk-preferences' ],
+		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
@@ -4826,7 +4611,7 @@ sub InitDPCore {
 	# Initialize the daemon
 	DaemonInit() or die();
 	# Connect to a DPS server and sync the local data with it if it's enabled
-	DPS_GUIPerform("GET");
+	DPS_Perform("GET");
 	# Add autostart if needed
 	unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 		DP_AddAutostart();
