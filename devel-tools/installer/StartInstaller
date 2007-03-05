@@ -96,7 +96,7 @@ if [ "`which perl`" != "/usr/bin/perl" ]; then
 	RealPerl="`which perl`"
 	echo "Nonstandard perl installation detected. Perl is at $RealPerl"
 	echo -n "Repairing core Day Planner files..."
-	for file in ./MainInstallerPart ./dayplanner-data/dayplanner ./dayplanner-data/dayplanner-notifier ./dayplanner-data/dayplanner-daemon ./dayplanner-data/tools/plan-migration ./dayplanner-data/devel-tools/commander; do
+	for file in ./MainInstallerPart ./dayplanner-data/dayplanner ./dayplanner-data/dayplanner-notifier ./dayplanner-data/dayplanner-daemon ./dayplanner-data/tools/commander; do
 		echo -n "."
 		perl -pi -e "s#/usr/bin/perl#$RealPerl#g" $file
 	done
