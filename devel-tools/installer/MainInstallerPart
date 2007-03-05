@@ -209,6 +209,7 @@ if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS
 
 $Performed++;
 ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+print ".";
 
 my @BINDIRS = (
 	"$ENV{HOME}/bin",
@@ -219,6 +220,7 @@ my @BINDIRS = (
 
 $Performed++;
 ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+print ".";
 
 my @BINLINKS;
 
@@ -232,6 +234,7 @@ foreach(@BINDIRS) {
 }
 $Performed++;
 ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+print ".";
 # Write uninstall script
 open(UNINSTALL, ">$InstallDirectory/uninstall.sh");
 print UNINSTALL "#!/bin/sh\n";
@@ -258,16 +261,19 @@ SystemChild("chmod +x $InstallDirectory/uninstall.sh");
 
 $Performed++;
 ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+print ".";
 
 # Write the XDG-style menu item
 if(-e "$InstallDirectory/doc/dayplanner.desktop") {
 	SystemChild("perl","-pi","-e","s#DAYPLANNER_INST_DIR#$InstallDirectory#g","$InstallDirectory/doc/dayplanner.desktop");
 	$Performed++;
 	ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+	print ".";
 	mkpath("$ENV{HOME}/.local/share/applications/");
 	copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/.local/share/applications/dayplanner.desktop");
 	$Performed++;
 	ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+	print ".";
 	if(-d "$ENV{HOME}/Desktop/") {
 		copy("$InstallDirectory/doc/dayplanner.desktop", "$ENV{HOME}/Desktop/");
 	}
@@ -277,6 +283,7 @@ if(-e "$InstallDirectory/doc/dayplanner.desktop") {
 
 $Performed++;
 ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+print ".";
 # Write Debian-style menu item
 if(InPath("update-menus")) {
 	mkdir("$ENV{HOME}/.menu/") unless -d "$ENV{HOME}/.menu/";
@@ -289,6 +296,7 @@ if(InPath("update-menus")) {
 }
 $Performed++;
 ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
+print ".";
 
 print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
