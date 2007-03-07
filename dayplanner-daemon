@@ -438,9 +438,10 @@ sub DayplannerAlarm {
 	if(defined($NotificationHash{"$currhour:$currmin"})) {
 		foreach my $UID (@{$NotificationHash{"$currhour:$currmin"}}) {
 			RunNotifier($UID,$curryear,$currmonth,$currmday,"$currhour:$currmin");
+			$NotifierStarted = 1;
 		}
 	} 
-       unless($NotifierStarted) {
+	if(not $NotifierStarted) {
 		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin") if($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday");
 	}
 }
