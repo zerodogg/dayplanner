@@ -250,6 +250,33 @@ sub GetPassword {
 	return($key);
 }
 
+# Purpose: Let the user talk directly to the daemon
+# Usage: DirectDaemonInput();
+sub DirectDaemonInput {
+	# Print initial warning and welcomming message
+	print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
+	print "Type !QUIT to quit\n";
+	
+	# Create our Term::ReadLine object
+	my $term = Term::ReadLine->new('Day Planner services daemon');
+	# Get the attribs and set up autocompleteion
+#	my $attribs = $term->Attribs;
+#	$attribs->{completion_entry_function} = $attribs->{list_completion_function};
+#	$attribs->{completion_word} = [qw(HI PING SHUTDOWN RELOAD_DATA BYE VERSION GET_PATH NOTIFICATION GET VERIFY CLEAN DEBUG DUMP_VARIOUS DUMP_CLIENTLIST DUMP_SLEEPTIME ENABLE_DEBUGLOG KICK RECALCULATE DUMP_HASHES DUMP_MAINHASH DUMP_CONFIG !QUIT !HELP !RESTART_DAEMON)];
+	
+	# Eternal loop getting and parsing user input
+	while (1) {
+		# Get the input
+		my $COMMAND = $term->readline('Command: ');
+		if($COMMAND =~ /^!QUIT/) {
+			return(1);
+		} else {
+			print SendDaemonCommand($COMMAND);
+			print "\n";
+		}
+	}
+}
+
 # Purpose: Add a user
 # Usage: AddUser();
 sub AddUser {
@@ -535,14 +562,17 @@ sub ExpertMenu {
 		print "R - Regenerate data MD5 for all users\n";
 		print "\tUseful for data corruption for multiple users\n";
 		print "E - Edit the data config for a user\n";
+		print "C - Talk directly to the daemon\n";
 		print "M - Return to the main menu\n";
-		my $Input = GetInput("Selection: ", "UREM");
+		my $Input = GetInput("Selection: ", "UREMC");
 		if($Input =~ /U/i) {
 			RegenerateUserMD5();
 		} elsif($Input =~ /e/i) {
 			EditUserConfig();
 		} elsif($Input =~ /r/i) {
 			RegenerateAllUserMD5();
+		} elsif($Input =~ /c/i) {
+			DirectDaemonInput();
 		} else {
 			return(1);
 		}
