@@ -450,6 +450,7 @@ sub DayplannerAlarm {
 sub RunNotifier {
 	# Notifier
 	my ($UID,$CurrYear,$CurrMonth,$CurrMday,$CurrTime) = @_;
+	$CurrMday = AppendZero($CurrMday);
 	my $UIDInfo = $iCalendar->get_info($UID);
 	my($Year,$Month,$Day,$Time) = iCal_ParseDateTime($UIDInfo->{DTSTART});
 	my $IsPreNot = 0;
