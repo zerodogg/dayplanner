@@ -527,7 +527,7 @@ sub DPS_Download {
 			# FIXME: Rewrite this
 			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
 		}
-		unless(md5_base64($MainData) eq $MD5) {
+		elsif(not md5_base64($MainData) eq $MD5) {
 			# FIXME: Rewrite this
 			DPS_Error(DP_gettext("The data corrupted itself during download. You may want to attempt to synchronize again."),"MD5 mismatch during download: got " . md5_base64($MainData) . " expected $MD5");
 		} else {
@@ -544,17 +544,24 @@ sub DPS_Download {
 				$iCalendar->enable('SMART_MERGE');
 				$iCalendar->addfile(\@DataArray);
 				$iCalendar->disable('SMART_MERGE');
+				# Download successful. Set DPS_LastMD5
+				my $CurrentData = encode_base64($iCalendar->get_rawdata(),"");
+				chomp($CurrentData);
+				$InternalConfig{DPS_LastMD5} = md5_base64($CurrentData);
 			} else {
 				$iCalendar->clean();
 				$iCalendar->addfile(\@DataArray);
+				# Download succesful. Set DPS_LastMD5
+				$InternalConfig{DPS_LastMD5} = $MD5;
 			}
 			UpdatedData();
 			return(1);
 		}
 	} else {
 		DPS_Log("Unable to download data. Server replied: $Data");
-		return(undef);
 	}
+	# If we got this far then it means we failed.
+	return(undef);
 }
 
 # Purpose: Synchronize our local data with the server data
@@ -907,7 +914,7 @@ sub WriteStateFile {
 		$InternalConfig{MainWin_Maximized} = 1;
 	} else {
 		$InternalConfig{MainWin_Maximized} = 0;
-		if($NewWinState) {
+		if($NewWinState and defined($MainWindow)) {
 			($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = $MainWindow->get_size();
 			($InternalConfig{MainWin_X}, $InternalConfig{MainWin_Y}) = $MainWindow->get_position();
 		}
