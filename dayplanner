@@ -544,16 +544,12 @@ sub DPS_Download {
 				$iCalendar->enable('SMART_MERGE');
 				$iCalendar->addfile(\@DataArray);
 				$iCalendar->disable('SMART_MERGE');
-				# Download successful. Set DPS_LastMD5
-				my $CurrentData = encode_base64($iCalendar->get_rawdata(),"");
-				chomp($CurrentData);
-				$InternalConfig{DPS_LastMD5} = md5_base64($CurrentData);
 			} else {
 				$iCalendar->clean();
 				$iCalendar->addfile(\@DataArray);
-				# Download succesful. Set DPS_LastMD5
-				$InternalConfig{DPS_LastMD5} = $MD5;
 			}
+			# Download succesful. Set DPS_LastMD5
+			$InternalConfig{DPS_LastMD5} = $MD5;
 			UpdatedData();
 			return(1);
 		}
