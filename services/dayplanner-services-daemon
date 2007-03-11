@@ -574,6 +574,18 @@ sub AdminCommands {
 	return("ERR UNKNOWN_COMMAND");
 }
 
+# Purpose: Handle SIGPIPE
+# Usage: $SIG{PIPE} = \&SigpipeHandler;
+sub SigpipeHandler {
+	print "Sigpipe: ";
+	my $arrayinfo;
+	foreach(@_) {
+		$arrayinfo++;
+		print "$arrayinfo\[$_\] ";
+	}
+	print "\n";
+}
+
 # Purpose: Create the connection selector and open sockets
 # Usage: InitNetwork();
 sub InitNetwork {
