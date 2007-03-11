@@ -39,6 +39,7 @@ use Cwd qw(realpath);
 #my $Server;
 my $ConnectionSelect;
 my $Shutdown;
+my $APILevel = "06A";
 
 my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
@@ -463,7 +464,7 @@ sub CommandHandler {
 	if($Command =~ /^APILEVEL/) {
 		my $API = $Command;
 		$API =~ s/^APILEVEL\s+(\S*).*$/$1/;
-		unless($API eq "05A") {
+		unless($API eq $APILevel) {
 			IntVerbose("APILEVEL mismatch from $Handle (got $API)");
 			return("ERR Unsupported");
 		} else {
