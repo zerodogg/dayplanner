@@ -32,7 +32,7 @@ use File::Path qw/mkpath/;	# We need mkpath
 use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
 use MIME::Base64;		# Used for import/export
 use Getopt::Long;		# Commandline options
-use IO::Socket;			# Network layer to communicate with the daemon
+use IO::Socket::UNIX;		# Network layer to communicate with the daemon
 use FindBin;			# So that we can detect module dirs during runtime
 use Cwd;			# We need Cwd::Realpath to find out which directory we live in
 # So that we can use a local Date::HolidayParser
@@ -428,22 +428,24 @@ sub DaemonConnectionErrorHandler {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Return better errors than IO::Socket::INET does.
+# Purpose: Return better errors than IO::Socket::SSL does.
 # Usage: my $ERROR = IO_Socket_INET_Errors($@);
 #	Errors:
 #		OFFLINE = Network is unreachable
 #		REFUSED = Connection refused
 #		BADHOST = Bad hostname (should often be handled as OFFLINE)
+#		TIMEOUT = The connection timed out
 #		* = Anything else simply returns $@
 sub IO_Socket_INET_Errors {
 	my $Error = shift;
-	# TODO: There are probably quite a few unhandled errors. At least timeout.
-	if($Error =~ /Network is unreachable/) {
+	if($Error =~ /Network is unreachable/i) {
 		return("OFFLINE");
-	} elsif ($Error =~ /Bad hostname/) {
+	} elsif ($Error =~ /Bad hostname/i) {
 		return("BADHOST");
-	} elsif ($Error =~ /Connection refused/) {
+	} elsif ($Error =~ /Connection refused/i) {
 		return("REFUSED");
+	} elsif ($Error =~ /timeout/i) {
+		return("TIMEOUT");
 	} else {
 		return($Error);
 	}
@@ -664,6 +666,15 @@ sub DPS_Perform {
 			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
 		}
 	}
+	# Make sure the IO::Socket::SSL module is available and loaded
+	if(not $DPServices{IO_SOCKET_SSL_LOADED}) {
+		if(not eval("use IO::Socket::SSL; 1")) {
+			DPError(DP_gettext("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
+			return(undef);
+		} else {
+			$DPServices{IO_SOCKET_SSL_LOADED} = 1;
+		}
+	}
 	# Create the progress window
 	if($Gtk2Init) {
 		$MainWindow->set_sensitive(0);
@@ -718,10 +729,10 @@ sub DPS_Connect {
 	my $Error;
 	# Connect
 	my $OLDLocale = setlocale(LC_ALL, "C");		# Need errors that are not localized for IO_Socket_INET_Errors();
-	$DPServices{socket} = IO::Socket::INET->new(
+	$DPServices{socket} = IO::Socket::SSL->new(
 					PeerAddr => $Host,
 					PeerPort => $Port,
-					Timeout => 30,
+					Timeout => 10,
 			) or do { $Error = $@; };
 			
 	setlocale(LC_ALL, ""); #, $OLDLocale);	# Reset the locale
