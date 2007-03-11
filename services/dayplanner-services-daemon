@@ -23,8 +23,9 @@ use strict;
 use warnings;
 require 5.8.1;				# Require perl 5.8 to ensure things work smoothly
 					# (5.8.1 introduced some security enhancements we need)
-#use IO::Socket::SSL;	TODO: Implement this instead of IO::Socket::INET
-use IO::Socket::INET;
+use IO::Socket::SSL;
+#use IO::Socket::INET;
+use IO::Socket::UNIX;
 use IO::Select;
 use Getopt::Long;
 use Digest::MD5 qw(md5_base64);
@@ -47,6 +48,7 @@ my $AdminSocket;
 my @Ports;
 my $StartedAt = time();
 my $ConfFile = "./dpservices.conf";
+my $NoFork;
 
 my %ActiveUsers;	# Currently active users
 my %Clients;		# Hash of current network clients
@@ -145,6 +147,14 @@ sub IntVeryVerbose {
 sub IntVerbose {
 	if ($OutputVerbose) {
 		IntOutputMSG("$_[0]\n");
+	}
+}
+
+# Purpose: Output a debugging message when in nofork and verbose mode
+# Usage: IntNoforkMSG(MESSAGE);
+sub IntNoforkMSG {
+	if($NoFork) {
+		IntVerbose(@_);
 	}
 }
 
@@ -581,19 +591,22 @@ sub InitNetwork {
 		}
 	}
 	# Open up the local communication unix socket
-	OpenLocalSocket("$Config{DataPath}/adminsocket");
+	#OpenLocalSocket("$Config{DataPath}/adminsocket");
 }
 
 # Purpose: Open a new communication socket on PORT
 # Usage: OpenSocket(PORT);
 sub OpenSocket {
 	my $ListenPort = shift;
-	my $NewServer = IO::Socket::INET->new(
+	my $NewServer = IO::Socket::SSL->new(
 					LocalPort => $ListenPort,
 					Listen	=> 5,
 					Timeout => 15,		# We can't really wait longer as other users might want to connect
-			) or die "Unable to create a new socket on $ListenPort: $@\n";
+					SSL_key_file => "./server.key",
+					SSL_cert_file => "./server.crt",
+			) or die sprintf("Unable to create a new socket on $ListenPort: %s\n",IO::Socket::SSL::errstr());
 	$Servers{$NewServer} = 1;
+	IntNoforkMSG("SSL server listening on port $ListenPort");
 	# Add the server to the connection selection object
 	$ConnectionSelect->add($NewServer);
 }
@@ -683,25 +696,29 @@ sub MainLoop {
 # Purpose: Go into true daemon-mode (reopen STDOUT, STDERR and STDIN, chdir(/) and fork)
 # Usage: Do_DaemonMode();
 sub Do_DaemonMode {
-	# Fork
-	my $PID = fork;
-	exit if $PID;
-	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
-	# Get an absolute path to the data, logfile and MOTD file
+	if(not $NoFork) {
+		# Fork
+		my $PID = fork;
+		exit if $PID;
+		die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
+		# Get an absolute path to the logfile
+		$Config{LogFile} = realpath($Config{LogFile});
+		# Reopen STDOUT, STDERR to the logfile
+		open(STDOUT, ">>", $Config{LogFile});
+		open(STDERR, ">>", $Config{LogFile});
+		# Reopen STDIN from /dev/null
+		open(STDIN, "<", "/dev/null");
+
+		print "\n";
+	}
+
+	# Get an absolute path to the data and MOTD file
 	$Config{DataPath} = realpath($Config{DataPath});
-	$Config{LogFile} = realpath($Config{LogFile});
-	if(length($Config{MOTDFile})) {
+	if(defined($Config{MOTDFile}) and length($Config{MOTDFile})) {
 		$Config{MOTDFile} = realpath($Config{MOTDFile});
 	}
 	# Change to root
 	chdir('/');
-	# Reopen STDOUT, STDERR to the logfile
-	open(STDOUT, ">>", $Config{LogFile});
-	open(STDERR, ">>", $Config{LogFile});
-	# Reopen STDIN from /dev/null
-	open(STDIN, "<", "/dev/null");
-
-	print "\n";
 	IntOutputMSG("Started\n");
 }
 
@@ -738,6 +755,7 @@ GetOptions (
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
+	'n|nofork' => \$NoFork,
 ) or die "See $0 --help for more information\n";
 
 print "WARNING: This is alpha software. Use at your own risk. See README for more information\n\n";
