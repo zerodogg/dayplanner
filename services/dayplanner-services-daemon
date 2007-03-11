@@ -775,8 +775,6 @@ GetOptions (
 	'n|nofork' => \$NoFork,
 ) or die "See $0 --help for more information\n";
 
-print "WARNING: This is alpha software. Use at your own risk. See README for more information\n\n";
-
 SetStatus("starting");
 umask(077);
 LoadServicesConfig($ConfFile);
