@@ -67,7 +67,7 @@ my %Servers;
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = "0.5 ALPHA";
+my $Version = "0.6 BETA";
 
 $SIG{INT} = sub {
 	foreach(keys(%Servers)) {
@@ -641,6 +641,10 @@ sub MainLoop {
 			# If the handle is $server then it's a new connection
 			if (defined($Servers{$Handle})) {
 				my $NewClient = $Handle->accept();
+				if(not defined($NewClient)) {
+					IntDebug("Non-SSL connection attempt.");
+					next;
+				}
 				$ConnectionSelect->add($NewClient);
 				if($Handle eq $AdminSocket) {
 					$Clients{$NewClient}{Admin} = 1;
