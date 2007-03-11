@@ -469,7 +469,7 @@ sub DPS_Error {
 
 # Purpose: Set the status in the DPS GUI Window
 # Usage: DPS_Status(TEXT, COMPLETED);
-#	COMPLETED is a number between 0 and 1
+#	COMPLETED is a number between 0 and 1 (such as 0.1, 0.5)
 #	0 = 0%
 #	1 = 100%
 sub DPS_Status {
