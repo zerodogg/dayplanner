@@ -592,7 +592,7 @@ sub InitNetwork {
 		}
 	}
 	# Open up the local communication unix socket
-	#OpenLocalSocket("$Config{DataPath}/adminsocket");
+	OpenLocalSocket("$Config{DataPath}/adminsocket");
 }
 
 # Purpose: Open a new communication socket on PORT
