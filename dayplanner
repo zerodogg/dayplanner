@@ -58,7 +58,7 @@ my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 my $DP_I18N_Mode = 0;
 my $Gettext;
-my $DPS_APILevel = "05A";				# The DPS API level used/supported
+my $DPS_APILevel = "06A";				# The DPS API level used/supported
 my $HTML_PHP = 0;					# If set to 1 the HTML exporter will not
 							#  output the header/footer. This is used by the
 							#  PHP exporter.
@@ -585,8 +585,10 @@ sub DPS_DataSync {
 	# If it does then we just upload.
 	elsif ($ServerMD5 eq $LastUpMD5) {
 		DPS_Log("Local data changed, uploading to DPS (local MD5 is $LocalMD5 and the servers MD5 is $ServerMD5)");
-		DPS_Status(DP_gettext("Synchronizing"),0.5);
+		DPS_Status(DP_gettext("Synchronizing"),0.4);
 		my $Return = DPS_Upload();
+		DPS_Status(DP_gettext("Synchronizing"),0.8);
+		UpdatedData();
 		DPS_Status(DP_gettext("Synchronizing"),0.9);
 		return($Return);
 	}
@@ -597,6 +599,8 @@ sub DPS_DataSync {
 		DPS_Log("Remote data changed, downloading from DPS");
 		DPS_Status(DP_gettext("Synchronizing"),0.5);
 		my $Return = DPS_Download();
+		DPS_Status(DP_gettext("Synchronizing"),0.8);
+		UpdatedData();
 		DPS_Status(DP_gettext("Synchronizing"),0.9);
 		return($Return);
 	}
@@ -610,6 +614,8 @@ sub DPS_DataSync {
 		if(DPS_Download(1)) {
 			DPS_Status(DP_gettext("Synchronizing"),0.6);
 			my $Return = DPS_Upload();
+			DPS_Status(DP_gettext("Synchronizing"),0.8);
+			UpdatedData();
 			DPS_Status(DP_gettext("Synchronizing"),0.9);
 			return($Return);
 		}
