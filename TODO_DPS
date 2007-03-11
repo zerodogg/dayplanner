@@ -15,8 +15,6 @@ TODO:
 
  Server:
  ------
-- Implement connection encryption
-- Allow encrypted connections
 - Add MOTD command
 - Add a SETTINGS command (gives info about the settings for the user):
 	Client: SETTINGS
@@ -42,9 +40,11 @@ DONE:
 - Use the DPS error function in DPS_RepairData.
 - Do a forced DPS_BackupData on DPS_RepairData failure.
 - Add conflict resolving on download (don't blindly trust it).
+- Implement connection encryption
 
  Server:
  ------
+- Implement connection encryption
 - Get a working services daemon
 - Move $Port to the config
 - Use the config a lot more
