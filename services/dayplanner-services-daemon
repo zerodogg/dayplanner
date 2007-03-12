@@ -507,7 +507,7 @@ sub CommandHandler {
 		}
 		$Clients{$Handle}{User} = $Username;
 		$ActiveUsers{$Username}{Handle} = $Handle;
-		IntVerbose("$Handle authenticated as $Username");
+		IntVerbose(sprintf("%s authenticated as $Username", $Handle->peerhost));
 		return("OK");
 	}
 	# Require authentication to proceed
