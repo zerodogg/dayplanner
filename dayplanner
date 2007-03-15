@@ -577,7 +577,7 @@ sub DPS_DataSync {
 	# Okay, the required information is available.
 	# First check if our current local MD5 sum matches the one on the server.
 	# If it does then we return without doing anything at all.
-	if($ServerMD5 eq $LocalMD5) {
+	if(defined($LocalMD5) and $ServerMD5 eq $LocalMD5) {
 		DPS_Log("ServerMD5[$ServerMD5] matched our LocalMD5[$LocalMD5]. Not doing anything");
 		return(1);
 	} 
@@ -4689,7 +4689,7 @@ GetOptions (
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar/) {
+		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar IO::Socket::SSL/) {
 			if(eval("use $_; 1")) {
 				push(@AvailModules, $_);
 			} else {
