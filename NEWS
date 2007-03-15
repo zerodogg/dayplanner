@@ -1,7 +1,7 @@
 Day planner version history
 **************************
 
-Version 0.5 (Unreleased)
+Version 0.5 (Released on the 15th of March 2007)
 ------------------------
 * Client (dayplanner)
 - Now uses the DP::iCalendar module for iCalendar stuff
