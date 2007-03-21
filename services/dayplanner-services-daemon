@@ -294,6 +294,7 @@ sub LoginFailure {
 	if($Security{LoginFailures}{$IP} > 9) {
 		$Security{Banned}{$IP} = 1;
 		delete($Security{LoginFailures}{$IP});
+		IntVerbose("Too many authentication failures from $IP, banned!");
 	}
 	return("REFUSED");
 }
@@ -663,7 +664,7 @@ sub MainLoop {
 					IntDebug("New local admin connection on the admin socket");
 				} else {
 					if ($Security{Banned}{$NewClient->peerhost}) {
-						IntDebug("New connection from " . $NewClient->peerhost  . "refused: banned");
+						IntDebug("New connection from " . $NewClient->peerhost  . " refused: banned");
 						print $NewClient "BANNED\n";
 						$ConnectionSelect->remove($NewClient);
 					} else {
