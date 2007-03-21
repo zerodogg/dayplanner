@@ -66,6 +66,7 @@ my $iCalendar;						# The DP::iCalendar object.
 
 
 
+# FIXME: Unused
 # Arrays
 my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
 	$ENV{HOME}, "$ENV{HOME}/Desktop", "$ENV{HOME}/Documents", "$ENV{HOME}/tmp", "/tmp", "/var/tmp", "/usr/tmp"
@@ -660,16 +661,16 @@ sub DPS_Perform {
 	# Make sure that DPS is enabled in the config
 	# TODO: Drop DPS_Enable, just verify config settings. If they are empty then
 	#	it is disabled.
-	return unless(defined($InternalConfig{DPS_Enable}) and $InternalConfig{DPS_Enable} eq "1");
+	return unless(defined($UserConfig{DPS_Enable}) and $UserConfig{DPS_Enable} eq "1");
 	# Check if the user wants to temporarily disable DPS
 	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
 	# Verify that all required options are set in the config
 	foreach my $Option (qw(host port user pass)) {
-		unless(defined($InternalConfig{"DPS_$Option"}) and length($InternalConfig{"DPS_$Option"})) {
+		unless(defined($UserConfig{"DPS_$Option"}) and length($UserConfig{"DPS_$Option"})) {
 			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. DPS will not be used.");
 			return(undef);
 		} else {
-			$DPServices{$Option} = $InternalConfig{"DPS_$Option"};
+			$DPServices{$Option} = $UserConfig{"DPS_$Option"};
 		}
 	}
 	# Make sure the IO::Socket::SSL module is available and loaded
@@ -912,12 +913,7 @@ sub WriteStateFile {
 		LastVersion => "The last Day Planner version used",
 		# All except DPS_LastMD5 and DPS_ParanoidBackups actually belongs in dayplanner.conf
 		# and not in state.conf. Maybe we should add an dps.conf/services.conf ?
-		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
 		DPS_LastMD5 => "The MD5 sum of the last data downloaded from the DPS server (base64 encoded)",
-		DPS_host => "The DPS host to connect to",
-		DPS_pass => "The password",
-		DPS_port => "The port to connect to on the DPS server",
-		DPS_user => "The username",
 		DPS_ParanoidBackups => "Writes a backup of the internal data to $Dir every time DPS is used.\n# This is useful when DPS is being debugged, in order to avoid data loss",
 		HEADER => "This file contains internal configuration used by Day Planner\n# In most cases you really don't want to edit this file manually",
 	);
@@ -966,10 +962,19 @@ sub WriteConfig {
 	unless(defined($UserConfig{Events_DayNotify}) and length($UserConfig{Events_DayNotify})) {
 		$UserConfig{Events_DayNotify} = 0;
 	}
+	if(not defined($UserConfig{DPS_Enable}) or not length($UserConfig{DPS_Enable})) {
+		$UserConfig{DPS_Enable} = 0;
+	}
+
 	my %Explanations = (
 		EditorVerboseDefault => "If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand",
 		Events_NotifyPre => "If Day Planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
 		Events_DayNotify => "If Day Planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
+		DPS_host => "The DPS host to connect to",
+		DPS_pass => "The password",
+		DPS_port => "The port to connect to on the DPS server",
+		DPS_user => "The username",
+		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
 		HEADER => "Day Planner $Version configuration file",
 	);
 	
@@ -4727,9 +4732,7 @@ GetOptions (
 	# confused when it gets all the options available.
 	'exportical|exportics=s' => \&CLI_Export,
 	'exportics_dps=s' => sub {
-		$DPServices{StaticUID} = 1;
 		CLI_Export(@_);
-		$DPServices{StaticUID} = 0;
 	},
 	'exporthtml=s' => \&CLI_Export,
 	'exportphp=s' => \&CLI_Export,
