@@ -550,6 +550,19 @@ sub AdminCommands {
 		IntVerbose("Userlist reloaded");
 		LoadData();
 		return("DONE");
+	} elsif ($Command =~ /^UNBAN/) {
+		my $IP = $Command;
+		$IP =~ s/^UNBAN\s*//;
+		if($IP) {
+			if($Security{Banned}{$IP}) {
+				delete($Security{Banned}{$IP});
+				return("DONE");
+			} else {
+				return("DONE # NOT_BANNED");
+			}
+		} else {
+			return("ERR SYNTAX_ERROR");
+		}
 	} elsif ($Command =~ /^UPTIME/) {
 		my $Uptime = time() - $StartedAt;
 		$Uptime = sprintf("%u", $Uptime / 60);
