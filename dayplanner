@@ -4665,6 +4665,14 @@ sub DrawMainWindow {
 	$Get =~ s/_//g;
 	$MenuDeleteEntry = $Menu_ItemFactory->get_widget($Get);
 
+	# Get the menu entry for DPS
+	my $MenuDPS = "/$EditStock/Configure DPS";
+	$MenuDPS =~ s/_//g;
+	my $DPSMenu = $Menu_ItemFactory->get_widget($MenuDPS);
+	if(not $UserConfig{DPS_Enable}) {
+		$DPSMenu->hide();
+	}
+
 	# ==================================================================
 	# TOOLBAR
 	# ==================================================================
