@@ -4,6 +4,7 @@ Day planner version history
 Version 0.6 (Unreleased)
 ------------------------
 * Client (dayplanner)
+- Dropped the old XFce autostart method for the daemon, XFce uses XDG now.
 
 * Notifier (dayplanner-notifier)
 
