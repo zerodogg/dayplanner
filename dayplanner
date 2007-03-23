@@ -3645,29 +3645,6 @@ sub CreateEventContainerWin {
 	$AddEventBox->add($ADPrimVBox);
 	$ADPrimVBox->show();
 	
-	# Add the label with the name
-	my $DateLabel = Gtk2::Label->new(sprintf($EventLabel,$EventDay, $MonthNames{$EventMonth},$EventYear));
-	$DateLabel->show();
-	$ADPrimVBox->pack_start($DateLabel,1,0,0);
-	
-	# The HBox for the frame
-	my $FrameHBox = Gtk2::HBox->new();
-	$FrameHBox->show();
-	$ADPrimVBox->pack_start($FrameHBox,1,1,0);
-	
-	# Create the frame
-	my $TBFrame = Gtk2::Frame->new();
-	$TBFrame->set_label(DP_gettext("Event"));
-	$FrameHBox->pack_start($TBFrame,1,1,0);
-	$TBFrame->show();
-	
-	# TODO: Add a pop-up where you can select the date (DatePopup())
-	
-	# Create the vbox for use in the frame
-	my $TBVBox = Gtk2::VBox->new();
-	$TBFrame->add($TBVBox);
-	$TBVBox->show();
-	
 	# ==================================================================
 	# Call the functions that constructs the main window contents
 	# ==================================================================
@@ -3695,7 +3672,7 @@ sub CreateEventContainerWin {
 	$AddEventBox->set_default($OKButton);
 
 	# Return the widgets
-	return($AddEventBox, $TBVBox, $OKButton, $CancelButton);
+	return($AddEventBox, $ADPrimVBox, $OKButton, $CancelButton);
 }
 
 # Purpose: Add a event. Creates the main window and calls the proper event functions
