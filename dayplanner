@@ -4323,6 +4323,7 @@ sub PreferencesWindow {
 	my $Port = $UserConfig{DPS_port} ? $UserConfig{DPS_port} : 4435;
 	my $Username = $UserConfig{DPS_user} ? $UserConfig{DPS_user} : "";
 	my $Password = $UserConfig{DPS_pass} ? $UserConfig{DPS_pass} : "";
+	my $DPSWasStatus = $UserConfig{DPS_Enable};
 
 	# Create the vbox
 	my $Sync_VBox = Gtk2::VBox->new();
@@ -4423,11 +4424,27 @@ sub PreferencesWindow {
 	# Handle closing
 	$PreferencesWindow->signal_connect("destroy" => sub { 
 			$MainWindow->set_sensitive(1);
-			$UserConfig{DPS_user} = $UserEntry->get_text();
-			$UserConfig{DPS_pass} = $PasswordEntry->get_text();
-			$UserConfig{DPS_host} = $HostEntry->get_text();
-			$UserConfig{DPS_port} = $PortSpinner->get_value();
+			if(not($UserConfig{DPS_user} eq $UserEntry->get_text())) {
+				$UserConfig{DPS_user} = $UserEntry->get_text();
+				$DPSWasStatus = 0;
+			}
+			if(not($UserConfig{DPS_pass} eq $PasswordEntry->get_text())) {
+				$UserConfig{DPS_pass} = $PasswordEntry->get_text();
+				$DPSWasStatus = 0;
+			}
+			if(not($UserConfig{DPS_host} eq $HostEntry->get_text())) {
+				$UserConfig{DPS_host} = $HostEntry->get_text();
+				$DPSWasStatus = 0;
+			}
+			if(not($UserConfig{DPS_port} eq $PortSpinner->get_value())) {
+				$UserConfig{DPS_port} = $PortSpinner->get_value();
+				$DPSWasStatus = 0;
+			}
 			WriteConfig();
+			# Synchronize if DPS settings have been changed and it is enabled
+			if($UserConfig{DPS_Enable} and not $DPSWasStatus) {
+				DPS_Perform('SYNC');
+			}
 		});
 	
 	# Add the buttons
