@@ -823,133 +823,6 @@ sub DPS_DataSegment {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Day Planner Services User GUI
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Display the DPS configuration interface
-# Usage: DPS_ConfigGUI();
-sub DPS_ConfigGUI {
-	# Get and set the values we're going to use
-	my $Host = $UserConfig{DPS_host} ? $UserConfig{DPS_host} : "";
-	my $Port = $UserConfig{DPS_port} ? $UserConfig{DPS_port} : 4435;
-	my $Username = $UserConfig{DPS_user} ? $UserConfig{DPS_user} : "";
-	my $Password = $UserConfig{DPS_pass} ? $UserConfig{DPS_pass} : "";
-
-	my $Name = DP_gettext("Services setup");
-	$MainWindow->set_sensitive(0);
-	my $PreferencesWindow = Gtk2::Window->new();
-	$PreferencesWindow->set_modal(1);
-	$PreferencesWindow->set_transient_for($MainWindow);
-	$PreferencesWindow->set_position('center-on-parent');
-	$PreferencesWindow->set_title($Name);
-	$PreferencesWindow->set_resizable(0);
-	$PreferencesWindow->set_border_width(12);
-	$PreferencesWindow->set_skip_taskbar_hint(1);
-	$PreferencesWindow->set_skip_pager_hint(1);
-	my $Tooltips = Gtk2::Tooltips->new();
-	$Tooltips->enable();
-
-	# Handle closing
-	$PreferencesWindow->signal_connect("destroy" => sub { 
-			$MainWindow->set_sensitive(1);
-			WriteConfig();
-			});
-	
-	# Create the vbox
-	my $Config_VBox = Gtk2::VBox->new();
-	$Config_VBox->show();
-	$PreferencesWindow->add($Config_VBox);
-
-	# Create the table
-	my $Config_Table = Gtk2::Table->new(3,4);
-	$Config_Table->show();
-	$Config_VBox->pack_start($Config_Table,0,0,0);
-	
-	# ==================================================================
-	# HOST/PORT
-	# ==================================================================
-	
-	# Host
-
-	#  Label
-	my $UseHost = Gtk2::Label->new(DP_gettext("Server:"));
-	$UseHost->show();
-	$Config_Table->attach_defaults($UseHost, 0,1,0,1);
-	
-	#  Entry
-	my $HostEntry = Gtk2::Entry->new();
-	$HostEntry->set_text($Host);
-	$HostEntry->show();
-	$Config_Table->attach_defaults($HostEntry, 1,2,0,1);
-	
-	# Port
-	
-	#  Label
-	my $UsePort = Gtk2::Label->new(" " . DP_gettext("Port:"));
-	$UsePort->show();
-	$Config_Table->attach_defaults($UsePort, 2,3,0,1);
-	
-	#  Spinner
-	my $PortAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 65000.0, 1.0, 5.0, 0.0);
-	my $PortSpinner = Gtk2::SpinButton->new($PortAdjustment,0,0);
-	$PortSpinner->set_value($Port);
-	$PortSpinner->show();
-	$Config_Table->attach_defaults($PortSpinner, 3,4,0,1);
-	
-	# ==================================================================
-	# USERNAME/PASSWORD
-	# ==================================================================
-	
-	# Username
-	#  Label
-	my $UsernameLabel = Gtk2::Label->new(DP_gettext("Username:"));
-	$UsernameLabel->show();
-	$Config_Table->attach_defaults($UsernameLabel, 0,1,1,2);
-	
-	#  Entry
-	my $UserEntry = Gtk2::Entry->new();
-	$UserEntry->set_text($Username);
-	$UserEntry->show();
-	$Config_Table->attach_defaults($UserEntry, 1,4,1,2);
-	
-	# Password
-	#  Label
-	my $PasswordLabel = Gtk2::Label->new(DP_gettext("Password:"));
-	$PasswordLabel->show();
-	$Config_Table->attach_defaults($PasswordLabel, 0,1,2,3);
-	
-	#  Entry
-	my $PasswordEntry = Gtk2::Entry->new();
-	$PasswordEntry->set_text($Password);
-	$PasswordEntry->show();
-	$PasswordEntry->set_visibility(0);
-	$Config_Table->attach_defaults($PasswordEntry, 1,4,2,3);
-	
-	# ==================================================================
-	# FINALIZE WINDOW
-	# ==================================================================
-	# Add the buttons
-	my $ButtonHBox = Gtk2::HBox->new();
-	$ButtonHBox->show();
-	$Config_VBox->pack_start($ButtonHBox,0,0,0);
-
-	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
-	$CloseButton->signal_connect("clicked" => sub {
-			$UserConfig{DPS_user} = $UserEntry->get_text();
-			$UserConfig{DPS_pass} = $PasswordEntry->get_text();
-			$UserConfig{DPS_host} = $HostEntry->get_text();
-			$UserConfig{DPS_port} = $PortSpinner->get_value();
-			WriteConfig();
-			$PreferencesWindow->destroy;
-		});
-	$CloseButton->show();
-	$ButtonHBox->pack_end($CloseButton,0,0,0);
-
-	# Show the config window
-	$PreferencesWindow->show();
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -4253,22 +4126,29 @@ sub PreferencesWindow {
 	$PreferencesWindow->set_skip_pager_hint(1);
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-
-	# Handle closing
-	$PreferencesWindow->signal_connect("destroy" => sub { 
-			$MainWindow->set_sensitive(1);
-			WriteConfig();
-			});
 	
-	# Creat the vbox
+	# Create the main VBox
+	my $MainVBox = Gtk2::VBox->new();
+	$MainVBox->show();
+	$PreferencesWindow->add($MainVBox);
+	
+	# Create the notebook
+	my $Notebook = Gtk2::Notebook->new();
+	$Notebook->show();
+	$MainVBox->pack_start($Notebook,0,0,0);
+	
+	# ==================================================================
+	# ==================================================================
+	# GENERAL TAB
+	# ==================================================================
+	# ==================================================================
+	
+	# Create the vbox
 	my $Config_VBox = Gtk2::VBox->new();
 	$Config_VBox->show();
-	$PreferencesWindow->add($Config_VBox);
-	
-	# ==================================================================
-	# GENERAL
-	# ==================================================================
-	
+	$Notebook->append_page($Config_VBox,DP_gettext("General"));
+	$Config_VBox->set_border_width(12);
+
 	# Create the primary vbox
 	my $General_VBox = Gtk2::VBox->new();
 	$General_VBox->show();
@@ -4357,20 +4237,35 @@ sub PreferencesWindow {
 			}
 		});
 	
-	# The main checkbox that enables/disables the rest of the page
-	my $Events_EnabledCheckbox = Gtk2::CheckButton->new_with_label(DP_gettext("Use notifications before events"));
-	$Events_EnabledCheckbox->show();
-	$Events_VBox->pack_start($Events_EnabledCheckbox,0,0,0);
 
+	# The label that explains about notifications
+	my $NotificationLabel = Gtk2::Label->new(DP_gettext("When an event is coming up, remind me:"));
+	$NotificationLabel->show();
+	$NotificationLabel->set_justify('left');
+	$NotificationLabel->set_alignment(0,0);
+	$Events_VBox->pack_start($NotificationLabel,0,0,0);
+	
+	# If the user wants to be notified in advance
+	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label(DP_gettext("One day in advance"));
+	$NotifyAdvance_CheckBox->show();
+	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
+	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
+			$UserConfig{Events_DayNotify} = $NotifyAdvance_CheckBox->get_active();
+		});
+	if($UserConfig{Events_DayNotify}) {
+		$NotifyAdvance_CheckBox->set_active(1);
+	}
+	
 	# The widgets that selects when the user wants to be notified
 	# The HBox
 	my $TimeSel_HBox = Gtk2::HBox->new();
 	$Events_VBox->pack_start($TimeSel_HBox,0,0,0);
 	$TimeSel_HBox->show();
-	# The label
-	my $TimeSel_Label = Gtk2::Label->new(DP_gettext('Time before the event to display the notification') . ': ');
-	$TimeSel_Label->show();
-	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
+	# The checkbutton
+	my $EnableDisablePreNotCB = Gtk2::CheckButton->new();
+	$EnableDisablePreNotCB->show();
+	$TimeSel_HBox->pack_start($EnableDisablePreNotCB,0,0,0);
+
 	# The combo box
 	my $TimeSel_Combo = Gtk2::ComboBox->new_text();
 	$TimeSel_Combo->insert_text(0, sprintf(DP_gettext("%s minutes"),"10"));
@@ -4395,48 +4290,148 @@ sub PreferencesWindow {
 	$TimeSel_Combo->signal_connect('changed' => sub {
 				$UserConfig{Events_NotifyPre} = $PreNotificationParser{$TimeSel_Combo->get_active};
 			});
+	# TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
+	my $TimeSel_Label = Gtk2::Label->new(' ' . DP_gettext('before the event time'));
+	$TimeSel_Label->show();
+	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
 	
-	# If the user wants to be notified in advance
-	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label(DP_gettext("Remind one day in advance"));
-	$NotifyAdvance_CheckBox->show();
-	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
-	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
-			$UserConfig{Events_DayNotify} = $NotifyAdvance_CheckBox->get_active();
-		});
-	if($UserConfig{Events_DayNotify}) {
-		$NotifyAdvance_CheckBox->set_active(1);
-	}
-	
-	# This needs to be at the bottom so that we can sensitiveize or not the rest of the dialog
-	$Events_EnabledCheckbox->signal_connect('toggled' => sub {
-			if($Events_EnabledCheckbox->get_active) {
+	# Set up the checkbutton signals and defaults
+	$EnableDisablePreNotCB->signal_connect('toggled' => sub {
+			if($EnableDisablePreNotCB->get_active()) {
 				$TimeSel_Combo->set_sensitive(1);
-				$TimeSel_Label->set_sensitive(1);
-				$NotifyAdvance_CheckBox->set_sensitive(1);
-				$UserConfig{Events_NotifyPre} = $PreNotificationParser{$TimeSel_Combo->get_active};
+				$TimeSel_Combo->signal_emit('changed');
 			} else {
-				$TimeSel_Combo->set_sensitive(0);
-				$TimeSel_Label->set_sensitive(0);
-				$NotifyAdvance_CheckBox->set_sensitive(0);
 				$UserConfig{Events_NotifyPre} = 0;
-			}
-		});
+				$TimeSel_Combo->set_sensitive(0);
+			}});
+
 	if($UserConfig{Events_NotifyPre}) {
-		$Events_EnabledCheckbox->set_active(1);
+		$EnableDisablePreNotCB->set_active(1);
 	} else {
-		$Events_EnabledCheckbox->set_active(0);
-		$TimeSel_Combo->set_sensitive(0);
-		$TimeSel_Label->set_sensitive(0);
-		$NotifyAdvance_CheckBox->set_sensitive(0);
+		$EnableDisablePreNotCB->set_active(0);
 	}
+	
+	
+	# ==================================================================
+	# ==================================================================
+	# SYNCHRONIZATION TAB
+	# ==================================================================
+	# ==================================================================
+	
+	# Get and set the values we're going to use
+	my $Host = $UserConfig{DPS_host} ? $UserConfig{DPS_host} : "";
+	my $Port = $UserConfig{DPS_port} ? $UserConfig{DPS_port} : 4435;
+	my $Username = $UserConfig{DPS_user} ? $UserConfig{DPS_user} : "";
+	my $Password = $UserConfig{DPS_pass} ? $UserConfig{DPS_pass} : "";
+
+	# Create the vbox
+	my $Sync_VBox = Gtk2::VBox->new();
+	$Sync_VBox->show();
+	$Sync_VBox->set_border_width(12);
+	$Notebook->append_page($Sync_VBox,DP_gettext("Synchronization"));
+
+	# Create the table
+	my $Config_Table = Gtk2::Table->new(3,4);
+	$Config_Table->show();
+
+	# Enable/disable checkbox
+	my $EnableDisableCButton = Gtk2::CheckButton->new(DP_gettext("Automatically synchronize an online copy of this calendar"));
+	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
+	$EnableDisableCButton->signal_connect('toggled' => sub {
+			if($EnableDisableCButton->get_active) {
+				$UserConfig{DPS_Enable} = 1;
+				$Config_Table->set_sensitive(1);
+			} else {
+				$UserConfig{DPS_Enable} = 0;
+				$Config_Table->set_sensitive(0);
+			}});
+	if($UserConfig{DPS_Enable}) {
+		$EnableDisableCButton->set_active(1);
+	} else {
+		$EnableDisableCButton->set_active(0);
+	}
+	$EnableDisableCButton->show();
+
+	# Add the table to the UI
+	$Sync_VBox->pack_start($Config_Table,0,0,0);
+	
+	# ==================================================================
+	# HOST/PORT
+	# ==================================================================
+	
+	# Host
+
+	#  Label
+	my $UseHost = Gtk2::Label->new(DP_gettext("Server:"));
+	$UseHost->show();
+	$Config_Table->attach_defaults($UseHost, 0,1,0,1);
+	
+	#  Entry
+	my $HostEntry = Gtk2::Entry->new();
+	$HostEntry->set_text($Host);
+	$HostEntry->show();
+	$Config_Table->attach_defaults($HostEntry, 1,2,0,1);
+	
+	# Port
+	
+	#  Label
+	my $UsePort = Gtk2::Label->new(" " . DP_gettext("Port:"));
+	$UsePort->show();
+	$Config_Table->attach_defaults($UsePort, 2,3,0,1);
+	
+	#  Spinner
+	my $PortAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 65000.0, 1.0, 5.0, 0.0);
+	my $PortSpinner = Gtk2::SpinButton->new($PortAdjustment,0,0);
+	$PortSpinner->set_value($Port);
+	$PortSpinner->show();
+	$Config_Table->attach_defaults($PortSpinner, 3,4,0,1);
+	
+	# ==================================================================
+	# USERNAME/PASSWORD
+	# ==================================================================
+	
+	# Username
+	#  Label
+	my $UsernameLabel = Gtk2::Label->new(DP_gettext("Username:"));
+	$UsernameLabel->show();
+	$Config_Table->attach_defaults($UsernameLabel, 0,1,1,2);
+	
+	#  Entry
+	my $UserEntry = Gtk2::Entry->new();
+	$UserEntry->set_text($Username);
+	$UserEntry->show();
+	$Config_Table->attach_defaults($UserEntry, 1,4,1,2);
+	
+	# Password
+	#  Label
+	my $PasswordLabel = Gtk2::Label->new(DP_gettext("Password:"));
+	$PasswordLabel->show();
+	$Config_Table->attach_defaults($PasswordLabel, 0,1,2,3);
+	
+	#  Entry
+	my $PasswordEntry = Gtk2::Entry->new();
+	$PasswordEntry->set_text($Password);
+	$PasswordEntry->show();
+	$PasswordEntry->set_visibility(0);
+	$Config_Table->attach_defaults($PasswordEntry, 1,4,2,3);
 	
 	# ==================================================================
 	# FINALIZE WINDOW
 	# ==================================================================
+	# Handle closing
+	$PreferencesWindow->signal_connect("destroy" => sub { 
+			$MainWindow->set_sensitive(1);
+			$UserConfig{DPS_user} = $UserEntry->get_text();
+			$UserConfig{DPS_pass} = $PasswordEntry->get_text();
+			$UserConfig{DPS_host} = $HostEntry->get_text();
+			$UserConfig{DPS_port} = $PortSpinner->get_value();
+			WriteConfig();
+		});
+	
 	# Add the buttons
 	my $ButtonHBox = Gtk2::HBox->new();
 	$ButtonHBox->show();
-	$Config_VBox->pack_start($ButtonHBox,0,0,0);
+	$MainVBox->pack_start($ButtonHBox,0,0,0);
 
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
 	$CloseButton->signal_connect("clicked" => sub { 
@@ -4616,7 +4611,6 @@ sub DrawMainWindow {
 		[ "/$EditStock/" . DP_gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
 		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
-		[ "/$EditStock/Configure DPS" , undef,			sub { DPS_ConfigGUI(); },		1,	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
@@ -4641,14 +4635,6 @@ sub DrawMainWindow {
 	$Get = "/$EditStock/" . DP_gettext("_Delete this event");
 	$Get =~ s/_//g;
 	$MenuDeleteEntry = $Menu_ItemFactory->get_widget($Get);
-
-	# Get the menu entry for DPS
-	my $MenuDPS = "/$EditStock/Configure DPS";
-	$MenuDPS =~ s/_//g;
-	my $DPSMenu = $Menu_ItemFactory->get_widget($MenuDPS);
-	if(not $UserConfig{DPS_Enable}) {
-		$DPSMenu->hide();
-	}
 
 	# ==================================================================
 	# TOOLBAR
