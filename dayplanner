@@ -822,6 +822,70 @@ sub DPS_DataSegment {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Day Planner Services User GUI
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+sub DPS_ConfigGUI {
+	my $Name = DP_gettext("Services setup");
+	$MainWindow->set_sensitive(0);
+	my $PreferencesWindow = Gtk2::Window->new();
+	$PreferencesWindow->set_modal(1);
+	$PreferencesWindow->set_transient_for($MainWindow);
+	$PreferencesWindow->set_position('center-on-parent');
+	$PreferencesWindow->set_title($Name);
+	$PreferencesWindow->set_resizable(0);
+	$PreferencesWindow->set_border_width(12);
+	$PreferencesWindow->set_skip_taskbar_hint(1);
+	$PreferencesWindow->set_skip_pager_hint(1);
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+
+	# Handle closing
+	$PreferencesWindow->signal_connect("destroy" => sub { 
+			$MainWindow->set_sensitive(1);
+			WriteConfig();
+			});
+	
+	# Creat the vbox
+	my $Config_VBox = Gtk2::VBox->new();
+	$Config_VBox->show();
+	$PreferencesWindow->add($Config_VBox);
+	
+	# ==================================================================
+	# GENERAL
+	# ==================================================================
+	
+	# Create the primary vbox
+	my $General_VBox = Gtk2::VBox->new();
+	$General_VBox->show();
+	$Config_VBox->pack_start($General_VBox,0,0,0);
+	
+	# Create the vbox
+	my $Events_VBox = Gtk2::VBox->new();
+	$Events_VBox->show();
+	$Config_VBox->pack_start($Events_VBox,0,0,0);
+
+	
+	# ==================================================================
+	# FINALIZE WINDOW
+	# ==================================================================
+	# Add the buttons
+	my $ButtonHBox = Gtk2::HBox->new();
+	$ButtonHBox->show();
+	$Config_VBox->pack_start($ButtonHBox,0,0,0);
+
+	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
+	$CloseButton->signal_connect("clicked" => sub { 
+			$PreferencesWindow->destroy;
+		});
+	$CloseButton->show();
+	$ButtonHBox->pack_end($CloseButton,0,0,0);
+
+	# Show the config window
+	$PreferencesWindow->show();
+}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -868,8 +932,8 @@ sub LoadConfigFile {
 		chomp;
 		my $Option = $_;
 		my $Value = $_;
-		$Option =~ s/^\s*(.*)\s*=.*/$1/;
-		$Value =~ s/^.*=\s*(.*)\s*/$1/;
+		$Option =~ s/^\s*(\w+)\s*=.*/$1/;
+		$Value =~ s/^\w+=\s*(.*)\s*/$1/;
 		if($OnlyValidOptions) {
 			unless(defined($OptionRegex->{$Option})) {
 				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
@@ -965,6 +1029,10 @@ sub WriteConfig {
 	if(not defined($UserConfig{DPS_Enable}) or not length($UserConfig{DPS_Enable})) {
 		$UserConfig{DPS_Enable} = 0;
 	}
+	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
+		$UserConfig{DPS_pass} = encode_base64(encode_base64($UserConfig{DPS_pass}));
+		chomp($UserConfig{DPS_pass});
+	}
 
 	my %Explanations = (
 		EditorVerboseDefault => "If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand",
@@ -974,7 +1042,7 @@ sub WriteConfig {
 		DPS_pass => "The password",
 		DPS_port => "The port to connect to on the DPS server",
 		DPS_user => "The username",
-		DPS_Enable => "If DPS (Day Planner servies) is enabled or not (1/0)",
+		DPS_Enable => "If DPS (Day Planner services) is enabled or not (1/0)",
 		HEADER => "Day Planner $Version configuration file",
 	);
 	
@@ -1004,9 +1072,17 @@ sub LoadConfig {
 			EditorVerboseDefault => '^\d+$',
 			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
 			Events_DayNotify => '^\d+$',
+			DPS_Enable => '^(1|0)$',
+			DPS_port => '^\d+$',
+			DPS_user => '^.+$',
+			DPS_host => '^.+$',
+			DPS_pass => '^.+$',
 		);
 
-	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash);
+	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash,1);
+	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
+		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
+	}
 	return(1);
 }
 
@@ -1389,8 +1465,8 @@ sub HolidaySetup {
 # Purpose: Remove the daemon from autostart for the various DMs/WMs
 # Usage: RemoveAutostart();
 sub RemoveAutostart {
-	# KDE, XDG and XFCE4 - easy
-	foreach("$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh") {
+	# KDE, XDG - easy
+	foreach("$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop",) {
 		unlink($_) if -e $_;
 	}
 
@@ -1538,14 +1614,6 @@ sub AddAutostart {
 				close($GNOMESESS);
 			}
 		}
-	}
-	# XFce 4
-	if(-d "$ENV{HOME}/.config/xfce4/" and -d "$ENV{HOME}/Desktop/") {
-		mkdir("$ENV{HOME}/Desktop/Autostart") unless -e "$ENV{HOME}/Desktop/Autostart";
-		open(my $XFCESCRIPT, ">", "$ENV{HOME}/Desktop/Autostart/dayplanner_auto.sh");
-		print $XFCESCRIPT "#!/bin/sh\n# Autogenerated startup script written by Day Planner\n";
-		print $XFCESCRIPT "$DaemonExec\n";
-		close($XFCESCRIPT);
 	}
 	# Fluxbox
 	if(-d "$ENV{HOME}/.fluxbox") {
@@ -4503,6 +4571,7 @@ sub DrawMainWindow {
 		[ "/$EditStock/" . DP_gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
 		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
+		[ "/$EditStock/Configure DPS" , undef,			sub { DPS_ConfigGUI(); },		1,	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	"<Branch>" ],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
