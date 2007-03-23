@@ -3561,7 +3561,7 @@ sub AddEvent {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext("Add an event"), DP_gettext('Adding an event on the %s. %s %s'), 'gtk-add');
+	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext("Add an Event"), DP_gettext('Adding an event on the %s. %s %s'), 'gtk-add');
 	# HBox
 	my $SelectorHBox = Gtk2::HBox->new();
 	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
@@ -4606,8 +4606,8 @@ sub DrawMainWindow {
 		[ "/" . DP_gettext("_Calendar") . "/$QuitStock",		"<control>Q",		\&QuitSub,		3,	"<StockItem>",	'gtk-quit'],
 		# Edit menu
 		[ "/$EditStock", undef,			undef,			0,	"<Branch>"],
-		[ "/$EditStock/" . DP_gettext("_Add an event..."),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
-		[ "/$EditStock/" . DP_gettext("_Edit this event..."),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
+		[ "/$EditStock/" . DP_gettext("_Add an Event..."),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
+		[ "/$EditStock/" . DP_gettext("_Edit This Event..."),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/$EditStock/" . DP_gettext("_Delete this event..."),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
 		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
@@ -4628,7 +4628,7 @@ sub DrawMainWindow {
 	$Menu_ItemFactory->get_widget("<main>")->show();
 	
 	# Create two widget objects for the edit/delete menu entries
-	my $Get = "/$EditStock/" . DP_gettext("_Edit this event...");
+	my $Get = "/$EditStock/" . DP_gettext("_Edit This Event...");
 	$Get =~ s/_//g;
 	$MenuEditEntry = $Menu_ItemFactory->get_widget($Get);
 
