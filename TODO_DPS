@@ -1,22 +1,13 @@
-TODO_DPS
 $Id$
-
-These are the items required to be done before DPS can be released
-for broader use.
-
-TODO:
 
  Client:
  ------
 - Implement support for an encrypted ICS filetype to enable DPS to
   have on-server encryption.
-- Clean the text of error messages in DPS_SendData().
 - Handle MOTD
 
  Server:
  ------
-- Implement connection encryption
-- Allow encrypted connections
 - Add MOTD command
 - Add a SETTINGS command (gives info about the settings for the user):
 	Client: SETTINGS
@@ -42,6 +33,7 @@ DONE:
 - Use the DPS error function in DPS_RepairData.
 - Do a forced DPS_BackupData on DPS_RepairData failure.
 - Add conflict resolving on download (don't blindly trust it).
+- Clean the text of error messages in DPS_SendData().
 
  Server:
  ------
@@ -51,3 +43,5 @@ DONE:
 - Implement --conffile and use it, but fallback to a config in ./
 - Clean up ghost connections (kicks old connections when a new one
 	tries to auth as the same user)
+- Implement connection encryption
+- Allow encrypted connections
