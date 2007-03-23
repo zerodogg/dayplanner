@@ -5,6 +5,9 @@ Version 0.6 (Unreleased)
 ------------------------
 * Client (dayplanner)
 - Dropped the old XFce autostart method for the daemon, XFce uses XDG now.
+- Removed the frame around the widgets in the add/edit event windows
+- Restructured the preferences window
+- Added the Day Planner services calendar synchronization system
 
 * Notifier (dayplanner-notifier)
 
