@@ -4347,8 +4347,10 @@ sub PreferencesWindow {
 			}});
 	if($UserConfig{DPS_Enable}) {
 		$EnableDisableCButton->set_active(1);
+		$EnableDisableCButton->signal_emit('toggled');
 	} else {
 		$EnableDisableCButton->set_active(0);
+		$EnableDisableCButton->signal_emit('toggled');
 	}
 	$EnableDisableCButton->show();
 
