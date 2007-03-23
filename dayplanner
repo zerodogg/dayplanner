@@ -1055,6 +1055,10 @@ sub WriteConfig {
 			DPIntWarn("Failed to tell the daemon to reload its configuration file. This might cause problems");
 		}
 	}
+	# Reset DPS_pass
+	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
+		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
+	}
 }
 
 # Purpose: Load the configuration file
