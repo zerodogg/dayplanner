@@ -826,6 +826,8 @@ sub DPS_DataSegment {
 # Day Planner Services User GUI
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Display the DPS configuration interface
+# Usage: DPS_ConfigGUI();
 sub DPS_ConfigGUI {
 	# Get and set the values we're going to use
 	my $Host = $UserConfig{DPS_host} ? $UserConfig{DPS_host} : "";
@@ -937,6 +939,7 @@ sub DPS_ConfigGUI {
 			$UserConfig{DPS_pass} = $PasswordEntry->get_text();
 			$UserConfig{DPS_host} = $HostEntry->get_text();
 			$UserConfig{DPS_port} = $PortSpinner->get_value();
+			WriteConfig();
 			$PreferencesWindow->destroy;
 		});
 	$CloseButton->show();
