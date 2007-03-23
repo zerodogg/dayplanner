@@ -23,6 +23,7 @@ require 5.6.0;			# We need perl 5.6.0 at the very least
 use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use POSIX;			# We need strftime
+use Glib qw(TRUE FALSE);	# We need glibs TRUE and FALSE, they prettify code
 use Gtk2;			# Use Gtk2 :)
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
@@ -826,6 +827,12 @@ sub DPS_DataSegment {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 sub DPS_ConfigGUI {
+	# Get and set the values we're going to use
+	my $Host = $UserConfig{DPS_host} ? $UserConfig{DPS_host} : "";
+	my $Port = $UserConfig{DPS_port} ? $UserConfig{DPS_port} : 4435;
+	my $Username = $UserConfig{DPS_user} ? $UserConfig{DPS_user} : "";
+	my $Password = $UserConfig{DPS_pass} ? $UserConfig{DPS_pass} : "";
+
 	my $Name = DP_gettext("Services setup");
 	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
@@ -846,25 +853,75 @@ sub DPS_ConfigGUI {
 			WriteConfig();
 			});
 	
-	# Creat the vbox
+	# Create the vbox
 	my $Config_VBox = Gtk2::VBox->new();
 	$Config_VBox->show();
 	$PreferencesWindow->add($Config_VBox);
-	
-	# ==================================================================
-	# GENERAL
-	# ==================================================================
-	
-	# Create the primary vbox
-	my $General_VBox = Gtk2::VBox->new();
-	$General_VBox->show();
-	$Config_VBox->pack_start($General_VBox,0,0,0);
-	
-	# Create the vbox
-	my $Events_VBox = Gtk2::VBox->new();
-	$Events_VBox->show();
-	$Config_VBox->pack_start($Events_VBox,0,0,0);
 
+	# Create the table
+	my $Config_Table = Gtk2::Table->new(3,4);
+	$Config_Table->show();
+	$Config_VBox->pack_start($Config_Table,0,0,0);
+	
+	# ==================================================================
+	# HOST/PORT
+	# ==================================================================
+	
+	# Host
+
+	#  Label
+	my $UseHost = Gtk2::Label->new(DP_gettext("Server:"));
+	$UseHost->show();
+	$Config_Table->attach_defaults($UseHost, 0,1,0,1);
+	
+	#  Entry
+	my $HostEntry = Gtk2::Entry->new();
+	$HostEntry->set_text($Host);
+	$HostEntry->show();
+	$Config_Table->attach_defaults($HostEntry, 1,2,0,1);
+	
+	# Port
+	
+	#  Label
+	my $UsePort = Gtk2::Label->new(" " . DP_gettext("Port:"));
+	$UsePort->show();
+	$Config_Table->attach_defaults($UsePort, 2,3,0,1);
+	
+	#  Spinner
+	my $PortAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 65000.0, 1.0, 5.0, 0.0);
+	my $PortSpinner = Gtk2::SpinButton->new($PortAdjustment,0,0);
+	$PortSpinner->set_value($Port);
+	$PortSpinner->show();
+	$Config_Table->attach_defaults($PortSpinner, 3,4,0,1);
+	
+	# ==================================================================
+	# USERNAME/PASSWORD
+	# ==================================================================
+	
+	# Username
+	#  Label
+	my $UsernameLabel = Gtk2::Label->new(DP_gettext("Username:"));
+	$UsernameLabel->show();
+	$Config_Table->attach_defaults($UsernameLabel, 0,1,1,2);
+	
+	#  Entry
+	my $UserEntry = Gtk2::Entry->new();
+	$UserEntry->set_text($Username);
+	$UserEntry->show();
+	$Config_Table->attach_defaults($UserEntry, 1,4,1,2);
+	
+	# Password
+	#  Label
+	my $PasswordLabel = Gtk2::Label->new(DP_gettext("Password:"));
+	$PasswordLabel->show();
+	$Config_Table->attach_defaults($PasswordLabel, 0,1,2,3);
+	
+	#  Entry
+	my $PasswordEntry = Gtk2::Entry->new();
+	$PasswordEntry->set_text($Password);
+	$PasswordEntry->show();
+	$PasswordEntry->set_visibility(0);
+	$Config_Table->attach_defaults($PasswordEntry, 1,4,2,3);
 	
 	# ==================================================================
 	# FINALIZE WINDOW
@@ -875,7 +932,11 @@ sub DPS_ConfigGUI {
 	$Config_VBox->pack_start($ButtonHBox,0,0,0);
 
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
-	$CloseButton->signal_connect("clicked" => sub { 
+	$CloseButton->signal_connect("clicked" => sub {
+			$UserConfig{DPS_user} = $UserEntry->get_text();
+			$UserConfig{DPS_pass} = $PasswordEntry->get_text();
+			$UserConfig{DPS_host} = $HostEntry->get_text();
+			$UserConfig{DPS_port} = $PortSpinner->get_value();
 			$PreferencesWindow->destroy;
 		});
 	$CloseButton->show();
