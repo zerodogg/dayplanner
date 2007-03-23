@@ -4600,15 +4600,15 @@ sub DrawMainWindow {
 	my @MenuItems = (
 		# Calendar menu
 		[ "/" . DP_gettext("_Calendar"),						undef,			undef,			0,	"<Branch>"],
-		[ "/" . DP_gettext("_Calendar") . "/" . DP_gettext("_Import"),		"",		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
-		[ "/" . DP_gettext("_Calendar") . "/" . DP_gettext("_Export"),		undef,		\&ExportData,		1,	"<StockItem>",	'gtk-save-as'],
+		[ "/" . DP_gettext("_Calendar") . "/" . DP_gettext("_Import..."),		"",		\&ImportData,		1,	"<StockItem>",	'gtk-open'],
+		[ "/" . DP_gettext("_Calendar") . "/" . DP_gettext("_Export..."),		undef,		\&ExportData,		1,	"<StockItem>",	'gtk-save-as'],
 		[ "/" . DP_gettext("_Calendar") . "/sep",					undef,			undef,			2,	'<Separator>'],
 		[ "/" . DP_gettext("_Calendar") . "/$QuitStock",		"<control>Q",		\&QuitSub,		3,	"<StockItem>",	'gtk-quit'],
 		# Edit menu
 		[ "/$EditStock", undef,			undef,			0,	"<Branch>"],
-		[ "/$EditStock/" . DP_gettext("_Add an event"),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
-		[ "/$EditStock/" . DP_gettext("_Edit this event"),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
-		[ "/$EditStock/" . DP_gettext("_Delete this event"),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
+		[ "/$EditStock/" . DP_gettext("_Add an event..."),		"<control>A",		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
+		[ "/$EditStock/" . DP_gettext("_Edit this event..."),	"<control>E",		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
+		[ "/$EditStock/" . DP_gettext("_Delete this event..."),	"<control>D",		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
 		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
@@ -4628,11 +4628,11 @@ sub DrawMainWindow {
 	$Menu_ItemFactory->get_widget("<main>")->show();
 	
 	# Create two widget objects for the edit/delete menu entries
-	my $Get = "/$EditStock/" . DP_gettext("_Edit this event");
+	my $Get = "/$EditStock/" . DP_gettext("_Edit this event...");
 	$Get =~ s/_//g;
 	$MenuEditEntry = $Menu_ItemFactory->get_widget($Get);
 
-	$Get = "/$EditStock/" . DP_gettext("_Delete this event");
+	$Get = "/$EditStock/" . DP_gettext("_Delete this event...");
 	$Get =~ s/_//g;
 	$MenuDeleteEntry = $Menu_ItemFactory->get_widget($Get);
 
