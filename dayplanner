@@ -4307,8 +4307,10 @@ sub PreferencesWindow {
 
 	if($UserConfig{Events_NotifyPre}) {
 		$EnableDisablePreNotCB->set_active(1);
+		$EnableDisablePreNotCB->signal_emit('toggled');
 	} else {
 		$EnableDisablePreNotCB->set_active(0);
+		$EnableDisablePreNotCB->signal_emit('toggled');
 	}
 	
 	
