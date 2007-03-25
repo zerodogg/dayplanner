@@ -194,10 +194,10 @@ sub get_rawdata {
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$self->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
 
-	foreach my $UID (keys(%{$self->{RawCalendar}})) {
+	foreach my $UID (sort keys(%{$self->{RawCalendar}})) {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
-		foreach my $setting (keys(%{$self->{RawCalendar}{$UID}})) {
+		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
 			$iCalendar .= "$setting:" . _GetSafe(${$self->{RawCalendar}}{$UID}{$setting}) . "\r\n";
 		}
 		$iCalendar .= "END:VEVENT\r\n";
@@ -446,6 +446,7 @@ sub _ChangeEntry {
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ":" . _AppendZero($currmin));
+	delete($self->{OrderedCalendar});
 	return(1);
 }
 

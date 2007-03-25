@@ -43,7 +43,7 @@ use Date::HolidayParser;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 
 # Scalars
-my $Version = "0.5";
+my $Version = "0.5.1";
 my $RCSRev = '$Id$';
 my $MainEventsFile = "events.dpd";			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)

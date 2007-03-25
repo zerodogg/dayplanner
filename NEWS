@@ -1,7 +1,18 @@
 Day planner version history
 **************************
 
-Version 0.5 (Unreleased)
+Version 0.5.1 (Release on the 25th of March 2007)
+------------------------
+* Client (dayplanner)
+- Fixed a bug that caused Day Planner to need a restart in order
+  to get the time of an event updated in the main window after
+  changing it.
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
+Version 0.5 (Released on the 15th of March 2007)
 ------------------------
 * Client (dayplanner)
 - Now uses the DP::iCalendar module for iCalendar stuff
