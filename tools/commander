@@ -26,8 +26,40 @@ use Getopt::Long;
 
 my $socket;			# The socket
 my $Is_Interactive;
-my $SocketName = "$ENV{HOME}/.dayplanner/dayplannerd";	# Default socket
+my $ConfDir = DetectConfDir();
+my $SocketName = "$ConfDir/dayplannerd"; # Default socket
 my $RCSRev = '$Id$';
+
+# Purpose: Detect the user config  directory
+# Usage: DetectConfDir();
+sub DetectConfDir {
+	# First detect the HOME directory, and set $ENV{HOME} if successfull,
+	# if not we just fall back to the value of $ENV{HOME}.
+	my $HOME = getpwuid($>);
+	if(-d $HOME) {
+		$ENV{HOME} = $HOME;
+	}
+	# Compatibility mode, using the old conf dir
+	if(-d "$ENV{HOME}/.dayplanner") {
+		return("$ENV{HOME}/.dayplanner");
+	}
+	# Check for XDG_CONFIG_HOME in the env
+	my $XDG_CONFIG_HOME;
+	if(defined($ENV{XDG_CONFIG_HOME})) {
+		$XDG_CONFIG_HOME = $ENV{XDG_CONFIG_HOME};
+	} else {
+		if(defined($ENV{HOME}) and length($ENV{HOME})) {
+			# Verify that HOME is set properly
+			if(not -d $ENV{HOME}) {
+				die("$ENV{HOME}: does not exist\n");
+			}
+			$XDG_CONFIG_HOME = "$ENV{HOME}/.config";
+		} else {
+			die("The environment variable HOME is missing\n");
+		}
+	}
+	return("$XDG_CONFIG_HOME/dayplanner");
+}
 
 # Purpose: Print formatted --help messages
 # Usage: PrintHelp("-short", "--long", "Description");
@@ -197,9 +229,6 @@ GetOptions(
 	'r|v|version' => sub {
 		print "Day planner commander $RCSRev\n";
 		exit(0);
-	},
-	't|test' => sub {
-		$SocketName = "$ENV{HOME}/.dayplanner/debug/dayplannerd";
 	},
 
 ) or die "See --help for more information\n";
