@@ -17,6 +17,7 @@ cp ../dayplanner-notifier .
 # This works around an damned annoying bug in xgettext when using --keyword=DP_gettext.
 # Changing it to just gettext allows us to use the default, which isn't broken.
 perl -pi -e 's#gettext\(\@\_\)#BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG#g;s#DP_gettext#gettext(#g' ./dayplanner ./dayplanner-notifier
+echo -n "."
 xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ../po/dayplanner.pot -d dayplanner --add-comments="TRANSLATORS" --language perl ./dayplanner ./dayplanner-notifier
 cd ..
 rm -rf $POTGEN
@@ -27,4 +28,4 @@ s%^# This file is distributed under the same license as the PACKAGE package.%# T
 s%^(#.+) YEAR %\$1 $YEAR %g" ./po/dayplanner.pot
 echo -n "."
 cd ..
-echo "done"
+echo " done."
