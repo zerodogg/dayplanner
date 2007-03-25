@@ -8,6 +8,9 @@ Version 0.6 (Unreleased)
 - Removed the frame around the widgets in the add/edit event windows
 - Restructured the preferences window
 - Added the Day Planner services calendar synchronization system
+- Now complies with the FreeDesktop basedir spec by using ~/.config/dayplanner
+  as configuration directory for new users (the old ~/.dayplanner is used if
+  it exists)
 
 * Notifier (dayplanner-notifier)
 

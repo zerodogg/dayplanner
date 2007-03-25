@@ -8,7 +8,6 @@ may be subject to change.
 
 * Version 0.6
 - - - - - - -
-- Better HOME detection
 - Add support for choosing how long an event lasts
 - Add support for
 	- Repeat every X [days|months]
