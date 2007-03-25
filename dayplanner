@@ -1031,7 +1031,7 @@ sub LoadConfig {
 # Usage: CreateSaveDir();
 sub CreateSaveDir {
 	unless (-e $SaveToDir) {
-		mkdir($SaveToDir) or do {
+		mkpath($SaveToDir) or do {
 				DPError(DP_gettext(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
 				unless(-d $SaveToDir) {
 					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
@@ -4915,13 +4915,6 @@ GetOptions (
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
-
-# If for some obscure reason HOME isn't set we can't continue
-unless(defined($ENV{HOME}) and $ENV{HOME}) {
-	Gtk2Init();
-	DPError(sprintf(DP_gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
-	die(sprintf(DP_gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
-}
 
 Gtk2Init();
 Gtk2->init_add(\&InitDPCore);
