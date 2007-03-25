@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+# icalinfo - Get simple information about an iCalendar file
+# Copyright (C) Eskild Hustvedt 2007
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use warnings;
+use FindBin;			# So that we can detect module dirs during runtime
+use Benchmark;
+# So that we can use a local Date::HolidayParser
+use lib "$FindBin::RealBin/../modules/";
+use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
+use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
+
+die("Requires an option: path to an ics file\n") if not @ARGV;
+die("$ARGV[0] doesn't exist") unless -r $ARGV[0];
+
+# Initial information
+{
+	print "Information about $ARGV[0]:\n";
+	my $iCalendar = DP::iCalendar->new($ARGV[0]);
+	my $Entries;
+	# NOTE: This abuses DP::iCalendar and might break at any time
+	foreach(keys(%{$iCalendar->{RawCalendar}})) {
+		$Entries++;
+	}
+	print " Entries: $Entries\n";
+}
+# Benchmarking
+{
+	print "Benchmarks of DP::iCalendar:\n";
+	timethis(0, sub { my $iCalendar = DP::iCalendar->new($ARGV[0])}, "Object creation");
+	timethis(0, sub {
+			my $iCalendar = DP::iCalendar->new($ARGV[0]);
+			$iCalendar->get_years();
+			$iCalendar->get_months(2007);
+			$iCalendar->get_monthinfo(2007,2);
+			$iCalendar->get_dateinfo(2007,2,19);
+			$iCalendar->get_timeinfo(2007,2,19,"02:15");
+		}, "Information getting for 2007.02.19 at 02:15" );
+	timethis(0, sub {
+			my $iCalendar = DP::iCalendar->new($ARGV[0]);
+			$iCalendar->reload();
+		}, "Data reload");
+	my $PreCOBJ = DP::iCalendar->new($ARGV[0]);
+	timethis(0, sub {
+			$PreCOBJ->get_years();
+			$PreCOBJ->get_months(2007);
+			$PreCOBJ->get_monthinfo(2007,2);
+			$PreCOBJ->get_dateinfo(2007,2,19);
+			$PreCOBJ->get_timeinfo(2007,2,19,"02:15");
+		}, "Information getting using precreated object" );
+	timethis(0, sub {
+			$PreCOBJ->reload();
+		}, "Data reload using precreated object");
+}
