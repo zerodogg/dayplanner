@@ -1668,29 +1668,6 @@ sub Set_DayChangeTimer {
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
 }
 
-# Purpose: Call the main initialization functions
-# Usage: MainInit();
-sub MainInit {
-	my $NoGui = $_[0];
-	my $FirstStartup;
-	# Set SaveToDir and HolidayFile
-	$SaveToDir = "$ENV{HOME}/.dayplanner" unless(defined($SaveToDir));	# The configuration and eventlist directory
-	$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
-
-	unless(-d $SaveToDir) {
-		$FirstStartup =	FirstStartup($NoGui);
-	}
-
-	# Load the configuration file
-	LoadConfig();
-	# Load the calendar
-	LoadCalendar();
-	# Load the internal state file
-	LoadStateFile();
-	# Set up holidays
-	HolidaySetup();
-	return($FirstStartup);
-}
 
 # Purpose: Convert AM/PM to internal 24H time
 # Usage: AMPM_To24(TIME [AM|PM]);
@@ -4758,7 +4735,34 @@ sub DrawMainWindow {
 # Initialization
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Initialize the main program
+# Purpose: Call the main data initialization functions
+# Usage: MainInit();
+sub MainInit {
+	my $NoGui = $_[0];
+	my $FirstStartup;
+	# Set SaveToDir if it isn't already set
+	if(not defined($SaveToDir)) {
+		$SaveToDir = DetectConfDir();
+	}
+	# Set HolidayFile
+	$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
+
+	unless(-d $SaveToDir) {
+		$FirstStartup =	FirstStartup($NoGui);
+	}
+
+	# Load the configuration file
+	LoadConfig();
+	# Load the calendar
+	LoadCalendar();
+	# Load the internal state file
+	LoadStateFile();
+	# Set up holidays
+	HolidaySetup();
+	return($FirstStartup);
+}
+
+# Purpose: Initialize the core program
 # Usage: Gtk2->init_add(\&InitDPCore);
 sub InitDPCore {
 	DP_InitI18n();
@@ -4787,6 +4791,43 @@ sub InitDPCore {
 	Set_DayChangeTimer();
 }
 
+# Purpose: Detect the user config  directory
+# Usage: DetectConfDir();
+sub DetectConfDir {
+	# First detect the HOME directory, and set $ENV{HOME} if successfull,
+	# if not we just fall back to the value of $ENV{HOME}.
+	my $HOME = getpwuid($>);
+	if(-d $HOME) {
+		$ENV{HOME} = $HOME;
+	}
+	# Compatibility mode, using the old conf dir
+	if(-d "$ENV{HOME}/.dayplanner") {
+		return("$ENV{HOME}/.dayplanner");
+	}
+	# Check for XDG_CONFIG_HOME in the env
+	my $XDG_CONFIG_HOME;
+	if(defined($ENV{XDG_CONFIG_HOME})) {
+		$XDG_CONFIG_HOME = $ENV{XDG_CONFIG_HOME};
+	} else {
+		if(defined($ENV{HOME}) and length($ENV{HOME})) {
+			# Verify that HOME is set properly
+			if(not -d $ENV{HOME}) {
+				DP_InitI18n();
+				printf(DP_gettext("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME");
+				Gtk2Init();
+				DPError(sprintf(DP_gettext("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME"));
+				die("\n");
+			}
+			$XDG_CONFIG_HOME = "$ENV{HOME}/.config";
+		} else {
+			Gtk2Init();
+			DPError(sprintf(DP_gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
+			die(sprintf(DP_gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
+		}
+	}
+	return("$XDG_CONFIG_HOME/dayplanner");
+}
+
 # Get commandline options
 GetOptions (
 	'help|h' => sub {
@@ -4810,8 +4851,10 @@ GetOptions (
 		exit(0);
 	},
 	'debuginfo' => sub {
+		$SaveToDir = DetectConfDir();
 		print "Day Planner version $Version\n";
 		print "RCS revision: $RCSRev\n";
+		print "Using config dir: $SaveToDir\n";
 		print "Gtk2 version ", join (".", Gtk2->GET_VERSION_INFO),"\n";
 		if(eval("use Locale::gettext;1")) {
 			print "Locale::gettext version: $Locale::gettext::VERSION\n";
@@ -4841,8 +4884,11 @@ GetOptions (
 	},
 	'test|t:i' => sub {
 		my $NumberPrefix = $_[1] ? $_[1] : "";
-		DPIntInfo("Running in test mode (using ~/.dayplanner/debug$NumberPrefix)");
-		$SaveToDir = "$ENV{HOME}/.dayplanner/debug$NumberPrefix";
+		$SaveToDir = DetectConfDir();
+		$SaveToDir .= "/debug$NumberPrefix";
+		my $Dir = $SaveToDir;
+		$Dir =~ s/^$ENV{HOME}/~/g;
+		DPIntInfo("Running in test mode (using $Dir)");
 	},
 	'confdir=s' => sub {
 		if (-e $_[1]) {
@@ -4875,14 +4921,6 @@ unless(defined($ENV{HOME}) and $ENV{HOME}) {
 	Gtk2Init();
 	DPError(sprintf(DP_gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
 	die(sprintf(DP_gettext("The environment variable %s is not set! Unable to continue\n"), "HOME"));
-}
-# The same goes for if HOME doesn't exist or isn't a directory
-unless(-e $ENV{HOME} and -d $ENV{HOME}) {
-	DP_InitI18n();
-	printf(DP_gettext("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME");
-	Gtk2Init();
-	DPError(sprintf(DP_gettext("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME"));
-	die("\n");
 }
 
 Gtk2Init();
