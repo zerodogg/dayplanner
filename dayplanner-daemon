@@ -246,6 +246,37 @@ sub FindSleepDuration {
 # CORE HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Detect the user config  directory
+# Usage: DetectConfDir();
+sub DetectConfDir {
+	# First detect the HOME directory, and set $ENV{HOME} if successfull,
+	# if not we just fall back to the value of $ENV{HOME}.
+	my $HOME = getpwuid($>);
+	if(-d $HOME) {
+		$ENV{HOME} = $HOME;
+	}
+	# Compatibility mode, using the old conf dir
+	if(-d "$ENV{HOME}/.dayplanner") {
+		return("$ENV{HOME}/.dayplanner");
+	}
+	# Check for XDG_CONFIG_HOME in the env
+	my $XDG_CONFIG_HOME;
+	if(defined($ENV{XDG_CONFIG_HOME})) {
+		$XDG_CONFIG_HOME = $ENV{XDG_CONFIG_HOME};
+	} else {
+		if(defined($ENV{HOME}) and length($ENV{HOME})) {
+			# Verify that HOME is set properly
+			if(not -d $ENV{HOME}) {
+				die("$ENV{HOME}: does not exist\n");
+			}
+			$XDG_CONFIG_HOME = "$ENV{HOME}/.config";
+		} else {
+			die("The environment variable HOME is missing\n");
+		}
+	}
+	return("$XDG_CONFIG_HOME/dayplanner");
+}
+
 # Purpose: Output a debugging message if needed
 # Usage: IntDebug(MESSAGE);
 sub IntDebug {
@@ -896,7 +927,9 @@ GetOptions (
 ) or die "See $0 --help for more information\n";
 
 # Set some settings according to commandline arguments
-$DayplannerDir = "$ENV{HOME}/.dayplanner" unless defined($DayplannerDir);
+if(not defined($DayplannerDir)) {
+	$DayPlannerDir = DetectConfDir();
+}
 $DaemonSocket = "$DayplannerDir/$SocketName";
 
 # Verify the dir
