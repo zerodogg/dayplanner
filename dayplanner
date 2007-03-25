@@ -674,15 +674,7 @@ sub DPS_Perform {
 			$DPServices{$Option} = $UserConfig{"DPS_$Option"};
 		}
 	}
-	# Make sure the IO::Socket::SSL module is available and loaded
-	if(not $DPServices{IO_SOCKET_SSL_LOADED}) {
-		if(not eval("use IO::Socket::SSL; 1")) {
-			DPError(DP_gettext("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
-			return(undef);
-		} else {
-			$DPServices{IO_SOCKET_SSL_LOADED} = 1;
-		}
-	}
+	return if not DPS_SSLSocketTest();
 	# Create the progress window
 	if($Gtk2Init) {
 		$MainWindow->set_sensitive(0);
@@ -712,6 +704,24 @@ sub DPS_Perform {
 	DPS_Disconnect();
 	$GuiEnded->();
 	return(1);
+}
+
+# Purpose: Test for IO::Socket::SSL
+# Usage: DPS_SSLSocketTest();
+sub DPS_SSLSocketTest {
+	# Make sure the IO::Socket::SSL module is available and loaded
+	if(not $DPServices{IO_SOCKET_SSL_LOADED}) {
+		if(not eval("use IO::Socket::SSL; 1")) {
+			if (not $DPServices{IO_SOCKET_SSL_ERR_DISPLAYED}) {
+				DPError(DP_gettext("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
+			}
+			$DPServices{IO_SOCKET_SSL_ERR_DISPLAYED} = 1;
+			return(undef);
+		} else {
+			$DPServices{IO_SOCKET_SSL_LOADED} = 1;
+			return(1);
+		}
+	}
 }
 
 # Purpose: Back up data to ~/.dayplanner/ before getting data
@@ -4319,8 +4329,10 @@ sub PreferencesWindow {
 	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
 	$EnableDisableCButton->signal_connect('toggled' => sub {
 			if($EnableDisableCButton->get_active) {
-				$UserConfig{DPS_Enable} = 1;
-				$Config_Table->set_sensitive(1);
+				if(DPS_SSLSocketTest()) {
+					$UserConfig{DPS_Enable} = 1;
+					$Config_Table->set_sensitive(1);
+				}
 			} else {
 				$UserConfig{DPS_Enable} = 0;
 				$Config_Table->set_sensitive(0);
