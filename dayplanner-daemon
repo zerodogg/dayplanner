@@ -928,7 +928,7 @@ GetOptions (
 
 # Set some settings according to commandline arguments
 if(not defined($DayplannerDir)) {
-	$DayPlannerDir = DetectConfDir();
+	$DayplannerDir = DetectConfDir();
 }
 $DaemonSocket = "$DayplannerDir/$SocketName";
 
