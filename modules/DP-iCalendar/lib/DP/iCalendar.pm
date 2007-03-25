@@ -229,7 +229,7 @@ sub add {
 		carp("Refusing to add a iCalendar entry without a DTSTART.");
 		return(undef);
 	}
-	my $UID = _UID($Hash{DTSTART});
+	my $UID = $self->_UID($Hash{DTSTART});
 	# FIXME: There are much more efficient ways to do this.
 	$self->{OrderedCalendar} = {};
 	$self->_ChangeEntry($UID,%Hash);
@@ -497,7 +497,7 @@ sub _LoadFile {
 			$Year =~ s/^0*//;
 			$Month =~ s/^0*//;
 			$Day =~ s/^0*//;
-			$UID = _UID($Year.$Month.$Day);
+			$UID = $self->_UID($Year.$Month.$Day);
 		} else {
 			$UID = $Current->{UID};
 		}
@@ -521,7 +521,7 @@ sub _LoadFile {
 						}
 					}
 				}
-				$UID = _UID($Current->{DTSTART}) if($Reassign);
+				$UID = $self->_UID($Current->{DTSTART}) if($Reassign);
 			} else {
 				# Just overwrite it with this one
 				$self->{RawCalendar}{$UID} = {};
@@ -642,9 +642,10 @@ sub _UnSafe {
 }
 
 # Purpose: Get a unique ID for an event
-# Usage: $iCalendar .= iCal_UID($Year?$Month$Day$Hour?$Minute, $Summary);
+# Usage: $iCalendar .= $self->_UID($Year?$Month$Day$Hour?$Minute);
 # TODO: Make sure it is unique!
 sub _UID {
+	my $self = shift;
 	my $NonRandom = shift;
 	chomp($NonRandom);
 	if($NonRandom) {
@@ -652,7 +653,12 @@ sub _UID {
 	} else {
 		$NonRandom = int(rand(10000));
 	}
-	return("dayplanner-" . time() . $NonRandom . int(rand(10000)));
+	while(1) {
+		my $UID = "dayplanner-" . time() . $NonRandom . int(rand(10000));
+		if(not defined($self->{RawCalendar}{$UID})) {
+			return($UID);
+		}
+	}
 }
 
 # Purpose: Append a "0" to a number if it is only one digit.
@@ -662,6 +668,20 @@ sub _AppendZero {
 		return("0$_[0]");
 	}
 	return($_[0]);
+}
+
+# Purpose: Parse an RRULE
+# Usage: _RRULE_Parser(UID);
+# Returns a hash containing the following fields:
+# 	...
+sub _RRULE_Parser {
+	print "Stub\n";
+}
+
+# Purpose: Parse an RRULE and add to the hash
+# Usage: _RRULE_Handler(UID);
+sub _RRULE_Handler {
+	print "Stub\n";
 }
 
 # Purpose: Generate the formatted calendar from the raw calendar
@@ -683,10 +703,10 @@ sub _GenerateCalendar {
 		if($Current->{RRULE}) {
 			if($Current->{RRULE} =~ /YEARLY/) {
 				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
-				next unless defined($Current->{DESCRIPTION});
+				#next unless defined($Current->{DESCRIPTION});
 			} else {
 				_WarnOut("Unhandled RRULE: $Current->{RRULE}");
-				next unless defined($Current->{DESCRIPTION});
+				#next unless defined($Current->{DESCRIPTION});
 			}
 		} else {
 			# Not recurring
