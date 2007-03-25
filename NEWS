@@ -44,12 +44,12 @@ Version 0.5 (Released on the 15th of March 2007)
 * Notifier (dayplanner-notifier)
 - Now doesn't set the skip_taskbar_hint on the notification window
 - Now sets the urgency hint on the notification window when possible
+- No longer *requires* Locale::gettext (although it is recommended)
 
 * Daemon (dayplanner-daemon)
 - Cleanups
 - iCalendar is now the main internal data format
 - Can now be used with old versions of Locale::gettext
-- No longer *requires* Locale::gettext (although it is recommended)
 
 Version 0.4.1 (Released on the 8th of January 2007)
 ------------------------
