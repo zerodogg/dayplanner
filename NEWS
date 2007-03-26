@@ -15,6 +15,7 @@ Version 0.6 (Unreleased)
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
+- Fixed an issue with the pre-notification code and full-day events.
 
 Version 0.5.1 (Release on the 25th of March 2007)
 ------------------------
