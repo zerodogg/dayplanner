@@ -132,7 +132,7 @@ sub DP_InitI18n {
 	if(eval("use Locale::gettext;1")) {
 		my $BindTo;
 		my $Legacy;
-		if($Locale::gettext::VERSION > "1.04") {
+		if($Locale::gettext::VERSION > 1.04) {
 			$Legacy = 0;
 		} else {
 			$Legacy = 1;
@@ -758,7 +758,7 @@ sub DPS_Connect {
 	# Process errors if any occurred
 	if($Error) {
 		# If we have already displayed an error to the user this session, don't do it again
-		if(defined($DPServices{Offline}) and $DPServices{Offline} eq 1) {
+		if(defined($DPServices{Offline}) and $DPServices{Offline} == 1) {
 			DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
 			return(undef);
 		}
