@@ -722,6 +722,7 @@ sub DPS_SSLSocketTest {
 			return(1);
 		}
 	}
+	return(1);
 }
 
 # Purpose: Back up data to ~/.dayplanner/ before getting data
