@@ -673,7 +673,11 @@ sub _AppendZero {
 # Purpose: Parse an RRULE
 # Usage: _RRULE_Parser(UID);
 # Returns a hash containing the following fields:
-# 	...
+# 	MONTHLY => TRUE/FALSE (if it should reoccur monthly)
+# 	YEARLY => TRUE/FALSE (if it should reoccur yearly)
+# 	DAILY => TRUE FALSE (if it shoudld reoccur daily)
+# Caller is expected to check EXRULE and EXDATE themselves.
+# See _RRULE_Handler.
 sub _RRULE_Parser {
 	print "Stub\n";
 }
@@ -703,10 +707,8 @@ sub _GenerateCalendar {
 		if($Current->{RRULE}) {
 			if($Current->{RRULE} =~ /YEARLY/) {
 				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
-				#next unless defined($Current->{DESCRIPTION});
 			} else {
 				_WarnOut("Unhandled RRULE: $Current->{RRULE}");
-				#next unless defined($Current->{DESCRIPTION});
 			}
 		} else {
 			# Not recurring
