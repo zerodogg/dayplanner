@@ -4416,21 +4416,24 @@ sub PreferencesWindow {
 	# Handle closing
 	$PreferencesWindow->signal_connect("destroy" => sub { 
 			$MainWindow->set_sensitive(1);
-			if(not($UserConfig{DPS_user} eq $UserEntry->get_text())) {
+			if(not defined($UserConfig{DPS_user}) or (not($UserConfig{DPS_user} eq $UserEntry->get_text()))) {
 				$UserConfig{DPS_user} = $UserEntry->get_text();
 				$DPSWasStatus = 0;
 			}
-			if(not($UserConfig{DPS_pass} eq $PasswordEntry->get_text())) {
+			if(not defined($UserConfig{DPS_pass}) or (not($UserConfig{DPS_pass} eq $PasswordEntry->get_text()))) {
 				$UserConfig{DPS_pass} = $PasswordEntry->get_text();
 				$DPSWasStatus = 0;
 			}
-			if(not($UserConfig{DPS_host} eq $HostEntry->get_text())) {
+			if(not defined($UserConfig{DPS_host}) or (not($UserConfig{DPS_host} eq $HostEntry->get_text()))) {
 				$UserConfig{DPS_host} = $HostEntry->get_text();
 				$DPSWasStatus = 0;
 			}
-			if(not($UserConfig{DPS_port} eq $PortSpinner->get_value())) {
-				$UserConfig{DPS_port} = $PortSpinner->get_value();
-				$DPSWasStatus = 0;
+			if(not defined($UserConfig{DPS_port}) or not($UserConfig{DPS_port} eq $PortSpinner->get_value())) {
+				# Don't write the port if it is currently empty and DPS isn't enabled
+				if (defined($UserConfig{DPS_port}) or ($UserConfig{DPS_Enable})) {
+					$UserConfig{DPS_port} = $PortSpinner->get_value();
+					$DPSWasStatus = 0;
+				}
 			}
 			WriteConfig();
 			# Synchronize if DPS settings have been changed and it is enabled
