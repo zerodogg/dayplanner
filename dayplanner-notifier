@@ -380,6 +380,7 @@ sub GtkNotifier {
 		$NotifyDialog->set_title(DP_gettext("Day Planner event"));
 		$NotifyDialog->set_skip_pager_hint(0);
 		$NotifyDialog->set_skip_taskbar_hint(0);
+		$NotifyDialog->set_size_request(300,-1);
 		if(Gtk2->CHECK_VERSION(2,10,0)) {
 			$NotifyDialog->set_urgency_hint(1);
 		}
