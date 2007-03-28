@@ -790,7 +790,7 @@ GetOptions (
 ) or die "See $0 --help for more information\n";
 
 SetStatus("starting");
-umask(077);
+umask(oct(77));
 LoadServicesConfig($ConfFile);
 LoadData();
 InitNetwork();
