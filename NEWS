@@ -11,6 +11,7 @@ Version 0.6 (Unreleased)
 - Now complies with the FreeDesktop basedir spec by using ~/.config/dayplanner
   as configuration directory for new users (the old ~/.dayplanner is used if
   it exists)
+- Many usability improvements
 
 * Notifier (dayplanner-notifier)
 
