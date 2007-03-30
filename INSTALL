@@ -13,8 +13,8 @@ There are two ways to install Day Planner locally. The first would be to
 simply run ./dayplanner from this directory (and ./devel-tools/BuildLocale first
 if you want localization).
 
-The second one properly installs day planner. Run ./devel-tools/installer/InstallLocal
-This will start the day planner installer used in the day planner packages.
+The second one properly installs Day Planner. Run ./devel-tools/installer/InstallLocal
+This will start the Day Planner installer used in the Day Planner packages.
 The installer runs ./devel-tools/BuildLocale for you, so if you use the installer
 you don't need to run it manually.
 
@@ -45,9 +45,9 @@ These files should go into either /usr/share/dayplanner/ or /usr/local/dayplanne
 - art/dayplanner-about.png
 
 If you place the executeables in the same dir as the *png's then the png's can be anywhere
-in the filesystem. A trick if day planner can't detect its images properly is to
+in the filesystem. A trick if Day Planner can't detect its images properly is to
 place the executeables in the same directory as the art/ subdirectory and then
-just symlink the executeables into $PATH, day planner handles $PATH fine.
+just symlink the executeables into $PATH, Day Planner handles $PATH fine.
 
 Lastly, for internationalization you want to run ./devel-tools/BuildLocale /dir.
 On most systems this would be: ./devel-tools/BuildLocale /usr/locale/
@@ -57,9 +57,9 @@ or as it would be for RPM packagers:
 2.1 - SPECIAL NOTES CONCERNING THE Date::HolidayParser MODULE AND PACKAGING
 ---------------------------------------------------------------------------
 Most likely you will want to package Date::HolidayParser seperately from
-day planner. You can do this by getting the source tarball from
+Day Planner. You can do this by getting the source tarball from
 CPAN. However, if for some reason you want to package the module along
-with day planner it is contained in ./modules/Date-HolidayParser/.
+with Day Planner it is contained in ./modules/Date-HolidayParser/.
 Read the README in that directory for installation instructions and
 check your distributions perl module packaging guidelines.
 

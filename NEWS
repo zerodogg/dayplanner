@@ -1,4 +1,4 @@
-Day planner version history
+Day Planner version history
 **************************
 
 Version 0.6 (Unreleased)
@@ -111,7 +111,7 @@ Version 0.3 (Released on the 21st of September 2006)
 - Will now prompt the user to migrate plan data on first run
 - Reorganization of the menus
 - More agressive use of gtk2 stock items to reduce translator load
-- Can now import and export the day planner data format (dpf)
+- Can now import and export the Day Planner data format (dpf)
 - Can now export and import the iCalendar format
 - Can now export to HTML
 - Can now import data from "plan" (previously done by a seperate script)
@@ -197,13 +197,13 @@ Version 0.1.1 (Released on the 24th of May 2006)
 - Attempts to restart dayplanner-daemon when recieving SIGPIPE
 - Now it won't attempt to tell the daemon to reload its configuration files
   when the daemon hasn't been started. This avoids a useless (and harmless)
-  warning the first time day planner is started.
+  warning the first time Day Planner is started.
 - Fixed a bug that would make the entire window insensitive when you clicked
   edit without having something to edit selected
 - Handles daemon errors better and is more verbose about them
 - Fixed a simple fixme where we looped over a command without having to
 - Added distro information to --debuginfo
-- Fixed a bug where day planner would freeze if the daemon shut down
+- Fixed a bug where Day Planner would freeze if the daemon shut down
   while it was running.
 - Fixed localization
 - Added Norwegian translation
