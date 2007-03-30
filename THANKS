@@ -1,16 +1,20 @@
-Thanks to all the translators of day planner. Also thanks to the authors
-of the following perl modules and libraries, of which without them
-day planner would not exist (or be alot harder to write).
-- Eskild
+I would like to thank all of the Day Planner translators. All of their
+names can be found in the respective po-files.
+I would also like to thank the following individuals:
+- Jason Holland for his great art and helpful comments on phrasing
+  user information
+- Michal Spáda for his invaluable comments and suggestions
+- Matthew Paul Thomas for his extremely useful usability comments and
+  suggestions
 
-The Gtk2 perl bindings
-Data::Dumper
-Getopt::Long
-Cwd
-File::Basename
-IO::Socket
-IO::Select
-Locale::gettext
-...and ofcourse gtk2 and perl itself
+And lastly, I would like to thank the authors of the perl modules that
+Day Planner uses, which include Cwd Data::Dumper Digest::MD5 File::Basename
+File::Copy File::Path FindBin Getopt::Long Gtk2 Gtk2::Gdk::Keysyms
+Gtk2::SimpleList IO::Select IO::Socket IO::Socket::SSL Locale::gettext
+MIME::Base64 and POSIX
+
+Thanks to you all,
+Eskild Hustvedt
+Lead developer, Day Planner
 
 $Id$
