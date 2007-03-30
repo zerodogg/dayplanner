@@ -146,7 +146,7 @@ $Dir = realpath($Dir);
 # Create the htaccess file
 my $HtAccess;
 open($HtAccess, ">", "$Dir/.htaccess");
-print $HtAccess "AuthType Basic\nAuthName 'Day planner for $User'\nAuthUserFile $Dir/.htpasswd\nRequire user $User";
+print $HtAccess "AuthType Basic\nAuthName 'Day Planner for $User'\nAuthUserFile $Dir/.htpasswd\nRequire user $User";
 close($HtAccess);
 my $HtPasswd;
 open($HtPasswd, ">", "$Dir/.htpasswd");
@@ -166,7 +166,7 @@ open($ICS_Target, ">", "$Dir/.tmp/file.ics");
 print $ICS_Target decode_base64($ICS_Content);
 close($ICS_Target);
 
-# Run day planner to generate the html
+# Run Day Planner to generate the html
 system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --importical $Dir/.tmp/file.ics");
 system("rm -f $Dir/*.html");
 open(my $TempHtml, ">", "$Dir/index.html");

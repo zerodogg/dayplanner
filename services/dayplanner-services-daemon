@@ -278,7 +278,7 @@ sub DataCorruption {
 		$Config{AdminMail},
 		"Data corruption for user $User!",
 		# TODO: Re-add port to this one
-		"The data for the user $User was found corrupt by the\nday planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe day planner services daemon",
+		"The data for the user $User was found corrupt by the\nDay Planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe Day Planner services daemon",
 	);
 	if($Error) {
 		IntVerbose("WARNING: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Error");
@@ -757,7 +757,7 @@ GetOptions (
 	'port|p=i' => \@Ports,
 	'switchuid=i' => \$DropToUID,
 	'help|h' => sub {
-		print "Day planner services daemon version $Version\n\n";
+		print "Day Planner services daemon version $Version\n\n";
 		PrintHelp("-d", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
 		PrintHelp("", "--version", "Display version information and exit");
 		PrintHelp("-h,", "--help", "Display this help screen");
@@ -782,7 +782,7 @@ GetOptions (
 		$OutputVeryVerbose = 1;
 	},
 	'version' => sub {
-		print "Day planner services daemon version $Version\n";
+		print "Day Planner services daemon version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},

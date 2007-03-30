@@ -148,7 +148,7 @@ sub WriteData {
 		print "WARNING: Unable to write data to $DataDir/users.conf!\n";
 		return(undef);
 	};
-	print $WriteTo "# Day planner services user configuration file\n";
+	print $WriteTo "# Day Planner services user configuration file\n";
 	$Data::Dumper::Purity = 1;
 	$Data::Dumper::Sortkeys = 1;
 	$Data::Dumper::Indent = 1;
@@ -585,7 +585,7 @@ sub MainMenu {
 	LoadData();
 	while(1) {
 		ClearScreen();
-		print "Welcome to the day planner services administration console\n";
+		print "Welcome to the Day Planner services administration console\n";
 		DaemonUptime("SILENT");
 		DaemonVersion("SILENT");
 		print "\n";
@@ -595,7 +595,7 @@ sub MainMenu {
 		print "C - Change the level of a user\n";
 		print "V - View the user list\n";
 		print "I - View information about a user\n";
-		print "R - Tell the day planner services daemon to reload the userlist\n";
+		print "R - Tell the Day Planner services daemon to reload the userlist\n";
 		print "U - Display the daemon uptime\n";
 		print "X - View the expert menu\n";
 		print "Q - Quit\n";

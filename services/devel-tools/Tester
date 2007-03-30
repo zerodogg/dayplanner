@@ -38,7 +38,7 @@ my $Version = '$Id$';
 
 my %InternalConfig;
 
-# Purpose: Get day planner data encoded in base64
+# Purpose: Get Day Planner data encoded in base64
 # Usage: my ($Data, $MD5Sum) = DPF_GetData(ONLY_BIRTHDAYS?, ENCRYPT?, NO_EOL?);
 sub DPF_GetData {
 	my ($OnlyBirthdays, $DPEncrypt, $Base64_NoEOL) = @_;
@@ -68,7 +68,7 @@ sub DPF_GetData {
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Connect to a day planner services server.
+# Purpose: Connect to a Day Planner services server.
 # Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
 # 	This shouldn't be called directly. Use DPS_ConnectHandler
 sub DPS_Connect {
@@ -115,7 +115,7 @@ sub DPS_ErrorIfNeeded {
 	}
 }
 
-# Purpose: Disconnect from a day planner services daemon
+# Purpose: Disconnect from a Day Planner services daemon
 # Usage: DPS_Disconnect();
 sub DPS_Disconnect {
 	my $Socket = $DPServices{socket};
@@ -124,7 +124,7 @@ sub DPS_Disconnect {
 	return(1);
 }
 
-# Purpose: Send data to a day planner services daemon and get the reply
+# Purpose: Send data to a Day Planner services daemon and get the reply
 # Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
 sub DPS_DataSegment {
 	my $Socket = $DPServices{socket};
@@ -134,7 +134,7 @@ sub DPS_DataSegment {
 	return($Data);
 }
 
-# Purpose: Get day planner data from a services server
+# Purpose: Get Day Planner data from a services server
 # Usage: DPS_GetData();
 sub DPS_GetData {
 	return unless DPS_ConnectHandler();
