@@ -4745,6 +4745,12 @@ sub DrawMainWindow {
 	# ==================================================================
 	# TOOLBAR
 	# ==================================================================
+	
+	# Tooltips
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+	
+	# Toolbar
 	$Toolbar = Gtk2::Toolbar->new();
 	$Toolbar->set_style('icons');
 	$LeftHandVBox->pack_end($Toolbar,0,0,0);
@@ -4752,12 +4758,16 @@ sub DrawMainWindow {
 	
 	# Delete button
 	$ToolbarDeleteButton = Gtk2::ToolButton->new_from_stock('gtk-delete');
+	$ToolbarDeleteButton->set_tooltip($Tooltips,DP_gettext('Delete the selected event'),'');
+	$Tooltips->set_tip($ToolbarDeleteButton,DP_gettext('Delete the selected event'));
 	$ToolbarDeleteButton->signal_connect('clicked' => \&DeleteEvent);
 	$Toolbar->insert($ToolbarDeleteButton,0);
 	$ToolbarDeleteButton->show();
 
 	# Edit button
 	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
+	$ToolbarEditButton->set_tooltip($Tooltips,DP_gettext('Edit the selected event'),'');
+	$Tooltips->set_tip($ToolbarEditButton,DP_gettext('Edit the selected event'));
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
 	$ToolbarEditButton->show();
@@ -4767,9 +4777,12 @@ sub DrawMainWindow {
 	$AddButton->signal_connect("clicked" => \&AddEvent);
 	$Toolbar->insert($AddButton,0);
 	$AddButton->show();
+	$AddButton->set_tooltip($Tooltips,DP_gettext('Add a new event'),'');
+	$Tooltips->set_tip($AddButton,DP_gettext('Add a new event'));
 
 	$Toolbar->get_nth_item(0)->set_is_important(1);
 	$Toolbar->get_nth_item(1)->set_is_important(1);
+	$Toolbar->set_tooltips(1);
 	
 	# Draw the initial eventlist
 	DrawEventlist();
