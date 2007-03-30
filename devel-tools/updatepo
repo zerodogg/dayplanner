@@ -34,7 +34,7 @@ sub SetLocale {
 SetLocale("C");
 
 unless(-d "./po" and -e "./devel-tools/buildpot") {
-	die("Please run me from the base of the day planner source tree (not the devel-tools/ dir)\n");
+	die("Please run me from the base of the Day Planner source tree (not the devel-tools/ dir)\n");
 }
 
 die("Pease install msgmerge before running me (usually included in the \"gettext\" package)\n") unless InPath("msgmerge");

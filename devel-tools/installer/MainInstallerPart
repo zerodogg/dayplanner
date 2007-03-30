@@ -154,7 +154,7 @@ if(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$AutoInstaller = 1;
 } else {
 	Gtk2->init();
-	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the day planner installation program. This will install day planner into a subdirectory of your home directory and put a day planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
+	my $Dialog = Gtk2::MessageDialog->new(undef, "modal", 'question', 'yes-no', "Welcome to the Day Planner installation program. This will install Day Planner into a subdirectory of your home directory and put a Day Planner icon on your desktop. All of this will be done automatically.\n\nDo you want to continue?");
 	$Dialog->set_skip_pager_hint(0);
 	$Dialog->set_skip_taskbar_hint(0);
 	$Dialog->set_title("Day Planner Installer");
@@ -254,7 +254,7 @@ print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Deskto
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL '[ -e "$HOME/.local/share/applications/dayplanner.desktop" ] && rm -f  "$HOME/.local/share/applications/dayplanner.desktop"' . "\n";
 print UNINSTALL "echo \"done\"\n";
-print UNINSTALL "[ \"\$1\" != \"quick\" ] && echo \"Day planner has been uninstalled.\"\n";
+print UNINSTALL "[ \"\$1\" != \"quick\" ] && echo \"Day Planner has been uninstalled.\"\n";
 print UNINSTALL "exit 0\n";
 close(UNINSTALL);
 SystemChild("chmod +x $InstallDirectory/uninstall.sh");
@@ -288,7 +288,7 @@ print ".";
 if(InPath("update-menus")) {
 	mkdir("$ENV{HOME}/.menu/") unless -d "$ENV{HOME}/.menu/";
 	open(MENU, ">$ENV{HOME}/.menu/dayplanner.menu");
-	print MENU "?package(%{name}):command=\"$InstallDirectory/dayplanner\"  icon=\"$InstallDirectory/art/dayplanner_48.png\"         needs=\"x11\"         section=\"Office/Time Management\"         title=\"Day planner\"         longtitle=\"An easy to use graphical day planner\"\n";
+	print MENU "?package(%{name}):command=\"$InstallDirectory/dayplanner\"  icon=\"$InstallDirectory/art/dayplanner_48.png\"         needs=\"x11\"         section=\"Office/Time Management\"         title=\"Day Planner\"         longtitle=\"An easy to use graphical Day Planner\"\n";
 	close(MENU);
 	# update-menus doesn't block, so it does more harm than good to use
 	# SystemChild().
@@ -301,7 +301,7 @@ print ".";
 print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$ProgressWin->{Window}->destroy();
-	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start day planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall day planner run $InstallDirectory/uninstall.sh");
+	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start Day Planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall Day Planner run $InstallDirectory/uninstall.sh");
 	$Finished->set_skip_pager_hint(0);
 	$Finished->set_skip_taskbar_hint(0);
 	$Finished->set_title("Day Planner Installer - Complete");

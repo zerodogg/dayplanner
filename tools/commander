@@ -215,7 +215,7 @@ $SIG{INT} = sub {				# Handle SIGINT correctly
 # Get commandline options
 GetOptions(
 	'h|help' => sub {
-		print "Day planner commander\n\n";
+		print "Day Planner commander\n\n";
 		print "Usage: " . basename($0) . " [PARAMETERS] [COMMAND]\n\n";
 		PrintHelp("-h", "--help", "Display this help screen");
 		PrintHelp("-s", "--socket", "Select an alternate socket");
@@ -227,7 +227,7 @@ GetOptions(
 	},
 	's|socket=s' => \$SocketName,
 	'r|v|version' => sub {
-		print "Day planner commander $RCSRev\n";
+		print "Day Planner commander $RCSRev\n";
 		exit(0);
 	},
 
@@ -244,7 +244,7 @@ my $HI_REPLY = <$socket>;
 if($Is_Interactive) {
 	# Print initial warning and welcomming message
 	print "WARNING: Use with care, you have RAW access to the daemon and I\n will NOT stop you from destroying data!\n\n";
-	print "Welcome to the day planner daemon commander\n";
+	print "Welcome to the Day Planner daemon commander\n";
 	print "Type !QUIT to quit, !HELP to view known daemon commands\n";
 	print "Daemon says $HI_REPLY\n";
 	

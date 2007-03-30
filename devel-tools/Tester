@@ -48,7 +48,7 @@ sub EN_12H_Gui {
 	StartApp($DPExec);
 
 	# Wait for application window to come up and become viewable. 
-	my ($GEditWinId) = WaitWindowViewable('Day planner');
+	my ($GEditWinId) = WaitWindowViewable('Day Planner');
 	if (!$GEditWinId) {
 		die("Unable to detect the window (en)\n");
 	}

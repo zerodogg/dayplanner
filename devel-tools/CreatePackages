@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # CreatePackages
-# Script to create day planner packages
+# Script to create Day Planner packages
 # $Id$
 # Copyright (C) Eskild Hustvedt 2006
 #
@@ -63,7 +63,7 @@ unless(-e "$OrigDir/devel-tools/installer") {
 	unless (-e "$OrigDir/devel-tools/installer") {
 		$OrigDir = "$OrigDir/../../";
 		unless (-e "$OrigDir/devel-tools/installer") {
-			die "failed - I'm giving up. Run me from the tools directory in the day planner source tree please.\n";
+			die "failed - I'm giving up. Run me from the tools directory in the Day Planner source tree please.\n";
 		}
 	}
 }
@@ -278,7 +278,7 @@ if($BuildInstaller) {
 	chdir($Makeself_Dir);
 	print "done\n";
 	print " Running makeself...";
-	if(system("./makeself.sh --nox11 $tempdir/installer/ dayplanner-$DPVersion.run 'Generic day planner installation script' ./StartInstaller &>/dev/null")) {
+	if(system("./makeself.sh --nox11 $tempdir/installer/ dayplanner-$DPVersion.run 'Generic Day Planner installation script' ./StartInstaller &>/dev/null")) {
 		die("failed - makeself command exited with a nonzero return value\n");
 	}
 	print "done\n";

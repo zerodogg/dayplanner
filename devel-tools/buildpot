@@ -1,5 +1,5 @@
 #!/bin/sh
-[ ! -f ./dayplanner ] && echo "Please run me from the directory that contains the day planner executeable perl source file" && exit 1
+[ ! -f ./dayplanner ] && echo "Please run me from the directory that contains the Day Planner executeable perl source file" && exit 1
 ! type xgettext &> /dev/null && echo "Please install xgettext before running me. It is usually included in the \"gettext\" package" && exit 1
 echo -n "Building po/dayplanner.pot..."
 # Get our current year

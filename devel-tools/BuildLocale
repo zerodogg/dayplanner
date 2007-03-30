@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # BuildLocale
-# Build the locale files and directory tree for day planner
+# Build the locale files and directory tree for Day Planner
 # Copyright (C) Eskild Hustvedt 2006
 #
 # This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ unless (-d $LocaleDir) {
 unless($NoAlias) {
 	unless (-e "$LocaleDir/README") {
 		open(README, ">", "$LocaleDir/README");
-		print README "This is a local locale tree for day planner. Much equal to that you would\n";
+		print README "This is a local locale tree for Day Planner. Much equal to that you would\n";
 		print README "find in /usr/share/locale/.";
 		close(README);
 	}

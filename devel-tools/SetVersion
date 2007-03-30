@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # SetVersion
-# Simple tool to change the current day planner version in all source
+# Simple tool to change the current Day Planner version in all source
 # files.
 # Copyright (C) Eskild Hustvedt 2006
 #
@@ -34,7 +34,7 @@ unless(-e "$OrigDir/dayplanner") {
         unless (-e "$OrigDir/dayplanner") {
                 $OrigDir = "$OrigDir/../../";
                 unless (-e "$OrigDir/dayplanner") {
-                        die "failed - I'm giving up. Run me from the devel-tools directory in the day planner source tree please.\n";
+                        die "failed - I'm giving up. Run me from the devel-tools directory in the Day Planner source tree please.\n";
                 }
         }
 }

@@ -1,4 +1,4 @@
-This directory contains various tools for users of day planner.
+This directory contains various tools for users of Day Planner.
 
-commander		The day planner daemon commander. Send raw commands
-			to a day planner daemon. Useful for testing
+commander		The Day Planner daemon commander. Send raw commands
+			to a Day Planner daemon. Useful for testing

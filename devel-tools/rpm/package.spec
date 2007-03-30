@@ -7,7 +7,7 @@
 %define	release	%mkrel %rel
 
 Name:		%{name} 
-Summary:	An easy and clean day planner
+Summary:	An easy and clean Day Planner
 Version:	%{version} 
 Release:	%{release} 
 Source0:	%{name}-%{version}.tar.bz2
@@ -19,9 +19,9 @@ BuildRequires:	perl
 BuildArch:	noarch
 
 %description
-Day planner is a simple time management program.
+Day Planner is a simple time management program.
 
-Day planner is designed to help you easily manage your time.
+Day Planner is designed to help you easily manage your time.
 It can manage appointments, birthdays and more. It makes sure you
 remember your appointments by popping up a dialog box reminding you about it.
 
@@ -30,14 +30,14 @@ This package also includes the Date::HolidayParser perl module
 %endif
 
 %package tools
-Summary: Various tools for use with day planner
+Summary: Various tools for use with Day Planner
 Group: Office
 Requires: dayplanner
 
 %description tools
-This package contains various tools for use with day planner:
+This package contains various tools for use with Day Planner:
 
-dayplanner-commander     : Send raw commands to the day planner daemon
+dayplanner-commander     : Send raw commands to the Day Planner daemon
 
 %prep
 %setup -q
@@ -81,7 +81,7 @@ cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
 	icon="dayplanner.png" \
 	needs="x11" \
 	section="Office/Time Management" \
-	title="Day planner" \
+	title="Day Planner" \
 	longtitle="An easy to use graphical day planner" \
 	xdg="true"
 EOF

@@ -79,7 +79,7 @@ the decoded and decrypted data.
 
 3 - Contained data
 ------------------
-The contained data should be valid perl code (day planner eval();s the data).
+The contained data should be valid perl code (Day Planner eval();s the data).
 This is the data contained within the ContainedData = setting. In the raw
 data file it is encoded in base64.
 
@@ -89,11 +89,11 @@ $DP_OnlyBirthdays = [Numeric true/false];
 
 The following variables are optional, but recommended:
 $DP_ExportedBy = VERSION;
-	The day planner version the data is exported by.
+	The Day Planner version the data is exported by.
 $DP_ExportedAt = UNIX TIME;
 	The unix time the file was exported at.
 
-When exported by a program other than day planner it is recommended that you set:
+When exported by a program other than Day Planner it is recommended that you set:
 $DP_ExportedBySoft = "SOFTWARE NAME";
 	The name of the software that exported it
 
@@ -101,7 +101,7 @@ You may add additional metadata there at will. It is recommended that any additi
 metadata be written like so: $X_DP_NAME = BLAH;, meaning that this specification
 favours additional metadata not specified here to be pefixed with an X_.
 
-This version of the day planner data format supports these two data hashes:
+This version of the Day Planner data format supports these two data hashes:
 	%MainCalendarContent
 	%BirthdayCalendarContent
 The format of the data hashes is outlined elsewhere in the document SaveformatSyntax.
@@ -123,7 +123,7 @@ as normal as outlined in section 2.
 5 - Comments, issues and feedback
 ---------------------------------
 If you have any comments or feedback about this specification, or
-have found some issues please contact the day planner developers.
+have found some issues please contact the Day Planner developers.
 Contact information can be found at http://home.gna.org/dayplanner/
 
 You may also direct any questions to the same place.

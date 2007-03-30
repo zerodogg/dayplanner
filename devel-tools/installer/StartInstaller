@@ -1,6 +1,6 @@
 #!/bin/bash
 # StartInstaller
-# First part of the day planner installer
+# First part of the Day Planner installer
 # Copyright (C) Eskild Hustvedt 2006
 #
 # This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ if [ "$ARGS" != "auto" ]; then
 		echo "The environment variable DISPLAY isn't set. This means that you don't have X running."
 		echo ""
 		echo "If you want to use this installer without X supply the commandline option \"auto\""
-		echo "(this will install day planner without prompting you)"
+		echo "(this will install Day Planner without prompting you)"
 		exit 1
 	fi
 
@@ -105,5 +105,5 @@ fi
 
 echo "Okay, handing control over to the perl installer part"
 if ! perl ./MainInstallerPart "$DATADIR" "$@"; then
-	SI_Error "An unkown error occurred with the main installer. Unable to proceed. This is a bug, please report it to the day planner developers."
+	SI_Error "An unkown error occurred with the main installer. Unable to proceed. This is a bug, please report it to the Day Planner developers."
 fi

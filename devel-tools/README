@@ -1,4 +1,4 @@
-This directory contains various tools for day planner.
+This directory contains various tools for Day Planner.
 Some of them are only useful for development or debugging, while
 others might be useful for other things too.
 
@@ -12,9 +12,9 @@ postat			View translation statistics
 updatepo		Run buildpot and then msgmerge existing *.po files with
 			the new pot-file
 
-CreatePackages		Helper script for producing day planner packages
+CreatePackages		Helper script for producing Day Planner packages
 
-installer/		Contains the source code for the generic day planner
+installer/		Contains the source code for the generic Day Planner
 			installer
 
-rpm/			Contains the specfiles for the day planner RPM
+rpm/			Contains the specfiles for the Day Planner RPM
