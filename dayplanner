@@ -1666,7 +1666,18 @@ sub MilisecondsUntilMidnight {
 sub Day_Changed_Event {
 	# First repopulate the upcoming events widget
 	PopulateUpcomingEvents();
-	# TODO: Switch days if the currently selected day is yesterday
+
+	# This should never be called at other times than after midnight, btu to be sure we subtract 200
+	# from the time value in order to get "yesterday"
+	my ($yestersec,$yestermin,$yesterhour,$yestermday,$yestermonth,$yesteryear,$yesterwday,$yesteryday,$yesterisdst) = GetDate(time - 200);
+	my ($CalYear, $CalMonth, $CalDay) = $CalendarWidget->get_date();
+	if($CalYear == $yesteryear && $CalMonth == $yestermonth && $CalDay == $yestermday) {
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(time - 200);
+		$CalendarWidget->select_month($currmonth,$curryear);
+		$CalendarWidget->select_day($currmday);
+		CalendarChange()
+	}
+
 	# Now reset the timer
 	Set_DayChangeTimer();
 	# Return false to make Glib remove the old timer
