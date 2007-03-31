@@ -1898,9 +1898,11 @@ sub HTML_Menu {
 			yearindex => "index.html",
 		);
 	}
-	if(defined($NonDateMode) and not $NonDateMode eq "M") {
-		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode(DP_gettext("View the main page")) . "</a><br/>\n";
-	} elsif(not defined($NonDateMode) or not $NonDateMode eq "M") {
+	if(not defined($NonDateMode) or not $NonDateMode eq 'M') {
+		
+#	if(defined($NonDateMode) and not $NonDateMode eq "M") {
+#		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode(DP_gettext("View the main page")) . "</a><br/>\n";
+#	} elsif(not defined($NonDateMode) or not $NonDateMode eq "M") {
 		$Menu .= HTML_Encode(DP_gettext("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode(DP_gettext("Change to another year")) . "</a> (" . HTML_Encode(sprintf(DP_gettext("current: %s"), $Year)) . ") - </a><br />\n";
 		$Menu .= HTML_Encode(DP_gettext("Months")) .
 			": <a href='$Links{1}'>" . HTML_Encode($MonthNames{1}) .
@@ -2074,7 +2076,7 @@ sub HTML_YearHtml {
 		DPError(sprintf(DP_gettext("Unable to open %s for writing: %s"), "$Directory/$Year.html", $!));
 		return(undef);
 	};
-	print $FILE HTML_Header($Year, $Year, 0);
+	print $FILE HTML_Header($Year, '', 'Y');
 	print $FILE HTML_Encode(DP_gettext("Select the month to view in the list above")) . "<br />\n";
 	print $FILE HTML_Footer();
 }
