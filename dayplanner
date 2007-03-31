@@ -585,7 +585,7 @@ sub DPS_DataSync {
 	} 
 	# It didn't match. So now we check if our last uploaded MD5 matches the servers MD5.
 	# If it does then we just upload.
-	elsif ($ServerMD5 eq $LastUpMD5) {
+	elsif ($ServerMD5 eq $LastUpMD5 or $ServerMD5 eq '[NONE]') {
 		DPS_Log("Local data changed, uploading to DPS (local MD5 is $LocalMD5 and the servers MD5 is $ServerMD5)");
 		DPS_Status(DP_gettext("Synchronizing"),0.4);
 		my $Return = DPS_Upload();
