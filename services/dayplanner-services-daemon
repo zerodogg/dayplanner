@@ -39,7 +39,7 @@ use Cwd qw(realpath);
 #my $Server;
 my $ConnectionSelect;
 my $Shutdown;
-my $APILevel = "06";
+my $APILevel = '06';
 
 my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
@@ -48,7 +48,7 @@ my $DropToUID;
 my $AdminSocket;
 my @Ports;
 my $StartedAt = time();
-my $ConfFile = "./dpservices.conf";
+my $ConfFile = './dpservices.conf';
 my $NoFork;
 
 my %ActiveUsers;	# Currently active users
@@ -67,7 +67,7 @@ my %Servers;
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = "0.6";
+my $Version = '0.6';
 
 $SIG{INT} = sub {
 	IntOutputMSG("Shutdown by SIG$_[0]\n");
@@ -94,14 +94,14 @@ sub ShutdownDaemon {
 # Usage: LoadServicesConfig(FILE);
 sub LoadServicesConfig {
 	my $File = $_[0];
-	die("The configuration file $File does not exist.\n") unless -r $File;
+	die("The configuration file $File does not exist.\n") if not -r $File;
 
 	my %ConfigOptions = (
 		DataPath => '.',
 		LogFile => '.',
 		AdminMail => '^.+@.+$',
-		HTMLBase => ".",
-		HTMLScript => ".",
+		HTMLBase => '.',
+		HTMLScript => '.',
 		Ports => '^[\d\s]+$',
 		DropToUID => '^\d*$',
 	);
@@ -169,9 +169,9 @@ sub IntNoforkMSG {
 # Usage: IntOutputMSG(MESSAGE);
 sub IntOutputMSG {
 	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
-	$lhour = "0$lhour" unless $lhour >= 10;
-	$lmin = "0$lmin" unless $lmin >= 10;
-	$lsec = "0$lsec" unless $lsec >= 10;
+	$lhour = "0$lhour" if not $lhour >= 10;
+	$lmin = "0$lmin" if not $lmin >= 10;
+	$lsec = "0$lsec" if not $lsec >= 10;
 	print "[$lhour:$lmin:$lsec] $_[0]";
 }
 
@@ -193,7 +193,7 @@ sub WriteConfigFile {
 	my ($File, $Config, $Explanations) = @_;
 
 	# Open the config for writing
-	open(my $CONFIG, ">", "$File") or do {
+	open(my $CONFIG, '>', $File) or do {
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
 		IntVerbose("Unable to save the configuration file $File: $!");
 		return(0);
@@ -202,7 +202,7 @@ sub WriteConfigFile {
 		print $CONFIG "# $Explanations->{HEADER}\n";
 	}
 	foreach(sort(keys(%{$Config}))) {
-		next unless length($Config->{$_});	# Don't write empty options
+		next if not length($Config->{$_});	# Don't write empty options
 		if(defined($Explanations->{$_})) {
 			print $CONFIG "\n# $Explanations->{$_}";
 		}
@@ -222,31 +222,31 @@ sub LoadConfigFile {
 
 	my $Status = 1;
 
-	open(my $CONFIG, "<", "$File") or do {
+	open(my $CONFIG, '<', $File) or do {
 		IntWarn "Unable to read config settings: $File:$!";
 		return(0);
 	};
 	while(<$CONFIG>) {
 		next if m/^\s*(#.*)?$/;
-		next unless m/=/;
+		next if not m/=/;
 		chomp;
 		my $Option = $_;
 		my $Value = $_;
 		$Option =~ s/^\s*(.*)\s*=.*/$1/;
 		$Value =~ s/^.*=\s*(.*)\s*/$1/;
 		if($OnlyValidOptions) {
-			unless(defined($OptionRegex->{$Option})) {
+			if(not defined($OptionRegex->{$Option})) {
 				IntVerbose("Unknown configuration option \"$Option\" in $File: Ignored.");
 				next;
 			}
 		}
-		unless(defined($Value)) {
+		if(not defined($Value)) {
 			IntVerbose("Empty value for option $Option in $File");
 			$Status = 0;
 		}
 		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
 			my $MustMatch = $OptionRegex->{$Option};
-			unless ($Value =~ /$MustMatch/) {
+			if (not $Value =~ /$MustMatch/) {
 				$Status = 0;
 				IntWarn "Invalid setting of $Option in the config file: Must match $OptionRegex->{$Option}";
 				next;
@@ -265,11 +265,11 @@ sub SendMail {
 	my($To, $Subject, $Message) = @_;
 	my %Message = (
 		To => $To,
-		From => "Day Planner services daemon <" . cuserid() . '@' . hostname() . ">",
-		Subject => "[DPS] " . $Subject,
+		From => 'Day Planner services daemon <' . cuserid() . '@' . hostname() . '>',
+		Subject => '[DPS] ' . $Subject,
 		Message => $Message,
-		"X-Mailer" => "dayplanner-services-daemon//Mail::SendMail",
-		"User-Agent" => "dayplanner-services-daemon//Mail::SendMail",
+		'X-Mailer' => 'dayplanner-services-daemon//Mail::SendMail',
+		'User-Agent' => 'dayplanner-services-daemon//Mail::SendMail',
 	);
 	sendmail(%Message) or return($Mail::Sendmail::error);
 	return(undef);
@@ -284,7 +284,7 @@ sub DataCorruption {
 		$Config{AdminMail},
 		"Data corruption for user $User!",
 		# TODO: Re-add port to this one
-		"The data for the user $User was found corrupt by the\nDay Planner services daemon at " . scalar(localtime(time)) . " on " . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe Day Planner services daemon",
+		"The data for the user $User was found corrupt by the\nDay Planner services daemon at " . scalar(localtime(time)) . ' on ' . hostname() . ".\n\nThis error is very serious, please look into this as soon as possible\n\nRegards,\nthe Day Planner services daemon",
 	);
 	if($Error) {
 		IntVerbose("WARNING: UNABLE TO SEND MAIL ABOUT DATA CORRUPTION: $Error");
@@ -302,7 +302,7 @@ sub LoginFailure {
 		delete($Security{LoginFailures}{$IP});
 		IntVerbose("Too many authentication failures from $IP, banned!");
 	}
-	return("REFUSED");
+	return('REFUSED');
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -312,7 +312,7 @@ sub LoginFailure {
 # Purpose: Load the data
 # Usage: LoadData();
 sub LoadData {
-	unless(-e "$Config{DataPath}/users.conf") {
+	if(not -e "$Config{DataPath}/users.conf") {
 		die("$Config{DataPath}/users.conf does not exist");
 	}
 	%Users = do("$Config{DataPath}/users.conf");
@@ -329,16 +329,16 @@ sub SendData {
 	my $User = $_[0];
 	my %User_DataConfig;
 	unless(-e "$Config{DataPath}/users/$User/dataconfig" and -e "$Config{DataPath}/users/$User/calendardata") {
-		return("ERR NO_DATA");
+		return('ERR NO_DATA');
 	}
 
 	LoadConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig);
 
-	open(my $User_Data, "<", "$Config{DataPath}/users/$User/calendardata") or return("ERR READFAIL $!");
+	open(my $User_Data, '<', "$Config{DataPath}/users/$User/calendardata") or return("ERR READFAIL $!");
 	my $ReturnData = <$User_Data>;
 	close($User_Data);
-	unless(defined($User_DataConfig{LastMD5})) {
-		return("ERR NO_MD5");
+	if(not defined($User_DataConfig{LastMD5})) {
+		return('ERR NOMD5');
 	}
 	my $MD5 = md5_base64($ReturnData);
 	if($MD5 eq $User_DataConfig{LastMD5}) {
@@ -347,7 +347,7 @@ sub SendData {
 	} else {
 		IntVerbose("MD5 verification of data for the user $User failed! Wanted $User_DataConfig{LastMD5} but found $MD5.");
 		DataCorruption($User);
-		return("ERR MD5_FAILURE");
+		return('ERR MD5_FAILURE');
 	}
 }
 
@@ -366,14 +366,14 @@ sub RecieveData {
 	$Data =~ s/^(\S+)\s+(\S+)\s+(\S+).*$/$3/;
 	$FORCE =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*//;
 	unless(length($THIS_MD5) and length($LAST_MD5) and length($Data)) {
-		return("ERR FORMATERROR");
+		return('ERR FORMATERROR');
 	}
 
 	LoadConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig);
 	
 	unless($FORCE) {
 		if(defined($User_DataConfig{LastMD5})) {
-			if(not $LAST_MD5 eq "undef" and not $User_DataConfig{LastMD5} eq $LAST_MD5) {
+			if(not $LAST_MD5 eq 'undef' and not $User_DataConfig{LastMD5} eq $LAST_MD5) {
 				return("ERR LASTMD5_NOMATCH $User_DataConfig{LastMD5} - $LAST_MD5");
 			}
 		}
@@ -385,9 +385,9 @@ sub RecieveData {
 	}
 
 	# We got this far, write the data
-	open(my $OutData, ">", "$Config{DataPath}/users/$User/calendardata") or do {
+	open(my $OutData, '>', "$Config{DataPath}/users/$User/calendardata") or do {
 		IntVerbose("Unable to open $Config{DataPath}/users/$User/calendardata for writing!: $!");
-		return("ERR WRITEFAILURE");
+		return('ERR WRITEFAILURE');
 	};
 	print $OutData $Data;
 	close($OutData);
@@ -395,14 +395,14 @@ sub RecieveData {
 	$User_DataConfig{LastMD5} = $MD5;
 
 	my %ConfigInfo = (
-		LastMD5 => "The MD5 sum of the last data transmitted to the server for this user",
+		LastMD5 => 'The MD5 sum of the last data transmitted to the server for this user',
 		HEADER => "Data information for $User",
 	);
 
 	WriteConfigFile("$Config{DataPath}/users/$User/dataconfig", \%User_DataConfig, \%ConfigInfo);
 	IntVerbose("New data for user $User recieved");
 	GenHTML($User);
-	return("OK");
+	return('OK');
 }
 
 # Purpose: Get the MD5 sum of a users data
@@ -414,7 +414,7 @@ sub GetMD5 {
 	if(defined($User_DataConfig{LastMD5})) {
 		return($User_DataConfig{LastMD5});
 	} else {
-		return("[NONE]");
+		return('[NONE]');
 	}
 }
 
@@ -427,19 +427,19 @@ sub GenHTML {
 		return(1);
 	}
 	unless(-d $Config{HTMLBase}) {
-		IntDebug("\$Config{HTMLBase} is not set");
+		IntDebug('$Config{HTMLBase} is not set');
 		return(undef);
 	}
 	unless(-x $Config{HTMLScript}) {
-		IntDebug("\$Config{HTMLScript} is not valid");
+		IntDebug('$Config{HTMLScript} is not valid');
 		return(undef);
 	}
 	if(defined($Users{$User}{settings}{language})) {
 		$Language = $Users{$User}{settings}{language};
 	} else {
-		$Language = "en";
+		$Language = 'en';
 	}
-	system("$Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass $Users{$User}{password} --dpfsource '$Config{DataPath}/users/$User/calendardata' --language $Language");
+	system($Config{HTMLScript}, '--dir', "$Config{HTMLBase}/$User", '--user', $User, '--pass', $Users{$User}{password},'--dpfsource'," $Config{DataPath}/users/$User/calendardata", '--language',$Language);
 	IntDebug("Started HTML generating script for user $User: $Config{HTMLScript} --dir '$Config{HTMLBase}/$User' --user $User --pass [HIDDEN] --dpfsource '$Config{DataPath}/users/$User/calendardata' --language $Language");
 	return(1);
 }
@@ -452,12 +452,12 @@ sub GenHTML {
 # Usage: return(SendMOTD());
 sub SendMOTD {
 	if(defined($Config{MOTDFile}) and length($Config{MOTDFile})) {
-		open(my $MOTDFile, "<", $Config{MOTDFile});
+		open(my $MOTDFile, '<', $Config{MOTDFile});
 		my $MOTD = <$MOTDFile>;
 		close($MOTDFile);
-		return(encode_base64($MOTD, ""));
+		return(encode_base64($MOTD, ''));
 	} else {
-		return("NO_MOTD");
+		return('NO_MOTD');
 	}
 }
 
@@ -473,14 +473,14 @@ sub CommandHandler {
 		$API =~ s/^APILEVEL\s+(\S*).*$/$1/;
 		unless($API eq $APILevel) {
 			IntVerbose("APILEVEL mismatch from $Handle (got $API)");
-			return("ERR Unsupported");
+			return('ERR Unsupported');
 		} else {
 			$Clients{$Handle}{APIOK} = 1;
-			return("OK");
+			return('OK');
 		}
 	}
 	unless(defined($Clients{$Handle}{APIOK})) {
-		return("REFUSED NO_APILEVEL");
+		return('REFUSED NO_APILEVEL');
 	}
 
 	# Authentication
@@ -504,8 +504,8 @@ sub CommandHandler {
 			return(LoginFailure($Handle->peerhost));
 		}
 		# If the user's level is 0 then the user account is expired and we refuse the login.
-		if($Users{$Username}{level} eq "0") {
-			return("EXPIRED");
+		if($Users{$Username}{level} eq '0') {
+			return('EXPIRED');
 		}
 		# If someone is already logged in as this user, kick that peer off
 		if(defined($ActiveUsers{$Username}) and defined($ActiveUsers{$Username}{Handle})) {
@@ -515,11 +515,11 @@ sub CommandHandler {
 		$Clients{$Handle}{User} = $Username;
 		$ActiveUsers{$Username}{Handle} = $Handle;
 		IntVerbose(sprintf("%s authenticated as $Username", $Handle->peerhost));
-		return("OK");
+		return('OK');
 	}
 	# Require authentication to proceed
 	unless(defined($Clients{$Handle}{User})) {
-		return("REFUSED AUTHFIRST");
+		return('REFUSED AUTHFIRST');
 	}
 
 	# Other commands
@@ -529,7 +529,7 @@ sub CommandHandler {
 		if($Users{$Clients{$Handle}{User}}{level} > 1) {
 			return(RecieveData($Command, $Clients{$Handle}{User}));
 		} else {
-			return("EXPIRED");
+			return('EXPIRED');
 		}
 	} elsif($Command =~ /^GET_MD5/) {
 		return(GetMD5($Clients{$Handle}{User}));
@@ -537,13 +537,13 @@ sub CommandHandler {
 		if($Users{$Clients{$Handle}{User}}{level} == 4) {
 			return(AdminCommands($Command));
 		} else {
-			return("REFUSED");
+			return('REFUSED');
 		}
 	} elsif($Command =~ /^MOTD/) {
 		return(SendMOTD());
 	}
-	IntVeryVerbose("Unknown command from " . $Handle->peerhost() . " ($Handle): $Command");
-	return("ERR UNKNOWN_COMMAND");
+	IntVeryVerbose('Unknown command from ' . $Handle->peerhost() . " ($Handle): $Command");
+	return('ERR UNKNOWN_COMMAND');
 }
 
 # Purpose: Handle ADMIN commands
@@ -553,27 +553,27 @@ sub AdminCommands {
 	if($Command =~ /^VERSION/) {
 		return("$Version - $RCSRev");
 	} elsif ($Command =~ /^RELOAD_USERLIST/) {
-		IntVerbose("Userlist reloaded");
+		IntVerbose('Userlist reloaded');
 		LoadData();
-		return("DONE");
+		return('DONE');
 	} elsif ($Command =~ /^UNBAN/) {
 		my $IP = $Command;
 		$IP =~ s/^UNBAN\s*//;
 		if($IP) {
 			if($Security{Banned}{$IP}) {
 				delete($Security{Banned}{$IP});
-				return("DONE");
+				return('DONE');
 			} else {
-				return("DONE # NOT_BANNED");
+				return('DONE # NOT_BANNED');
 			}
 		} else {
-			return("ERR SYNTAX_ERROR");
+			return('ERR SYNTAX_ERROR');
 		}
 	} elsif ($Command =~ /^SHUTDOWN/) {
 		ShutdownDaemon();
 	} elsif ($Command =~ /^UPTIME/) {
 		my $Uptime = time() - $StartedAt;
-		$Uptime = sprintf("%u", $Uptime / 60);
+		$Uptime = sprintf('%u', $Uptime / 60);
 		my ($Days, $Hours, $Minutes) = (0,0,0);
 		while ($Uptime > 24 * 60) {
 			$Days++;
@@ -584,22 +584,22 @@ sub AdminCommands {
 			$Uptime -= 60;
 		}
 		$Minutes = $Uptime;
-		my $UptimeString = $Days ? "$Days days " : "";
-		$UptimeString .= $Hours ? "$Hours hours " : "";
+		my $UptimeString = $Days ? "$Days days " : '';
+		$UptimeString .= $Hours ? "$Hours hours " : '';
 		$UptimeString .= "$Minutes minutes";
 		unless(length($UptimeString)) {
-			$UptimeString = "Less than one minute";
+			$UptimeString = 'Less than one minute';
 		}
 		IntVerbose("Uptime requested ($UptimeString)");
 		return($UptimeString);
 	}
-	return("ERR UNKNOWN_COMMAND");
+	return('ERR UNKNOWN_COMMAND');
 }
 
 # Purpose: Handle SIGPIPE
 # Usage: $SIG{PIPE} = \&SigpipeHandler;
 sub SigpipeHandler {
-	print "Sigpipe: ";
+	print 'Sigpipe: ';
 	my $arrayinfo;
 	foreach(@_) {
 		$arrayinfo++;
@@ -637,8 +637,8 @@ sub OpenSocket {
 					LocalPort => $ListenPort,
 					Listen	=> 5,
 					Timeout => 15,		# We can't really wait longer as other users might want to connect
-					SSL_key_file => "./server.key",
-					SSL_cert_file => "./server.crt",
+					SSL_key_file => './server.key',
+					SSL_cert_file => './server.crt',
 			) or die sprintf("Unable to create a new socket on $ListenPort: %s\n",IO::Socket::SSL::errstr());
 	$Servers{$NewServer} = 1;
 	IntNoforkMSG("SSL server listening on port $ListenPort");
@@ -666,30 +666,30 @@ sub OpenLocalSocket {
 sub MainLoop {
 	# Loop for eternity
 	while (1) {
-		SetStatus("waiting for connections");
+		SetStatus('waiting for connections');
 		# Block until one handle is available or it times out
 		my @Ready_Handles = $ConnectionSelect->can_read();
-		SetStatus("processing");
+		SetStatus('processing');
 		# For each handle...
 		foreach my $Handle (@Ready_Handles) {
 			# If the handle is $server then it's a new connection
 			if (defined($Servers{$Handle})) {
 				my $NewClient = $Handle->accept();
 				if(not defined($NewClient)) {
-					IntDebug("Non-SSL connection attempt.");
+					IntDebug('Non-SSL connection attempt.');
 					next;
 				}
 				$ConnectionSelect->add($NewClient);
 				if($Handle eq $AdminSocket) {
 					$Clients{$NewClient}{Admin} = 1;
-					IntDebug("New local admin connection on the admin socket");
+					IntDebug('New local admin connection on the admin socket');
 				} else {
 					if ($Security{Banned}{$NewClient->peerhost}) {
-						IntDebug("New connection from " . $NewClient->peerhost  . " refused: banned");
+						IntDebug('New connection from ' . $NewClient->peerhost  . ' refused: banned');
 						print $NewClient "BANNED\n";
 						$ConnectionSelect->remove($NewClient);
 					} else {
-						IntDebug("New connection from " . $NewClient->peerhost . " on $NewClient");
+						IntDebug('New connection from ' . $NewClient->peerhost . " on $NewClient");
 					}
 				}
 			}
@@ -739,14 +739,14 @@ sub Do_DaemonMode {
 		# Fork
 		my $PID = fork;
 		exit if $PID;
-		die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
+		die "Unable to fork: $!\nYou may want to try --nofork\n" if not defined($PID);
 		# Get an absolute path to the logfile
 		$Config{LogFile} = realpath($Config{LogFile});
 		# Reopen STDOUT, STDERR to the logfile
-		open(STDOUT, ">>", $Config{LogFile});
-		open(STDERR, ">>", $Config{LogFile});
+		open(STDOUT, '>>', $Config{LogFile});
+		open(STDERR, '>>', $Config{LogFile});
 		# Reopen STDIN from /dev/null
-		open(STDIN, "<", "/dev/null");
+		open(STDIN, '<', '/dev/null');
 
 		print "\n";
 	}
@@ -766,16 +766,16 @@ GetOptions (
 	'switchuid=i' => \$DropToUID,
 	'help|h' => sub {
 		print "Day Planner services daemon version $Version\n\n";
-		PrintHelp("-d", "--dayplannerdir", "Which directory to use as the dayplanner config dir");
-		PrintHelp("", "--version", "Display version information and exit");
-		PrintHelp("-h,", "--help", "Display this help screen");
-		PrintHelp("-n,", "--nofork", "Don't go into the background (and log to STDOUT/STDERR instead of the logfile)");
-		PrintHelp("-v,", "--verbose", "Be verbose");
-		PrintHelp("-V,", "--veryverbose", "Be very verbose");
-		PrintHelp("-c,", "--conffile", "Set which configuration file to use");
-		PrintHelp("", "--switchuid", "Switch to the supplied UID after startup");
-		PrintHelp("-p", "--port", "Additional ports to listen on (can be supplied multiple times)");
-		PrintHelp("-D,", "--debug", "Output debugging information");
+		PrintHelp('-d', '--dayplannerdir', 'Which directory to use as the dayplanner config dir');
+		PrintHelp('', '--version', 'Display version information and exit');
+		PrintHelp('-h,', '--help', 'Display this help screen');
+		PrintHelp('-n,', '--nofork', 'Don\'t go into the background (and log to STDOUT/STDERR instead of the logfile)');
+		PrintHelp('-v,', '--verbose', 'Be verbose');
+		PrintHelp('-V,', '--veryverbose', 'Be very verbose');
+		PrintHelp('-c,', '--conffile', 'Set which configuration file to use');
+		PrintHelp('', '--switchuid', 'Switch to the supplied UID after startup');
+		PrintHelp('-p', '--port', 'Additional ports to listen on (can be supplied multiple times)');
+		PrintHelp('-D,', '--debug', 'Output debugging information');
 		exit(0);
 	},
 	'c|config|configfile|conffile=s' => \$ConfFile,
@@ -797,7 +797,7 @@ GetOptions (
 	'n|nofork' => \$NoFork,
 ) or die "See $0 --help for more information\n";
 
-SetStatus("starting");
+SetStatus('starting');
 umask(oct(77));
 LoadServicesConfig($ConfFile);
 LoadData();
