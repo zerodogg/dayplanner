@@ -70,19 +70,25 @@ my $RCSRev = '$Id$';
 my $Version = "0.6";
 
 $SIG{INT} = sub {
-	foreach(keys(%Servers)) {
-		close($_);
-	}
-	close("$Config{DataPath}/adminsocket");
-	unlink("$Config{DataPath}/adminsocket");
 	IntOutputMSG("Shutdown by SIG$_[0]\n");
-	exit(0);
+	ShutdownDaemon();
 };
 $SIG{TERM} = $SIG{INT};
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CORE HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Shut down the daemon
+# Usage: ShutdownDaemon();
+sub ShutdownDaemon {
+	foreach(keys(%Servers)) {
+		close($_);
+	}
+	close("$Config{DataPath}/adminsocket");
+	unlink("$Config{DataPath}/adminsocket");
+	exit(0);
+}
 
 # Purpose: Load the services config file
 # Usage: LoadServicesConfig(FILE);
@@ -563,6 +569,8 @@ sub AdminCommands {
 		} else {
 			return("ERR SYNTAX_ERROR");
 		}
+	} elsif ($Command =~ /^SHUTDOWN/) {
+		ShutdownDaemon();
 	} elsif ($Command =~ /^UPTIME/) {
 		my $Uptime = time() - $StartedAt;
 		$Uptime = sprintf("%u", $Uptime / 60);
