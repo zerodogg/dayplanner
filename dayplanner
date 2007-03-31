@@ -1861,7 +1861,7 @@ sub HTML_Header {
 # Usage: print $FILE HTML_Menu(YEAR,DATE,NONDATEMODE?);
 sub HTML_Menu {
 	my ($Year,$Date,$NonDateMode) = @_;
-	my $Menu;
+	my $Menu = '';
 	my %Links;
 	if($HTML_PHP) {
 		# PHP-style links
