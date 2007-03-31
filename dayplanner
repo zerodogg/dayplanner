@@ -2076,7 +2076,7 @@ sub HTML_YearHtml {
 		DPError(sprintf(DP_gettext("Unable to open %s for writing: %s"), "$Directory/$Year.html", $!));
 		return(undef);
 	};
-	print $FILE HTML_Header($Year, '', 'Y');
+	print $FILE HTML_Header($Year, $Year, 'Y');
 	print $FILE HTML_Encode(DP_gettext("Select the month to view in the list above")) . "<br />\n";
 	print $FILE HTML_Footer();
 }
