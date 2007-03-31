@@ -59,7 +59,7 @@ my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 my $DP_I18N_Mode = 0;
 my $Gettext;
-my $DPS_APILevel = "06A";				# The DPS API level used/supported
+my $DPS_APILevel = "06";				# The DPS API level used/supported
 my $HTML_PHP = 0;					# If set to 1 the HTML exporter will not
 							#  output the header/footer. This is used by the
 							#  PHP exporter.
