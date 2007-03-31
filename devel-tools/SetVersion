@@ -40,7 +40,7 @@ unless(-e "$OrigDir/dayplanner") {
 }
 $OrigDir = realpath($OrigDir);
 print "Working...\n";
-foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier devel-tools/CreatePackages#) {
+foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier services/dayplanner-services-daemon devel-tools/CreatePackages#) {
 	print " $CurrentFile...";
 	unless (-e $CurrentFile) {
 		print " didn't exist - skipping\n";
@@ -54,7 +54,7 @@ foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier dev
 	open(FILE, "<$OrigDir/$CurrentFile") or die "Unable to open $OrigDir/$CurrentFile: $!\n";
 	my @File;
 	foreach(<FILE>) {
-		s/^(my\s+\$D?P?Version\s+=\s+["']).*(["'];)/$1$NewVersion$2/;
+		s/^(my\s+\$D?P?Version\s+=\s+["']).*(["'];)/$1$NewVersion$2/i;
 		push(@File, $_);
 	}
 	close(FILE);
