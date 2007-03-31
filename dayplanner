@@ -484,7 +484,7 @@ sub DPS_Status {
 	}
 }
 
-# Purpose: Upload data to a day planner services server
+# Purpose: Upload data to a Day Planner services server
 # Usage: DPS_Upload();
 sub DPS_Upload {
 	my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
@@ -509,7 +509,7 @@ sub DPS_Upload {
 	return(1);
 }
 
-# Purpose: Download data from a day planner services server
+# Purpose: Download data from a Day Planner services server
 # Usage: DPS_Download(MERGE?);
 #	If MERGE is true then it will not overwrite the current data
 #	with the downloaded data, but rather use the DP::iCalendar merge
@@ -2108,7 +2108,7 @@ sub HTML_PHPIndex {
 		DPError(sprintf(DP_gettext("Unable to open %s for writing: %s"), "$Directory/index.php", $!));
 		return(undef);
 	};
-	print $FILE "<?php\n// This is a simple script written by Day Planner to add autodetection of\n// the current day to exported Day Planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of Day Planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as day planer\n";
+	print $FILE "<?php\n// This is a simple script written by Day Planner to add autodetection of\n// the current day to exported Day Planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of Day Planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as Day Planner\n";
 	print $FILE HTML_PHP_DayDetectFunc();
 	print $FILE '$file = DayDetectFunc("./");' . "\n";
 	print $FILE 'if($file) {' . "\n";
