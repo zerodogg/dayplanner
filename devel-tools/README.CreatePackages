@@ -24,3 +24,6 @@ environment variable DP_NOINSTALLER=1 before running the script.
 The combination of DP_NORPM=1 and DP_NOINSTALLER=1 will make
 CreatePackages only create the source tarball (so it will always
 require tar, bzip2).
+
+You can also set the env var DP_SANITYONLY to 1 in order
+to make CreatePackages exit after the sanity check.
