@@ -2112,7 +2112,7 @@ sub HTML_PHPIndex {
 	print $FILE HTML_PHP_DayDetectFunc();
 	print $FILE '$file = DayDetectFunc("./");' . "\n";
 	print $FILE 'if($file) {' . "\n";
-	print $FILE "\t" . 'include($file)';
+	print $FILE "\t" . 'include($file);' . "\n";
 	print $FILE "} else {" . "\n";
 	print $FILE "\t" . 'print("Unable to detect files. This export is corrupt!");' . "\n";
 	print $FILE "}\n?>";
