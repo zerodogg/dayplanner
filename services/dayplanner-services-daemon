@@ -39,7 +39,7 @@ use Cwd qw(realpath);
 #my $Server;
 my $ConnectionSelect;
 my $Shutdown;
-my $APILevel = "06A";
+my $APILevel = "06";
 
 my $OutputVeryVerbose = 1;
 my $OutputVerbose = 1;
@@ -67,7 +67,7 @@ my %Servers;
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = "0.6 BETA";
+my $Version = "0.6";
 
 $SIG{INT} = sub {
 	foreach(keys(%Servers)) {
@@ -217,7 +217,7 @@ sub LoadConfigFile {
 	my $Status = 1;
 
 	open(my $CONFIG, "<", "$File") or do {
-		print "Unable to read config settings: $File:$!\n";
+		IntWarn "Unable to read config settings: $File:$!";
 		return(0);
 	};
 	while(<$CONFIG>) {
@@ -242,7 +242,7 @@ sub LoadConfigFile {
 			my $MustMatch = $OptionRegex->{$Option};
 			unless ($Value =~ /$MustMatch/) {
 				$Status = 0;
-				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{$Option}\n";
+				IntWarn "Invalid setting of $Option in the config file: Must match $OptionRegex->{$Option}";
 				next;
 			}
 		}
