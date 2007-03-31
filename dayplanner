@@ -1184,6 +1184,44 @@ sub GetDistVer {
 	return("Unknown ($sysname $release $version $machine)");
 }
 
+# Purpose: Launch a web browser with the supplied URL
+# Usage: LaunchWebBrowser(URL);
+sub LaunchWebBrowser {
+	my $URL = shift;
+	# Check if URL is a ref. If it is that means we're being used in a gtk2 callback
+	# and the first arg is the object we're called from, so shift again to the second
+	# arg we recieved which is the real url.
+	if(ref($URL)) {
+		$URL = shift;
+	}
+	my $Browser;
+	# First check for the BROWSER env var
+	if(defined($ENV{BROWSER}) and length($ENV{BROWSER})) {
+		if(InPath($ENV{BROWSER}) or -x $ENV{BROWSER}) {
+			$Browser = $ENV{BROWSER};
+		}
+	}
+	# Then check for various known browsers (and browser launchers)
+	if(not $Browser) {
+		foreach(qw/www-browser gnome-open xdg-open mozffremote mozilla-firefox epiphany mozilla iceweasel firefox konqueror/) {
+			if(InPath($_)) {
+				$Browser = $_;
+				last;
+			}
+		}
+	}
+	# Then launch if found, or output an error if not found
+	if($Browser) {
+		my $PID = fork();
+		if(not $PID) {
+			exec($Browser,$URL);
+		}
+	} else {
+		DPIntWarn("Failed to detect any browser to launch for the URL $URL");
+	}
+}
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1691,6 +1729,11 @@ sub Set_DayChangeTimer {
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
 }
 
+# Purpose: Find out if a command is in PATH or not
+# Usage: InPath(COMMAND);
+sub InPath {
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+}
 
 # Purpose: Convert AM/PM to internal 24H time
 # Usage: AMPM_To24(TIME [AM|PM]);
@@ -4092,6 +4135,7 @@ sub AboutBox {
 	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
 	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
 	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006, 2007");
+	$AboutDialog->set_url_hook(\&LaunchWebBrowser);
 	$AboutDialog->set_website("http://www.day-planner.org/");
 	$AboutDialog->set_name(DP_gettext("Day Planner"));
 	$AboutDialog->set_version($Version);
