@@ -3158,7 +3158,7 @@ sub DeleteEvent {
 		splice(@{$Array},$Selected,1);
 		$EventlistWidget->{data} = $Array;
 		$ToolbarEditButton->set_sensitive(0);
-		$ToolbarDeleteButton->set_sensisitve(0);
+		$ToolbarDeleteButton->set_sensitive(0);
 		$MenuEditEntry->set_sensitive(0);
 		$MenuDeleteEntry->set_sensitive(0);
 		Gtk2->main_iteration while Gtk2->events_pending;
