@@ -3290,7 +3290,7 @@ sub DPWarning {
 # Usage: DPInfo("Information message", details?);
 sub DPInfo {
 	if($Gtk2Init) {
-		my $Dialog = Gtk2::MessageDialog->new($MainWindow, 'modal', 'info', 'ok', '$_[0]');
+		my $Dialog = Gtk2::MessageDialog->new($MainWindow, 'modal', 'info', 'ok', $_[0]);
 		if($_[1]) {
 			# The expander
 			my $FT_Expander = CreateDetailsWidget();
