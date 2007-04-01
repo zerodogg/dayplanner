@@ -1577,7 +1577,7 @@ sub AddAutostart {
 		print $XDGSTART "Comment=Automatically start the Day Planner daemon on session startup\n";
 		print $XDGSTART "Exec=$DaemonExec\n";
 		print $XDGSTART "StartupNotify=false\n";
-		print $XDGSTART "StartupWMClass=fales\n";
+		print $XDGSTART "StartupWMClass=false\n";
 		close($XDGSTART);
 	}
 	# GNOME - this is harder. No real common spec or easy way to do it. 2.14 or so
