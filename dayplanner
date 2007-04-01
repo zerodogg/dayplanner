@@ -4132,24 +4132,24 @@ sub AboutBox {
 	my $AboutDialog = Gtk2::AboutDialog->new;
 	$AboutDialog->set_transient_for($MainWindow);
 	$AboutDialog->set_position('center-on-parent');
-	$AboutDialog->set_authors("Eskild Hustvedt <zerodogg AT skolelinux DOT no>");
-	$AboutDialog->set_artists("Jason Holland <jasonholland AT rawsoftware DOT com>");
-	$AboutDialog->set_copyright("Copyright (C) Eskild Hustvedt 2006, 2007");
+	$AboutDialog->set_authors('Eskild Hustvedt <zerodogg at skolelinux dot no>');
+	$AboutDialog->set_artists('Jason Holland <jasonholland at rawsoftware dot com>');
+	$AboutDialog->set_copyright('Copyright (C) Eskild Hustvedt 2006, 2007');
 	$AboutDialog->set_url_hook(\&LaunchWebBrowser);
-	$AboutDialog->set_website("http://www.day-planner.org/");
-	$AboutDialog->set_name(DP_gettext("Day Planner"));
+	$AboutDialog->set_website('http://www.day-planner.org/');
+	$AboutDialog->set_name(DP_gettext('Day Planner'));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day Planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with Day Planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
 	# Logo
-	my $LogoImage = DetectImage("dayplanner-about.png","dayplanner_48.png","dayplanner_24.png", "dayplanner_16.png", "dayplanner_HC48.png","dayplanner_HC24.png", "dayplanner_HC16.png", "dayplanner.png");
+	my $LogoImage = DetectImage('dayplanner-about.png','dayplanner_48.png','dayplanner_24.png', 'dayplanner_16.png', 'dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', 'dayplanner.png');
 	if ($LogoImage) {
 		my $PixBuf = Gtk2::Gdk::Pixbuf->new_from_file($LogoImage);
 		$AboutDialog->set_logo($PixBuf);
 	}
 	# Translator credits
-	unless (DP_gettext("THE NAMES OF THE TRANSLATORS") eq "THE NAMES OF THE TRANSLATORS") {
-		$AboutDialog->set_translator_credits(DP_gettext("THE NAMES OF THE TRANSLATORS"));
+	unless (DP_gettext('THE NAMES OF THE TRANSLATORS') eq 'THE NAMES OF THE TRANSLATORS') {
+		$AboutDialog->set_translator_credits(DP_gettext('THE NAMES OF THE TRANSLATORS'));
 	}
 	$AboutDialog->run;
 	$AboutDialog->destroy();
