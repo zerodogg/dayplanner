@@ -1765,6 +1765,7 @@ sub AMPM_To24 {
 sub AMPM_From24 {
 	my $Time = $_[0];
 	return($Time) if $ClockSystem eq '24';
+	return('') if not length($Time);
 	my $Hour = $Time;
 	my $Minutes = $Time;
 	my $Suffix;
