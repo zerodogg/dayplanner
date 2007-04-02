@@ -4963,7 +4963,7 @@ GetOptions (
 		} else {
 			print 'Locale::gettext version: MISSING\n';
 		}
-		printf 'Perl version %vd\n', $^V;
+		printf "Perl version %vd\n", $^V;
 		print 'OS: ', GetDistVer(), "\n";
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
