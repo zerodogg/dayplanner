@@ -200,11 +200,15 @@ sub DP_InitI18n {
 	# AM/PM setup.
 	# The %% in the end is *required*. It works around bugs in recent versions
 	# of strftime()
-	$AM_String = strftime('%p%%', 0,0,0,0,0,106,0);
-	$PM_String = strftime('%p%%', 0,0,12,0,0,106,0);
-	$AM_String =~ s/%p?%?$//;	# Remove junk
-	$PM_String =~ s/%p?%?$//;	# Remove junk
-	$ClockSystem = $AM_String eq '' ? '24' : '12';
+	if(defined($ENV{DP_FORCE_24H}) and $ENV{DP_FORCE_24H}) {
+		$ClockSystem = '24';
+	} else {
+		$AM_String = strftime('%p%%', 0,0,0,0,0,106,0);
+		$PM_String = strftime('%p%%', 0,0,12,0,0,106,0);
+		$AM_String =~ s/%p?%?$//;	# Remove junk
+		$PM_String =~ s/%p?%?$//;	# Remove junk
+		$ClockSystem = $AM_String eq '' ? '24' : '12';
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

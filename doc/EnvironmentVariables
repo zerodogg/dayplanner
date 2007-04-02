@@ -7,5 +7,8 @@ DP_DISABLE_SERVICES
 DP_FORCE_LEGACY_I18N
 			Forces the use of the legacy Locale::gettext
 			functions if set to 1.
+DP_FORCE_24_H
+			Forces Day Planner into 24 hour mode if
+			set to 1.
 
 vim: set tw=70 autoindent :
