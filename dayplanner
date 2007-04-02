@@ -664,16 +664,14 @@ sub DPS_Perform {
 	};
 
 	# Make sure that DPS is enabled in the config
-	# TODO: Drop DPS_Enable, just verify config settings. If they are empty then
-	#	it is disabled.
-	return unless(defined($UserConfig{DPS_Enable}) and $UserConfig{DPS_Enable} eq "1");
+	return unless(defined($UserConfig{DPS_enable}) and $UserConfig{DPS_enable} eq "1");
 	# Check if the user wants to temporarily disable DPS
 	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
 	# Verify that all required options are set in the config
 	foreach my $Option (qw(host port user pass)) {
 		unless(defined($UserConfig{"DPS_$Option"}) and length($UserConfig{"DPS_$Option"})) {
 			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
-			$UserConfig{DPS_Enable} = 0;
+			$UserConfig{DPS_enable} = 0;
 			return(undef);
 		} else {
 			$DPServices{$Option} = $UserConfig{"DPS_$Option"};
@@ -979,8 +977,8 @@ sub WriteConfig {
 	unless(defined($UserConfig{Events_DayNotify}) and length($UserConfig{Events_DayNotify})) {
 		$UserConfig{Events_DayNotify} = 0;
 	}
-	if(not defined($UserConfig{DPS_Enable}) or not length($UserConfig{DPS_Enable})) {
-		$UserConfig{DPS_Enable} = 0;
+	if(not defined($UserConfig{DPS_enable}) or not length($UserConfig{DPS_enable})) {
+		$UserConfig{DPS_enable} = 0;
 	}
 	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
 		$UserConfig{DPS_pass} = encode_base64(encode_base64($UserConfig{DPS_pass}));
@@ -995,7 +993,7 @@ sub WriteConfig {
 		DPS_pass => 'The password',
 		DPS_port => 'The port to connect to on the DPS server',
 		DPS_user => 'The username',
-		DPS_Enable => 'If DPS (Day Planner services) is enabled or not (1/0)',
+		DPS_enable => 'If DPS (Day Planner services) is enabled or not (1/0)',
 		HEADER => "Day Planner $Version configuration file",
 	);
 	
@@ -1029,7 +1027,7 @@ sub LoadConfig {
 			EditorVerboseDefault => '^\d+$',
 			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
 			Events_DayNotify => '^\d+$',
-			DPS_Enable => '^(1|0)$',
+			DPS_enable => '^(1|0)$',
 			DPS_port => '^\d+$',
 			DPS_user => '^.+$',
 			DPS_host => '^.+$',
@@ -4378,7 +4376,7 @@ sub PreferencesWindow {
 	my $Port = $UserConfig{DPS_port} ? $UserConfig{DPS_port} : 4435;
 	my $Username = $UserConfig{DPS_user} ? $UserConfig{DPS_user} : '';
 	my $Password = $UserConfig{DPS_pass} ? $UserConfig{DPS_pass} : '';
-	my $DPSWasStatus = $UserConfig{DPS_Enable};
+	my $DPSWasStatus = $UserConfig{DPS_enable};
 
 	# Create the vbox
 	my $Sync_VBox = Gtk2::VBox->new();
@@ -4396,14 +4394,14 @@ sub PreferencesWindow {
 	$EnableDisableCButton->signal_connect('toggled' => sub {
 			if($EnableDisableCButton->get_active) {
 				if(DPS_SSLSocketTest()) {
-					$UserConfig{DPS_Enable} = 1;
+					$UserConfig{DPS_enable} = 1;
 					$Config_Table->set_sensitive(1);
 				}
 			} else {
-				$UserConfig{DPS_Enable} = 0;
+				$UserConfig{DPS_enable} = 0;
 				$Config_Table->set_sensitive(0);
 			}});
-	if($UserConfig{DPS_Enable}) {
+	if($UserConfig{DPS_enable}) {
 		$EnableDisableCButton->set_active(1);
 		$EnableDisableCButton->signal_emit('toggled');
 	} else {
@@ -4478,9 +4476,7 @@ sub PreferencesWindow {
 	# ==================================================================
 	# FINALIZE WINDOW
 	# ==================================================================
-	# Handle closing
-	$PreferencesWindow->signal_connect('destroy' => sub { 
-			$MainWindow->set_sensitive(1);
+	my $ClosePerform = sub {
 			if(not defined($UserConfig{DPS_user}) or (not($UserConfig{DPS_user} eq $UserEntry->get_text()))) {
 				$UserConfig{DPS_user} = $UserEntry->get_text();
 				$DPSWasStatus = 0;
@@ -4495,17 +4491,29 @@ sub PreferencesWindow {
 			}
 			if(not defined($UserConfig{DPS_port}) or not($UserConfig{DPS_port} eq $PortSpinner->get_value())) {
 				# Don't write the port if it is currently empty and DPS isn't enabled
-				if (defined($UserConfig{DPS_port}) or ($UserConfig{DPS_Enable})) {
+				if (defined($UserConfig{DPS_port}) or ($UserConfig{DPS_enable})) {
 					$UserConfig{DPS_port} = $PortSpinner->get_value();
 					$DPSWasStatus = 0;
 				}
 			}
+			# Make sure that the proper DPS settings are in place
+			if($UserConfig{DPS_enable}) {
+				if(not $UserConfig{DPS_user} or not $UserConfig{DPS_pass} or not $UserConfig{DPS_host} or not $UserConfig{DPS_port}) {
+					DPError(DP_gettext('You have not entered the information required for synchronization to be enabled, it has been disabled.'));
+					$UserConfig{DPS_enable} = 0;
+				}
+			}
 			WriteConfig();
+			$PreferencesWindow->hide();
 			# Synchronize if DPS settings have been changed and it is enabled
-			if($UserConfig{DPS_Enable} and not $DPSWasStatus) {
+			if($UserConfig{DPS_enable} and not $DPSWasStatus) {
 				DPS_Perform('SYNC');
 			}
-		});
+			$PreferencesWindow->destroy();
+			$MainWindow->set_sensitive(1);
+		};
+	# Handle closing
+	$PreferencesWindow->signal_connect('delete-event' => $ClosePerform);
 	
 	# Add the buttons
 	my $ButtonHBox = Gtk2::HBox->new();
@@ -4513,9 +4521,7 @@ sub PreferencesWindow {
 	$MainVBox->pack_start($ButtonHBox,0,0,0);
 
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
-	$CloseButton->signal_connect('clicked' => sub { 
-			$PreferencesWindow->destroy;
-		});
+	$CloseButton->signal_connect('clicked' => $ClosePerform);
 	$CloseButton->show();
 	$ButtonHBox->pack_end($CloseButton,0,0,0);
 
