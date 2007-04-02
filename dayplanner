@@ -23,8 +23,8 @@ require 5.6.0;			# We need perl 5.6.0 at the very least
 use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use POSIX;			# We need strftime
-use Glib qw(TRUE FALSE);	# We need glibs TRUE and FALSE, they prettify code
 use Gtk2;			# Use Gtk2 :)
+use Glib qw(TRUE FALSE);	# We need glibs TRUE and FALSE, they prettify code
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
@@ -70,7 +70,7 @@ my $iCalendar;						# The DP::iCalendar object.
 # FIXME: Unused
 # Arrays
 my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
-	$ENV{HOME}, "$ENV{HOME}/Desktop", "$ENV{HOME}/Documents", "$ENV{HOME}/tmp", "/tmp", "/var/tmp", "/usr/tmp"
+	$ENV{HOME}, "$ENV{HOME}/Desktop", "$ENV{HOME}/Documents", "$ENV{HOME}/tmp", "/tmp", "/var/tmp", "/usr/tmp",
 );
 
 # Hashes
@@ -194,7 +194,7 @@ sub DP_InitI18n {
 		9 => DP_gettext('September'),
 		10 => DP_gettext('October'),
 		11 => DP_gettext('November'),
-		12 => DP_gettext('December')
+		12 => DP_gettext('December'),
 	);	# Localized hash of month number => Name values
 
 	# AM/PM setup.
@@ -2048,7 +2048,7 @@ sub HTML_MonthToHtml {
 		9 => 'september',
 		10 => 'october',
 		11 => 'november',
-		12 => 'december'
+		12 => 'december',
 	);
 	open(my $FILE, '>', "$Directory/$RawMonthNames{$Month}-$Year.html") or do {
 		DPIntWarn("Unable to open $Directory/$RawMonthNames{$Month}-$Year.html for writing: $!");
@@ -2181,7 +2181,7 @@ sub HTML_Export {
 		9 => 'september',
 		10 => 'october',
 		11 => 'november',
-		12 => 'december'
+		12 => 'december',
 	);
 	my $Dir = $_[0];
 	unless(-d $Dir) {
@@ -2250,7 +2250,7 @@ sub PHP_Export {
 		9 => 'september',
 		10 => 'october',
 		11 => 'november',
-		12 => 'december'
+		12 => 'december',
 	);
 	my $Dir = $_[0];
 	my $BaseDir = $Dir;
@@ -2411,10 +2411,10 @@ sub PlanConvert_ProcessFile {
 			# Convert the time to a more dayplannerish format
 			$Time = '00:00' if $Time eq '99:99';
 			if ($Time =~ /^\d+:\d$/) {
-				$Time = $Time . 0;
+				$Time = $Time . '0';
 			}
 			if ($Time =~ /^\d:\d*$/) {
-				$Time = 0 . $Time;
+				$Time = "0$Time";
 			}
 			# Set the variables in the hash
 			$PlanConvertHash->{Day} = $Day;
@@ -2688,7 +2688,7 @@ sub ImportProgData {
 	if($ImportPlan) {
 		foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
 			if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
-				foreach my $File (<$Dir/*>) {
+				while (my $File = glob("$Dir/*")) {
 					next if $File =~ m#/(lock\.pland|pland|holiday)$#;
 					push(@PlanFiles, $File);
 				}
@@ -2699,7 +2699,7 @@ sub ImportProgData {
 	# Get the files to import Evolution data from
 	if($ImportEvolution) {
 		my $EvoDir = "$ENV{HOME}/.evolution/calendar/local/system";
-		foreach my $File (<$EvoDir/*.ics>) {
+		while(my $File = glob("$EvoDir/*.ics")) {
 			push(@EvolutionFiles, $File);
 		}
 	}
@@ -2876,7 +2876,7 @@ sub PromptOverwrite {
 	if($Dir) {
 		if(-e $File) {
 			if(-d $File) {
-				foreach(<$File/*>) {
+				while(glob("$File/*")) {
 					unless($_ =~ /^\./) {
 						if(DPQuestion(sprintf(DP_gettext("There are already files in the directory \"%s\". If you continue any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
 							return(1);
@@ -3027,7 +3027,7 @@ sub PopulateUpcomingEvents {
 		3 => DP_gettext('Wednesday'),
 		4 => DP_gettext('Thursday'),
 		5 => DP_gettext('Friday'),
-		6 => DP_gettext('Saturday')
+		6 => DP_gettext('Saturday'),
 	);
 
 	# Today is
