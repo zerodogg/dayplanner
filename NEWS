@@ -14,13 +14,14 @@ Version 0.6 (Unreleased)
 - Many (major) usability improvements
 - Day Planner now changes the selected day after midnight if the day that is
   then yesterday was selected
+- Full day events now work properly in AM/PM
 
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
 - Fixed an issue with the pre-notification code and full-day events.
 
-Version 0.5.1 (Release on the 25th of March 2007)
+Version 0.5.1 (Released on the 25th of March 2007)
 ------------------------
 * Client (dayplanner)
 - Fixed a bug that caused Day Planner to need a restart in order
