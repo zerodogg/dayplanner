@@ -82,7 +82,7 @@ if(defined($ENV{DP_SAVERPMLOG}) and $ENV{DP_SAVERPMLOG}  eq '1') {
 	$SaveRPMLog = 1;
 }
 print " Verifying sanity...";
-foreach (qw(dayplanner dayplanner-notifier dayplanner-daemon modules/DP-iCalendar/lib/DP/iCalendar.pm modules/Date-HolidayParser/lib/Date/HolidayParser.pm tools/commander devel-tools/GenDesktop devel-tools/buildpot devel-tools/updatepo devel-tools/installer/MainInstallerPart services/dayplanner-services-daemon services/tools/DPSAdmin services/tools/GenHTML)) {
+foreach(qw(dayplanner dayplanner-daemon dayplanner-notifier devel-tools/installer/MainInstallerPart devel-tools/installer/InstallLocal devel-tools/GenDesktop devel-tools/BuildLocale devel-tools/SetVersion devel-tools/postat devel-tools/updatepo devel-tools/CreatePackages modules/Date-HolidayParser/lib/Date/HolidayParser.pm modules/DP-iCalendar/lib/DP/iCalendar.pm services/tools/DPSAdmin services/tools/GenHTML services/dayplanner-services-daemon)) {
 	print ".";
 	if(SilentSystem("perl","-c","$OrigDir/$_")) {
 		die("$_ does not verify properly (perl -c $_). Refusing to build packages of broken software\n");
