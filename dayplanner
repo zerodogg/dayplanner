@@ -3045,6 +3045,12 @@ sub PopulateUpcomingEvents {
 		$TheYday++;	# This is a new day
 		$AddDays--;	# One less day to add
 
+		# Append a zero to ensure proper sorting if the
+		# year day is below 100
+		if($TheYday < 100) {
+			$TheYday = "0$TheYday";
+		}
+		
 		$InformationHash{$TheYday} = {};
 		my $h = $InformationHash{$TheYday};
 		
@@ -3077,7 +3083,7 @@ sub PopulateUpcomingEvents {
 					if($time eq 'DAY') {
 						$h->{text} .= "\n" . GetSummaryString($UID);
 					} else {
-						$h->{text} .= "\n" . DP_gettext('At') . ' ' . AMPM_From24($time) .'": ' . GetSummaryString($UID);
+						$h->{text} .= "\n" . DP_gettext('At') . ' ' . AMPM_From24($time) . ': ' . GetSummaryString($UID);
 					}
 				}
 			}
