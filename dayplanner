@@ -1167,16 +1167,18 @@ sub GetDistVer {
 		my $DarwinOSVer;
 		# Darwin kernel, try to get OS X info.
 		if(InPath('sw_vers')) {
-			if(open(my $SW_VERS, 'sw_vers |')) {
-				while(<$SW_VERS>) {
-					chomp;
-					if (s/^ProductName:\s+//gi) {
-						$DarwinName = $_;
-					} elsif(s/^ProductVersion:\s+//) {
-						$DarwinOSVer = $_;
+			if(eval('use IPC::Open2;1')) {
+				if(open2(my $SW_VERS, my $NULL_IN, 'sw_vers')) {
+					while(<$SW_VERS>) {
+						chomp;
+						if (s/^ProductName:\s+//gi) {
+							$DarwinName = $_;
+						} elsif(s/^ProductVersion:\s+//) {
+							$DarwinOSVer = $_;
+						}
 					}
+					close($SW_VERS);
 				}
-				close($SW_VERS);
 			}
 		}
 		if(defined($DarwinOSVer) and defined($DarwinName)) {
@@ -2368,12 +2370,12 @@ sub PlanConvert_ProcessFile {
 	my $PlanConvertHash = $_[1]; 
 	$PlanConvertHash->{Type} = 'normal';
 
-	open(PLAN_FILE,$_[0]) or do {
+	open(my $PLAN_FILE, '<', $_[0]) or do {
 		DPIntWarn("Unable to open $_[0]: $!");
 		return(0);
 	};
 	my $LineNo = 0;
-	while(<PLAN_FILE>) {
+	while(<$PLAN_FILE>) {
 		$LineNo++;
 		next if /^\s*(O|o|t|e|l|a|y|P|p|m|L|u|E)/;	# These are Plan specific stuff, just ignore them
 		chomp;
@@ -4974,7 +4976,7 @@ GetOptions (
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar IO::Socket::SSL/) {
+		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar IO::Socket::SSL IPC::Open2/) {
 			if(eval("use $_; 1")) {
 				push(@AvailModules, $_);
 			} else {
