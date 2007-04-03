@@ -19,6 +19,7 @@ Version 0.6 (Unreleased)
   when one day was one or two-digit while another was three-digit
 
 * Notifier (dayplanner-notifier)
+- Now has a fixed minimum width of the window that pops up.
 
 * Daemon (dayplanner-daemon)
 - Fixed an issue with the pre-notification code and full-day events.
