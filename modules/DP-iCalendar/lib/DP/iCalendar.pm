@@ -643,7 +643,6 @@ sub _UnSafe {
 
 # Purpose: Get a unique ID for an event
 # Usage: $iCalendar .= $self->_UID($Year?$Month$Day$Hour?$Minute);
-# TODO: Make sure it is unique!
 sub _UID {
 	my $self = shift;
 	my $NonRandom = shift;
@@ -679,13 +678,89 @@ sub _AppendZero {
 # Caller is expected to check EXRULE and EXDATE themselves.
 # See _RRULE_Handler.
 sub _RRULE_Parser {
-	print "Stub\n";
+	my $PureLine = shift;
+	$_ = $PureLine;
+	my %ReturnHash;
+	if(not /^FREQ=/) {
+		_WarnOut("RRULE Parser: Unable to handle line (doesn't have FREQ= after RRULE:): $PureLine");
+		return(\%ReturnHash);
+	}
+	# NOTE: There are loads of settings we do not know how to handle.
+	# 	These are deliberately not here so that they cause errors to be
+	# 	displayed. We also need to allow the underlying user program
+	# 	know that something has gone wrong and give the ability rectify it.
+	# 	This could be done by a ->was_rrule_exception command which returns
+	# 	true if an rrule exception occurred. Then the user could opt in to chose
+	# 	what to do. Either allow the errors to pass and the module just to continue
+	# 	to read the file, or discard the event in question.
+	# The settings we know how to handle
+	# 	Some of the descriptions are taken directly from the RFC
+	my %Settings = (
+		# The BYDAY rule part specifies a COMMA character (US-ASCII decimal 44)
+		# separated list of days of the week; MO indicates Monday; TU indicates
+		# Tuesday; WE indicates Wednesday; TH indicates Thursday; FR indicates
+		# Friday; SA indicates Saturday; SU indicates Sunday.
+		BYDAY => 1,
+
+		# The WKST rule part specifies the day on which the workweek starts.
+		# Valid values are MO, TU, WE, TH, FR, SA and SU. This is significant
+		# when a WEEKLY RRULE has an interval greater than 1, and a BYDAY rule
+		# part is specified. This is also significant when in a YEARLY RRULE
+		# when a BYWEEKNO rule part is specified. The default value is MO.
+		WKST => 1,
+	
+		# FREQ defines how often it should repeat. This can be for instance DAILY
+		# MONTHLY WEEKLY YEARLY
+		FREQ => 1,
+
+		# The INTERVAL rule part contains a positive integer representing how
+		# often the recurrence rule repeats. The default value is "1", meaning
+		# every second for a SECONDLY rule, or every minute for a MINUTELY
+		# rule, every hour for an HOURLY rule, every day for a DAILY rule,
+		# every week for a WEEKLY rule, every month for a MONTHLY rule and
+		# every year for a YEARLY rule.
+		INTERVAL => 1,
+
+		# UNTIL defines until when the event should repeat. It contains a standard
+		# iCalendar datetime string
+		UNTIL => 1,
+	);
+	# Check if it has multiple settings
+	if(/;/) {
+		# It does, process individually
+		foreach my $Setting (split(/;/)) {
+			my $Opt = $Setting;
+			my $Val = $Setting;
+			$Opt =~ s/^(\w+)=.*$/$1/;
+			$Val =~ s/^\w+=(.*)$/$1/;
+			if(not $Settings{$Opt}) {
+				_WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
+			}
+			if($ReturnHash{$Opt}) {
+				_WarnOut("RRULE Parser: $Opt occurs multiple times in RRULE:. Can only handle one. Expect trouble.");
+			}
+			$ReturnHash{$Opt} = $Val;
+		}
+	} else {
+		# It doesn't. Process the single line
+			my $Opt = $_;
+			my $Val = $_;
+			$Opt =~ s/^(\w+)=.*$/$1/;
+			$Val =~ s/^\w+=(.*)$/$1/;
+			if(not $Settings{$Opt}) {
+				_WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
+			}
+			$ReturnHash{$Opt} = $Val;
+	}
+	return(\%ReturnHash);
 }
 
 # Purpose: Parse an RRULE and add to the hash
 # Usage: _RRULE_Handler(UID);
 sub _RRULE_Handler {
-	print "Stub\n";
+	my $self = shift;
+	my $UID = shift;
+	_RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
 }
 
 # Purpose: Generate the formatted calendar from the raw calendar
@@ -705,6 +780,7 @@ sub _GenerateCalendar {
 		$Day =~ s/^0*//;
 		# Recurring?
 		if($Current->{RRULE}) {
+			$self->_RRULE_Handler($UID);
 			if($Current->{RRULE} =~ /YEARLY/) {
 				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
 			} else {
