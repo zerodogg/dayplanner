@@ -3576,6 +3576,11 @@ sub CreateEventContainerWin {
 	$AddEventBox->add($ADPrimVBox);
 	$ADPrimVBox->show();
 	
+	# Add the label with the name
+	my $DateLabel = Gtk2::Label->new(sprintf($EventLabel,$EventDay, $MonthNames{$EventMonth},$EventYear));
+	$DateLabel->show();
+	$ADPrimVBox->pack_start($DateLabel,1,0,0);
+	
 	# ==================================================================
 	# Call the functions that constructs the main window contents
 	# ==================================================================
