@@ -67,7 +67,7 @@ my %Servers;
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = '0.6';
+my $Version = '0.7';
 
 $SIG{INT} = sub {
 	IntOutputMSG("Shutdown by SIG$_[0]\n");
