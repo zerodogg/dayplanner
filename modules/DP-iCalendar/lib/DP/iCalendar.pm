@@ -198,7 +198,15 @@ sub get_rawdata {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
 		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
-			$iCalendar .= "$setting:" . _GetSafe(${$self->{RawCalendar}}{$UID}{$setting}) . "\r\n";
+			my $value =  _GetSafe(${$self->{RawCalendar}}{$UID}{$setting});
+			# Check if value should be written with a ;
+			# FIXME: There are more cases than this single one.
+			if($value =~ /^TZID=\D+:/) {
+				$iCalendar .= "$setting;$value";
+			} else {
+				$iCalendar .= "$setting:$value";
+			}
+			$iCalendar .= "\r\n";
 		}
 		$iCalendar .= "END:VEVENT\r\n";
 	}
@@ -338,11 +346,10 @@ sub set_prodid {
 	my($self, $ProdId) = @_;
 	if(not defined($ProdId) or not length($ProdId)) {
 		croak("Emtpy/undef ProdId used in ->set_prodid");
-		return(undef);
 	}
 	# Warn about excessively long prodids
 	if(length($ProdId) > 100) {
-		croak("ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.");
+		carp("ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.");
 	}
 	# Verify that it is nicely formatted
 	unless($ProdId =~ m#^-//.+//NONSGML\s.+//EN$#) {
@@ -370,8 +377,6 @@ sub iCal_GenDateTime {
 		$Minute =~ s/^\d+:(\d+)$/$1/;
 		return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
 	} else {
-		# FIXME: This might not be fully valid. Needs to be checked with the spec.
-		# Might need to be VALUE=DATE:$Year$iCalMonth$iCalDay
 		return("$Year$iCalMonth$iCalDay");
 	}
 }
@@ -393,6 +398,8 @@ sub iCal_ParseDateTime {
 			return(2000,"01","01","00:00");
 		}
 	}
+	# Stripping of TZID
+	$Value =~ s/^(DTSTART)?;?TZID=\D+://;
 
 	my $Year = $Value;
 	my $Month = $Value;
@@ -462,7 +469,7 @@ sub _ErrOut {
 	warn("DP::iCalendar: ERROR: $_[0]\n");
 }
 
-# Purpose: Imports data in the iCalendar format into day planner
+# Purpose: Loads iCalendar data
 # Usage: _LoadFile(FILE OR ARRAYREF);
 sub _LoadFile {
 	# TODO: Create a iCalendar error logfile with dumps of data and errors.
@@ -601,8 +608,8 @@ sub _ParseData {
 		} else {
 			my $Name = $_;
 			my $Value = $_;
-			$Name =~ s/^([A-Za-z\-]+):(.*)$/$1/;
-			$Value =~ s/^([A-Za-z\-\_]+):(.*)$/$2/;
+			$Name =~ s/^([A-Za-z\-]+)[:;](.*)$/$1/;
+			$Value =~ s/^([A-Za-z\-\_]+)[:;](.*)$/$2/;
 			if($Name =~ /^BEGIN/) {
 				$CurrentStructure++;
 				$Name = "X-PARSER_ENTRYTYPE";
@@ -613,8 +620,6 @@ sub _ParseData {
 	}
 	unless($FileBegun) {
 		_WarnOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
-		# TODO: DROP
-		print Dumper(\@FileContents);
 	}
 	return(\@iCalendarStructures);
 }
@@ -643,7 +648,6 @@ sub _UnSafe {
 
 # Purpose: Get a unique ID for an event
 # Usage: $iCalendar .= $self->_UID($Year?$Month$Day$Hour?$Minute);
-# TODO: Make sure it is unique!
 sub _UID {
 	my $self = shift;
 	my $NonRandom = shift;
@@ -668,24 +672,6 @@ sub _AppendZero {
 		return("0$_[0]");
 	}
 	return($_[0]);
-}
-
-# Purpose: Parse an RRULE
-# Usage: _RRULE_Parser(UID);
-# Returns a hash containing the following fields:
-# 	MONTHLY => TRUE/FALSE (if it should reoccur monthly)
-# 	YEARLY => TRUE/FALSE (if it should reoccur yearly)
-# 	DAILY => TRUE FALSE (if it shoudld reoccur daily)
-# Caller is expected to check EXRULE and EXDATE themselves.
-# See _RRULE_Handler.
-sub _RRULE_Parser {
-	print "Stub\n";
-}
-
-# Purpose: Parse an RRULE and add to the hash
-# Usage: _RRULE_Handler(UID);
-sub _RRULE_Handler {
-	print "Stub\n";
 }
 
 # Purpose: Generate the formatted calendar from the raw calendar
