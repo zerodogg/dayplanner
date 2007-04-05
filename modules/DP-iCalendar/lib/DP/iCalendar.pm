@@ -338,11 +338,10 @@ sub set_prodid {
 	my($self, $ProdId) = @_;
 	if(not defined($ProdId) or not length($ProdId)) {
 		croak("Emtpy/undef ProdId used in ->set_prodid");
-		return(undef);
 	}
 	# Warn about excessively long prodids
 	if(length($ProdId) > 100) {
-		croak("ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.");
+		carp("ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.");
 	}
 	# Verify that it is nicely formatted
 	unless($ProdId =~ m#^-//.+//NONSGML\s.+//EN$#) {
@@ -370,11 +369,23 @@ sub iCal_GenDateTime {
 		$Minute =~ s/^\d+:(\d+)$/$1/;
 		return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
 	} else {
-		# FIXME: This might not be fully valid. Needs to be checked with the spec.
-		# Might need to be VALUE=DATE:$Year$iCalMonth$iCalDay
 		return("$Year$iCalMonth$iCalDay");
 	}
 }
+
+# Purpose: Generate an iCalendar date-time string from a UNIX time string
+# Usage: my $iCalDateTime = iCal_ConvertFromUnixTime(UNIX TIME);
+sub iCal_ConvertFromUnixTime {
+	my $UnixTime = shift;
+	my ($realsec,$realmin,$realhour,$realmday,$realmonth,$realyear,$realwday,$realyday,$realisdst) = localtime($UnixTime);
+	$realyear += 1900;	# Fix the year
+	$realmonth++;		# Fix the month
+	# Return data from iCal_GenDateTime
+	return(iCal_GenDateTime($realyear,$realmonth,$realmday,"$realhour:$realmin"));
+}
+
+# Purpose: Generate a UNIX time string from an iCalendar date-time string
+# Usage...
 
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
@@ -393,6 +404,8 @@ sub iCal_ParseDateTime {
 			return(2000,"01","01","00:00");
 		}
 	}
+	# Stripping of TZID
+	$Value =~ s/^(DTSTART)?;?TZID=\D+://;
 
 	my $Year = $Value;
 	my $Month = $Value;
@@ -669,20 +682,51 @@ sub _AppendZero {
 	return($_[0]);
 }
 
+# Purpose: Generate the formatted calendar from the raw calendar
+# Usage: _GenerateCalendar(YEAR);
+#  Note: This will generate the calendar including recurring stuff for YEAR.
+#  It will create the normal calendar for all events.
+sub _GenerateCalendar {
+	my $self = shift;
+	my $EventYear = $_[0];
+	return if defined($self->{OrderedCalendar}{$EventYear});
+	$self->{OrderedCalendar}{$EventYear} = {};
+	foreach my $UID (keys(%{$self->{RawCalendar}})) {
+		my $Current = $self->{RawCalendar}{$UID};
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
+		$Year =~ s/^0*//;
+		$Month =~ s/^0*//;
+		$Day =~ s/^0*//;
+		# Recurring?
+		if($Current->{RRULE}) {
+			$self->_RRULE_Handler($UID,$EventYear);
+			if($Current->{RRULE} =~ /YEARLY/) {
+				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
+			}
+		} else {
+			# Not recurring
+			if(not $Time) {
+				$Time = 'DAY';
+			}
+			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
+		}
+	}
+}
+
+# --- Internal RRULE calculation functions ---
+
 # Purpose: Parse an RRULE
 # Usage: _RRULE_Parser(UID);
-# Returns a hash containing the following fields:
-# 	MONTHLY => TRUE/FALSE (if it should reoccur monthly)
-# 	YEARLY => TRUE/FALSE (if it should reoccur yearly)
-# 	DAILY => TRUE FALSE (if it shoudld reoccur daily)
+# Returns a hash containing the RRULE fields parsed.
 # Caller is expected to check EXRULE and EXDATE themselves.
+# 	(ie. we don't support that yet)
 # See _RRULE_Handler.
 sub _RRULE_Parser {
 	my $PureLine = shift;
 	$_ = $PureLine;
 	my %ReturnHash;
-	if(not /^FREQ=/) {
-		_WarnOut("RRULE Parser: Unable to handle line (doesn't have FREQ= after RRULE:): $PureLine");
+	if(not /FREQ=/) {
+		_WarnOut("RRULE Parser: Unable to handle line (no FREQ): $PureLine");
 		return(\%ReturnHash);
 	}
 	# NOTE: There are loads of settings we do not know how to handle.
@@ -756,44 +800,143 @@ sub _RRULE_Parser {
 }
 
 # Purpose: Parse an RRULE and add to the hash
-# Usage: _RRULE_Handler(UID);
+# Usage: _RRULE_Handler(UID,YEAR);
 sub _RRULE_Handler {
 	my $self = shift;
 	my $UID = shift;
-	_RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
+	my $YEAR = shift;
+	my $RRULE = _RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
+	my $AddDates;
+	if ($RRULE->{FREQ} eq 'WEEKLY') {
+		$AddDates = $self->_RRULE_WEEKLY($RRULE,$UID,$YEAR);
+	} else {
+		_WarnOut("STUB: _RRULE_Handler is unable to handle RRULE:FREQ=$RRULE->{FREQ} at this time.");
+	}
+	if($AddDates) {
+		$self->_RRULE_AddDates($AddDates,$UID);
+	}
 }
 
-# Purpose: Generate the formatted calendar from the raw calendar
-# Usage: _GenerateCalendar(YEAR);
-#  Note: This will generate the calendar including recurring stuff for YEAR.
-#  It will create the normal calendar for all events.
-sub _GenerateCalendar {
+# Purpose: Add the supplied DATETIMEs to the sorted hash for the supplied UID.
+# 		Also fetches the TIME from the UIDs DTSTART.
+# 	This is the function that _RRULE_Handler() uses to add the dates that it has
+# 	calculated from the RRULE to the internal sorted hash.
+# Usage: $self->_RRULE_AddDates(HASHREF, $UID);
+sub _RRULE_AddDates {
 	my $self = shift;
-	my $EventYear = $_[0];
-	return if defined($self->{OrderedCalendar}{$EventYear});
-	$self->{OrderedCalendar}{$EventYear} = {};
-	foreach my $UID (keys(%{$self->{RawCalendar}})) {
-		my $Current = $self->{RawCalendar}{$UID};
-		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
-		$Year =~ s/^0*//;
-		$Month =~ s/^0*//;
-		$Day =~ s/^0*//;
-		# Recurring?
-		if($Current->{RRULE}) {
-			$self->_RRULE_Handler($UID);
-			if($Current->{RRULE} =~ /YEARLY/) {
-				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
-			} else {
-				_WarnOut("Unhandled RRULE: $Current->{RRULE}");
-			}
-		} else {
-			# Not recurring
-			if(not $Time) {
-				$Time = 'DAY';
-			}
-			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
-		}
+	my $AddDates = shift;
+	my $UID = shift;
+	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
+	foreach my $DateTimeString (keys(%{$AddDates})) {
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($DateTimeString);
+		push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
 	}
+}
+
+# Purpose: Evalute an WEEKLY RRULE
+# Usage. _RRULE_WEEKLY(RRULE,UID,YEAR);
+sub _RRULE_WEEKLY {
+	my $self = shift;
+	my $RRULE = shift;
+	my $UID = shift;
+	my $YEAR = shift;
+	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
+	print "$StartsAt\n";
+	my %Dates;
+	
+	# We will add and eliminate dates as we go. This is inefficient, but functional.
+	# Right now we just know about one date+time, so let's add that.
+	#
+	# Ideas on how to solve the inefficiency:
+	# - Create a "recurrence" cache. Dump all recurrence information into a file.
+	#   The file bases itself upon UIDs and MD5 sums. If an UID is found in the loaded
+	#   iCalendar file and the UID object has the same MD5 sum as the one in the file
+	#   then just use the recurrence information in the cache file, if not, recalculate it
+	#   and then write out the new information to the cache file when told to do so.
+	# - Another recurrence cache option:
+	#    Create a directory tree consisting of a DP directory with subfiles named
+	#    after UIDs. The files contain the cached recurrence information for *that*
+	#    one UID. When the UID changes the new cache is written out. So it can be written
+	#    and loaded on the fly without having to write out massive amounts of data.
+	#    Again it should have an MD5 sum field which can be used for verification.
+	#    Then when an UID is removed the file is removed.
+	#    This would require us to have some sort of cleanup function in order to be able
+	#    to remove old UID caches.
+	# It could have:
+	#  MD5SUM=THE MD5SUM
+	#  RECUR_ON=space seperated list of iCalendar DATETIME strings
+	#  CALCULATED_FOR=space seperated list of years which the recurrance has been calculated for
+	# The file would grow as the cache grows. Years won't be removed or replaced, just appended.
+	# This could result in very efficient calculations, assuming that calculating a single
+	# MD5 and checking it up against another MD5 will be quicker than our hard number-crunching
+	# calculations.
+	#
+	# The cache would not need to be written out for simple strings that only have a single
+	# FREQ (and INTERVAL=1), but for more advanced strings that require a lot of calculation,
+	# this would be useful. HD space is more plentyful than CPU power.
+
+	# What do we know so far?
+	# - It is an event that occurs more than once
+	# - It is an event that occurs on a weekly basis
+	$Dates{$StartsAt} = 1;
+
+	# Check for BYDAY
+	#
+	# FIXME: This doesn't *really* calculate BYDAY. It calculates a BYDAY-like string
+	# from $StartsAt which in most cases is the exact same thing, but it doesn't have to be.
+	if($RRULE->{BYDAY}) {
+		my %StartDate = (
+			Month => undef,
+			Day => undef,
+		);
+		# Great, we have a BYDAY. Add all of them to \%Dates
+		
+		# First, start by finding out which day we're starting.
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
+		# If year is less than YEAR then stop processing
+		if($Year < $YEAR) {
+			return({});
+		}
+		# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
+		# If it does then we need to start at the date specified. If not, we start
+		# at the 1st of january.
+		if($Year eq $YEAR) {
+			$StartDate{Month} = $Month;
+			$StartDate{Day} = $Day;
+			$StartDate{Month}--;
+		} else {
+			$StartDate{Month} = 0;
+			$StartDate{Day} = 1;
+		}
+		my $UnixYear = $Year - 1900;
+		# Good, let's process.
+		# First get the UNIX time string for the said date.
+		# We use it to calculate.
+		my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
+		# Okay, now loop through /all/ possible dates
+		my $LoopYear = $Year;
+		while($LoopYear eq $Year) {
+			# One day is 86400, thus one week is 86400 * 7 = 604800.
+			# We add four additional seconds to each for good measure.
+			# So: 86404 * 7 = 604828
+			$TimeString += 604828;
+			my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
+			$Dates{$iCalTime} = 1;
+			my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($iCalTime);
+			$LoopYear = $evYear;
+		
+		}
+		# The loop has enedd and we've done all required calculations for BYDAY.
+	}
+	return(\%Dates);
+}
+
+# Purpose: Strip the time part of a DateTime string
+# Usage: _DT_StripTime
+sub _DT_StripTime {
+	my $DT = shift;
+	$DT =~ s/Z.+$//i;
+	return($DT);
 }
 
 # End of DP::iCalendar
