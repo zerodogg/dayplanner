@@ -198,7 +198,15 @@ sub get_rawdata {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
 		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
-			$iCalendar .= "$setting:" . _GetSafe(${$self->{RawCalendar}}{$UID}{$setting}) . "\r\n";
+			my $value =  _GetSafe(${$self->{RawCalendar}}{$UID}{$setting});
+			# Check if value should be written with a ;
+			# FIXME: There are more cases than this single one.
+			if($value =~ /^TZID=\D+:/) {
+				$iCalendar .= "$setting;$value";
+			} else {
+				$iCalendar .= "$setting:$value";
+			}
+			$iCalendar .= "\r\n";
 		}
 		$iCalendar .= "END:VEVENT\r\n";
 	}
@@ -475,7 +483,7 @@ sub _ErrOut {
 	warn("DP::iCalendar: ERROR: $_[0]\n");
 }
 
-# Purpose: Imports data in the iCalendar format into day planner
+# Purpose: Loads iCalendar data
 # Usage: _LoadFile(FILE OR ARRAYREF);
 sub _LoadFile {
 	# TODO: Create a iCalendar error logfile with dumps of data and errors.
@@ -614,8 +622,8 @@ sub _ParseData {
 		} else {
 			my $Name = $_;
 			my $Value = $_;
-			$Name =~ s/^([A-Za-z\-]+):(.*)$/$1/;
-			$Value =~ s/^([A-Za-z\-\_]+):(.*)$/$2/;
+			$Name =~ s/^([A-Za-z\-]+)[:;](.*)$/$1/;
+			$Value =~ s/^([A-Za-z\-\_]+)[:;](.*)$/$2/;
 			if($Name =~ /^BEGIN/) {
 				$CurrentStructure++;
 				$Name = "X-PARSER_ENTRYTYPE";
@@ -626,8 +634,6 @@ sub _ParseData {
 	}
 	unless($FileBegun) {
 		_WarnOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
-		# TODO: DROP
-		print Dumper(\@FileContents);
 	}
 	return(\@iCalendarStructures);
 }
@@ -841,7 +847,6 @@ sub _RRULE_WEEKLY {
 	my $UID = shift;
 	my $YEAR = shift;
 	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
-	print "$StartsAt\n";
 	my %Dates;
 	
 	# We will add and eliminate dates as we go. This is inefficient, but functional.
