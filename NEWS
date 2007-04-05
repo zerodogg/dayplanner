@@ -17,6 +17,7 @@ Version 0.6 (Unreleased)
 - Full day events now work properly in AM/PM
 - Fixed an issue causing sorting of the upcoming events list to be wrong
   when one day was one or two-digit while another was three-digit
+- Various minor iCalendar compatibility fixes
 
 * Notifier (dayplanner-notifier)
 - Now has a fixed minimum width of the window that pops up.
