@@ -808,6 +808,13 @@ sub _RRULE_Handler {
 	my $self = shift;
 	my $UID = shift;
 	my $YEAR = shift;
+	if($YEAR > 2037 or $YEAR < 1970) {
+		if(not $self->{Settings}{UnixTimeLimitWarned}) {
+			$self->{Settings}{UnixTimeLimitWarned} = 1;
+			_WarnOut("Can't handle RRULEs for years below 1970 or above 2037");
+		}
+		return(undef);
+	}
 	my $RRULE = _RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
 	my $AddDates;
 	if ($RRULE->{FREQ} eq 'WEEKLY') {
@@ -900,7 +907,6 @@ sub _RRULE_WEEKLY {
 	# What do we know so far?
 	# - It is an event that occurs more than once
 	# - It is an event that occurs on a weekly basis
-	$Dates{$StartsAt} = 1;
 
 	# Check for BYDAY
 	#
@@ -937,7 +943,7 @@ sub _RRULE_WEEKLY {
 		my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
 		# Okay, now loop through /all/ possible dates
 		my $LoopYear = $YEAR;
-		while($LoopYear eq $Year) {
+		while($LoopYear eq $YEAR) {
 			my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
 			$Dates{$iCalTime} = 1;
 			
