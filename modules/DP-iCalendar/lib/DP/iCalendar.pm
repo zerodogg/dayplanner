@@ -706,9 +706,6 @@ sub _GenerateCalendar {
 		# Recurring?
 		if($Current->{RRULE}) {
 			$self->_RRULE_Handler($UID,$EventYear);
-			if($Current->{RRULE} =~ /YEARLY/) {
-				push(@{$self->{OrderedCalendar}{$EventYear}{$Month}{$Day}{DAY}},$UID);
-			}
 		} else {
 			# Not recurring
 			if(not $Time) {
@@ -815,11 +812,13 @@ sub _RRULE_Handler {
 	my $AddDates;
 	if ($RRULE->{FREQ} eq 'WEEKLY') {
 		$AddDates = $self->_RRULE_WEEKLY($RRULE,$UID,$YEAR);
+	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
+		$AddDates = $self->_RRULE_YEARLY($RRULE,$UID,$YEAR);
 	} else {
 		_WarnOut("STUB: _RRULE_Handler is unable to handle RRULE:FREQ=$RRULE->{FREQ} at this time.");
 	}
 	if($AddDates) {
-		$self->_RRULE_AddDates($AddDates,$UID);
+		$self->_RRULE_AddDates($AddDates,$UID,$YEAR);
 	}
 }
 
@@ -827,20 +826,31 @@ sub _RRULE_Handler {
 # 		Also fetches the TIME from the UIDs DTSTART.
 # 	This is the function that _RRULE_Handler() uses to add the dates that it has
 # 	calculated from the RRULE to the internal sorted hash.
-# Usage: $self->_RRULE_AddDates(HASHREF, $UID);
+# Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR);
 sub _RRULE_AddDates {
 	my $self = shift;
 	my $AddDates = shift;
 	my $UID = shift;
+	my $GenYear = shift;
 	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
+	if (not defined($UID_Time) or not length($UID_Time)) {
+		$UID_Time = 'DAY';
+	}
 	foreach my $DateTimeString (keys(%{$AddDates})) {
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($DateTimeString);
+		if($Year ne $GenYear) {
+			_ErrOut("Wanted to add $Day.$Month.$Year, but we're generating $GenYear! This is a bug!");
+			next;
+		}
+		$Year =~ s/^0*//;
+		$Month =~ s/^0*//;
+		$Day =~ s/^0*//;
 		push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
 	}
 }
 
 # Purpose: Evalute an WEEKLY RRULE
-# Usage. _RRULE_WEEKLY(RRULE,UID,YEAR);
+# Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_WEEKLY {
 	my $self = shift;
 	my $RRULE = shift;
@@ -898,8 +908,8 @@ sub _RRULE_WEEKLY {
 		
 		# First, start by finding out which day we're starting.
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
-		# If year is less than YEAR then stop processing
-		if($Year < $YEAR) {
+		# If YEAR is less than year then stop processing
+		if($Year > $YEAR) {
 			return({});
 		}
 		# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
@@ -913,26 +923,52 @@ sub _RRULE_WEEKLY {
 			$StartDate{Month} = 0;
 			$StartDate{Day} = 1;
 		}
-		my $UnixYear = $Year - 1900;
+		my $UnixYear = $YEAR - 1900;
 		# Good, let's process.
 		# First get the UNIX time string for the said date.
 		# We use it to calculate.
 		my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
 		# Okay, now loop through /all/ possible dates
-		my $LoopYear = $Year;
+		my $LoopYear = $YEAR;
 		while($LoopYear eq $Year) {
+			my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
+			$Dates{$iCalTime} = 1;
+			
 			# One day is 86400, thus one week is 86400 * 7 = 604800.
 			# We add four additional seconds to each for good measure.
 			# So: 86404 * 7 = 604828
 			$TimeString += 604828;
-			my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
-			$Dates{$iCalTime} = 1;
-			my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($iCalTime);
+			my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
+			my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 			$LoopYear = $evYear;
 		
 		}
 		# The loop has enedd and we've done all required calculations for BYDAY.
 	}
+	return(\%Dates);
+}
+
+# Purpose: Evaluate an YEARLY RRULE
+# Usage: RRULE_YEARLY(RRULE,UID,YEAR);
+sub _RRULE_YEARLY {
+	my $self = shift;
+	my $RRULE = shift;
+	my $UID = shift;
+	my $YEAR = shift;
+	my $Date = $self->{RawCalendar}{$UID}{DTSTART};
+	my $TheRRULE= $self->{RawCalendar}{$UID}{RRULE};
+	my %Dates;
+	# Delete the FREQ key from RRULE.
+	# If the RRULE object then still evaluates as true then the rule
+	# is probably too advanced.
+	delete($RRULE->{FREQ});
+	if(%{$RRULE}) {
+		_ErrOut("RRULE too advanced for current parser: $TheRRULE. Report this to the developers.");
+		return(undef);
+	}
+	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Date);
+	my $NewDate = iCal_GenDateTime($YEAR,$Month,$Day,$Time);
+	$Dates{$NewDate} = 1;
 	return(\%Dates);
 }
 
