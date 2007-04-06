@@ -835,6 +835,13 @@ sub _RRULE_AddDates {
 	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
 	if (not defined($UID_Time) or not length($UID_Time)) {
 		$UID_Time = 'DAY';
+	} elsif($UID_Time eq '00:00') {
+		# NOTE: This is for the deprecated and old X-DP-BIRTHDAY syntax
+		# in some iCalendar files. It should probably be removed soon and replaced by some
+		# upgrade function.
+		if(defined($self->{RawCalendar}{$UID}{'X-DP-BIRTHDAY'})) {
+			$UID_Time = 'DAY';
+		}
 	}
 	foreach my $DateTimeString (keys(%{$AddDates})) {
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($DateTimeString);
