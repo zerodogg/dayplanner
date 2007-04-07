@@ -484,7 +484,7 @@ sub _ErrOut {
 }
 
 # Purpose: Loads iCalendar data
-# Usage: _LoadFile(FILE OR ARRAYREF);
+# Usage: $self->_LoadFile(FILE OR ARRAYREF);
 sub _LoadFile {
 	# TODO: Create a iCalendar error logfile with dumps of data and errors.
 	my $self = shift;
@@ -689,7 +689,7 @@ sub _AppendZero {
 }
 
 # Purpose: Generate the formatted calendar from the raw calendar
-# Usage: _GenerateCalendar(YEAR);
+# Usage: $self->_GenerateCalendar(YEAR);
 #  Note: This will generate the calendar including recurring stuff for YEAR.
 #  It will create the normal calendar for all events.
 sub _GenerateCalendar {
