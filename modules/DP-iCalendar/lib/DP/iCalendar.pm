@@ -662,6 +662,10 @@ sub _UnSafe {
 
 # Purpose: Get a unique ID for an event
 # Usage: $iCalendar .= $self->_UID($Year?$Month$Day$Hour?$Minute);
+# 	NONRANDOM is a non random string to be included into
+# 	the UID. It should usually be something like $Year$Month$Day$Hour$Minute
+# 	or similar. NONRANDOM *can* be omitted, if it is then it will be replaced
+# 	by a random numerical string.
 sub _UID {
 	my $self = shift;
 	my $NonRandom = shift;
