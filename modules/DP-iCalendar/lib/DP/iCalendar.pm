@@ -948,9 +948,7 @@ sub _RRULE_WEEKLY {
 			$Dates{$iCalTime} = 1;
 			
 			# One day is 86400, thus one week is 86400 * 7 = 604800.
-			# We add four additional seconds to each for good measure.
-			# So: 86404 * 7 = 604828
-			$TimeString += 604828;
+			$TimeString += 604800;
 			my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
 			my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 			$LoopYear = $evYear;
