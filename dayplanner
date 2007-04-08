@@ -1446,11 +1446,17 @@ sub HolidaySetup {
 		}
 	}
 	open(my $DUMMY_FILE, '>', "$HolidayFile");
-	print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. It couldn't detect a proper\n";
-	print $DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
-	print $DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
-	print $DUMMY_FILE ":  of the Day Planner distribution for examples of the syntax).\n";
-	print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run Day Planner";
+	if($LocationDetect) {
+		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. It couldn't detect a proper\n";
+		print $DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
+		print $DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
+		print $DUMMY_FILE ":  of the Day Planner distribution for examples of the syntax).\n";
+		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run Day Planner";
+	} else {
+		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. You didn't have any\n";
+		print $DUMMY_FILE ": environment variables set so Day Planner couldn't autodetect one.\n";
+		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file and re-run Day Planner";
+	}
 	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
 	$InternalConfig{Holiday_Attempted} = $Version;
