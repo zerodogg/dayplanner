@@ -200,8 +200,8 @@ sub get_rawdata {
 		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
 			my $value =  _GetSafe(${$self->{RawCalendar}}{$UID}{$setting});
 			# Check if value should be written with a ;
-			# FIXME: There are more cases than this single one.
-			if($value =~ /^TZID=\D+:/) {
+			# FIXME: There are more cases than these
+			if($value =~ /^(TZID=\D+:|ORGANIZER)/) {
 				$iCalendar .= "$setting;$value";
 			} else {
 				$iCalendar .= "$setting:$value";
@@ -400,12 +400,13 @@ sub iCal_ConvertToUnixTime {
 
 	$Year -= 1900;
 	$Month--;
-	
-	my ($Hour,$Minute);
-	$Hour = $Time;
-	$Hour =~ s/^(\d+):.+$/$1/;
-	$Minute = $Minute;
-	$Minute =~ s/^\d+:(\d+)$/$1/;
+	my ($Hour,$Minute) = (0,0);
+	if($Time) {
+		$Hour = $Time;
+		$Hour =~ s/^(\d+):.+$/$1/;
+		$Minute = $Time;
+		$Minute =~ s/^\d+:(\d+)$/$1/;
+	}
 	
 	my $UnixTime = mktime(0,$Minute,$Hour,$Day,$Month,$Year);
 	return($UnixTime);
@@ -837,7 +838,9 @@ sub _RRULE_Handler {
 	}
 	my $RRULE = _RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
 	my $AddDates;
-	if ($RRULE->{FREQ} eq 'WEEKLY') {
+	if	($RRULE->{FREQ} eq 'DAILY') {
+		$AddDates = $self->_RRULE_DAILY($RRULE,$UID,$YEAR);
+	} elsif ($RRULE->{FREQ} eq 'WEEKLY') {
 		$AddDates = $self->_RRULE_WEEKLY($RRULE,$UID,$YEAR);
 	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
 		$AddDates = $self->_RRULE_YEARLY($RRULE,$UID,$YEAR);
@@ -981,7 +984,7 @@ sub _RRULE_WEEKLY {
 
 			# Handle UNTIL.
 			if($UNTIL) {
-				if($NextiCalTime > $UNTIL) {
+				if($TimeString > $UNTIL) {
 					last;
 				}
 			}
@@ -989,6 +992,73 @@ sub _RRULE_WEEKLY {
 		}
 		# The loop has enedd and we've done all required calculations for BYDAY.
 	}
+	return(\%Dates);
+}
+
+# Purpose: Evalute an WEEKLY RRULE
+# Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
+sub _RRULE_DAILY {
+	my $self = shift;
+	my $RRULE = shift;
+	my $UID = shift;
+	my $YEAR = shift;
+	my $UNTIL;
+	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
+	my %Dates;
+	
+	# Fetch UNTIL first if it is set
+	if($RRULE->{UNTIL}) {
+		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
+	}
+
+	my %StartDate = (
+		Month => undef,
+		Day => undef,
+	);
+	# Great, we have a BYDAY. Add all of them to \%Dates
+	
+	# First, start by finding out which day we're starting.
+	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
+	# If YEAR is less than year then stop processing
+	if($Year > $YEAR) {
+		return({});
+	}
+	# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
+	# If it does then we need to start at the date specified. If not, we start
+	# at the 1st of january.
+	if($Year eq $YEAR) {
+		$StartDate{Month} = $Month;
+		$StartDate{Day} = $Day;
+		$StartDate{Month}--;
+	} else {
+		$StartDate{Month} = 0;
+		$StartDate{Day} = 1;
+	}
+	my $UnixYear = $YEAR - 1900;
+	# Good, let's process.
+	# First get the UNIX time string for the said date.
+	# We use it to calculate.
+	my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
+	# Okay, now loop through /all/ possible dates
+	my $LoopYear = $YEAR;
+	while($LoopYear eq $YEAR) {
+		my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
+		$Dates{$iCalTime} = 1;
+		
+		# One day is 86400
+		$TimeString += 86400;
+		my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
+		my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
+		$LoopYear = $evYear;
+		# Handle UNTIL.
+		if($UNTIL) {
+			if($TimeString > $UNTIL) {
+				last;
+			}
+		}
+	
+	}
+	# The loop has enedd and we've done all required calculations for BYDAY.
 	return(\%Dates);
 }
 
@@ -1007,8 +1077,10 @@ sub _RRULE_YEARLY {
 	# is probably too advanced.
 	delete($RRULE->{FREQ});
 	if(%{$RRULE}) {
-		_ErrOut("RRULE too advanced for current parser: $TheRRULE. Report this to the developers.");
-		return(undef);
+		if(not defined($RRULE->{INTERVAL}) or not $RRULE->{INTERVAL} == 1) {
+			_ErrOut("RRULE too advanced for current parser: $TheRRULE. Report this to the developers.");
+			return(undef);
+		}
 	}
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Date);
 	my $NewDate = iCal_GenDateTime($YEAR,$Month,$Day,$Time);
