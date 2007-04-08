@@ -393,7 +393,23 @@ sub iCal_ConvertFromUnixTime {
 }
 
 # Purpose: Generate a UNIX time string from an iCalendar date-time string
-# Usage...
+# Usage: my $UnixTime = iCal_ConvertToUnixTime(DATE-TIME_ENTRY);
+sub iCal_ConvertToUnixTime {
+	my $Value = shift;
+	my($Year,$Month,$Day,$Time) = iCal_ParseDateTime($Value);
+
+	$Year -= 1900;
+	$Month--;
+	
+	my ($Hour,$Minute);
+	$Hour = $Time;
+	$Hour =~ s/^(\d+):.+$/$1/;
+	$Minute = $Minute;
+	$Minute =~ s/^\d+:(\d+)$/$1/;
+	
+	my $UnixTime = mktime(0,$Minute,$Hour,$Day,$Month,$Year);
+	return($UnixTime);
+}
 
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
@@ -874,6 +890,7 @@ sub _RRULE_WEEKLY {
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
+	my $UNTIL;
 	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
 	my %Dates;
 	
@@ -911,6 +928,11 @@ sub _RRULE_WEEKLY {
 	# What do we know so far?
 	# - It is an event that occurs more than once
 	# - It is an event that occurs on a weekly basis
+	
+	# Fetch UNTIL first if it is set
+	if($RRULE->{UNTIL}) {
+		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
+	}
 
 	# Check for BYDAY
 	#
@@ -956,6 +978,13 @@ sub _RRULE_WEEKLY {
 			my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
 			my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 			$LoopYear = $evYear;
+
+			# Handle UNTIL.
+			if($UNTIL) {
+				if($NextiCalTime > $UNTIL) {
+					last;
+				}
+			}
 		
 		}
 		# The loop has enedd and we've done all required calculations for BYDAY.
