@@ -847,7 +847,7 @@ sub _RRULE_Handler {
 	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
 		$AddDates = $self->_RRULE_YEARLY($RRULE,$UID,$YEAR);
 	} else {
-		_WarnOut("STUB: _RRULE_Handler is unable to handle RRULE:FREQ=$RRULE->{FREQ} at this time.");
+		_WarnOut("STUB: _RRULE_Handler is unable to handle $self->{RawCalendar}{$UID}{RRULE} at this time.");
 	}
 	if($AddDates) {
 		$self->_RRULE_AddDates($AddDates,$UID,$YEAR);
