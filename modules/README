@@ -1,8 +1,9 @@
 This directory contains perl modules used by day planner and developed for
-day planner. They are bundled here for convinience, day planner automagically
+day planner. They are bundled here for convinience, Day Planner automagically
 detects them and makes use of them.
 
 Modules:
 Date::HolidayParser	A parser for .holiday files. Day planner uses it to
 			parse the included holiday files and put them into
 			the calendar.
+DP::iCalendar		The iCalendar format parser used by Day Planner.
