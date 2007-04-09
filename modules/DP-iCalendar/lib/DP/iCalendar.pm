@@ -507,6 +507,8 @@ sub _LoadFile {
 	my $self = shift;
 	my $Data = _ParseData($_[0]);
 	return(undef) unless(defined($Data));
+	# Delete OrderedCalendar so that it gets recreated
+	delete($self->{OrderedCalendar});
 	foreach(0..scalar(@{$Data})) {
 		my $Current = $Data->[$_];
 		my ($Summary, $Fulltext, $UID);
@@ -897,6 +899,14 @@ sub _RRULE_WEEKLY {
 	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
 	my %Dates;
 	
+	# Check all values in RRULE, if it has values we don't know about then don't calculate.
+	foreach(keys(%{$RRULE})) {
+		if(not /^(UNTIL|BYDAY|FREQ|WKST)/) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Report this to the developers.");
+			return(undef);
+		}
+	}
+	
 	# We will add and eliminate dates as we go. This is inefficient, but functional.
 	# Right now we just know about one date+time, so let's add that.
 	#
@@ -937,61 +947,55 @@ sub _RRULE_WEEKLY {
 		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
 	}
 
-	# Check for BYDAY
-	#
-	# FIXME: This doesn't *really* calculate BYDAY. It calculates a BYDAY-like string
-	# from $StartsAt which in most cases is the exact same thing, but it doesn't have to be.
-	if($RRULE->{BYDAY}) {
-		my %StartDate = (
-			Month => undef,
-			Day => undef,
-		);
-		# Great, we have a BYDAY. Add all of them to \%Dates
-		
-		# First, start by finding out which day we're starting.
-		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
-		# If YEAR is less than year then stop processing
-		if($Year > $YEAR) {
-			return({});
-		}
-		# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
-		# If it does then we need to start at the date specified. If not, we start
-		# at the 1st of january.
-		if($Year eq $YEAR) {
-			$StartDate{Month} = $Month;
-			$StartDate{Day} = $Day;
-			$StartDate{Month}--;
-		} else {
-			$StartDate{Month} = 0;
-			$StartDate{Day} = 1;
-		}
-		my $UnixYear = $YEAR - 1900;
-		# Good, let's process.
-		# First get the UNIX time string for the said date.
-		# We use it to calculate.
-		my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
-		# Okay, now loop through /all/ possible dates
-		my $LoopYear = $YEAR;
-		while($LoopYear eq $YEAR) {
-			my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
-			$Dates{$iCalTime} = 1;
-			
-			# One day is 86400, thus one week is 86400 * 7 = 604800.
-			$TimeString += 604800;
-			my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
-			my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
-			$LoopYear = $evYear;
-
-			# Handle UNTIL.
-			if($UNTIL) {
-				if($TimeString > $UNTIL) {
-					last;
-				}
-			}
-		
-		}
-		# The loop has enedd and we've done all required calculations for BYDAY.
+	# FIXME: Add BYDAY support.
+	my %StartDate = (
+		Month => undef,
+		Day => undef,
+	);
+	# Great, we have a BYDAY. Add all of them to \%Dates
+	
+	# First, start by finding out which day we're starting.
+	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
+	# If YEAR is less than year then stop processing
+	if($Year > $YEAR) {
+		return({});
 	}
+	# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
+	# If it does then we need to start at the date specified. If not, we start
+	# at the 1st of january.
+	if($Year eq $YEAR) {
+		$StartDate{Month} = $Month;
+		$StartDate{Day} = $Day;
+		$StartDate{Month}--;
+	} else {
+		$StartDate{Month} = 0;
+		$StartDate{Day} = 1;
+	}
+	my $UnixYear = $YEAR - 1900;
+	# Good, let's process.
+	# First get the UNIX time string for the said date.
+	# We use it to calculate.
+	my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
+	# Okay, now loop through /all/ possible dates
+	my $LoopYear = $YEAR;
+	while($LoopYear eq $YEAR) {
+		my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
+		$Dates{$iCalTime} = 1;
+		
+		# One day is 86400, thus one week is 86400 * 7 = 604800.
+		$TimeString += 604800;
+		my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
+		my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
+		$LoopYear = $evYear;
+			# Handle UNTIL.
+		if($UNTIL) {
+			if($TimeString > $UNTIL) {
+				last;
+			}
+		}
+	
+	}
+	# The loop has ended and we've done all required calculations
 	return(\%Dates);
 }
 
@@ -1005,6 +1009,14 @@ sub _RRULE_DAILY {
 	my $UNTIL;
 	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
 	my %Dates;
+	
+	# Check all values in RRULE, if it has values we don't know about then don't calculate.
+	foreach(keys(%{$RRULE})) {
+		if(not /^(UNTIL|BYDAY|FREQ|WKST)/) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Report this to the developers.");
+			return(undef);
+		}
+	}
 	
 	# Fetch UNTIL first if it is set
 	if($RRULE->{UNTIL}) {
@@ -1072,16 +1084,19 @@ sub _RRULE_YEARLY {
 	my $Date = $self->{RawCalendar}{$UID}{DTSTART};
 	my $TheRRULE= $self->{RawCalendar}{$UID}{RRULE};
 	my %Dates;
-	# Delete the FREQ key from RRULE.
-	# If the RRULE object then still evaluates as true then the rule
-	# is probably too advanced.
-	delete($RRULE->{FREQ});
-	if(%{$RRULE}) {
-		if(not defined($RRULE->{INTERVAL}) or not $RRULE->{INTERVAL} == 1) {
-			_ErrOut("RRULE too advanced for current parser: $TheRRULE. Report this to the developers.");
+	# Check all values in RRULE, if it has values we don't know about then don't calculate.
+	foreach(keys(%{$RRULE})) {
+		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Report this to the developers.");
 			return(undef);
 		}
 	}
+	# Verify INTERVAL
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Report this to the developers.");
+			return(undef);
+	}
+
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Date);
 	my $NewDate = iCal_GenDateTime($YEAR,$Month,$Day,$Time);
 	$Dates{$NewDate} = 1;
