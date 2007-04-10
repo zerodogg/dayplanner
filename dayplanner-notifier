@@ -30,7 +30,7 @@ use File::Basename;
 use FindBin;
 
 my $Gettext;			# Global Gettext object
-my $Version = "0.7";
+my $Version = '0.7';
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 
@@ -44,6 +44,7 @@ my $Date;			# The date
 my $IsWarning;			# If it is a warning or the actual event time
 
 my $MessageID;			# The daemon message ID
+my($ClockSystem, $AM_String, $PM_String);
 my $NoFork;
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,16 +71,16 @@ sub DP_gettext {
 # Purpose: Initialize the i18n subsystem
 # Usage: DP_InitI18n();
 sub DP_InitI18n {
-	setlocale(LC_ALL, "" );
-	if(eval("use Locale::gettext;1")) {
+	setlocale(LC_ALL, '' );
+	if(eval('use Locale::gettext;1')) {
 		my $BindTo;
 		my $Legacy;
-		if($Locale::gettext::VERSION > "1.04") {
+		if($Locale::gettext::VERSION > 1.04) {
 			$Legacy = 0;
 		} else {
 			$Legacy = 1;
 		}
-		if(defined($ENV{DP_FORCE_LEGACY_I18N}) and $ENV{DP_FORCE_LEGACY_I18N} eq "1") {
+		if(defined($ENV{DP_FORCE_LEGACY_I18N}) and $ENV{DP_FORCE_LEGACY_I18N} eq '1') {
 			$Legacy = 1;
 		}
 		# Find out if we have a locale directory in our main dir
@@ -101,17 +102,21 @@ sub DP_InitI18n {
 		}
 		# Set up the i18n fetching type
 		if($Legacy) {
-			DPIntWarn("Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters");
+			DPIntWarn('Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters');
 			$DP_I18N_Mode = 1;
-			bindtextdomain("dayplanner", "$FindBin::RealBin/locale");
-			textdomain("dayplanner");
-			# This is a hack, but works in many cases
-			foreach my $EnvVar(qw(LANG LC_CTYPE LC_ALL LC_ADDRESS LC_NAME)) {
-				bind_textdomain_codeset("dayplanner","ISO-8859-15");
+			if($BindTo) {
+				bindtextdomain('dayplanner', $BindTo);
 			}
+			textdomain('dayplanner');
+			# This is a hack, but works in many cases
+			bind_textdomain_codeset('dayplanner','ISO-8859-15');
 		} else {
 			$DP_I18N_Mode = 2;
-			$Gettext = Locale::gettext->domain("dayplanner");	# Set the gettext domain
+			# The reason we use domain_raw and sets the ->codeset is because for some reason
+			# in later Gtk2 perls (or possibly buggy Locale::gettexts) special characters
+			# doesn't get properly returned.
+			$Gettext = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
+			$Gettext->codeset('UTF-8');
 			if($BindTo) {
 				$Gettext->dir($BindTo);
 			}
@@ -119,8 +124,45 @@ sub DP_InitI18n {
 	} else {
 		$DP_I18N_Mode = 0;
 		# No Locale::Gettext available
-		DPIntWarn("Locale::gettext is not available. This will work, but localization will *not* be available");
+		DPIntWarn('Locale::gettext is not available. This will work, but localization will *not* be available');
 	}
+	
+	# AM/PM setup.
+	# The %% in the end is *required*. It works around bugs in recent versions
+	# of strftime()
+	if(defined($ENV{DP_FORCE_24H}) and $ENV{DP_FORCE_24H}) {
+		$ClockSystem = '24';
+	} else {
+		$AM_String = strftime('%p%%', 0,0,0,0,0,106,0);
+		$PM_String = strftime('%p%%', 0,0,12,0,0,106,0);
+		$AM_String =~ s/%p?%?$//;	# Remove junk
+		$PM_String =~ s/%p?%?$//;	# Remove junk
+		$ClockSystem = $AM_String eq '' ? '24' : '12';
+	}
+}
+
+# Purpose: Convert internal 24H time to AM/PM
+# Usage: AM_PM_From24(TIME);
+sub AMPM_From24 {
+	my $Time = $_[0];
+	return($Time) if $ClockSystem eq '24';
+	return('') if not length($Time);
+	my $Hour = $Time;
+	my $Minutes = $Time;
+	my $Suffix;
+	$Hour =~ s/^(\d+):.*$/$1/;
+	$Minutes =~ s/^\d+:(\d+).*$/$1/;
+	if($Hour >= 12) {
+		$Suffix = $PM_String;
+		$Hour = $Hour-12;
+	}
+	unless(defined($Suffix)) {
+		if($Hour == 0) {
+			$Hour = '12';
+		}
+		$Suffix = $AM_String;
+	}
+	return("$Hour:$Minutes $Suffix");
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,12 +176,12 @@ sub DaemonConnect {
 					Type => SOCK_STREAM,
 					Timeout => 10 )
 					or DPIntWarn("Unable to connect to $SocketName: $@!") and return(0);
-	if(Daemon_DataSegment("HI servant") eq "HI") {
+	if(Daemon_DataSegment('HI servant') eq 'HI') {
 		return(1);
 	} else {
 		DPIntWarn("Unable to connect to $SocketName: The daemon refused my connection\n");
 		close($Socket);
-		return("NOHI");
+		return('NOHI');
 	}
 
 }
@@ -155,7 +197,7 @@ sub Daemon_SendData {
 sub Daemon_GetData {
 	my $Data = <$Socket>;
 	unless(defined($Data)) {
-		return("ERR UNABLE_TO_GET_DATA");
+		return('ERR UNABLE_TO_GET_DATA');
 	}
 	if ($Data =~ /^BEGIN MULTILINE/) {
 		return(UnwrapMultiLinePacket());
@@ -175,7 +217,7 @@ sub Daemon_DataSegment {
 # Purpose: Disconnect from the daemon
 # Usage: DaemonDisconnect();
 sub DaemonDisconnect {
-	Daemon_DataSegment("BYE");
+	Daemon_DataSegment('BYE');
 	close($Socket);
 }
 
@@ -204,7 +246,7 @@ sub UnwrapMultiLinePacket {
 			} elsif (/^NNL$/) {
 				# This means the preceeding line doesn't end with \n
 				unless(defined($NewMessage)) {
-					DPIntWarn("Recieved NNL while unwrapping a multiline packet without any preceeding line. This is a bug in either the daemon or notifier. Ignoring request and proceeding");
+					DPIntWarn('Recieved NNL while unwrapping a multiline packet without any preceeding line. This is a bug in either the daemon or notifier. Ignoring request and proceeding');
 					next;
 				}	
 				$NewMessage =~ s/\n$//;
@@ -214,7 +256,7 @@ sub UnwrapMultiLinePacket {
 				$UnhandledLimit++;
 			}
 			if(defined($UnhandledLimit) and $UnhandledLimit >= 20) {
-				DPIntWarn("Limit of 20 unhandled daemon commands within UnwrapMultiLinePacket exceeded. Assuming END MULTILINE");
+				DPIntWarn('Limit of 20 unhandled daemon commands within UnwrapMultiLinePacket exceeded. Assuming END MULTILINE');
 				$MultiLineNotEnded = 0;
 				last;
 			}
@@ -225,14 +267,14 @@ sub UnwrapMultiLinePacket {
 			$DidNotDoAnything = 0;
 		}
 		if(defined($DidNotDoAnything) and $DidNotDoAnything >= 20) {
-			DPIntWarn("Limit of 20 idle turns through the UnwrapMultiLinePacket loop exceeded. Assuming END MULTILINE");
+			DPIntWarn('Limit of 20 idle turns through the UnwrapMultiLinePacket loop exceeded. Assuming END MULTILINE');
 			$MultiLineNotEnded = 0;
 			last;
 		}
 	}
 	unless(defined($NewMessage)) {
-		DPIntWarn("\$NewMessage was undefined while unwrapping a multiline packet. This is probably a bug. Returning \"\" scalar string value to caller");
-		return("");
+		DPIntWarn('$NewMessage was undefined while unwrapping a multiline packet. This is probably a bug. Returning "" scalar string value to caller');
+		return('');
 	}
 	unless($NewMessage =~ /\n.*\n/) {
 		chomp($NewMessage);
@@ -249,6 +291,7 @@ sub GetMessages {
 	
 	$Message = Daemon_DataSegment("NOTIFICATION GET $_[0] Summary");
 	$Time = Daemon_DataSegment("NOTIFICATION GET $_[0] Time");
+	$Time = AMPM_From24($Time);	# Convert to AM/PM if needed
 	$Date = Daemon_DataSegment("NOTIFICATION GET $_[0] Date");
 	$Fulltext = Daemon_DataSegment("NOTIFICATION GET $_[0] Fulltext");
 	$IsWarning = Daemon_DataSegment("NOTIFICATION GET $_[0] PreNot");
@@ -258,7 +301,7 @@ sub GetMessages {
 
 	# Fulltext is a multiline packet and can thus return "" on failure.
 	# We assume $_[0] UNDEF on ""/failure
-	if($Fulltext eq "$_[0] UNDEF" or $Fulltext eq "") {
+	if($Fulltext eq "$_[0] UNDEF" or $Fulltext eq '') {
 		$Fulltext = undef;
 	}
 
@@ -272,9 +315,9 @@ sub GetMessages {
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
 sub CreateDetailsWidget {
-	my $FT_Expander = Gtk2::Expander->new(DP_gettext("Show details"));
+	my $FT_Expander = Gtk2::Expander->new(DP_gettext('Show details'));
 	$FT_Expander->show();
-	$FT_Expander->signal_connect("activate" => sub {
+	$FT_Expander->signal_connect('activate' => sub {
 			# Yes, it is weird to use not here, but in the callback it appears
 			# to return "" if it is expanded and 1 if it isn't.
 			# Possibly a race condition within gtk2. This appears to work anyway.
@@ -320,7 +363,7 @@ sub X_Available {
 
 		# This statement might look a bit weird, but remember that for commandline
 		# programs 0 is true and anything else is false.
-		if(system("perl -e 'use Gtk2; open(STDERR, \">/dev/null\"); Gtk2->init;'")) {
+		if(system('perl', '-e', 'use Gtk2; open(STDERR, \'>/dev/null\'); Gtk2->init;')) {
 			return(0);
 		} else {
 			return(1);
@@ -333,7 +376,6 @@ sub X_Available {
 sub InPath {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN NOTIFICATION
@@ -377,7 +419,7 @@ sub GtkNotifier {
 		# and on all desktops
 		$NotifyDialog->set_keep_above(1);
 		$NotifyDialog->stick;
-		$NotifyDialog->set_title(DP_gettext("Day Planner event"));
+		$NotifyDialog->set_title(DP_gettext('Day Planner event'));
 		$NotifyDialog->set_skip_pager_hint(0);
 		$NotifyDialog->set_skip_taskbar_hint(0);
 		$NotifyDialog->set_size_request(300,-1);
@@ -393,7 +435,7 @@ sub GtkNotifier {
 		$NotifyDialog->add_action_widget($PostponeButton, 'reject');
 		$PostponeButton->show();
 		$Tooltips->enable();
-		$Tooltips->set_tip($PostponeButton, DP_gettext("Postpone this notification for 10 minutes"));
+		$Tooltips->set_tip($PostponeButton, DP_gettext('Postpone this notification for 10 minutes'));
 	
 		my $OkayButton = Gtk2::Button->new_from_stock('gtk-ok');
 		$OkayButton->can_default(1);
@@ -410,7 +452,7 @@ sub GtkNotifier {
 			# The textview field
 			my $FulltextView = Gtk2::TextView->new();
 			$FulltextView->set_editable(0);
-			$FulltextView->set_wrap_mode("word-char");
+			$FulltextView->set_wrap_mode('word-char');
 			$FulltextView->show();
 			# Add the text to it
 			my $FulltextBuffer = Gtk2::TextBuffer->new();
@@ -441,7 +483,7 @@ sub GtkNotifier {
 # Usage: NonGUINotifier();
 sub NonGUINotifier {
 	my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
-	unless($sysname eq "Linux") {
+	unless($sysname eq 'Linux') {
 		print "*** dayplanner-notifier ($Version): Not running under GNU/Linux but attempting to use the NonGUINotifier. This might not work as expected if a non-GNU compatible who is installed\n";
 	}
 	# Discussion follows
@@ -471,10 +513,10 @@ sub NonGUINotifier {
 # 	written.
 sub WriteTo {
 	my ($User,$Message) = @_;
-	return(0) unless InPath("who");
-	return(0) unless InPath("write");
+	return(0) unless InPath('who');
+	return(0) unless InPath('write');
 	my $Return = 0;
-	open(my $WHO, "who -T|");
+	open(my $WHO, 'who -T|');
 	my @WritableDevs;
 	while(<$WHO>) {
 		next unless s/^$User\s+//;
@@ -504,15 +546,15 @@ GetOptions (
 		print "This program is for use by the dayplanner daemon.\n\n";
 		print "Use a --time/--message/--date (and --fulltext) combo if you want to call it manually,\n";
 		print "the daemon uses --id.\n\n";
-		PrintHelp("-h","--help","Display this help screen");
-		PrintHelp("-v", "--version", "Display version information and exit");
-		PrintHelp("-s","--socket","Select the daemon socket");
-		PrintHelp("-m", "--message", "Set the message");
-		PrintHelp("-f", "--fulltext", "Set the \"fulltext\" entry (details)");
-		PrintHelp("-t", "--time", "Set the time (HH:MM)");
-		PrintHelp("-d", "--date", "Set the date (a date string, \"today\" or \"tomorrow\")");
-		PrintHelp("-i", "--id", "Set the daemon message ID");
-		PrintHelp("-n", "--nofork", "Don't go into the background");
+		PrintHelp('-h','--help','Display this help screen');
+		PrintHelp('-v', '--version', 'Display version information and exit');
+		PrintHelp('-s','--socket','Select the daemon socket');
+		PrintHelp('-m', '--message', 'Set the message');
+		PrintHelp('-f', '--fulltext', 'Set the "fulltext" entry (details)');
+		PrintHelp('-t', '--time', 'Set the time (HH:MM)');
+		PrintHelp('-d', '--date', 'Set the date (a date string, "today" or "tomorrow")');
+		PrintHelp('-i', '--id', 'Set the daemon message ID');
+		PrintHelp('-n', '--nofork', 'Don\'t go into the background');
 		exit(0);
 	},
 	'socket|s=s' => \$SocketName,
