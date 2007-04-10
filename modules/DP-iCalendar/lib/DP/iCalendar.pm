@@ -32,16 +32,16 @@ sub new {
 	my $File = $_[1];
 	my $self;
 	if(ref($File)) {	# If we got a reference
-		if(ref($File) eq "ARRAY") {
+		if(ref($File) eq 'ARRAY') {
 			# Do stuff
 		} else {
-			carp("Supplied a reference, but the reference is not a ARRAYREF.");
+			carp('Supplied a reference, but the reference is not a ARRAYREF.');
 		}
 		$self = _NewObj();
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
 		unless(defined($File)) {
-			carp("Needs an option: path to the iCalendar file");
+			carp('Needs an option: path to the iCalendar file');
 			return(undef);
 		}
 		unless(-e $File) {
@@ -59,11 +59,11 @@ sub new {
 sub newfile {
 	my $File = $_[1];
 	if(not defined($File)) {
-		carp("Needs an option: path to the iCalendar file");
+		carp('Needs an option: path to the iCalendar file');
 		return(undef);
 	}
 	if(ref($File)) {
-		carp("Doesn't take a reference");
+		carp('Doesn\'t take a reference');
 		return(undef);
 	}
 	return(_NewObj($File));
@@ -156,7 +156,7 @@ sub get_info {
 	if(defined($self->{RawCalendar}{$UID})) {
 		return($self->{RawCalendar}{$UID});
 	}
-	carp("get_info got invalid UID");
+	carp('get_info got invalid UID');
 	return(undef);
 }
 
@@ -165,15 +165,15 @@ sub get_info {
 sub write {
 	my ($self, $file) = @_;
 	if(not defined($file)) {
-		if($self->{FILETYPE} eq "ref") {
-			carp("write called on object created from array ref");
+		if($self->{FILETYPE} eq 'ref') {
+			carp('write called on object created from array ref');
 			return(undef);
 		}
 		$file = $self->{FILE};
 	}
 	my $iCalendar = $self->get_rawdata($self->{FILE},0,0);
 	if($iCalendar) {
-		open(my $TARGET, ">", $file) or do {
+		open(my $TARGET, '>', $file) or do {
 			_OutWarn("Unable to open $file for writing: $!");
 			return(undef);
 		};
@@ -181,7 +181,7 @@ sub write {
 		close($TARGET);
 		return(1);
 	} else {
-		_OutWarn("Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?");
+		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
 		return(undef);
 	}
 }
@@ -224,7 +224,7 @@ sub delete {
 		$self->{OrderedCalendar} = {};
 		return(1);
 	} else {
-		carp("delete called without a valid UID");
+		carp('delete called without a valid UID');
 		return(undef);
 	}
 }
@@ -234,7 +234,7 @@ sub delete {
 sub add {
 	my ($self, %Hash) = @_;
 	unless(defined($Hash{DTSTART})) {
-		carp("Refusing to add a iCalendar entry without a DTSTART.");
+		carp('Refusing to add a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
 	my $UID = $self->_UID($Hash{DTSTART});
@@ -249,11 +249,11 @@ sub add {
 sub change {
 	my ($self, $UID, %Hash) = @_;
 	unless(defined($UID)) {
-		carp("Refusing to change a iCalendar entry without a UID to change.");
+		carp('Refusing to change a iCalendar entry without a UID to change.');
 		return(undef);
 	}
 	unless(defined($Hash{DTSTART})) {
-		carp("Refusing to change a iCalendar entry without a DTSTART.");
+		carp('Refusing to change a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
 	$self->_ChangeEntry($UID,%Hash);
@@ -276,13 +276,13 @@ sub exists {
 sub addfile {
 	my ($self,$File) = @_;
 	if(ref($File)) {	# If we got a reference
-		if(not ref($File) eq "ARRAY") {
-			carp("Supplied a reference, but the reference is not a ARRAYREF.");
+		if(not ref($File) eq 'ARRAY') {
+			carp('Supplied a reference, but the reference is not a ARRAYREF.');
 		}
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
 		unless(defined($File)) {
-			carp("Needs an option: path to the iCalendar file");
+			carp('Needs an option: path to the iCalendar file');
 			return(undef);
 		}
 		unless(-e $File) {
@@ -332,8 +332,8 @@ sub disable {
 # Usage: $object->reload();
 sub reload {
 	my $self = shift;
-	if($self->{FILETYPE} eq "ref") {
-		carp("reload called on object created from array ref");
+	if($self->{FILETYPE} eq 'ref') {
+		carp('reload called on object created from array ref');
 		return(undef);
 	}
 	$self->clean();
@@ -345,15 +345,15 @@ sub reload {
 sub set_prodid {
 	my($self, $ProdId) = @_;
 	if(not defined($ProdId) or not length($ProdId)) {
-		croak("Emtpy/undef ProdId used in ->set_prodid");
+		croak('Emtpy/undef ProdId used in ->set_prodid');
 	}
 	# Warn about excessively long prodids
 	if(length($ProdId) > 100) {
-		carp("ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.");
+		carp('ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.');
 	}
 	# Verify that it is nicely formatted
 	unless($ProdId =~ m#^-//.+//NONSGML\s.+//EN$#) {
-		croak("ProdId is not nicely formatted, see the DP::iCalendar documentation.");
+		croak('ProdId is not nicely formatted, see the DP::iCalendar documentation.');
 	}
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
@@ -423,10 +423,10 @@ sub iCal_ParseDateTime {
 		# probably be improved.
 		if(not $Value =~ s/^VALUE=DATE://) {
 			_ErrOut("Unhandled value in iCal_ParseDateTime(): $Value. This is a bug!");
-			_WarnOut("Returning 2000,01,01,00:00");
+			_WarnOut('Returning 2000,01,01,00:00');
 			# We don't return undef in order to not break programs that expect
 			# this function to return something usable.
-			return(2000,"01","01","00:00");
+			return(2000,'01','01','00:00');
 		}
 	}
 	# Stripping of TZID
@@ -448,7 +448,7 @@ sub iCal_ParseDateTime {
 		$Hour =~ s/^(\d\d).*$/$1/;
 		$Minutes =~ s/^.+T//;
 		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
-		$Time = _AppendZero($Hour) . ":" . _AppendZero($Minutes);
+		$Time = _AppendZero($Hour) . ':' . _AppendZero($Minutes);
 	}
 	return($Year,$Month,$Day,$Time);
 }
@@ -466,10 +466,10 @@ sub _NewObj {
 	$self->{OrderedCalendar} = {};
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	if($File) {
-		$self->{FILETYPE} = "file";
+		$self->{FILETYPE} = 'file';
 		$self->{FILE} = $File;
 	} else {
-		$self->{FILETYPE} = "ref";
+		$self->{FILETYPE} = 'ref';
 	}
 	return($self);
 }
@@ -483,7 +483,7 @@ sub _ChangeEntry {
 	}
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
-	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ":" . _AppendZero($currmin));
+	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
 	delete($self->{OrderedCalendar});
 	return(1);
 }
@@ -514,8 +514,8 @@ sub _LoadFile {
 		my ($Summary, $Fulltext, $UID);
 		# First make sure we've got everything we need. Skip entries
 		# missing some things.
-		next unless(defined($Current->{"X-PARSER_ENTRYTYPE"}));
-		next unless($Current->{"X-PARSER_ENTRYTYPE"} eq 'VEVENT');
+		next unless(defined($Current->{'X-PARSER_ENTRYTYPE'}));
+		next unless($Current->{'X-PARSER_ENTRYTYPE'} eq 'VEVENT');
 		unless(defined($Current->{'DTSTART'})) {
 			# Detect an alternate dstart
 			foreach(keys(%{$Current})) {
@@ -525,7 +525,7 @@ sub _LoadFile {
 				}
 			}
 			unless(defined($Current->{'DTSTART'})) {
-				main::DPIntWarn("DTSTART missing from iCalendar file. Dumping data:");
+				_ErrOout('DTSTART missing from iCalendar file. Dumping data:');
 				print Dumper(\$Current);
 				next
 			}
@@ -556,8 +556,8 @@ sub _LoadFile {
 								last;
 							}
 						} else {
-							last;
 							$Reassign = 1;
+							last;
 						}
 					}
 				}
@@ -574,7 +574,7 @@ sub _LoadFile {
 			}
 		}
 		unless(defined($Current->{SUMMARY})) {
-			_WarnOut("Dangerous: SUMMARY missing from iCalendar import. Dumping data:");
+			_WarnOut('Dangerous: SUMMARY missing from iCalendar import. Dumping data:');
 			print Dumper(\$Current);
 		}
 		foreach(keys(%{$Current})) {
@@ -601,13 +601,13 @@ sub _ParseData {
 	my $Type;
 	# If $File is a ref...
 	if(ref($File)) {
-		$Type = "ref";
-		if(ref($File) eq "ARRAY") {
+		$Type = 'ref';
+		if(ref($File) eq 'ARRAY') {
 			# All is well.
 			@FileContents = @{$File};
 		} else {
 			# Nothing is well, bug!
-			_WarnOut("iCal_ParseData: supplied reference is not an ARRAYREF!");
+			_WarnOut('iCal_ParseData: supplied reference is not an ARRAYREF!');
 			# Return an empty anonymous array
 			return([]);
 		}
@@ -615,7 +615,7 @@ sub _ParseData {
 	# It isn't
 	else {
 		$Type = "file ($File)";
-		open(my $ICALENDAR, "<", $File) or do {
+		open(my $ICALENDAR, '<', $File) or do {
 			_WarnOut("iCal_ParseData: Unable to open $File for reading: $!");
 			# Return an empty anonymous array
 			return([]);
@@ -645,7 +645,7 @@ sub _ParseData {
 			$Value =~ s/^([A-Za-z\-\_]+)[:;](.*)$/$2/;
 			if($Name =~ /^BEGIN/) {
 				$CurrentStructure++;
-				$Name = "X-PARSER_ENTRYTYPE";
+				$Name = 'X-PARSER_ENTRYTYPE';
 			}
 			$LastName = $Name;
 			$iCalendarStructures[$CurrentStructure]{$Name} = _UnSafe($Value);
@@ -695,7 +695,7 @@ sub _UID {
 		$NonRandom = int(rand(10000));
 	}
 	while(1) {
-		my $UID = "dayplanner-" . time() . $NonRandom . int(rand(10000));
+		my $UID = 'dayplanner-' . time() . $NonRandom . int(rand(10000));
 		if(not defined($self->{RawCalendar}{$UID})) {
 			return($UID);
 		}
@@ -834,7 +834,7 @@ sub _RRULE_Handler {
 	if($YEAR > 2037 or $YEAR < 1970) {
 		if(not $self->{Settings}{UnixTimeLimitWarned}) {
 			$self->{Settings}{UnixTimeLimitWarned} = 1;
-			_WarnOut("Can't handle RRULEs for years below 1970 or above 2037");
+			_WarnOut('Can\'t handle RRULEs for years below 1970 or above 2037');
 		}
 		return(undef);
 	}
