@@ -21,8 +21,8 @@ use Data::Dumper;
 our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime iCal_ConvertToUnixTime);
 
 # Version number
-my $VERSION;
-$VERSION = 0.1;
+our $VERSION;
+$VERSION = 0.2;
 
 # - Public methods
 
