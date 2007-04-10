@@ -4986,13 +4986,14 @@ GetOptions (
 		print "Day Planner version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		print "Using config dir: $SaveToDir\n";
-		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
+		printf "Perl version %vd\n", $^V;
 		if(eval('use Locale::gettext;1')) {
 			print "Locale::gettext version: $Locale::gettext::VERSION\n";
 		} else {
 			print 'Locale::gettext version: MISSING\n';
 		}
-		printf "Perl version %vd\n", $^V;
+		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
+		print "Gtk2-perl version $Gtk2::VERSION\n";
 		print 'OS: ', GetDistVer(), "\n";
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
