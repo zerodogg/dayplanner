@@ -18,7 +18,7 @@ use POSIX;
 use Data::Dumper;
 
 # Exported functions
-our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime);
+our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime iCal_ConvertToUnixTime);
 
 # Version number
 my $VERSION;
@@ -1149,7 +1149,8 @@ of the returned iCalendar data.
 =head1 EXPORT
 
 This module doesn't export anything by default.
-You can tell it to export the iCal_ParseDateTime and iCal_GenDateTime functions.
+You can tell it to export the iCal_ParseDateTime, iCal_GenDateTime,
+iCal_ConvertFromUnixTime and iCal_ConvertToUnixTime functions.
 
 =head1 METHODS
 
@@ -1276,6 +1277,15 @@ such as DTSTART.
 
 Generates an iCalendar DATETIME value from the date supplied.
 Can be used for creating entries such as DTSTART.
+
+=head2 my $UnixTime = iCal_ConvertToUnixTime(DATE TIME);
+
+The same as iCal_ParseDateTime but returns unix time instead.
+
+=head2 my $DATETIME = iCal_ConvertFromUnixTime(UNIX TIME);
+
+The same as iCal_GenDateTime but takes a unix time as parameter
+instead.
 
 =head1 OPTIONAL FEATURES
 
