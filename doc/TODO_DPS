@@ -2,8 +2,6 @@ $Id$
 
  Client:
  ------
-- Implement support for an encrypted ICS filetype to enable DPS to
-  have on-server encryption.
 - Handle MOTD
 
  Server:
@@ -19,29 +17,4 @@ $Id$
  Other:
  -----
 - Write a document on how to communicate with the DPS.
-
-----------------------------------------------------------------------
-
-DONE:
-
- Client:
- ------
-- Get the client working
-- Don't ask the user if she wants to resolve the conflicts. It is required
-  to avoid data loss.
-- Log conflicts in DPS_RepairData.
-- Use the DPS error function in DPS_RepairData.
-- Do a forced DPS_BackupData on DPS_RepairData failure.
-- Add conflict resolving on download (don't blindly trust it).
-- Clean the text of error messages in DPS_SendData().
-
- Server:
- ------
-- Get a working services daemon
-- Move $Port to the config
-- Use the config a lot more
-- Implement --conffile and use it, but fallback to a config in ./
-- Clean up ghost connections (kicks old connections when a new one
-	tries to auth as the same user)
-- Implement connection encryption
-- Allow encrypted connections
+- Come up with a method to encrypt user data.
