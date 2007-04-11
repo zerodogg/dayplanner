@@ -161,15 +161,19 @@ sub DP_InitI18n {
 		if($Legacy) {
 			DPIntWarn('Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters');
 			$DP_I18N_Mode = 1;
-			bindtextdomain('dayplanner', "$FindBin::RealBin/locale");
+			if($BindTo) {
+				bindtextdomain('dayplanner', $BindTo);
+			}
 			textdomain('dayplanner');
 			# This is a hack, but works in many cases
-			foreach my $EnvVar(qw(LANG LC_CTYPE LC_ALL LC_ADDRESS LC_NAME)) {
-				bind_textdomain_codeset('dayplanner','ISO-8859-15');
-			}
+			bind_textdomain_codeset('dayplanner','ISO-8859-15');
 		} else {
 			$DP_I18N_Mode = 2;
-			$Gettext = Locale::gettext->domain('dayplanner');	# Set the gettext domain
+			# The reason we use domain_raw and sets the ->codeset is because for some reason
+			# in later Gtk2 perls (or possibly buggy Locale::gettexts) special characters
+			# doesn't get properly returned.
+			$Gettext = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
+			$Gettext->codeset('UTF-8');
 			if($BindTo) {
 				$Gettext->dir($BindTo);
 			}
