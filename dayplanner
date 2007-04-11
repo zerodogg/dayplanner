@@ -257,7 +257,7 @@ sub StartDaemon {
 		if (-x "$_/$DaemonName") {
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
 			# and 1-255 on FALSE, so it's the other way around from perl
-			unless(system("$_/$DaemonName --force-fork --dayplannerdir $SaveToDir")) {
+			unless(system("$_/$DaemonName", '--force-fork', '--dayplannerdir', $SaveToDir)) {
 				if(ConnectToDaemon("$SaveToDir/$DaemonSocketName")) {
 					$DaemonOnline = 1;
 					return(1);
