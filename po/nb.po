@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2007-04-04 18:08+0200\n"
-"PO-Revision-Date: 2007-04-02 18:04+0200\n"
+"PO-Revision-Date: 2007-04-11 14:13+0200\n"
 "Last-Translator: Jørgen Grønlund <jorgenhg@broadpark.no>\n"
 "Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -87,7 +87,7 @@ msgstr ""
 "allerede kjører før du fortsetter.\n"
 "\n"
 "Du kan tvinge dagsplanleggeren til å kjøre to instanser av programmet på en "
-"gang. Dette anbefales ikke da det kan ende opp med tap eller skade av data."
+"gang. Dette anbefales ikke da det kan ende opp med tap av data."
 
 #: dayplanner:413
 msgid "_Force"
@@ -103,7 +103,7 @@ msgstr ""
 
 #: dayplanner:502
 msgid "An error ocurred while uploading the data"
-msgstr "En feil oppstod under nedlasting av dataen"
+msgstr "En feil oppstod under opplasting av dataene"
 
 #: dayplanner:504
 msgid ""
@@ -112,9 +112,8 @@ msgid ""
 "contact your service provider to get information on why your account has "
 "expired."
 msgstr ""
-"Din konto er utgått på data. Hvis du bruker en betalt tjeneste kan dette "
-"være fordi du ikke har betalt for den gjeldende perioden. Hvis ikke bør du "
-"kontakte tjenestelevrandøren din for å få informasjon om hvorfor kontoen har "
+"Din konto er utgått på data. Hvis du bruker en betaltjeneste kan dette "
+"være fordi du ikke har betalt for den gjeldende perioden. Hvis dette ikke er tilfelle, må du ta kontakt med tjenestelevrandøren din for å få informasjon om hvorfor kontoen har gått ut."
 "gått ut."
 
 #: dayplanner:507
