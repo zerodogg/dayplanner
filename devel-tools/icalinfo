@@ -38,7 +38,13 @@ die("$ARGV[0] doesn't exist") unless -r $ARGV[0];
 		$Entries++;
 	}
 	print " Entries: $Entries\n";
+	$iCalendar->get_years();
+	$iCalendar->get_months(2007);
+	$iCalendar->get_monthinfo(2007,2);
+	$iCalendar->get_dateinfo(2007,2,19);
+	$iCalendar->get_timeinfo(2007,2,19,"02:15");
 }
+exit(0);
 # Benchmarking
 {
 	print "Benchmarks of DP::iCalendar:\n";
