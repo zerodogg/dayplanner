@@ -34,7 +34,9 @@ sub SetLocale {
 	setlocale(LC_ALL, "" );
 	textdomain("dayplanner");
 	bindtextdomain("dayplanner", "./");
-	return(Locale::gettext->domain("dayplanner"));
+	my $GettextObj = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
+	$GettextObj->codeset('UTF-8');
+	return($GettextObj);
 }
 
 my %Languages;
