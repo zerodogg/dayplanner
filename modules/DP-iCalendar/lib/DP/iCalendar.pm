@@ -241,6 +241,8 @@ sub add {
 	# FIXME: There are much more efficient ways to do this.
 	$self->{OrderedCalendar} = {};
 	$self->_ChangeEntry($UID,%Hash);
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
+	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
 	return(1);
 }
