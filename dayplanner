@@ -3432,19 +3432,89 @@ sub Get_DateInfo {
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
 sub CreateDetailsWidget {
-	my $FT_Expander = Gtk2::Expander->new(DP_gettext("Show details"));
+	my $FT_Expander = Gtk2::Expander->new(DP_gettext('Show advanced settings'));
 	$FT_Expander->show();
 	$FT_Expander->signal_connect('activate' => sub {
 			# Yes, it is weird to use not here, but in the callback it appears
 			# to return "" if it is expanded and 1 if it isn't.
 			# Possibly a race condition within gtk2. This appears to work anyway.
 			if(not $FT_Expander->get_expanded) {
-				$FT_Expander->set_label(DP_gettext('Hide details'));
+				$FT_Expander->set_label(DP_gettext('Hide advanced settings'));
 			} else {
-				$FT_Expander->set_label(DP_gettext('Show details'));
+				$FT_Expander->set_label(DP_gettext('Show advanced settings'));
 			}
 		});
 	return($FT_Expander);
+}
+
+# Purpose: Create the advanced settings widget
+# Usage: my $ExpanderWidget = CreateAdvancedWidget();
+sub CreateAdvancedWidget {
+	# Create the expander and set up signal handlers
+	my $FT_Expander = Gtk2::Expander->new(DP_gettext('Show advanced settings'));
+	$FT_Expander->show();
+	$FT_Expander->signal_connect('activate' => sub {
+			# Yes, it is weird to use not here, but in the callback it appears
+			# to return "" if it is expanded and 1 if it isn't.
+			# Possibly a race condition within gtk2. This appears to work anyway.
+			if(not $FT_Expander->get_expanded) {
+				$FT_Expander->set_label(DP_gettext('Hide advanced settings'));
+			} else {
+				$FT_Expander->set_label(DP_gettext('Show advanced settings'));
+			}
+		});
+	# Create the vbox to use within the expander
+	my $ExpanderVBox = Gtk2::VBox->new();
+	$ExpanderVBox->show();
+	$FT_Expander->add($ExpanderVBox);
+	# Create the recurrance checkbutton
+		# HBox for it
+	my $RecurHBox = Gtk2::HBox->new();
+	$RecurHBox->show();
+	$ExpanderVBox->pack_start($RecurHBox,0,0,0);
+		# Checkbutton for it
+	my $RecurCheckButton = Gtk2::CheckButton->new(DP_gettext('Repeat event every') . ' ');
+	$RecurCheckButton->show();
+	$RecurHBox->pack_start($RecurCheckButton,0,0,0);
+		# The combo for it
+	my $Recur_Combo = Gtk2::ComboBox->new_text();
+	# TRANSLATORS: Context: Repeat event every: THIS STRING
+	$Recur_Combo->insert_text(0, DP_gettext('day'));
+	# TRANSLATORS: Context: Repeat event every: THIS STRING
+	$Recur_Combo->insert_text(1, DP_gettext('week'));
+	# TRANSLATORS: Context: Repeat event every: THIS STRING
+	$Recur_Combo->insert_text(2, DP_gettext('month'));
+	# TRANSLATORS: Context: Repeat event every: THIS STRING
+	$Recur_Combo->insert_text(3, DP_gettext('year'));
+	$Recur_Combo->set_active(0);
+	$Recur_Combo->show();
+	$Recur_Combo->set_sensitive(0);
+	$RecurHBox->pack_start($Recur_Combo,0,0,0);
+		# Checkbutton callback
+	$RecurCheckButton->signal_connect('toggled' => sub {
+			if($RecurCheckButton->get_active) {
+				$Recur_Combo->set_sensitive(1);
+			} else {
+				$Recur_Combo->set_sensitive(0);
+			}
+		});
+
+	# Create the entry for the fulltext.
+	# The caller should add text and such as needed
+	my $FulltextEntry = Gtk2::TextView->new();
+	$FulltextEntry->set_editable(1);
+	$FulltextEntry->set_wrap_mode('word-char');
+	$FulltextEntry->show();
+	my $FulltextWindow = Gtk2::ScrolledWindow->new;
+	$FulltextWindow->set_policy('automatic', 'automatic');
+	$FulltextWindow->add($FulltextEntry);
+	$FulltextWindow->show();
+	my $FTFrame = Gtk2::Frame->new();
+	$FTFrame->show();
+	$FTFrame->add($FulltextWindow);
+	$FTFrame->set_label(DP_gettext('Detailed description'));
+	$ExpanderVBox->pack_start($FTFrame,0,0,0);
+	return($FT_Expander,$FulltextEntry);
 }
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
@@ -3719,6 +3789,7 @@ sub EditEvent {
 	my $Time = AMPM_To24($EventlistWidget->{data}[$Selected][1]);
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
+	# FIXME: Don't trust the date from ->get_date, fetch DTSTART from UID!
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my %TimeHash = (
 		EventYear => $EventYear,
@@ -3863,18 +3934,11 @@ sub NormalEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my $FT_Expander = CreateDetailsWidget();
+	my ($FT_Expander, $FulltextEntry) = CreateAdvancedWidget();
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
-	$Tooltips->set_tip($FT_Expander, DP_gettext('Additional information'));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
-	
-	# Add the extended entry box
-	my $FulltextEntry = Gtk2::TextView->new();
-	$FulltextEntry->set_editable(1);
-	$FulltextEntry->set_wrap_mode('word-char');
-	$FulltextEntry->show();
 	# Add text to it if needed
 	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
@@ -3883,12 +3947,6 @@ sub NormalEventWindow {
 		$FT_Expander->set_expanded(1);
 	}
 
-	$FulltextWindow = Gtk2::ScrolledWindow->new;
-	$FulltextWindow->set_policy('automatic', 'automatic');
-	$FulltextWindow->add($FulltextEntry);
-	$FulltextWindow->show();
-	$FT_Expander->add($FulltextWindow);
-	
 	return($MainVBox, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry);
 }
 
@@ -4898,7 +4956,12 @@ sub MainInit {
 sub InitDPCore {
 	DP_InitI18n();
 	my $Exception =  Glib->install_exception_handler(sub {
+		# This is the DP perl exception handler.
+		# Display an error
 		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
+		# Make the main window sensitive - this so that the program is at least
+		# partially usable after the exception occurred.
+		$MainWindow->set_sensitive(1);
 		1;
 	});
 	
