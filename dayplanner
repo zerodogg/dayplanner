@@ -2534,8 +2534,9 @@ sub ImportDataFromProgram {
 		Plan => 0,
 		GnomeCalendar => 0,
 		Korganizer => 0,
+		Orage => 0,
 		ImportPossible => 0,
-		TotalPrograms => 4,
+		TotalPrograms => 5,
 	);
 
 	# Detect evolution
@@ -2565,6 +2566,13 @@ sub ImportDataFromProgram {
 		$Programs{Korganizer} = 1;
 		$Programs{ImportPossible} = 1;
 	}
+	ProgressMade($Programs{TotalPrograms}, 4, $ProgressWindow);
+	# Detect Orage
+	if (-e "$ENV{HOME}/.config/xfce4/orage/orage.ics") {
+		$Programs{Orage} = 1;
+		$Programs{ImportPossible} = 1;
+	}
+	ProgressMade($Programs{TotalPrograms}, 5, $ProgressWindow);
 
 	$ProgressWindow->{Window}->destroy();
 	if(not $Programs{ImportPossible}) {
@@ -2639,6 +2647,16 @@ sub ImportDataFromProgram {
 		$KorganizerButton->set_sensitive(0);
 	}
 	
+	# Orage
+	my $OrageButton = Gtk2::CheckButton->new_with_label('Orage');
+	$ImportVBox->pack_start($OrageButton,0,0,0);
+	$OrageButton->show();
+	if($Programs{Orage}) {
+		$OrageButton->set_active(1);
+	} else {
+		$OrageButton->set_sensitive(0);
+	}
+	
 	# Plan
 	my $PlanButton= Gtk2::CheckButton->new_with_label('Plan');
 	$ImportVBox->pack_start($PlanButton,0,0,0);
@@ -2662,7 +2680,7 @@ sub ImportDataFromProgram {
 	# Signal callback (starts a function depending on the radio button selected)
 	$OKButton->signal_connect('clicked' => sub {
 			$ImportWindow->destroy();
-			ImportProgData($EvolutionButton->get_active(), $PlanButton->get_active(), $GnomeCalButton->get_active(), $KorganizerButton->get_active());
+			ImportProgData($EvolutionButton->get_active(), $PlanButton->get_active(), $GnomeCalButton->get_active(), $KorganizerButton->get_active(),$OrageButton->get_active());
 			$MainWindow->show() if $FirstTime;
 		}	# NOTE: Removing this makes perl 5.8.8 in mdv20070 segfault.
 			# This might need a bug report
@@ -2685,9 +2703,9 @@ sub ImportDataFromProgram {
 }
 
 # Purpose: Import data from other programs
-# Usage: ImportProgData(EVOLUTION?, PLAN?, GNOME_CAL?, KORGANIZER?);
+# Usage: ImportProgData(EVOLUTION?, PLAN?, GNOME_CAL?, KORGANIZER?, ORAGE?);
 sub ImportProgData {
-	my($ImportEvolution, $ImportPlan, $ImportGnome, $ImportKorganizer) = @_;
+	my($ImportEvolution, $ImportPlan, $ImportGnome, $ImportKorganizer, $ImportOrage) = @_;
 	my (@PlanFiles, @EvolutionFiles);
 
 	my $MaxProgress = 1;
@@ -2746,6 +2764,12 @@ sub ImportProgData {
 	if($ImportKorganizer) {
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Korganizer");
 		$iCalendar->addfile("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
+		$CurrentProgress++;
+	}
+	# Then do Orage
+	if($ImportOrage) {
+		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Orage");
+		$iCalendar->addfile("$ENV{HOME}/.config/xfce4/orage/orage.ics");
 		$CurrentProgress++;
 	}
 	# End with plan
