@@ -1,6 +1,15 @@
 Day Planner version history
 **************************
 
+Version 0.7 (Unreleased)
+------------------------
+* Client (dayplanner)
+- Now supports importing from Orage
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
 Version 0.6 (Released on the 11th of April 2007)
 ------------------------
 * Client (dayplanner)
