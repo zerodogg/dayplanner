@@ -44,6 +44,7 @@ weekend "Grundlovsdag/Fars dag" weekend on 5.6
 "FN-dag" on 24.10
 :
 : Royale fødselsdage
+"Kronprinsesse Mary" on 5.2
 "Dronning Ingrid" on 28.3
 "Dronning Margrete II" on 16.4
 "Prinsesse Benedikte" on 29.4
@@ -51,6 +52,8 @@ weekend "Grundlovsdag/Fars dag" weekend on 5.6
 "Prins Joachim" on 7.6
 "Prins Henrik" on 11.6
 "Prinsesse Alexandra" on 30.6
+"Prins Felix" on 22.7
+"Prins Nikolai" on 28.8
 :
 : Andet
 small blue "Sommertid" on last sunday in march

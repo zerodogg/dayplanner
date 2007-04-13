@@ -36,4 +36,10 @@ small "Allerheiligen" on 1.11
 small "Allerzielen" on 2.11
 small "Oudjaar" on 31.12
 small "Moederdag" on every second sunday in may
-small "Vaderdag" on third sunday in june
+small "Vaderdag" on every third sunday in june
+:
+: Winter- en zomertijd:
+: Author: Wilbert Berendsen <wbsoft@xs4all.nl>
+:
+blue "Zomertijd" on last sunday in march
+blue "Wintertijd" on last sunday in october
