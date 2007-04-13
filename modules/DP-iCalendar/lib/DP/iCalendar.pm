@@ -160,6 +160,22 @@ sub get_info {
 	return(undef);
 }
 
+# Purpose: Get a parsed RRULE for the supplied UID
+# Usage: my $Info = $object->get_RRULE(UID);
+sub get_rrule {
+	my ($self, $UID) = @_;
+	if(defined($self->{RawCalendar}{$UID})) {
+		if(defined($self->{RawCalendar}{$UID})) {
+			return(_RRULE_Parser($self->{RawCalendar}{$UID}{RRULE}));
+		} else {
+			return(undef);
+		}
+	} else {
+		carp('get_RRULE got invalid UID');
+		return(undef);
+	}
+}
+
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
 sub write {
@@ -1286,6 +1302,12 @@ information from the $object->get_info() function.
 Returns an iCalendar hash reference for the supplied UID or undef if
 the UID doesn't exist. See the section ICALENDAR HASH for information
 on the syntax of the returned reference.
+
+=head2 $RRULE_Info = $object->get_RRULE(UID);
+
+Returns a hash reference containing the information found in the RRULE
+as key=value pairs (like ->get_info()). Returns undef when the UID
+doesn't have an RRULE.
 
 =head2 $object->write(FILE?);
 
