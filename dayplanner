@@ -3596,7 +3596,6 @@ sub GetRRULEFromCombo {
 	}
 }
 
-
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
 sub TimeSelection {
@@ -3908,7 +3907,7 @@ sub EditEvent {
 }
 
 # Purpose: Create the widgets for editing a normal event
-# Usage: my ($NormalEventWidget, $HourSpinner, $MinuteSpinner, $SummaryWidget, $DetailsWidget,$RecurComboWidget) = NormalEventWindow(UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my $NormalEvent = NormalEventWindow(UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
 # UID is the event UID of the event being edited or undef
 # OK_BUTTON is the OK button widget to attach to
