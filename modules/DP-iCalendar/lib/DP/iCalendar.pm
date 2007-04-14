@@ -498,7 +498,15 @@ sub _NewObj {
 sub _ChangeEntry {
 	my($self,$UID,%Hash) = @_;
 	foreach my $key (keys(%Hash)) {
-		$self->{RawCalendar}{$UID}{$key} = $Hash{$key};
+		# If the key isn't defined that means we should remove the key if it
+		# exists.
+		if(defined($Hash{$key})) {
+			$self->{RawCalendar}{$UID}{$key} = $Hash{$key};
+		} else {
+			if(defined($self->{RawCalendar}{$UID}{$key})) {
+				delete($self->{RawCalendar}{$UID}{$key});
+			}
+		}
 	}
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
