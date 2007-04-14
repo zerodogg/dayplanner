@@ -3463,8 +3463,11 @@ sub CreateDetailsWidget {
 }
 
 # Purpose: Create the advanced settings widget
-# Usage: my $ExpanderWidget = CreateAdvancedWidget();
+# Usage: my $ExpanderWidget = CreateAdvancedWidget(RRULE?);
+# 	RRULE is an RRULE hash as returned by DP::iCalendars ->get_RRULE.
+# 	It can be undef.
 sub CreateAdvancedWidget {
+	my $RRULE = shift;
 	# Create the expander and set up signal handlers
 	my $FT_Expander = Gtk2::Expander->new(DP_gettext('Show advanced settings'));
 	$FT_Expander->show();
@@ -3504,7 +3507,6 @@ sub CreateAdvancedWidget {
 	$Recur_Combo->set_active(0);
 	$Recur_Combo->show();
 	$Recur_Combo->set_sensitive(0);
-	$RecurHBox->pack_start($Recur_Combo,0,0,0);
 		# Checkbutton callback
 	$RecurCheckButton->signal_connect('toggled' => sub {
 			if($RecurCheckButton->get_active) {
@@ -3513,6 +3515,21 @@ sub CreateAdvancedWidget {
 				$Recur_Combo->set_sensitive(0);
 			}
 		});
+		# Get RRULE information if provided and set it
+	if($RRULE) {
+		$RRULE = $RRULE->{FREQ};
+		$RecurCheckButton->set_active(1);
+		if($RRULE eq 'DAILY') {
+			$Recur_Combo->set_active(0);
+		} elsif($RRULE eq 'WEEKLY') {
+			$Recur_Combo->set_active(1);
+		} elsif($RRULE eq 'MONTHLY') {
+			$Recur_Combo->set_active(2);
+		} elsif($RRULE eq 'YEARLY') {
+			$Recur_Combo->set_active(3);
+		}
+	}
+	$RecurHBox->pack_start($Recur_Combo,0,0,0);
 
 	# Create the entry for the fulltext.
 	# The caller should add text and such as needed
@@ -3906,7 +3923,7 @@ sub NormalEventWindow {
 	my $IsEditing = 0;
 	
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($EventSummary, $EventFulltext,$EventTime);
+	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
@@ -3919,6 +3936,7 @@ sub NormalEventWindow {
 		$EventTime = $Time;
 		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
+		$EventRRULE = $iCalendar->get_RRULE($EventUID);
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
 	}
@@ -3970,7 +3988,7 @@ sub NormalEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my ($FT_Expander, $FulltextEntry,$RecurCombo) = CreateAdvancedWidget();
+	my ($FT_Expander, $FulltextEntry,$RecurCombo) = CreateAdvancedWidget($EventRRULE);
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
