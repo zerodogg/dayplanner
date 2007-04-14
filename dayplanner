@@ -34,12 +34,13 @@ use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday up
 use MIME::Base64;		# Used for import/export
 use Getopt::Long;		# Commandline options
 use IO::Socket::UNIX;		# Network layer to communicate with the daemon
-use FindBin;			# So that we can detect module dirs during runtime
 use Cwd;			# We need Cwd::Realpath to find out which directory we live in
-# So that we can use a local Date::HolidayParser
+use FindBin;			# So that we can detect module dirs during runtime
+# This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
+# Day Planner-specific libs
 use Date::HolidayParser;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 
@@ -1253,16 +1254,6 @@ sub GetSummaryString {
 		return(DP_gettext('Unknown'));
 	}
 	return($UID_Obj->{SUMMARY});
-}
-
-# Purpose: Get the real name of the person whose birthday it is
-# Usage: my $Name = GetRealBirthdayName(NAME);
-sub GetRealBirthdayName {
-	my $Name = $_[0];
-	my $BirthdayString = DP_gettext("%s's birthday");
-	$BirthdayString =~ s/%s//;
-	$Name =~ s/$BirthdayString$//;
-	return($Name);
 }
 
 # Purpose: Upgrade from one version to another
@@ -3538,7 +3529,7 @@ sub CreateAdvancedWidget {
 	$FTFrame->add($FulltextWindow);
 	$FTFrame->set_label(DP_gettext('Detailed description'));
 	$ExpanderVBox->pack_start($FTFrame,0,0,0);
-	return($FT_Expander,$FulltextEntry);
+	return($FT_Expander,$FulltextEntry,$Recur_Combo);
 }
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
@@ -3567,6 +3558,27 @@ sub GetTimeFromWidgets {
 	}
 	return("$Hour:$Minute");
 }
+
+# Purpose: Get a formatted RRULE from the combo box.
+# Usage: my $RRULE = GetRRULEFromCombo(COMBO WIDGET);
+sub GetRRULEFromCombo {
+	my $combo = shift;
+	# 0 == day
+	# 1 == week
+	# 2 == month
+	# 3 == year
+	my $ActiveIndex = $combo->get_active;
+	if($ActiveIndex == 0) {
+		return('FREQ=DAILY');
+	} elsif ($ActiveIndex == 1) {
+		return('FREQ=WEEKLY');
+	} elsif ($ActiveIndex == 2) {
+		return('FREQ=MONTHLY');
+	} elsif ($ActiveIndex == 3) {
+		return('FREQ=YEARLY;INTERVAL=1');
+	}
+}
+
 
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
@@ -3756,7 +3768,7 @@ sub AddEvent {
 	$Tooltips->set_tip($CancelButton, DP_gettext('Discard this event'));
 	
 	# Create the widgets for the normal event selection
-	my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow('NULL', $OKButton, $VBox_HBoxContainer, $Window);
+	my ($NormalEvent) = NormalEventWindow('NULL', $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the all day event selection
 	my ($AE_MainWidget, $AE_SummaryWidget, $AE_DetailsWidget) = AllDayEventWindow('NULL', $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
@@ -3768,20 +3780,20 @@ sub AddEvent {
 			if ($ActiveIndex == 0) {
 				$BE_MainWidget->hide();
 				$AE_MainWidget->hide();
-				$NE_MainWidget->show();
+				$NormalEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, 0);
+					NormalEvent_OK($Window, $NormalEvent, \%TimeHash, 0);
 				});
 			} elsif ($ActiveIndex == 1) {
-				$NE_MainWidget->hide();
+				$NormalEvent->{MainVBox}->hide();
 				$BE_MainWidget->hide();
 				$AE_MainWidget->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
 					AllDayEvent_OK($Window, $AE_SummaryWidget, $AE_DetailsWidget, \%TimeHash, 0)});
 			} elsif ($ActiveIndex == 2) {
-				$NE_MainWidget->hide();
+				$NormalEvent->{MainVBox}->hide();
 				$AE_MainWidget->hide();
 				$BE_MainWidget->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
@@ -3837,13 +3849,13 @@ sub EditEvent {
 		
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing an event'), DP_gettext('Editing an event on the %s. %s %s'), 'gtk-ok');
 		# Create the widgets for the normal event selection
-		my ($NE_MainWidget, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
+		my ($NormalEvent) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub {
-				NormalEvent_OK($Window, $NE_HourSpinner, $NE_MinuteSpinner, $NE_AMPM, $NE_SummaryWidget, $NE_DetailsWidget, \%TimeHash, $EventUID);
+				NormalEvent_OK($Window, $NormalEvent, \%TimeHash, $EventUID);
 		});
 		
 		# Show the default widget (Normal event)
-		$NE_MainWidget->show();
+		$NormalEvent->{MainVBox}->show();
 	} elsif ($Type eq 'bday') {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
@@ -3879,7 +3891,7 @@ sub EditEvent {
 }
 
 # Purpose: Create the widgets for editing a normal event
-# Usage: my ($NormalEventWidget, $HourSpinner, $MinuteSpinner, $SummaryWidget, $DetailsWidget) = NormalEventWindow(UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my ($NormalEventWidget, $HourSpinner, $MinuteSpinner, $SummaryWidget, $DetailsWidget,$RecurComboWidget) = NormalEventWindow(UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
 # UID is the event UID of the event being edited or undef
 # OK_BUTTON is the OK button widget to attach to
@@ -3958,7 +3970,7 @@ sub NormalEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my ($FT_Expander, $FulltextEntry) = CreateAdvancedWidget();
+	my ($FT_Expander, $FulltextEntry,$RecurCombo) = CreateAdvancedWidget();
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
@@ -3971,7 +3983,17 @@ sub NormalEventWindow {
 		$FT_Expander->set_expanded(1);
 	}
 
-	return($MainVBox, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry);
+	# Create a hash containing the widgets that the caller might need
+	# and return it.
+	my %ReturnHash;
+	$ReturnHash{MainVBox} = $MainVBox;
+	$ReturnHash{HourSpinner} = $HourSpinner;
+	$ReturnHash{MinuteSpinner} = $MinuteSpinner;
+	$ReturnHash{AMPM} = $AMPM;
+	$ReturnHash{SummaryEntry} = $SummaryEntry;
+	$ReturnHash{FulltextEntry} = $FulltextEntry;
+	$ReturnHash{RecurCombo} = $RecurCombo;
+	return(\%ReturnHash);
 }
 
 # Purpose: Create the widgets for editing an all-day event
@@ -4123,13 +4145,13 @@ sub BirthdayEventWindow {
 #
 # EventUID can be undef.
 sub NormalEvent_OK {
-	my ($MyWindow, $HourSpinner, $MinuteSpinner, $AMPM, $SummaryEntry, $FulltextEntry, $TimeHash, $EventUID) = @_;
+	my ($MyWindow, $WidgetHash, $TimeHash, $EventUID) = @_;
 	my $Error = 0;
 	
 	# Get the contents
-	my $Time = GetTimeFromWidgets($HourSpinner,$MinuteSpinner, $AMPM);
-	my $Summary = $SummaryEntry->get_text;
-	my $FulltextBuff = $FulltextEntry->get_buffer;
+	my $Time = GetTimeFromWidgets($WidgetHash->{HourSpinner},$WidgetHash->{MinuteSpinner}, $WidgetHash->{AMPM});
+	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
+	my $FulltextBuff = $WidgetHash->{FulltextEntry}->get_buffer;
 	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 
 	# Get variables from the TimeHash
@@ -4154,6 +4176,11 @@ sub NormalEvent_OK {
 		$EntryHash{DESCRIPTION} = $Fulltext;
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
+		if($WidgetHash->{RecurCombo}->is_sensitive) {
+			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
+		} else {
+			$EntryHash{RRULE} = undef;
+		}
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
 		} else {
@@ -4982,7 +5009,7 @@ sub InitDPCore {
 	my $Exception =  Glib->install_exception_handler(sub {
 		# This is the DP perl exception handler.
 		# Display an error
-		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n $_[0]");
+		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n$_[0]");
 		# Make the main window sensitive - this so that the program is at least
 		# partially usable after the exception occurred.
 		$MainWindow->set_sensitive(1);
