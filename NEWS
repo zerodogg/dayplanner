@@ -6,6 +6,8 @@ Version 0.7 (Unreleased)
 * Client (dayplanner)
 - Now supports importing from Orage
 - Now bundles more holiday files (autodetection is not available for all)
+- Fixed a bug that caused Day Planner not to work on certain legacy
+  distributions
 
 * Notifier (dayplanner-notifier)
 
