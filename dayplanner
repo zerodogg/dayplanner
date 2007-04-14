@@ -3444,6 +3444,8 @@ sub Get_DateInfo {
 # GUI event adding and editing functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# HELPER FUNCTIONS
+
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
 sub CreateDetailsWidget {
@@ -3743,6 +3745,8 @@ sub CreateEventContainerWin {
 	return($AddEventBox, $ADPrimVBox, $OKButton, $CancelButton);
 }
 
+# MAIN FUNCTIONS
+
 # Purpose: Add a event. Creates the main window and calls the proper event functions
 # Usage: AddEvent();
 sub AddEvent {
@@ -3906,6 +3910,8 @@ sub EditEvent {
 	$Window->show();
 }
 
+# NORMAL EVENT HANDLING FUNCTIONS
+
 # Purpose: Create the widgets for editing a normal event
 # Usage: my $NormalEvent = NormalEventWindow(UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
@@ -4013,6 +4019,63 @@ sub NormalEventWindow {
 	return(\%ReturnHash);
 }
 
+# Purpose: Handle the OK button for the Normal event widget
+# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID)});
+#
+# EventUID can be undef.
+sub NormalEvent_OK {
+	my ($MyWindow, $WidgetHash, $TimeHash, $EventUID) = @_;
+	my $Error = 0;
+	
+	# Get the contents
+	my $Time = GetTimeFromWidgets($WidgetHash->{HourSpinner},$WidgetHash->{MinuteSpinner}, $WidgetHash->{AMPM});
+	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
+	my $FulltextBuff = $WidgetHash->{FulltextEntry}->get_buffer;
+	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
+
+	# Get variables from the TimeHash
+	my $EventYear = ${$TimeHash}{EventYear};
+	my $EventMonth = ${$TimeHash}{EventMonth};
+	my $EventDay = ${$TimeHash}{EventDay};
+	my $OldEventYear = ${$TimeHash}{OldEventYear};
+	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
+	my $OldEventDay = ${$TimeHash}{OldEventDay};
+	my $OldEventTime = ${$TimeHash}{OldEventTime};
+	
+	# TODO: Add tests for an event that is *identical*
+	unless ($Summary) {
+		DPError(DP_gettext('There is no summary for this event. Please enter a summary.'));
+		$Error = 1;
+	}
+	# We don't do this if an error occurred
+	unless ($Error) {
+		my %EntryHash;
+		# Add them to the hash
+		$EntryHash{SUMMARY} = $Summary;
+		$EntryHash{DESCRIPTION} = $Fulltext;
+		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
+		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
+		if($WidgetHash->{RecurCombo}->is_sensitive) {
+			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
+		} else {
+			$EntryHash{RRULE} = undef;
+		}
+		if($EventUID) {
+			$iCalendar->change($EventUID,%EntryHash);
+		} else {
+			$iCalendar->add(%EntryHash);
+		}
+		
+		# Call UpdatedData to tell Day Planner to save the data and redraw widgets
+		UpdatedData();
+		# Destroy our window, it will get the signal and do anything it needs to
+		$MyWindow->destroy;
+		$MainWindow->set_sensitive(1);
+	}
+}
+
+# ALL DAY AND BIRTHDAY EVENT HANDLING FUNCTIONS
+
 # Purpose: Create the widgets for editing an all-day event
 # Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = AllDayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
@@ -4108,110 +4171,6 @@ sub AllDayEventWindow {
 	return($MainVBox,$SummaryEntry, $FulltextEntry);
 }
 
-# Purpose: Create the widgets for editing a birthday(birthdays.dpd) event (%BirthdayContents)
-# Usage: my ($BirthdayEventWidget, $SummaryWidget) = NormalEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
-#
-# UID is the event UID of the event being edited or undef
-# VBOX_WIDGET is the widget you want to pack our widgets into
-# MAIN_WINDOW_WIDGET is the main window it will live inside
-sub BirthdayEventWindow {
-	# ==================================================================
-	# INITIALIZE
-	# ==================================================================
-	my ($UID, $ParentVBox, $MyWindow) = @_;
-	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	
-	# Create our main vbox
-	my $MainVBox = Gtk2::VBox->new();
-	$ParentVBox->pack_start($MainVBox,0,0,0);
-	
-	# Create the tooltips widget
-	my $Tooltips = Gtk2::Tooltips->new();
-	$Tooltips->enable();
-	
-	# Create the table inside the frame
-	my $ContentTable = Gtk2::Table->new(2,2);
-	$ContentTable->show();
-	$MainVBox->pack_start($ContentTable,1,1,0);
-	
-	# ==================================================================
-	# ADD THE TIME/SUMMARY BOXES
-	# ==================================================================
-	
-	# Create the summary label
-	my $SummaryLabel = Gtk2::Label->new(DP_gettext('Name:'));
-	$SummaryLabel->show();
-	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
-
-	# Create the summary entry box
-	my $SummaryEntry = Gtk2::Entry->new();
-	if (defined($UID) and length($UID)) {
-		my $Info = $iCalendar->get_info($UID);
-		$SummaryEntry->set_text($Info->{'X-DP-BIRTHDAYNAME'});
-	}
-	$SummaryEntry->set_activates_default(1);
-	$SummaryEntry->show();
-	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
-	$Tooltips->set_tip($SummaryEntry, DP_gettext('Enter the name of the person whose birthday it is here'));
-	
-	return($MainVBox, $SummaryEntry);
-}
-
-# Purpose: Handle the OK button for the Normal event widget
-# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID)});
-#
-# EventUID can be undef.
-sub NormalEvent_OK {
-	my ($MyWindow, $WidgetHash, $TimeHash, $EventUID) = @_;
-	my $Error = 0;
-	
-	# Get the contents
-	my $Time = GetTimeFromWidgets($WidgetHash->{HourSpinner},$WidgetHash->{MinuteSpinner}, $WidgetHash->{AMPM});
-	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
-	my $FulltextBuff = $WidgetHash->{FulltextEntry}->get_buffer;
-	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
-
-	# Get variables from the TimeHash
-	my $EventYear = ${$TimeHash}{EventYear};
-	my $EventMonth = ${$TimeHash}{EventMonth};
-	my $EventDay = ${$TimeHash}{EventDay};
-	my $OldEventYear = ${$TimeHash}{OldEventYear};
-	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
-	my $OldEventDay = ${$TimeHash}{OldEventDay};
-	my $OldEventTime = ${$TimeHash}{OldEventTime};
-	
-	# TODO: Add tests for an event that is *identical*
-	unless ($Summary) {
-		DPError(DP_gettext('There is no summary for this event. Please enter a summary.'));
-		$Error = 1;
-	}
-	# We don't do this if an error occurred
-	unless ($Error) {
-		my %EntryHash;
-		# Add them to the hash
-		$EntryHash{SUMMARY} = $Summary;
-		$EntryHash{DESCRIPTION} = $Fulltext;
-		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
-		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
-		if($WidgetHash->{RecurCombo}->is_sensitive) {
-			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
-		} else {
-			$EntryHash{RRULE} = undef;
-		}
-		if($EventUID) {
-			$iCalendar->change($EventUID,%EntryHash);
-		} else {
-			$iCalendar->add(%EntryHash);
-		}
-		
-		# Call UpdatedData to tell Day Planner to save the data and redraw widgets
-		UpdatedData();
-		# Destroy our window, it will get the signal and do anything it needs to
-		$MyWindow->destroy;
-		$MainWindow->set_sensitive(1);
-	}
-}
-
 # Purpose: Handle the OK button for the all day event widget and birthday event widget
 # Usage: $OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($MainWindow, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID, IS_BIRTHDAY)});
 #
@@ -4269,6 +4228,55 @@ sub AllDayEvent_OK {
 		$MyWindow->destroy;
 		$MainWindow->set_sensitive(1);
 	}
+}
+
+# Purpose: Create the widgets for editing a birthday event
+# Usage: my ($BirthdayEventWidget, $SummaryWidget) = NormalEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+#
+# UID is the event UID of the event being edited or undef
+# VBOX_WIDGET is the widget you want to pack our widgets into
+# MAIN_WINDOW_WIDGET is the main window it will live inside
+sub BirthdayEventWindow {
+	# ==================================================================
+	# INITIALIZE
+	# ==================================================================
+	my ($UID, $ParentVBox, $MyWindow) = @_;
+	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	
+	# Create our main vbox
+	my $MainVBox = Gtk2::VBox->new();
+	$ParentVBox->pack_start($MainVBox,0,0,0);
+	
+	# Create the tooltips widget
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+	
+	# Create the table inside the frame
+	my $ContentTable = Gtk2::Table->new(2,2);
+	$ContentTable->show();
+	$MainVBox->pack_start($ContentTable,1,1,0);
+	
+	# ==================================================================
+	# ADD THE TIME/SUMMARY BOXES
+	# ==================================================================
+	
+	# Create the summary label
+	my $SummaryLabel = Gtk2::Label->new(DP_gettext('Name:'));
+	$SummaryLabel->show();
+	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
+
+	# Create the summary entry box
+	my $SummaryEntry = Gtk2::Entry->new();
+	if (defined($UID) and length($UID)) {
+		my $Info = $iCalendar->get_info($UID);
+		$SummaryEntry->set_text($Info->{'X-DP-BIRTHDAYNAME'});
+	}
+	$SummaryEntry->set_activates_default(1);
+	$SummaryEntry->show();
+	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	$Tooltips->set_tip($SummaryEntry, DP_gettext('Enter the name of the person whose birthday it is here'));
+	
+	return($MainVBox, $SummaryEntry);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
