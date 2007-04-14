@@ -162,7 +162,7 @@ sub get_info {
 
 # Purpose: Get a parsed RRULE for the supplied UID
 # Usage: my $Info = $object->get_RRULE(UID);
-sub get_rrule {
+sub get_RRULE {
 	my ($self, $UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
 		if(defined($self->{RawCalendar}{$UID})) {
