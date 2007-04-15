@@ -1210,7 +1210,7 @@ sub LaunchWebBrowser {
 	}
 	# Then check for various known browsers (and browser launchers)
 	if(not $Browser) {
-		foreach(qw/www-browser gnome-open xdg-open mozffremote mozilla-firefox epiphany mozilla iceweasel firefox konqueror/) {
+		foreach(qw/xdg-open gnome-open www-browser mozffremote mozilla-firefox firefox iceweasel epiphany mozilla seamonkey konqueror opera/) {
 			if(InPath($_)) {
 				$Browser = $_;
 				last;
@@ -1227,7 +1227,6 @@ sub LaunchWebBrowser {
 		DPIntWarn("Failed to detect any browser to launch for the URL $URL");
 	}
 }
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
@@ -1708,7 +1707,7 @@ sub Day_Changed_Event {
 	# First repopulate the upcoming events widget
 	PopulateUpcomingEvents();
 
-	# This should never be called at other times than after midnight, btu to be sure we subtract 200
+	# This should never be called at other times than after midnight, but to be sure we subtract 200
 	# from the time value in order to get "yesterday"
 	my ($yestersec,$yestermin,$yesterhour,$yestermday,$yestermonth,$yesteryear,$yesterwday,$yesteryday,$yesterisdst) = GetDate(time - 200);
 	my ($CalYear, $CalMonth, $CalDay) = $CalendarWidget->get_date();
