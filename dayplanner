@@ -3579,6 +3579,9 @@ sub GetTimeFromWidgets {
 # Usage: my $RRULE = GetRRULEFromCombo(COMBO WIDGET);
 sub GetRRULEFromCombo {
 	my $combo = shift;
+	if(not $combo->is_sensitive) {
+		return(undef);
+	}
 	# 0 == day
 	# 1 == week
 	# 2 == month
@@ -3787,7 +3790,7 @@ sub AddEvent {
 	# Create the widgets for the normal event selection
 	my ($NormalEvent) = NormalEventWindow('NULL', $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the all day event selection
-	my ($AE_MainWidget, $AE_SummaryWidget, $AE_DetailsWidget) = AllDayEventWindow('NULL', $VBox_HBoxContainer, $Window);
+	my ($AllDayEvent) = AllDayEventWindow('NULL', $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
 	my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
@@ -3796,7 +3799,7 @@ sub AddEvent {
 			my $ActiveIndex = $EventType_Combo->get_active;
 			if ($ActiveIndex == 0) {
 				$BE_MainWidget->hide();
-				$AE_MainWidget->hide();
+				$AllDayEvent->{MainVBox}->hide();
 				$NormalEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
@@ -3805,13 +3808,13 @@ sub AddEvent {
 			} elsif ($ActiveIndex == 1) {
 				$NormalEvent->{MainVBox}->hide();
 				$BE_MainWidget->hide();
-				$AE_MainWidget->show();
+				$AllDayEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					AllDayEvent_OK($Window, $AE_SummaryWidget, $AE_DetailsWidget, \%TimeHash, 0)});
+					AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, 0)});
 			} elsif ($ActiveIndex == 2) {
 				$NormalEvent->{MainVBox}->hide();
-				$AE_MainWidget->hide();
+				$AllDayEvent->{MainVBox}->hide();
 				$BE_MainWidget->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
@@ -3887,9 +3890,9 @@ sub EditEvent {
 		# ALL DAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing an all day event'), DP_gettext('Editing an all day event on the %s. %s %s'), 'gtk-ok');
-		my ($AD_MainWidget, $AD_SummaryWidget, $AD_DetailsWidget) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
-		$AD_MainWidget->show();
-		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AD_SummaryWidget, $AD_DetailsWidget, \%TimeHash, $EventUID, 0)});
+		my ($AllDayEvent) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
+		$AllDayEvent->{MainVBox}->show();
+		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, $EventUID, 0)});
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf(DP_gettext("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
@@ -4017,7 +4020,7 @@ sub NormalEventWindow {
 }
 
 # Purpose: Handle the OK button for the Normal event widget
-# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $HourSpinner, $MinuteSpinner, $SummaryEntry, $FulltextEntry, \%TimeHash, EventUID)});
+# Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $WidgetHash, \%TimeHash, EventUID)});
 #
 # EventUID can be undef.
 sub NormalEvent_OK {
@@ -4052,11 +4055,7 @@ sub NormalEvent_OK {
 		$EntryHash{DESCRIPTION} = $Fulltext;
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
-		if($WidgetHash->{RecurCombo}->is_sensitive) {
-			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
-		} else {
-			$EntryHash{RRULE} = undef;
-		}
+		$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
 		} else {
@@ -4089,7 +4088,7 @@ sub AllDayEventWindow {
 	my ($EventUID, $ParentVBox, $MyWindow) = @_;
 
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($EventSummary, $EventFulltext,$EventTime);
+	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
@@ -4099,6 +4098,7 @@ sub AllDayEventWindow {
 		my ($Year, $Month, $Day) = iCal_ParseDateTime($EventHash->{DTSTART});
 		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
+		$EventRRULE = $iCalendar->get_RRULE($EventUID);
 		($OldEventYear, $OldEventMonth,$OldEventDay) = ($EventYear,$EventMonth,$EventDay);
 	}
 
@@ -4139,18 +4139,13 @@ sub AllDayEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my $FT_Expander = CreateDetailsWidget();
+	my ($FT_Expander, $FulltextEntry,$RecurCombo) = CreateAdvancedWidget($EventRRULE);
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
 	$Tooltips->set_tip($FT_Expander, DP_gettext('Additional information'));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	
-	# Add the extended entry box
-	my $FulltextEntry = Gtk2::TextView->new();
-	$FulltextEntry->set_editable(1);
-	$FulltextEntry->set_wrap_mode('word-char');
-	$FulltextEntry->show();
 	# Add text to it if needed
 	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
@@ -4158,14 +4153,14 @@ sub AllDayEventWindow {
 		$FulltextEntry->set_buffer($AddEventBuffer);
 		$FT_Expander->set_expanded(1);
 	}
-
-	$FulltextWindow = Gtk2::ScrolledWindow->new;
-	$FulltextWindow->set_policy('automatic', 'automatic');
-	$FulltextWindow->add($FulltextEntry);
-	$FulltextWindow->show();
-	$FT_Expander->add($FulltextWindow);
 	
-	return($MainVBox,$SummaryEntry, $FulltextEntry);
+	my %ReturnHash;
+	$ReturnHash{MainVBox} = $MainVBox;
+	$ReturnHash{SummaryEntry} = $SummaryEntry;
+	$ReturnHash{FulltextEntry} = $FulltextEntry;
+	$ReturnHash{RecurCombo} = $RecurCombo;
+	
+	return(\%ReturnHash);
 }
 
 # Purpose: Handle the OK button for the all day event widget and birthday event widget
@@ -4176,11 +4171,11 @@ sub AllDayEventWindow {
 # IS_BIRTHDAY can be either true or false. If the entry being changed/added is a birthday
 # then it should be true.
 sub AllDayEvent_OK {
-	my ($MyWindow, $SummaryEntry, $FulltextEntry, $TimeHash, $EventUID,$IsBirthday) = @_;
+	my ($MyWindow, $WidgetHash,$TimeHash, $EventUID,$IsBirthday) = @_;
 	my $Error = 0;
 	
 	# Get the contents of the summary
-	my $Summary = $SummaryEntry->get_text;
+	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
 
 	# Get variables from the TimeHash
 	my $EventYear = ${$TimeHash}{EventYear};
@@ -4208,8 +4203,9 @@ sub AllDayEvent_OK {
 			$EntryHash{SUMMARY} = sprintf(DP_gettext("%s's birthday"), $Summary);
 		} else {
 			$EntryHash{SUMMARY} = $Summary;
+			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
 			# Get and add content to the fulltext
-			my $FulltextBuff = $FulltextEntry->get_buffer;
+			my $FulltextBuff = $WidgetHash->{FulltextEntry}->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 			$EntryHash{DESCRIPTION} = $Fulltext;
 		}
