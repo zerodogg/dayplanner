@@ -545,7 +545,7 @@ msgstr "Skjul avanserte val"
 
 #: dayplanner:3493
 msgid "Repeat event every"
-msgstr "Gjenta henging kvar(t)"
+msgstr "Gjenta hending kvar(t)"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
 #: dayplanner:3499
