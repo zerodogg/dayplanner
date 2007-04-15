@@ -165,7 +165,7 @@ sub get_info {
 sub get_RRULE {
 	my ($self, $UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		if(defined($self->{RawCalendar}{$UID})) {
+		if(defined($self->{RawCalendar}{$UID}{RRULE})) {
 			return(_RRULE_Parser($self->{RawCalendar}{$UID}{RRULE}));
 		} else {
 			return(undef);
