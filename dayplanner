@@ -3676,16 +3676,26 @@ sub TimeSelection {
 }
 
 # Purpose: Create the window that will contain the event editor
-# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE);
+# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE, UID);
 #
 # TITLE is the title of the window, LABEL is the label to display on top of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
+# UID is the UID of the event. This can be undef.
 sub CreateEventContainerWin {
 	# Get the options passed to the sub
-	my ($WindowTitle, $EventLabel, $OkButtonType) = @_;
+	my ($WindowTitle, $EventLabel, $OkButtonType, $UID) = @_;
 	
 	# Get the date
-	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my ($EventYear, $EventMonth, $EventDay);
+	# If we have an UID then get it from that, if not then get it from the calendar widget
+	if($UID) {
+		my $UIDObj = $iCalendar->get_info($UID);
+		# Get date information from the UID
+		($EventYear, $EventMonth, $EventDay) = iCal_ParseDateTime($UIDObj->{DTSTART});
+		$EventMonth =~ s/^0//;	# Drop leading zero from event month.
+	} else {
+		($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	}
 
 	# ==================================================================
 	# BUILD THE WINDOW
@@ -3845,8 +3855,16 @@ sub EditEvent {
 	my $Time = AMPM_To24($EventlistWidget->{data}[$Selected][1]);
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-	# FIXME: Don't trust the date from ->get_date, fetch DTSTART from UID!
-        my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my $UIDObj = $iCalendar->get_info($EventUID);
+	# Get date information from the UID
+        my ($EventYear, $EventMonth, $EventDay) = iCal_ParseDateTime($UIDObj->{DTSTART});
+	# Get date information from the calendar, we check if it differs with the one from
+	# the UID
+	my ($SelEventYear, $SelEventMonth, $SelEventDay) = $CalendarWidget->get_date();$SelEventMonth++;
+	my $Differs = 0;
+	if($SelEventYear ne $EventYear or $SelEventMonth ne $EventMonth or $SelEventDay ne $EventDay) {
+		$Differs = 1
+	}
 	my %TimeHash = (
 		EventYear => $EventYear,
 		EventMonth => $EventMonth,
@@ -3855,6 +3873,7 @@ sub EditEvent {
 		OldEventMonth => $EventMonth,
 		OldEventDay => $EventDay,
 		OldEventTime => $Time,
+		Differs => $Differs,
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
@@ -3866,8 +3885,11 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing an event'), DP_gettext('Editing an event on the %s. %s %s'), 'gtk-ok');
+		# Get the text string to use (it differs if we're editing on another date than
+		# the selected
+		my $EditString = $Differs ? DP_gettext('Editing a repeating event starting on the %s. %s %s') : DP_gettext('Editing an event on the %s. %s %s');
+
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing an event'), $EditString, 'gtk-ok',$EventUID);
 		# Create the widgets for the normal event selection
 		my ($NormalEvent) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub {
@@ -3880,7 +3902,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing a birthday'), DP_gettext('Editing a birthday on the %s. %s %s'), 'gtk-ok');
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing a birthday'), DP_gettext('Editing a birthday on the %s. %s %s'), 'gtk-ok',$EventUID);
 		
 		my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$BE_MainWidget->show();
@@ -3889,7 +3911,11 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# ALL DAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing an all day event'), DP_gettext('Editing an all day event on the %s. %s %s'), 'gtk-ok');
+		# Get the text string to use (it differs if we're editing on another date than
+		# the selected
+		my $EditString = $Differs ? DP_gettext('Editing a repeating all day event starting on the %s. %s %s') : DP_gettext('Editing an all day event on the %s. %s %s');
+
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(DP_gettext('Editing an all day event'), $EditString, 'gtk-ok',$EventUID);
 		my ($AllDayEvent) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$AllDayEvent->{MainVBox}->show();
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, $EventUID, 0)});
@@ -3937,8 +3963,7 @@ sub NormalEventWindow {
 	} else {
 		my $EventHash = $iCalendar->get_info($EventUID);
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
-		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($EventHash->{DTSTART});
-		$EventTime = $Time;
+		($EventYear, $EventMonth, $EventDay, $EventTime) = iCal_ParseDateTime($EventHash->{DTSTART});
 		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		$EventRRULE = $iCalendar->get_RRULE($EventUID);
