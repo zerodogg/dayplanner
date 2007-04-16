@@ -3860,10 +3860,9 @@ sub EditEvent {
         my ($EventYear, $EventMonth, $EventDay) = iCal_ParseDateTime($UIDObj->{DTSTART});
 	# Get date information from the calendar, we check if it differs with the one from
 	# the UID
-	my ($SelEventYear, $SelEventMonth, $SelEventDay) = $CalendarWidget->get_date();$SelEventMonth++;
 	my $Differs = 0;
-	if($SelEventYear ne $EventYear or $SelEventMonth ne $EventMonth or $SelEventDay ne $EventDay) {
-		$Differs = 1
+	if($UIDObj->{RRULE}) {
+		$Differs = 1;
 	}
 	my %TimeHash = (
 		EventYear => $EventYear,
