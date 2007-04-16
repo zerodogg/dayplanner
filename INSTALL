@@ -31,6 +31,15 @@ This is a bit trickier, these files should go into $PATH somewhere, such as in /
 - dayplanner-notifier
 - dayplanner-daemon
 
+Note however that if either of the modules used are bundled inside the package
+the following is required:
+have a tree, such as /usr/share/dayplanner/ (path doesn't really matter, just an example)
+which contains dayplanner, dayplanner-notifier and dayplanner-daemon. Have the modules/
+directory be a subdirectory of this tree (see 2.1 and 2.2 for more information).
+Then symlink dayplanner, dayplanner-notifier and dayplanner-daemon into $PATH instead.
+This alows Day Planner to properly detect and use the bundled modules (which it
+otherwise wouldn't be able to find).
+
 These files should go into the systems standard icons directory OR either /usr/share/dayplanner/
 or /usr/local/dayplanner/:
 - art/dayplanner_16.png
