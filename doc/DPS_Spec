@@ -105,4 +105,19 @@ Description: This command supplies the client with the data of the user it is
 
 	SENDDATA
 Syntax: SENDDATA [MD5] [LAST MD5] [DATA] [FORCE?]
-Possible replies:
+Possible replies:	ERR FORMATERROR
+			ERR LASTMD5_NOMATCH [LAST MD5 IN SERVER CONF] - [LAST MD5 FROM SENDDATA COMMAND]
+			ERR MD5_MISMATCH # [MD5 OF RECIEVED DATA] [MD5 FROM SENDDATA COMMAND]
+			ERR WRITEFAILURE
+			OK
+Description: This command is used to upload new data to the server. The syntax is
+	SENDDATA [MD5 SUM OF DATA PORTION] [LAST MD5 UPLOADED] [DATA] [FORCE?].
+	LAST MD5 UPLOADED is either an MD5 sum or the value UNDEF (for undefined, ie.
+	nothing uploaded before). DATA is an base64 encoded iCalendar file.
+	If FORCE is true then it disables certain on-server sanity checks (such as
+	verification between last md5 in senddata and last md5 in server conf).
+	It replies FORMATERROR when the SENDDATA line syntax is invalid, LASTMD5_NOMATCH
+	when the last md5 supplied doesn't match the one in the server config, MD5_MISMATCH
+	if the recieved data doesn't match the recieved MD5 sum and WRITEFAILURE if 
+	the server couldn't write the new data to disk. OK is replied if the transfer
+	was successful.
