@@ -8,6 +8,7 @@ Version 0.7 (Unreleased)
 - Now bundles more holiday files (autodetection is not available for all)
 - Fixed a bug that caused Day Planner not to work on certain legacy
   distributions
+- Renamed the postpone button "Remind me later"
 
 * Notifier (dayplanner-notifier)
 
