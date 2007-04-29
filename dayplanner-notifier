@@ -144,7 +144,7 @@ sub DP_InitI18n {
 # Purpose: Convert internal 24H time to AM/PM
 # Usage: AM_PM_From24(TIME);
 sub AMPM_From24 {
-	my $Time = $_[0];
+	my $Time = shift;
 	return($Time) if $ClockSystem eq '24';
 	return('') if not length($Time);
 	my $Hour = $Time;
@@ -291,7 +291,6 @@ sub GetMessages {
 	
 	$Message = Daemon_DataSegment("NOTIFICATION GET $_[0] Summary");
 	$Time = Daemon_DataSegment("NOTIFICATION GET $_[0] Time");
-	$Time = AMPM_From24($Time);	# Convert to AM/PM if needed
 	$Date = Daemon_DataSegment("NOTIFICATION GET $_[0] Date");
 	$Fulltext = Daemon_DataSegment("NOTIFICATION GET $_[0] Fulltext");
 	$IsWarning = Daemon_DataSegment("NOTIFICATION GET $_[0] PreNot");
@@ -385,6 +384,7 @@ sub InPath {
 # Usage: NotifyUser();
 sub NotifyUser {
 	DP_InitI18n();
+	$Time = AMPM_From24($Time);	# Convert to AM/PM if needed
 	if(defined($ENV{DISPLAY}) and length($ENV{DISPLAY}) and X_Available()) {
 		# We have DISPLAY, use GTK
 		GtkNotifier();

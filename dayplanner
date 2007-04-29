@@ -24,7 +24,6 @@ use strict;			# Force strict coding
 use warnings;			# Tell perl to warn about things
 use POSIX;			# We need strftime
 use Gtk2;			# Use Gtk2 :)
-use Glib qw(TRUE FALSE);	# We need glibs TRUE and FALSE, they prettify code
 use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;		# Easier keybindings
 use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
@@ -36,6 +35,7 @@ use Getopt::Long;		# Commandline options
 use IO::Socket::UNIX;		# Network layer to communicate with the daemon
 use Cwd;			# We need Cwd::Realpath to find out which directory we live in
 use FindBin;			# So that we can detect module dirs during runtime
+use constant { TRUE => 1, FALSE => 0 };
 # This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
