@@ -237,7 +237,7 @@ ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 print ".";
 # Write uninstall script
 open(UNINSTALL, ">$InstallDirectory/uninstall.sh");
-print UNINSTALL "#!/bin/sh\n";
+print UNINSTALL "#!/bin/sh\n# Uninstall script for Day Planner\n";
 print UNINSTALL "echo -n \"Uninstalling...\"\n";
 print UNINSTALL "cd \$HOME\n";
 print UNINSTALL "rm -rf '$InstallDirectory'\n";
@@ -250,7 +250,7 @@ print UNINSTALL "rm -f $BinLinkRm\n" if($BinLinkRm);
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL "if [ -e \$HOME/.menu/dayplanner.menu ]; then\n\trm -f \$HOME/.menu/dayplanner.menu\n\t[ \"\$1\" != \"quick\" ] && update-menus &> /dev/null\nfi\n";
 print UNINSTALL "echo -n \".\"\n";
-print UNINSTALL "[ -e \$HOME/Desktop/dayplanner.desktop ] && rm -f \$HOME/Desktop/dayplanner.desktop\n";
+print UNINSTALL '[ "$1" != "quick" ] && [ -e $HOME/Desktop/dayplanner.desktop ] && rm -f $HOME/Desktop/dayplanner.desktop' . "\n";
 print UNINSTALL "echo -n \".\"\n";
 print UNINSTALL '[ -e "$HOME/.local/share/applications/dayplanner.desktop" ] && rm -f  "$HOME/.local/share/applications/dayplanner.desktop"' . "\n";
 print UNINSTALL "echo \"done\"\n";
