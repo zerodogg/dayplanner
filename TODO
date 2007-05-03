@@ -16,6 +16,7 @@ may be subject to change.
 - 22:55:57 < reinouts> Zero_Dogg: you should *really* use a date format like 'dd MMMM yyyy' instead of '%s. %s %s'
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
+- Add a DP::GeneralHelpers and split general helper functions into it
 
 * Longer term
 - - - - - - -
