@@ -24,6 +24,7 @@ use Locale::gettext;		# Allow the program to be translated
 use FindBin;			# So that we can detect stuff at runtime
 use POSIX;
 use utf8;
+use Fatal qw/open close/;
 
 sub SetLocale {
 	foreach(keys(%ENV)) {
@@ -82,12 +83,13 @@ open(my $Desktop, ">", "./doc/dayplanner.desktop");
 print ".";
 binmode($Desktop, ':utf8');
 print $Desktop "[Desktop Entry]\n";
+print $Desktop "Version=1.0\n";
 print $Desktop "Encoding=UTF-8\n";
 print $Desktop "Categories=X-MandrivaLinux-Office-TimeManagement;Office;Calendar;GTK;GNOME;\n";
 print $Desktop "Exec=$BinDir/dayplanner\n";
 print $Desktop "Icon=$Icon\n";
 print $Desktop "Name=Day Planner\n";
-print $Desktop "StartupNotify=true\n";
+print $Desktop "StartupNotify=false\n";
 print $Desktop "Terminal=false\n";
 print $Desktop "Type=Application\n";
 print ".";
