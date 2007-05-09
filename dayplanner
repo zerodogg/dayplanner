@@ -224,9 +224,6 @@ sub DP_InitI18n {
 sub DaemonInit {
 	$DaemonInitialized = 1;
 	
-	# Handle SIGPIPE
-	$SIG{PIPE} = \&DaemonSIGPIPEHandler;
-
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
 		if ($ConnectionAttempt eq 'NOHI') {
@@ -267,14 +264,6 @@ sub StartDaemon {
 	}
 	DPIntWarn('Unable to start daemon!');
 	return(0);
-}
-
-# Purpose: Handle SIGPIPE gracefully
-# Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
-sub DaemonSIGPIPEHandler {
-	print "$_\n" foreach(@_);
-	DPIntWarn('I recieved a SIGPIPE, the daemon is probably offline');
-	StartDaemon();
 }
 
 # Purpose: Connect to the daemon
@@ -1234,6 +1223,7 @@ sub AlreadyRunningDP {
 			sleep(1);
 			# Unlink the IPC socket
 			unlink("$SaveToDir/ipcsocket");
+			$iCalendar->reload();
 			return(TRUE);
 		}
 	} else {
@@ -1242,14 +1232,15 @@ sub AlreadyRunningDP {
 	}
 }
 
-
 # Purpose: Handle IPC talking
 # Usage: IPC_Handler();
 sub IPC_Handler {
 	my $Message = shift;
 	chomp($Message);
 	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/) {
-		print "Import of $Message requested.\n";
+		$iCalendar->addfile($Message);
+		print "Imported $Message\n";
+		UpdatedData();
 	} elsif ($Message =~ /^QUIT/) {
 		# This is the same as ctrl+c
 		DP_SigHandler('IPC_QUIT_REQUEST');
@@ -5091,8 +5082,19 @@ sub InitDPCore {
 	$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	if(not $IPC_Socket) {
 		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub { return });
+		if(@ARGV) {
+			foreach(@ARGV) {
+				$Client->client_send("IMPORT_DATA $_");
+			}
+			exit(0);
+		}
 		AlreadyRunningDP($Client);
 		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
+	}
+	if(@ARGV) {
+		foreach(@ARGV) {
+			IPC_Handler("IMPORT_DATA $_");
+		}
 	}
 	# Draw the main window
 	DrawMainWindow();
