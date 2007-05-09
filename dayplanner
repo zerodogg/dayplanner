@@ -230,7 +230,7 @@ sub DaemonInit {
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
 		if ($ConnectionAttempt eq 'NOHI') {
-			DaemonConnectionErrorHandler();
+			die("Daemon refused the connection\n");
 			return(1);
 		} elsif ($ConnectionAttempt eq '1') {
 			$DaemonOnline = 1;
