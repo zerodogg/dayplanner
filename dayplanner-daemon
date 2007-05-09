@@ -531,10 +531,10 @@ sub CommandHandler {
 	if (/^HI\s+(\w+)/) {
 		my $TYPE = $1;
 		IntDebug("New connection ($TYPE), $PID says HI");
-		if {$TYPE =~ /client2/) {
+		if ($TYPE =~ /client2/) {
 			$AccessStatus{Connected} = $PID;
 			IntDebug "New client2 ($PID)";
-		elsif ($TYPE =~ /client/) {
+		} elsif ($TYPE =~ /client/) {
 			# We already have a client, refuse
 			if ($AccessStatus{Connected}) {
 				if ($_ =~ /FORCE/ ) {
