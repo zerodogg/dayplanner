@@ -40,9 +40,11 @@ use constant { TRUE => 1, FALSE => 0 };
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
 use Date::HolidayParser;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
+use DP::GeneralHelpers;
 
 # Scalars
 my $Version = '0.7';
@@ -65,8 +67,7 @@ my $HTML_PHP = 0;					# If set to 1 the HTML exporter will not
 							#  output the header/footer. This is used by the
 							#  PHP exporter.
 my $iCalendar;						# The DP::iCalendar object.
-
-
+my $IPC_Socket;
 
 # FIXME: Unused
 # Arrays
@@ -271,6 +272,7 @@ sub StartDaemon {
 # Purpose: Handle SIGPIPE gracefully
 # Usage: $SIG{PIPE} = \&DaemonSIGPIPEHandler;
 sub DaemonSIGPIPEHandler {
+	print "$_\n" foreach(@_);
 	DPIntWarn('I recieved a SIGPIPE, the daemon is probably offline');
 	StartDaemon();
 }
@@ -278,9 +280,9 @@ sub DaemonSIGPIPEHandler {
 # Purpose: Connect to the daemon
 # Usage: ConnectToDaemon(/path/to/socket, FORCE/undef);
 sub ConnectToDaemon {
-	my $HI = 'HI client';
+	my $HI = 'HI client2';
 	if(defined($_[1]) and $_[1] eq 'FORCE') {
-		$HI = 'HI client FORCE';
+		$HI = 'HI client2 FORCE';
 	}
 	$DaemonSocket = IO::Socket::UNIX->new(
 		Peer	=> $_[0],
@@ -387,6 +389,8 @@ sub CloseDaemon {
 		}
 		$DaemonOnline = 0;
 	}
+	# FIXME: This shouldn't be done here!
+	$IPC_Socket->destroy();
 	return(1);
 }
 
@@ -400,37 +404,6 @@ sub Daemon_ErrorHandler {
 		DPIntWarn("Weird multi-return response from caller: [1]=\"$_[1]\"");
 	}
 	return($_[0]);
-}
-
-# Purpose: Display an error dialog about the inability to connect to the daemon
-# Usage: DaemonConnectionErrorHandler();
-sub DaemonConnectionErrorHandler {
-	if($Gtk2Init) {
-		my $ErrorDialog = Gtk2::MessageDialog->new (undef,
-						'destroy-with-parent',
-						'error',
-						'none',
-						 DP_gettext("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nRunning two instances of Day Planner can be forced. However that is not recommended as it may lead to data loss or corruption."));
-
-		$ErrorDialog->add_buttons(
-			DP_gettext('_Force') => 'reject',
-			'gtk-ok' => 'accept',
-		);
-	
-		$ErrorDialog->set_default_response('accept');
-		if($ErrorDialog->run eq 'accept') {
-			$ErrorDialog->destroy;
-			exit(0)
-		} else {
-			$ErrorDialog->destroy;
-			unless (ConnectToDaemon("$SaveToDir/$DaemonSocketName", 'FORCE')) {
-					DPError(DP_gettext('Unable to force the start. This is likely due to a bug in the application, please contact the Day Planner developers.'));
-					exit(1);
-				}
-		}
-	} else {
-		die("Another instance of Day Planner appears to be running, unable to continue\n");
-	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1231,6 +1204,59 @@ sub LaunchWebBrowser {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Display an error dialog about the inability to connect to the daemon
+# Usage: AlreadyRunningDP(IPC_CLIENT);
+sub AlreadyRunningDP {
+	my $ClientConnection = shift;
+	if($Gtk2Init) {
+		my $ErrorDialog = Gtk2::MessageDialog->new (undef,
+						'destroy-with-parent',
+						'error',
+						'none',
+						 DP_gettext("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nYou may force the other instance to quit if you wish."));
+
+		$ErrorDialog->add_buttons(
+			DP_gettext('_Force') => 'reject',
+			'gtk-ok' => 'accept',
+		);
+	
+		$ErrorDialog->set_default_response('accept');
+		if($ErrorDialog->run eq 'accept') {
+			$ErrorDialog->destroy;
+			$ClientConnection->destroy();
+			exit(0)
+		} else {
+			$ErrorDialog->destroy;
+			$ClientConnection->client_send('QUIT');
+			$ClientConnection->destroy();
+			# Sleep for one second to allow the other instance to quit
+			sleep(1);
+			# Unlink the IPC socket
+			unlink("$SaveToDir/ipcsocket");
+			return(TRUE);
+		}
+	} else {
+		$ClientConnection->destroy();
+		die("Another instance of Day Planner appears to be running, unable to continue\n");
+	}
+}
+
+
+# Purpose: Handle IPC talking
+# Usage: IPC_Handler();
+sub IPC_Handler {
+	my $Message = shift;
+	chomp($Message);
+	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/) {
+		print "Import of $Message requested.\n";
+	} elsif ($Message =~ /^QUIT/) {
+		# This is the same as ctrl+c
+		DP_SigHandler('IPC_QUIT_REQUEST');
+	} else {
+		return('UNKNOWN_CMD');
+	}
+}
 
 # Purpose: Get the SUMMARY string for an UID
 # Usage: my $Summary = GetSummaryString(UID);
@@ -5061,6 +5087,13 @@ sub InitDPCore {
 	# MainInit() returns 1 if we're in "FirstStartup" mode AND are displaying the import window.
 	# If we're not displaying the import window it returns 0 in any case.
 	my $FirstStartup = MainInit();
+	# Create the socket
+	$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
+	if(not $IPC_Socket) {
+		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub { return });
+		AlreadyRunningDP($Client);
+		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
+	}
 	# Draw the main window
 	DrawMainWindow();
 	$MainWindow->show() if not $FirstStartup;
