@@ -3272,13 +3272,7 @@ sub QuitSub {
 			$MainWindow->show();
 			return(1);
 		}
-	} elsif ($SaveData eq 'DAEMON_RELOAD_FAILURE') {
-		unless(DPQuestion(DP_gettext('Quit anyway?'))) {
-			$MainWindow->show();
-			return(1);
-		}
 	}
-	
 	WriteStateFile($SaveToDir, 'state.conf');
 	
 	Gtk2->main_quit;
