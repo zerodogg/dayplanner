@@ -1,0 +1,6 @@
+GeneralHelpers.xs
+Makefile.PL
+MANIFEST
+README
+t/DP-GeneralHelpers.t
+lib/DP/GeneralHelpers.pm
