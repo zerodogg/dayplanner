@@ -66,7 +66,12 @@ sub new_client {
 	$self->{Type} = 'client';
 	$self->{Socket} = IO::Socket::UNIX->new(
 		Peer    => $self->{FileName},
-		Type	=> SOCK_STREAM,) or return(FALSE,$@);
+		Type	=> SOCK_STREAM,) or do {
+			       if(wantarray()) {
+			       	       return(FALSE,$@);
+			       } else {
+				       return(FALSE);
+			       } };
 	if(not Glib::IO->add_watch(fileno($self->{Socket}), 'in', sub { $self->_IO_IN_EVENT($self->{Socket});})) {
 			return(FALSE);
 		}
@@ -97,7 +102,12 @@ sub new_server {
 					Local	=> $self->{FileName},
 					Type	=> SOCK_STREAM,
 					Listen	=> TRUE,
-			) or return(FALSE,$@);
+			) or do {
+			       if(wantarray()) {
+			       	       return(FALSE,$@);
+			       } else {
+				       return(FALSE);
+			       } };
 	if(not Glib::IO->add_watch(fileno($self->{Socket}), 'in', sub { $self->_IO_IN(@_);})) {
 			return(FALSE);
 		}
