@@ -9,6 +9,9 @@ Version 0.7 (Unreleased)
 - Fixed a bug that caused Day Planner not to work on certain legacy
   distributions
 - Renamed the postpone button "Remind me later"
+- Added a DP::GeneralHelpers lib, handles IPC and such
+- Can now import data supplied on the commandline without a commandline parameter
+- DP can now communicate with other running DPs and shut them down
 
 * Notifier (dayplanner-notifier)
 
