@@ -108,7 +108,9 @@ sub new_server {
 			       } else {
 				       return(FALSE);
 			       } };
+	chmod(0600, $self->{FileName});
 	if(not Glib::IO->add_watch(fileno($self->{Socket}), 'in', sub { $self->_IO_IN(@_);})) {
+			$self->destroy();
 			return(FALSE);
 		}
 	return($self);
