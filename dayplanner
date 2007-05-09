@@ -56,7 +56,6 @@ my $BirthdayFile = 'birthdays.dpd';			# The filename to save birthdays to
 my $ICSFile = 'calendar.ics';				# The ICS calendar
 my $ConfigFile = 'dayplanner.conf';			# The filename to save the configuration to
 my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
-my $DaemonOnline = 0;					# Is the daemon online?
 my $DaemonInitialized = 0;				# Has the daemon been initialized?
 my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
@@ -223,28 +222,17 @@ sub DP_InitI18n {
 # Usage: DaemonInit();
 sub DaemonInit {
 	$DaemonInitialized = 1;
-	
 	if (-e "$SaveToDir/$DaemonSocketName") {
-		my $ConnectionAttempt = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
-		if ($ConnectionAttempt eq 'NOHI') {
-			die("Daemon refused the connection\n");
-			return(1);
-		} elsif ($ConnectionAttempt eq '1') {
-			$DaemonOnline = 1;
-			my $DaemonVersion = Daemon_DataSegment('VERSION');
-			chomp($DaemonVersion);
-			unless($DaemonVersion eq $Version) {
-				if(Daemon_DataSegment('SHUTDOWN') eq "okay\n") {
-					$DaemonOnline = 0;
-					return(StartDaemon());
-				} else {
-					DPIntWarn('Wanted to restart the daemon but was unable to!');
-				}
-			}
-			return(1);
-		} 
+		$DaemonSocket = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
 	}
-	return(StartDaemon());
+	if (not $DaemonSocket) {
+		if(not StartDaemon()) {
+			return(undef);
+		}
+		return(DaemonInit());
+	}
+	$DaemonSocket->client_send("$$ HI client2");
+	return(TRUE);
 }
 
 # Purpose: Start the Day Planner daemon
@@ -255,10 +243,7 @@ sub StartDaemon {
 			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
 			# and 1-255 on FALSE, so it's the other way around from perl
 			unless(system("$_/$DaemonName", '--force-fork', '--dayplannerdir', $SaveToDir)) {
-				if(ConnectToDaemon("$SaveToDir/$DaemonSocketName")) {
-					$DaemonOnline = 1;
-					return(1);
-				}
+				return(1);
 			}
 		}
 	}
@@ -266,119 +251,14 @@ sub StartDaemon {
 	return(0);
 }
 
-# Purpose: Connect to the daemon
-# Usage: ConnectToDaemon(/path/to/socket, FORCE/undef);
-sub ConnectToDaemon {
-	my $HI = 'HI client2';
-	if(defined($_[1]) and $_[1] eq 'FORCE') {
-		$HI = 'HI client2 FORCE';
+# Purpose: Close the connection to the daemon (shutdown if $ShutdownDaemon) and close the IPC socket
+# Usage: CloseIPC();
+sub CloseIPC {
+	if($ShutdownDaemon) {
+		$DaemonSocket->client_send('SHUTDOWN');
 	}
-	$DaemonSocket = IO::Socket::UNIX->new(
-		Peer	=> $_[0],
-		Type	=> SOCK_STREAM,
-		Timeout	=> 5)
-		or return('NOCONNECT');
-	$DaemonOnline = 1;	# If DaemonOnline isn't 1 then Daemon_DataSegment won't send the data
-	if(Daemon_DataSegment($HI) eq "HI\n") {
-		return(1);
-	} else {
-		$DaemonOnline = 0;
-		close($DaemonSocket);
-		return('NOHI');
-	}
-}
-
-# Purpose: Send some data to the daemon
-# Usage: Daemon_SendData(DATA);
-sub Daemon_SendData {
-	if($DaemonOnline) {
-		unless(defined($DaemonSocket)) {
-			DPIntWarn('$DaemonSocket is suddenly undef, attempting reconnect');
-			if(not Daemon_AttemptReconnect()) {
-				       DPIntWarn('Unable to reconnect, expect trouble');
-				       return(0);
-		       }
-	       }
-		if(print $DaemonSocket "$$ $_[0]","\n") {
-			return(1);
-		} else {
-			DPIntWarn("Problem sending data to the daemon: $!");
-		}
-	} 
-	return(0);
-}
-
-# Purpose: Reconnect after $DaemonSocket for some reason has gone undef
-# Usage: Daemon_AttemptReconnect();
-sub Daemon_AttemptReconnect {
-	my $ConnectionReply = ConnectToDaemon("$SaveToDir/$DaemonSocketName");
-	if($ConnectionReply eq 'NOCONNECT') {
-		DPIntWarn('Unable to reconnect to the daemon, attempting to restart it');
-		if(StartDaemon()) {
-			DPIntInfo('Daemon started');
-		} else {
-			$DaemonOnline = 0;
-			return(undef);
-		}
-	}
-	if($ConnectionReply eq 'NOHI') {
-		return(undef);
-	} else {
-		return(1);
-	}
-}
-
-# Purpose: Get some data from the daemon
-# Usage: $Data = Daemon_GetData();
-sub Daemon_GetData {
-	if($DaemonOnline) {
-		unless(defined($DaemonSocket)) {
-			DPIntWarn('$DaemonSocket is suddenly undef, attempting reconnect');
-			Daemon_AttemptReconnect() or DPIntWarn('Unable to reconnect, expect trouble') and return('ERR NOT_ONLINE');
-		}
-		my $Data = <$DaemonSocket>;
-		unless(defined($Data)) {
-			return('ERR UNABLE_TO_GET_DATA');
-		}
-		return($Data);
-	} else {
-		return('ERR NOT_ONLINE');
-	}
-}
-
-# Purpose: Send something to the daemon and then return the daemons reply
-# Usage: $Reply = Daemon_DataSegment(DATA);
-sub Daemon_DataSegment {
-	if($DaemonOnline) {
-		if(Daemon_SendData($_[0])) {
-			return(Daemon_ErrorHandler(Daemon_GetData()));
-		}
-	} else {
-		return('ERR NOT_ONLINE');
-	}
-}
-
-# Purpose: Close the connection to the daemon (shutdown if $ShutdownDaemon);
-# Usage: CloseDaemon();
-sub CloseDaemon {
-	if ($DaemonOnline) {
-		unless(defined($DaemonSocket)) {
-			DPIntWarn('$DaemonSocket is suddenly undef. Doesn\'t matter though since we\'re closing the connection anyway.');
-		} else {
-			if($ShutdownDaemon) {
-				my $GetDaemon = Daemon_DataSegment('SHUTDOWN');
-				chomp($GetDaemon);
-				unless($GetDaemon eq 'okay') {
-					DPIntWarn("The daemon replied \"$GetDaemon\" to my SHUTDOWN request!");
-				}
-			} else {
-				my $GetDaemon = Daemon_DataSegment('BYE');
-			}
-			close($DaemonSocket);
-		}
-		$DaemonOnline = 0;
-	}
-	# FIXME: This shouldn't be done here!
+	Daemon_SendData('BYE');
+	$DaemonSocket->destroy();
 	$IPC_Socket->destroy();
 	return(1);
 }
@@ -393,6 +273,12 @@ sub Daemon_ErrorHandler {
 		DPIntWarn("Weird multi-return response from caller: [1]=\"$_[1]\"");
 	}
 	return($_[0]);
+}
+
+# Purpose: Send a message to the daemon
+# Usage: Daemon_SendData(DATA);
+sub Daemon_SendData {
+	$DaemonSocket->client_send("$$ $_[0]");
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -967,9 +853,7 @@ sub WriteConfig {
 
 	# Tell the daemon to reload the config file
 	if($DaemonInitialized) {
-		unless(Daemon_DataSegment('RELOAD_CONFIG') eq "done\n") {
-			DPIntWarn('Failed to tell the daemon to reload its configuration file. This might cause problems');
-		}
+		Daemon_SendData('RELOAD_CONFIG');
 	}
 	# Reset DPS_pass
 	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
@@ -1039,17 +923,8 @@ sub SaveMainData {
 	my $Return = 'OKAY';
 	$iCalendar->write();	# TODO: Check return value
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
-	unless(Daemon_DataSegment('RELOAD_DATA') eq "done\n") {
-		if($Gtk2Init) {
-			DPWarning(DP_gettext("<b><big>Day Planner encountered an error while saving events</big></b>.\n\nThere appears to be another instance of Day Planner running. This may lead to data loss.\n\nLeaving this instance of Day Planner open while you resolve the issues with the other instance of Day Planner will ensure your data remains safe. Closing this instance of Day Planner before it can safely write recent changes will result in data loss."));
-		} else {
-			DPWarning('Unable to tell the daemon to reload its data. This *could* be bad.');
-		}
-		if ($Return eq 'OKAY') {
-			$Return = 'DAEMON_RELOAD_FAILURE';
-		}
-	}
-	return($Return);
+	Daemon_SendData('RELOAD_DATA');
+	return(TRUE);
 }
 
 # Purpose: Save the data file and redraw the needed windows
@@ -1377,7 +1252,7 @@ sub DP_SigHandler {
 	print "\nWriting state file...";
 	WriteStateFile($SaveToDir, "state.conf");
 	print "done\nClosing the daemon connection...";
-	CloseDaemon();
+	CloseIPC();
 	print "done\nExiting the gtk2 main loop...";
 	Gtk2->main_quit;
 	print "done\nExiting\n";
@@ -1875,7 +1750,7 @@ sub CLI_Import {
 	# Save the data
 	SaveMainData();
 	# Close the daemon connection
-	CloseDaemon();
+	CloseIPC();
 	# Exit peacefully
 	exit(0);
 }
@@ -3407,7 +3282,7 @@ sub QuitSub {
 	WriteStateFile($SaveToDir, 'state.conf');
 	
 	Gtk2->main_quit;
-	CloseDaemon();
+	CloseIPC();
 	exit(0);
 }
 
