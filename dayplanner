@@ -44,7 +44,7 @@ use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
 use Date::HolidayParser;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
-use DP::GeneralHelpers qw(DPIntWarn DPIntInfo);
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile);
 
 # Scalars
 our $Version = '0.7';
@@ -589,72 +589,6 @@ sub DPS_DataSegment {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Write a configuration file
-# Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
-sub WriteConfigFile {
-	my ($File, $Config, $Explanations) = @_;
-
-	# Open the config for writing
-	open(my $CONFIG, '>', "$File") or do {
-		# If we can't then we error out, no need for failsafe stuff - it's just the config file
-		DPIntWarn("Unable to save the configuration file $File: $!");
-		return(0);
-	};
-	if(defined($Explanations->{HEADER})) {
-		print $CONFIG "# $Explanations->{HEADER}\n";
-	}
-	foreach(sort(keys(%{$Config}))) {
-		next unless length($Config->{$_});	# Don't write empty options
-		if(defined($Explanations->{$_})) {
-			print $CONFIG "\n# $Explanations->{$_}";
-		}
-		print $CONFIG "\n$_=$Config->{$_}\n";
-	}
-	close($CONFIG);
-}
-
-# Purpose: Load a configuration file
-# Usage: LoadConfigFile(/FILE, \%ConfigHash, \%OptionRegexHash, OnlyValidOptions?);
-#  OptionRegeXhash can be available for only a select few of the config options
-#  or skipped completely (by replacing it by undef).
-#  If OnlyValidOptions is true it will cause LoadConfigFile to skip options not in
-#  the OptionRegexHash.
-sub LoadConfigFile {
-	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
-
-	open(my $CONFIG, '<', "$File") or do {
-		DPError($i18n->get(sprintf("Unable to read the configuration settings from %s: %s", $File, $!)));
-		return(0);
-	};
-	while(<$CONFIG>) {
-		next if m/^\s*(#.*)?$/;
-		next unless m/=/;
-		chomp;
-		my $Option = $_;
-		my $Value = $_;
-		$Option =~ s/^\s*(\w+)\s*=.*/$1/;
-		$Value =~ s/^\w+=\s*(.*)\s*/$1/;
-		if($OnlyValidOptions) {
-			unless(defined($OptionRegex->{$Option})) {
-				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
-				next;
-			}
-		}
-		unless(defined($Value)) {
-			DPIntWarn("Empty value for option $Option in $File");
-		}
-		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
-			my $MustMatch = $OptionRegex->{$Option};
-			unless ($Value =~ /$MustMatch/) {
-				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{Option}.\n";
-				next;
-			}
-		}
-		$ConfigHash->{$Option} = $Value;
-	}
-	close($CONFIG);
-}
 
 # Purpose: Write the state file 
 # Usage: WriteStateFile(DIRECTORY, FILENAME);
