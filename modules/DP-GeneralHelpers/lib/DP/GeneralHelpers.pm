@@ -35,7 +35,7 @@ use constant {
 	};
 
 # Exported functions
-our @EXPORT_OK = qw(DPIntWarn DPIntInfo);
+our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile);
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
@@ -83,7 +83,7 @@ sub LoadConfigFile {
 	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
 
 	open(my $CONFIG, '<', "$File") or do {
-		DPError($i18n->get(sprintf("Unable to read the configuration settings from %s: %s", $File, $!)));
+		DPIntWarn(sprintf("Unable to read the configuration settings from %s: %s", $File, $!));
 		return(0);
 	};
 	while(<$CONFIG>) {
