@@ -405,6 +405,27 @@ sub new {
 	return($self);
 }
 
+# Purpose: Get information about the clocksystem
+# Usage: get_clocktype();
+sub get_clocktype {
+	my $self = shift;
+	return($self->{ClockSystem});
+}
+
+# Purpose: Get AM/PM strings
+# Usage: get_ampmstring(AM/PM);
+sub get_ampmstring {
+	my $self = shift;
+	my $string = shift;
+	if($string eq 'AM') {
+		return($self->{AM_String});
+	} elsif ($string eq 'PM') {
+		return($self->{PM_String});
+	} else {
+		return(undef);
+	}
+}
+
 # Purpose: Convert AM/PM to internal 24H time
 # Usage: AMPM_To24(TIME [AM|PM]);
 sub AMPM_To24 {
