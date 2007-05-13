@@ -29,6 +29,8 @@ use Cwd;
 use File::Basename;
 use FindBin;
 
+my $RealZero = $0;
+$0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
 my $Version = '0.7';
 my $RCSRev = '$Id$';
@@ -582,6 +584,7 @@ if(defined($MessageID)) {
 	die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
 	die "$SocketName does not exist\n" unless -e $SocketName;
 	die "$SocketName is not a socket\n" unless -S $SocketName;
+	$0 = "dayplanner-notifier [$SocketName\{$MessageID}]";
 }
 
 unless($NoFork) {
