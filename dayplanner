@@ -90,7 +90,6 @@ my (
 my $HolidayParser;	# The Date::HolidayParser object
 my $Gtk2Init;		# Info about if gtk2 is initialized or not
 my $ShutdownDaemon;	# If we should shut down the daemon on exit
-my($AM_String, $PM_String, $ClockSystem);	# Time/date info
 
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
@@ -3224,9 +3223,9 @@ sub GetTimeFromWidgets {
 	if(defined($AMPM)) {
 		my $Prefix;
 		if($AMPM->get_active() == 0) {
-			$Prefix = $AM_String;
+			$Prefix = $i18n->get_ampmstring('AM');
 		} else {
-			$Prefix = $PM_String;
+			$Prefix = $i18n->get_ampmstring('PM');
 		}
 		($Hour,$Minute) = $i18n->AMPM_To24("$Hour:$Minute $Prefix", 1);
 	}
@@ -3262,7 +3261,7 @@ sub TimeSelection {
 	my $Time = $_[0];
 	my($HourAdjustment,$MinuteAdjustment, $HourSpinner,$MinuteSpinner,$AMPM);
 
-	if($ClockSystem == 24) {
+	if($i18n->get_clocktype() == 24) {
 		# The hour adjustment
 		$HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
 	} else {
@@ -3286,7 +3285,7 @@ sub TimeSelection {
 	$HourSpinner->set_activates_default(1);
 	$MinuteSpinner->set_activates_default(1);
 	
-	if($ClockSystem == 24) {
+	if($i18n->get_clocktype() == 24) {
 		# Get the time
 		my $HSTime = $Time;		# Hour
 		my $MSTime = $Time;		# Minute
@@ -3308,11 +3307,11 @@ sub TimeSelection {
 		$MinuteSpinner->set_value($MSTime);
 		# Create the combo box
 		$AMPM = Gtk2::ComboBox->new_text;
-		$AMPM->insert_text(0, $AM_String);
-		$AMPM->insert_text(1, $PM_String);
+		$AMPM->insert_text(0, $i18n->get_ampmstring('AM'));
+		$AMPM->insert_text(1, $i18n->get_ampmstring('PM'));
 		$AMPM->show();
 		# Set the initial value
-		if($Suffix eq $AM_String) {
+		if($Suffix eq $i18n->get_ampmstring('AM')) {
 			$AMPM->set_active(0);
 		} else {
 			$AMPM->set_active(1);
