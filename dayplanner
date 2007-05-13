@@ -3459,13 +3459,13 @@ sub AddEvent {
 	# Create the widgets for the all day event selection
 	my ($AllDayEvent) = AllDayEventWindow('NULL', $VBox_HBoxContainer, $Window);
 	# Create the widgets for the birthday event selection
-	my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
+	my ($BirthdayEvent) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
 	# Handle changed values in the combo box
 	$EventType_Combo->signal_connect('changed' => sub {
 			my $ActiveIndex = $EventType_Combo->get_active;
 			if ($ActiveIndex == 0) {
-				$BE_MainWidget->hide();
+				$BirthdayEvent->{MainVBox}->hide();
 				$AllDayEvent->{MainVBox}->hide();
 				$NormalEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
@@ -3474,7 +3474,7 @@ sub AddEvent {
 				});
 			} elsif ($ActiveIndex == 1) {
 				$NormalEvent->{MainVBox}->hide();
-				$BE_MainWidget->hide();
+				$BirthdayEvent->{MainVBox}->hide();
 				$AllDayEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
@@ -3482,10 +3482,10 @@ sub AddEvent {
 			} elsif ($ActiveIndex == 2) {
 				$NormalEvent->{MainVBox}->hide();
 				$AllDayEvent->{MainVBox}->hide();
-				$BE_MainWidget->show();
+				$BirthdayEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					AllDayEvent_OK($Window, $BE_NameWidget, undef, \%TimeHash, 0,1)});
+					AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, 0,1)});
 			}
 		});
 
@@ -3560,9 +3560,10 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), $i18n->get('Editing a birthday on the %s. %s %s'), 'gtk-ok',$EventUID);
 		
-		my ($BE_MainWidget, $BE_NameWidget) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
-		$BE_MainWidget->show();
-		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BE_NameWidget, undef, \%TimeHash, $EventUID, 1)});
+		my ($BirthdayEvent) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
+		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, $EventUID, 1)});
+		# Show the main vbox
+		$BirthdayEvent->{MainVBox}->show();
 	} elsif ($Type eq 'allday') {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# ALL DAY EVENT
@@ -3950,7 +3951,12 @@ sub BirthdayEventWindow {
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
 	$Tooltips->set_tip($SummaryEntry, $i18n->get('Enter the name of the person whose birthday it is here'));
 	
-	return($MainVBox, $SummaryEntry);
+	# Create a hash containing the widgets that the caller might need
+	# and return it.
+	my %ReturnHash;
+	$ReturnHash{MainVBox} = $MainVBox;
+	$ReturnHash{SummaryEntry} = $SummaryEntry;
+	return(\%ReturnHash);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4706,9 +4712,13 @@ sub MainInit {
 sub InitDPCore {
 	DP_InitI18n();
 	my $Exception =  Glib->install_exception_handler(sub {
-		# This is the DP perl exception handler.
+		my $Exception = shift;
+		my $Chomped = $Exception;
+		chomp($Chomped);
+		# This is the DP perl exception handler
+		DPIntWarn("An exception occurred: $Chomped");
 		# Display an error
-		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n$_[0]");
+		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n$Exception");
 		# Make the main window sensitive - this so that the program is at least
 		# partially usable after the exception occurred.
 		$MainWindow->set_sensitive(1);
