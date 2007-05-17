@@ -358,11 +358,25 @@ sub new {
 			textdomain('dayplanner');
 		} else {
 			$self->{I18N_Mode} = 2;
-			# The reason we use domain_raw and sets the ->codeset is because for some reason
-			# in later Gtk2 perls (or possibly buggy Locale::gettexts) special characters
-			# doesn't get properly returned.
-			$self->{Gettext} = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
-			$self->{Gettext}->codeset('UTF-8');
+			my $Workaround;
+			if($Gtk2::VERSION >= 1.144) {
+				$Workaround = 1;
+			}
+			if(defined($ENV{DP_FORCE_GETTEXT_WORKAROUND})) {
+				if ($ENV{DP_FORCE_GETTEXT_WORKAROUND} eq "1") {
+					$Workaround = 1;
+				} else {
+					$Workaround = 0;
+				}
+			}
+			if($Workaround) {
+				# This is needed on some boxes in some cases. It appears to be when using one of the
+				# later Gtk2 versions.
+				$self->{Gettext} = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
+				$self->{Gettext}->codeset('UTF-8');
+			} else {
+				$self->{Gettext} = Locale::gettext->domain('dayplanner');
+			}
 			if($BindTo) {
 				$self->{Gettext}->dir($BindTo);
 			}
