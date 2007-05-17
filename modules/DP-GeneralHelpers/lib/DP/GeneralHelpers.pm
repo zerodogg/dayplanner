@@ -189,7 +189,7 @@ sub new_server {
 			       } else {
 				       return(FALSE);
 			       } };
-	chmod(0600, $self->{FileName});
+	chmod(oct(600), $self->{FileName});
 	if(not Glib::IO->add_watch(fileno($self->{Socket}), 'in', sub { $self->_IO_IN(@_);})) {
 			$self->destroy();
 			return(FALSE);
@@ -328,7 +328,7 @@ sub new {
 		} else {
 			$Legacy = 1;
 		}
-		if(defined($ENV{DP_FORCE_LEGACY_I18N}) and $ENV{DP_FORCE_LEGACY_I18N} eq "1") {
+		if(defined($ENV{DP_FORCE_LEGACY_I18N}) and $ENV{DP_FORCE_LEGACY_I18N} eq '1') {
 			$Legacy = 1;
 		}
 		# Find out if we have a locale directory in our main dir
@@ -363,7 +363,7 @@ sub new {
 				$Workaround = 1;
 			}
 			if(defined($ENV{DP_FORCE_GETTEXT_WORKAROUND})) {
-				if ($ENV{DP_FORCE_GETTEXT_WORKAROUND} eq "1") {
+				if ($ENV{DP_FORCE_GETTEXT_WORKAROUND} eq '1') {
 					$Workaround = 1;
 				} else {
 					$Workaround = 0;
