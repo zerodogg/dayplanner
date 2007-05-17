@@ -524,6 +524,7 @@ sub DPS_Connect {
 		}
 			# Process connection refused
 		elsif($Error eq 'REFUSED') {
+			$DPServices{Offline} = 1;
 			DPS_Error(sprintf($i18n->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port") . ' ' . $i18n->get('The connection was refused by the server. Please verify your Day Planner services settings.') . "\n\n" . $i18n->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		} 
 			# Process unknown errors
