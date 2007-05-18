@@ -3175,6 +3175,12 @@ sub ExceptionDateSel {
 	$Window->set_decorated(1);
 	$Window->set_deletable(0);
 	$Window->set_modal(1);
+	$Window->set_skip_taskbar_hint(1);
+	$Window->set_skip_pager_hint(1);
+	$Window->set_title($i18n->get('Calendar'));
+	$Window->set_position('mouse');
+	$Window->set_resizable(0);
+	$Window->set_border_width(5);
 	my $VBox = Gtk2::VBox->new();
 	$Window->add($VBox);
 	my $Calendar = Gtk2::Calendar->new();
