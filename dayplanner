@@ -3163,6 +3163,47 @@ sub ParseDateString {
 	return($Year,$Month,$Day);
 }
 
+# Purpose: Add a date to a text field
+# Usage: AddToField(ENTRY, YEAR, MONTH, DAY);
+sub AddToField {
+	my($Entry,$Year,$Month,$Day) = @_;
+	# First get the text
+	my $FieldText = $Entry->get_text();
+	# Then add to the text
+	if($FieldText =~ /\S/) {
+		$FieldText .= ", ";
+	}
+	$FieldText .= "$Day.$Month.$Year";
+	$Entry->set_text($FieldText);
+}
+
+# Purpose: Remove a date from a text field (more tricky)
+# Usage: RemoveFromField(ENTRY, YEAR, MONTH, DAY);
+sub RemoveFromField {
+	my($Entry,$EventYear,$EventMonth,$EventDay) = @_;
+	# First get the text
+	my $FieldText = $Entry->get_text();
+	# Then redo it
+	my $NewField = "";
+	foreach my $String (split(/[,|\s]+/, $FieldText)) {
+		my $Year = $String;
+		my $Month = $String;
+		my $Day = $String;
+		$Year =~ s/^\d+\.\d+\.(\d\d\d\d)$/$1/;
+		$Month =~ s/^\d+\.(\d+)\.\d\d\d\d$/$1/;
+		$Day =~ s/^(\d+).*$/$1/;
+		$Month =~ s/^0//;
+		$Day =~ s/^0//;
+		if(not $Year eq $EventYear or not $Month eq $EventMonth or not $Day eq $EventDay) {
+			if($NewField) {
+				$NewField .= ", ";
+			}
+			$NewField .= "$Day.$Month.$Year"
+		}
+	}
+	$Entry->set_text($NewField);
+}
+
 # Purpose: Popup a calendar to select exception dates from
 # Usage: \&ExceptionDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON);
 sub ExceptionDateSel {
@@ -3194,20 +3235,38 @@ sub ExceptionDateSel {
 		});
 	$ButHBox->pack_end($CloseButton,0,0,0);
 	# Handle changes to the calendar
+	my %SelHash;
 		# Get the dates
 	$Calendar->signal_connect('month-changed' => sub {
 			my $DateRef = ParseEntryField($TextEntry);
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# 1-12 not 0-11
+			%SelHash = ();
+			$Calendar->clear_marks();
 			foreach my $Date (@{$DateRef}) {
 				my($Year,$Month,$Day) = ParseDateString($Date);
 				if($Year eq $CurrYear and $Month eq $CurrMonth) {
+					$SelHash{$Day} = 1;
 					$Calendar->mark_day($Day);
 				}
 			}
 	});
 	$Calendar->signal_emit('month-changed');
-
+		# Set the handler for clicking on a date
+		# This will add and remove dates from the field
+	$Calendar->signal_connect('day-selected' => sub {
+			my $Selected = $Calendar->selected_day();
+			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
+			if($SelHash{$Selected}) {
+				$Calendar->unmark_day($Selected);
+				delete($SelHash{$Selected});
+				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
+			} else {
+				$Calendar->mark_day($Selected);
+				$SelHash{$Selected} = 1;
+				AddToField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
+			}
+			});
 	# Show it all
 	$Window->show_all();
 }
