@@ -6,5 +6,16 @@ The HC* ones are high-contrast icons, specially for users with visual
 impairments. The other ones are the standard day planner icons for
 users with normal vision.
 
-The icons are copyright (C) Jason Holland 2006.
-They are licensed under the same license as day planner itself.
+LICENSE AND COPYRIGHT
+---------------------
+The dayplanner_* images are copyright (C) Jason Holland 2006
+The x-office-calendar.png icon is copyright (C) Andreas Nilsson.
+
+The icons are free; you can redistribute them and/or
+modify them under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+You should have received a copy of the GNU General Public License
+along with these icons; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
