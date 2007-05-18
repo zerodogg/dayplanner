@@ -214,15 +214,24 @@ sub get_rawdata {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
 		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
-			my $value =  _GetSafe(${$self->{RawCalendar}}{$UID}{$setting});
-			# Check if value should be written with a ;
-			# FIXME: There are more cases than these
-			if($value =~ /^(TZID=\D+:|CN=|ROLE=|CUTYPE=|PARTSTAT=).*:.*/) {
-				$iCalendar .= "$setting;$value";
+			my $value = ${$self->{RawCalendar}}{$UID}{$setting};
+			if(ref($value)) {
+				foreach my $TrueValue (@{$value}) {
+					$TrueValue = _GetSafe($TrueValue);
+					$iCalendar .= "$setting:$TrueValue";
+					$iCalendar .= "\r\n";
+				}
 			} else {
-				$iCalendar .= "$setting:$value";
+				$value = _GetSafe($value);
+				# Check if value should be written with a ;
+				# FIXME: There are more cases than these
+				if($value =~ /^(TZID=\D+:|CN=|ROLE=|CUTYPE=|PARTSTAT=).*:.*/) {
+					$iCalendar .= "$setting;$value";
+				} else {
+					$iCalendar .= "$setting:$value";
+				}
+				$iCalendar .= "\r\n";
 			}
-			$iCalendar .= "\r\n";
 		}
 		$iCalendar .= "END:VEVENT\r\n";
 	}
@@ -650,6 +659,9 @@ sub _ParseData {
 		@FileContents = <$ICALENDAR>;
 		close($ICALENDAR);
 	}
+	my %ArrayFields = (
+		EXDATE => 1,
+	);
 
 	foreach(@FileContents) {
 		s/\r//g;
@@ -662,7 +674,12 @@ sub _ParseData {
 			}
 		}
 		if (s/^\s//) {
-			$iCalendarStructures[$CurrentStructure]{$LastName} .= $_;
+			if($ArrayFields{$LastName}) {
+				my $LastArrayField = scalar(@{$iCalendarStructures[$CurrentStructure]{$LastName}});
+				$iCalendarStructures[$CurrentStructure]{$LastName}->[$LastArrayField] .= _UnSafe($_);
+			} else {
+				$iCalendarStructures[$CurrentStructure]{$LastName} .= _UnSafe($_);
+			}
 		} elsif(/^END/) {
 			next;
 		} else {
@@ -675,7 +692,17 @@ sub _ParseData {
 				$Name = 'X-PARSER_ENTRYTYPE';
 			}
 			$LastName = $Name;
-			$iCalendarStructures[$CurrentStructure]{$Name} = _UnSafe($Value);
+			if($ArrayFields{$Name}) {
+				if(not $iCalendarStructures[$CurrentStructure]{$Name}) {
+					$iCalendarStructures[$CurrentStructure]{$Name} = [];
+				}
+				push(@{$iCalendarStructures[$CurrentStructure]{$Name}}, _UnSafe($Value));
+			} else {
+				if($iCalendarStructures[$CurrentStructure]{$Name}) {
+					_WarnOut("Multiple entries of $Name found, but field isn't classified as an array field. Expect trouble");
+				}
+				$iCalendarStructures[$CurrentStructure]{$Name} = _UnSafe($Value);
+			}
 		}
 	}
 	unless($FileBegun) {
