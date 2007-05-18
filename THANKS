@@ -1,11 +1,12 @@
 I would like to thank all of the Day Planner translators. All of their
 names can be found in the respective po-files.
 I would also like to thank the following individuals:
+- Andreas Nilsson for the small calendar icon
 - Jason Holland for his great art and helpful comments on phrasing
   user information
-- Michal Spáda for his invaluable comments and suggestions
 - Matthew Paul Thomas for his extremely useful usability comments and
   suggestions
+- Michal Spáda for his invaluable comments and suggestions
 
 And lastly, I would like to thank the authors of the perl modules that
 Day Planner uses, which include Cwd Data::Dumper Digest::MD5 File::Basename
