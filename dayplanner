@@ -3119,6 +3119,93 @@ sub CreateDetailsWidget {
 	return($FT_Expander);
 }
 
+# Purpose: Parse the contents of a text entry field containing various dates
+# 		and return an arrayref of dates in the format DD.MM.YYYY
+# Usage: my $Ref = ParseEntryField(TEXT ENTRY OBJECT);
+sub ParseEntryField {
+	my $Field = shift;
+	# First get the text
+	my $FieldText = $Field->get_text();
+	# If it is empty then return an empty array
+	if(not $FieldText =~ /\S/) {
+		return([]);
+	}
+	my @ReturnArray;
+	# Parse the entry field
+	foreach my $Text (split(/[,|\s]+/, $FieldText)) {
+		$Text =~ s/\s+//g;
+		if($Text =~ /^\d+\.\d+.\d\d\d\d$/) {
+			push(@ReturnArray, $Text);
+		} else {
+			DPIntWarn("Unrecognized date string (should be DD.MM.YYYY): $Text");
+		}
+	}
+	return(\@ReturnArray);
+}
+
+# Purpose: Parse a date string and return various date fields
+# Usage: my ($Year, $Month, $Day) = ParseDateString(STRING);
+sub ParseDateString {
+	my $String = shift;
+	# This function is currently stupid, so it doesn't really support more than
+	# one format. It is also very strict about that format.
+	# This can easily be improved though.
+	my $Year = $String;
+	my $Month = $String;
+	my $Day = $String;
+	$Year =~ s/^\d+\.\d+\.(\d\d\d\d)$/$1/;
+	$Month =~ s/^\d+\.(\d+)\.\d\d\d\d$/$1/;
+	$Day =~ s/^(\d+).*$/$1/;
+
+	# Drop leading zeros from returning
+	$Month =~ s/^0//;
+	$Day =~ s/^0//;
+	return($Year,$Month,$Day);
+}
+
+# Purpose: Popup a calendar to select exception dates from
+# Usage: \&ExceptionDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON);
+sub ExceptionDateSel {
+	my $TextEntry = shift;
+	my $CalButton = shift;
+	$CalButton->set_sensitive(0);
+
+	# Create the window and stuff inside the window
+	my $Window = Gtk2::Window->new();
+	$Window->set_decorated(1);
+	$Window->set_deletable(0);
+	$Window->set_modal(1);
+	my $VBox = Gtk2::VBox->new();
+	$Window->add($VBox);
+	my $Calendar = Gtk2::Calendar->new();
+	$VBox->pack_start($Calendar,0,0,0);
+	my $ButHBox = Gtk2::HBox->new();
+	$VBox->pack_end($ButHBox,0,0,0);
+	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
+	$CloseButton->signal_connect(clicked => sub {
+			$Window->destroy();
+			$CalButton->set_sensitive(1);
+		});
+	$ButHBox->pack_end($CloseButton,0,0,0);
+	# Handle changes to the calendar
+		# Get the dates
+	$Calendar->signal_connect('month-changed' => sub {
+			my $DateRef = ParseEntryField($TextEntry);
+			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
+			$CurrMonth++;	# 1-12 not 0-11
+			foreach my $Date (@{$DateRef}) {
+				my($Year,$Month,$Day) = ParseDateString($Date);
+				if($Year eq $CurrYear and $Month eq $CurrMonth) {
+					$Calendar->mark_day($Day);
+				}
+			}
+	});
+	$Calendar->signal_emit('month-changed');
+
+	# Show it all
+	$Window->show_all();
+}
+
 # Purpose: Create the advanced settings widget
 # Usage: my $ExpanderWidget = CreateAdvancedWidget(RRULE?);
 # 	RRULE is an RRULE hash as returned by DP::iCalendars ->get_RRULE.
@@ -3148,7 +3235,7 @@ sub CreateAdvancedWidget {
 	$RecurHBox->show();
 	$ExpanderVBox->pack_start($RecurHBox,0,0,0);
 		# Checkbutton for it
-	my $RecurCheckButton = Gtk2::CheckButton->new($i18n->get('Repeat event every') . ' ');
+	my $RecurCheckButton = Gtk2::CheckButton->new($i18n->get('Repeat event every:') . ' ');
 	$RecurCheckButton->show();
 	$RecurHBox->pack_start($RecurCheckButton,0,0,0);
 	my $ExceptHBox;	# For use later, needs to be declared here to be used in the RecurCheckButton callback
@@ -3184,7 +3271,7 @@ sub CreateAdvancedWidget {
 	$ExpanderVBox->pack_start($ExceptHBox,0,0,0);
 		# Checkbutton for it
 		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
-	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on ') . ' ');
+	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
 	$ExceptCheckButton->show();
 	$ExceptHBox->pack_start($ExceptCheckButton,0,0,0);
 		# The entry field
@@ -3198,6 +3285,7 @@ sub CreateAdvancedWidget {
 	$CalButton->set_image($CalImage);
 	$CalButton->show();
 	$CalButton->set_sensitive(0);
+	$CalButton->signal_connect('clicked' => sub { ExceptionDateSel($ExceptEntry,$CalButton)});
 	$ExceptHBox->pack_end($CalButton,0,0,0);
 		# CheckButton callback
 	$ExceptCheckButton->signal_connect('toggled' => sub {
