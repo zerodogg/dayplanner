@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-04-25 10:15+0200\n"
+"POT-Creation-Date: 2007-05-18 14:44+0200\n"
 "PO-Revision-Date: 2007-01-07 02:40+0100\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
@@ -20,89 +20,12 @@ msgstr ""
 "Content-Type: text/plain; charset=iso-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: dayplanner:189
-msgid "January"
-msgstr "január"
-
-#: dayplanner:190
-msgid "February"
-msgstr "február"
-
-#: dayplanner:191
-msgid "March"
-msgstr "marec"
-
-#: dayplanner:192
-msgid "April"
-msgstr "apríl"
-
-#: dayplanner:193
-msgid "May"
-msgstr "máj"
-
-#: dayplanner:194
-msgid "June"
-msgstr "jún"
-
-#: dayplanner:195
-msgid "July"
-msgstr "júl"
-
-#: dayplanner:196
-msgid "August"
-msgstr "august"
-
-#: dayplanner:197
-msgid "September"
-msgstr "september"
-
-#: dayplanner:198
-msgid "October"
-msgstr "október"
-
-#: dayplanner:199
-msgid "November"
-msgstr "november"
-
-#: dayplanner:200
-msgid "December"
-msgstr "december"
-
-#: dayplanner:413
-#, fuzzy
-msgid ""
-"Another instance of Day Planner appears to be running. Please quit the "
-"currently running instance of Day Planner before continuing\n"
-"\n"
-"Running two instances of Day Planner can be forced. However that is not "
-"recommended as it may lead to data loss or corruption."
-msgstr ""
-"Zdá sa, ¾e Plánovaè u¾ be¾í. Ak chcete pokraèova», zatvorte prosím najskôr "
-"aktuálne be¾iaci Plánovaè\n"
-"\n"
-"Mô¾ete si vynúti» aj to, aby súèasne be¾ali dva plánovaèe. Tento spôsob "
-"pou¾ívania programu sa v¹ak v nijakom prípade neodporúèa, nakoµko mô¾e vies» "
-"k strate èi po¹kodeniu údajov."
-
-#: dayplanner:416
-msgid "_Force"
-msgstr "_Vynúti»"
-
-#: dayplanner:427
-#, fuzzy
-msgid ""
-"Unable to force the start. This is likely due to a bug in the application, "
-"please contact the Day Planner developers."
-msgstr ""
-"Nepodarilo sa mi vynúti» spustenie aplikácie. Zapríèinila to pravdepodobne "
-"chyba v programe, kontaktujte preto prosím vývojárov Plánovaèa."
-
-#: dayplanner:505
+#: dayplanner:251
 #, fuzzy
 msgid "An error ocurred while uploading the data"
 msgstr "Poèas prenosu údajov na server do¹lo k chybe"
 
-#: dayplanner:507
+#: dayplanner:253
 msgid ""
 "Your account has expired. If you are using a payed service this may be "
 "because you have not payed for the current period. If not, you should "
@@ -114,27 +37,27 @@ msgstr ""
 "prípade kontaktujte poskytovateµa slu¾ieb a spýtajte sa ho na príèinu "
 "vypr¹ania platnosti úètu."
 
-#: dayplanner:510
+#: dayplanner:256
 #, perl-format
 msgid ""
 "The server did not accept the uploaded data and replied with an unknwown "
 "value: %s"
 msgstr "Server neprijal prená¹ané údaje a odpovedal neznámou hodnotou: %s"
 
-#: dayplanner:543
+#: dayplanner:289
 msgid ""
 "The data corrupted itself during download. You may want to attempt to "
 "synchronize again."
 msgstr ""
 "Údaje sa poèas prenosu po¹kodili. Pokúste sa o opätovnú synchronizáciu."
 
-#: dayplanner:577 dayplanner:597 dayplanner:599 dayplanner:601 dayplanner:609
-#: dayplanner:611 dayplanner:613 dayplanner:622 dayplanner:624 dayplanner:626
-#: dayplanner:628
+#: dayplanner:323 dayplanner:343 dayplanner:345 dayplanner:347 dayplanner:355
+#: dayplanner:357 dayplanner:359 dayplanner:368 dayplanner:370 dayplanner:372
+#: dayplanner:374
 msgid "Synchronizing"
 msgstr ""
 
-#: dayplanner:662
+#: dayplanner:408
 #, fuzzy, perl-format
 msgid ""
 "An error ocurred with the Day Planner services:\n"
@@ -145,45 +68,45 @@ msgstr ""
 "\n"
 "%s"
 
-#: dayplanner:687
+#: dayplanner:433
 msgid "Services"
 msgstr "Slu¾by"
 
-#: dayplanner:687
+#: dayplanner:433
 msgid "Initializing"
 msgstr "Prebieha inicializácia"
 
-#: dayplanner:695
+#: dayplanner:441
 msgid "Connecting"
 msgstr "Pripájam sa"
 
-#: dayplanner:701
+#: dayplanner:447
 #, fuzzy
 msgid "Connected"
 msgstr "Pripájam sa"
 
-#: dayplanner:708
+#: dayplanner:454
 msgid "Complete"
 msgstr ""
 
-#: dayplanner:722
+#: dayplanner:468
 msgid ""
 "You don't have the IO::Socket:SSL module. This module is required for the "
 "Day Planner services to function. The services will not function until this "
 "module is installed."
 msgstr ""
 
-#: dayplanner:777 dayplanner:781 dayplanner:785
+#: dayplanner:523 dayplanner:528 dayplanner:532
 #, perl-format
 msgid "Unable to connect to the Day Planner services server (%s)."
 msgstr "Nepodarilo sa pripoji» k serveru so slu¾bami Plánovaèa (%s)."
 
-#: dayplanner:777
+#: dayplanner:523
 #, perl-format
 msgid "You're probably not connected to the internet"
 msgstr "Pravdepodobne nie ste pripojení k internetu"
 
-#: dayplanner:781
+#: dayplanner:528
 #, perl-format
 msgid ""
 "The connection was refused by the server. Please verify your Day Planner "
@@ -192,12 +115,12 @@ msgstr ""
 "Server odmietol pripojenie. Skontrolujte prosím svoje nastavenia slu¾ieb "
 "Plánovaèa."
 
-#: dayplanner:781 dayplanner:785
+#: dayplanner:528 dayplanner:532
 #, perl-format
 msgid "If this problem persists, please contact your service provider"
 msgstr "Ak problém pretrváva, kontaktujte prosím poskytovateµa slu¾ieb"
 
-#: dayplanner:796
+#: dayplanner:543
 #, fuzzy, perl-format
 msgid ""
 "The Day Planner services server you are connecting to does not support this "
@@ -206,46 +129,43 @@ msgstr ""
 "Server slu¾ieb Plánovaèa, ku ktorému sa pripájate, nepodporuje va¹u verziu "
 "programu (%s)."
 
-#: dayplanner:800
+#: dayplanner:547
 msgid "The username and/or password is incorrect."
 msgstr "U¾ívateµské meno a/alebo heslo sú nesprávne."
 
-#: dayplanner:1082
+#: dayplanner:914
 #, fuzzy
 msgid ""
-"<b><big>Day Planner encountered an error while saving events</big></b>.\n"
+"Another instance of Day Planner appears to be running. Please quit the "
+"currently running instance of Day Planner before continuing\n"
 "\n"
-"There appears to be another instance of Day Planner running. This may lead "
-"to data loss.\n"
-"\n"
-"Leaving this instance of Day Planner open while you resolve the issues with "
-"the other instance of Day Planner will ensure your data remains safe. "
-"Closing this instance of Day Planner before it can safely write recent "
-"changes will result in data loss."
+"You may force the other instance to quit if you wish."
 msgstr ""
-"<b><big>Plánovaè narazil na chybu pri ukladaní udalostí</big></b>.\n"
+"Zdá sa, ¾e Plánovaè u¾ be¾í. Ak chcete pokraèova», zatvorte prosím najskôr "
+"aktuálne be¾iaci Plánovaè\n"
 "\n"
-"Zdá sa, ¾e Plánovaè u¾ be¾í. Tento stav mô¾e spôsobi» stratu údajov.\n"
-"\n"
-"Ak ponecháte tento plánovaè otvorený, zatiaµ èo vyrie¹ite problémy s druhým "
-"be¾iacim plánovaèom, zabezpeèíte tým, ¾e va¹e dáta zostanú v bezpeèí. "
-"Zavretie tohto plánovaèa skôr, ne¾ bude môc» bezpeène zapísa» na disk "
-"aktuálne zmeny, bude ma» za následok stratu údajov."
+"Mô¾ete si vynúti» aj to, aby súèasne be¾ali dva plánovaèe. Tento spôsob "
+"pou¾ívania programu sa v¹ak v nijakom prípade neodporúèa, nakoµko mô¾e vies» "
+"k strate èi po¹kodeniu údajov."
 
-#: dayplanner:1244 dayplanner:1320 dayplanner:2354 dayplanner:4227
+#: dayplanner:917
+msgid "_Force"
+msgstr "_Vynúti»"
+
+#: dayplanner:969 dayplanner:1045 dayplanner:2018 dayplanner:4013
 #, perl-format
 msgid "%s's birthday"
 msgstr "%s má narodeniny"
 
-#: dayplanner:1251
+#: dayplanner:976
 msgid "Unknown"
 msgstr "Neznáme"
 
-#: dayplanner:1259
+#: dayplanner:984
 msgid "Upgrading"
 msgstr "Prebieha aktualizácia"
 
-#: dayplanner:1672
+#: dayplanner:1385
 #, fuzzy
 msgid ""
 "A problem occurred while setting up automatic startup of the Day Planner "
@@ -263,7 +183,7 @@ msgstr ""
 "pri ¹tarte, potom pridajte polo¾ku \"dayplanner-daemon\" a potvrïte túto "
 "voµbu. Automatické pripomienky sú týmto nastavené."
 
-#: dayplanner:1683
+#: dayplanner:1396
 #, fuzzy
 msgid ""
 "Disabling automatic startup of the reminder will prevent notifications "
@@ -273,121 +193,121 @@ msgstr ""
 "pokiaµ Plánovaè nespustíte manuálne. Chcete naozaj automatické spú¹»anie "
 "pripomienok vypnú»?"
 
-#: dayplanner:1895
+#: dayplanner:1559
 #, fuzzy, perl-format
 msgid "Day Planner for %s"
 msgstr "Plánovaè pre %s"
 
-#: dayplanner:1952
+#: dayplanner:1616
 msgid "Tools"
 msgstr "Nástroje"
 
-#: dayplanner:1952
+#: dayplanner:1616
 msgid "Change to another year"
 msgstr "Prejs» na ïal¹í rok"
 
-#: dayplanner:1952
+#: dayplanner:1616
 #, perl-format
 msgid "current: %s"
 msgstr "aktuálne: %s"
 
-#: dayplanner:1953
+#: dayplanner:1617
 msgid "Months"
 msgstr "Mesiace"
 
-#: dayplanner:1974
+#: dayplanner:1638
 msgid "Generated by"
 msgstr "Vytvoril"
 
-#: dayplanner:1974 dayplanner:2585 dayplanner:4317 dayplanner:4813
+#: dayplanner:1638 dayplanner:2249 dayplanner:4109 dayplanner:4605
 msgid "Day Planner"
 msgstr "Plánovaè"
 
-#: dayplanner:1974
+#: dayplanner:1638
 msgid "version"
 msgstr "verzia"
 
-#: dayplanner:1986 dayplanner:2053 dayplanner:2122 dayplanner:2136
-#: dayplanner:2154
+#: dayplanner:1650 dayplanner:1717 dayplanner:1786 dayplanner:1800
+#: dayplanner:1818
 #, perl-format
 msgid "Unable to open %s for writing: %s"
 msgstr "Nepodarilo sa otvori» %s pre zápis: %s"
 
-#: dayplanner:1992 dayplanner:4773
+#: dayplanner:1656 dayplanner:4565
 msgid "Time"
 msgstr "Èas"
 
-#: dayplanner:1992
+#: dayplanner:1656
 msgid "Description"
 msgstr "Popis"
 
-#: dayplanner:2064
+#: dayplanner:1728
 msgid "There are no events this month"
 msgstr "Na nasledujúci mesiac nemáte naplánované nijaké udalosti"
 
-#: dayplanner:2074
+#: dayplanner:1738
 msgid "Special days this month:"
 msgstr "Sviatky a iné zvlá¹tne udalosti v tomto mesiaci:"
 
-#: dayplanner:2126
+#: dayplanner:1790
 msgid "Select the month to view in the list above"
 msgstr "V zozname vy¹¹ie zvoµte mesiac, ktorý chcete zobrazi»"
 
-#: dayplanner:2140
+#: dayplanner:1804
 msgid "Select the year to view:"
 msgstr "Zvoµte rok, ktorý chcete zobrazi»:"
 
-#: dayplanner:2189 dayplanner:2260
+#: dayplanner:1853 dayplanner:1924
 #, perl-format
 msgid "Unable to create the directory %s: %s"
 msgstr "Nepodarilo sa vytvori» adresár %s: %s"
 
-#: dayplanner:2443 dayplanner:2585 dayplanner:2592
+#: dayplanner:2107 dayplanner:2249 dayplanner:2256
 msgid "Import data"
 msgstr "Importova» údaje"
 
-#: dayplanner:2455
+#: dayplanner:2119
 msgid "Import data from:"
 msgstr "Importova» údaje z:"
 
-#: dayplanner:2461
+#: dayplanner:2125
 msgid "A file"
 msgstr "Súbor"
 
-#: dayplanner:2462
+#: dayplanner:2126
 msgid "Other applications"
 msgstr "Iné aplikácie"
 
-#: dayplanner:2500
+#: dayplanner:2164
 msgid "Import data from a file"
 msgstr "Importova» dáta zo súboru"
 
-#: dayplanner:2501
+#: dayplanner:2165
 msgid "Import data from various other applications"
 msgstr "Importova» dáta z rôznych iných aplikácií"
 
-#: dayplanner:2502
+#: dayplanner:2166
 #, fuzzy
 msgid "Cancel importing and return to Day Planner"
 msgstr "Zru¹i» importovanie a návrat do Plánovaèa"
 
-#: dayplanner:2503
+#: dayplanner:2167
 msgid "Continue"
 msgstr "Pokraèova»"
 
-#: dayplanner:2518 dayplanner:2701
+#: dayplanner:2182 dayplanner:2365
 msgid "Preparing"
 msgstr "Prebieha príprava"
 
-#: dayplanner:2518
+#: dayplanner:2182
 msgid "Preparing to import"
 msgstr "Prebieha príprava na import"
 
-#: dayplanner:2569
+#: dayplanner:2233
 msgid "Could not detect data from any application to import."
 msgstr "Nepodarilo sa nájs» nijaké kompatibilné dáta na import."
 
-#: dayplanner:2602
+#: dayplanner:2266
 msgid ""
 "Welcome to Day Planner.\n"
 "\n"
@@ -403,39 +323,39 @@ msgstr ""
 "chcete importova» dáta a stlaète Ok; ak nechcete importova», \n"
 "stlaète Zru¹i»."
 
-#: dayplanner:2602
+#: dayplanner:2266
 msgid "Which application(s) do you want to import data from?"
 msgstr "Z ktorých aplikácií si ¾eláte importova» dáta?"
 
-#: dayplanner:2701
+#: dayplanner:2365
 msgid "Importing..."
 msgstr "Prebieha import dát..."
 
-#: dayplanner:2772
+#: dayplanner:2436
 msgid "Done"
 msgstr "Hotovo"
 
-#: dayplanner:2795
+#: dayplanner:2459
 msgid "All supported file formats"
 msgstr "V¹etky podporované formáty súborov"
 
-#: dayplanner:2814
+#: dayplanner:2478
 msgid "Export data"
 msgstr "Exportova» údaje"
 
-#: dayplanner:2817
+#: dayplanner:2481
 msgid "My_dayplanner"
 msgstr "Môj_plánovaè"
 
-#: dayplanner:2839
+#: dayplanner:2503
 msgid "Save as filetype:"
 msgstr "Ulo¾i» ako:"
 
-#: dayplanner:2846
+#: dayplanner:2510
 msgid "XHTML (exports to a directory)"
 msgstr "XHTML (exportuje do adresára)"
 
-#: dayplanner:2903
+#: dayplanner:2567
 #, fuzzy, perl-format
 msgid ""
 "There are already files in the directory \"%s\". If you continue any "
@@ -446,77 +366,77 @@ msgstr ""
 "vyexportované údaje Plánovaèa v danom adresári budú prepísané. Chcete "
 "pokraèova»?"
 
-#: dayplanner:2912
+#: dayplanner:2576
 #, perl-format
 msgid "\"%s\" already exists and is not a directory."
 msgstr "\"%s\" u¾ existuje a nie je to adresár."
 
-#: dayplanner:2921
+#: dayplanner:2585
 #, perl-format
 msgid "\"%s\" is read only. Write permissions are required."
 msgstr "\"%s\" je urèený iba na èítanie. Potrebujete práva aj na zápis."
 
-#: dayplanner:2926
+#: dayplanner:2590
 #, perl-format
 msgid "\"%s\" is a directory."
 msgstr "\"%s\" je adresár."
 
-#: dayplanner:2928
+#: dayplanner:2592
 #, perl-format
 msgid "\"%s\" already exists. Overwrite?"
 msgstr "\"%s\" u¾ existuje. Prepísa»?"
 
-#: dayplanner:3046
+#: dayplanner:2710
 msgid "Sunday"
 msgstr "nedeµa"
 
-#: dayplanner:3047
+#: dayplanner:2711
 msgid "Monday"
 msgstr "pondelok"
 
-#: dayplanner:3048
+#: dayplanner:2712
 msgid "Tuesday"
 msgstr "utorok"
 
-#: dayplanner:3049
+#: dayplanner:2713
 msgid "Wednesday"
 msgstr "streda"
 
-#: dayplanner:3050
+#: dayplanner:2714
 msgid "Thursday"
 msgstr "¹tvrtok"
 
-#: dayplanner:3051
+#: dayplanner:2715
 msgid "Friday"
 msgstr "piatok"
 
-#: dayplanner:3052
+#: dayplanner:2716
 msgid "Saturday"
 msgstr "sobota"
 
-#: dayplanner:3087
+#: dayplanner:2751
 msgid "Tomorrow"
 msgstr "Zajtra"
 
-#: dayplanner:3108
+#: dayplanner:2772
 msgid "At"
 msgstr "o"
 
 #. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
 #. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
-#: dayplanner:3116 dayplanner:3185
+#: dayplanner:2780 dayplanner:2849
 msgid "(nothing)"
 msgstr "(niè)"
 
-#: dayplanner:3124
+#: dayplanner:2788
 msgid "No upcoming events exist for the next seven days"
 msgstr "Na nasledujúcich sedem dní nemáte naplánované nijaké udalosti"
 
-#: dayplanner:3177 dayplanner:3180
+#: dayplanner:2841 dayplanner:2844
 msgid "and"
 msgstr "a"
 
-#: dayplanner:3247 dayplanner:3922
+#: dayplanner:2911 dayplanner:3708
 #, fuzzy, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -527,185 +447,186 @@ msgstr ""
 "Plánovaèi. Ak chcete tento sviatok napriek tomu upravi», pou¾ite textový "
 "editor na súbor %s."
 
-#: dayplanner:3379
+#: dayplanner:3043
 msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr ""
 "Niektoré súbory nebolo mo¾né korektne ulo¾i». Chcete naozaj ukonèi» prácu a "
 "zavrie» Plánovaè?"
 
-#: dayplanner:3384
-msgid "Quit anyway?"
-msgstr "Ukonèi» napriek tomu program?"
-
-#: dayplanner:3449 dayplanner:3458 dayplanner:3471 dayplanner:3480
+#: dayplanner:3107 dayplanner:3116 dayplanner:3216 dayplanner:3225
 msgid "Show advanced settings"
 msgstr ""
 
-#: dayplanner:3456 dayplanner:3478
+#: dayplanner:3114 dayplanner:3223
 msgid "Hide advanced settings"
 msgstr ""
 
-#: dayplanner:3493
-msgid "Repeat event every"
+#: dayplanner:3238
+msgid "Repeat event every:"
 msgstr ""
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3499
+#: dayplanner:3245
 #, fuzzy
 msgid "day"
 msgstr "máj"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3501
+#: dayplanner:3247
 msgid "week"
 msgstr ""
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3503
+#: dayplanner:3249
 #, fuzzy
 msgid "month"
 msgstr "Mesiace"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3505
+#: dayplanner:3251
 msgid "year"
 msgstr ""
 
-#: dayplanner:3546
+#. TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
+#: dayplanner:3274
+msgid "But not on:"
+msgstr ""
+
+#: dayplanner:3331
 #, fuzzy
 msgid "Detailed description"
 msgstr "Popis"
 
-#: dayplanner:3773
+#: dayplanner:3558
 #, fuzzy
 msgid "Add an Event"
 msgstr "Prida» udalos»"
 
-#: dayplanner:3773
+#: dayplanner:3558
 #, perl-format
 msgid "Adding an event on the %s. %s %s"
 msgstr "Pridávam udalos» na dátum %s.%s %s"
 
-#: dayplanner:3779
+#: dayplanner:3564
 msgid "Event type:"
 msgstr "Typ udalosti:"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3785
+#: dayplanner:3570
 msgid "Normal"
 msgstr "Normálna"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3787
+#: dayplanner:3572
 msgid "All day"
 msgstr ""
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3789
+#: dayplanner:3574
 msgid "Birthday"
 msgstr "Narodeniny"
 
-#: dayplanner:3797
+#: dayplanner:3582
 msgid "Add this event"
 msgstr "_Prida» udalos»"
 
-#: dayplanner:3798
+#: dayplanner:3583
 msgid "Discard this event"
 msgstr "_Odstráni» túto udalos»"
 
-#: dayplanner:3889
+#: dayplanner:3674
 #, fuzzy, perl-format
 msgid "Editing a repeating event starting on the %s. %s %s"
 msgstr "Upravujem udalos» %s. %s %s"
 
-#: dayplanner:3889
+#: dayplanner:3674
 #, perl-format
 msgid "Editing an event on the %s. %s %s"
 msgstr "Upravujem udalos» %s. %s %s"
 
-#: dayplanner:3891
+#: dayplanner:3676
 msgid "Editing an event"
 msgstr "Upravujem udalos»"
 
-#: dayplanner:3904
+#: dayplanner:3689
 msgid "Editing a birthday"
 msgstr "Upravujem narodeniny"
 
-#: dayplanner:3904
+#: dayplanner:3689
 #, perl-format
 msgid "Editing a birthday on the %s. %s %s"
 msgstr "Upravujem narodeniny dÅˆa %s. %s %s"
 
-#: dayplanner:3915
+#: dayplanner:3701
 #, fuzzy, perl-format
 msgid "Editing a repeating all day event starting on the %s. %s %s"
 msgstr "Upravujem udalos» %s. %s %s"
 
-#: dayplanner:3915
+#: dayplanner:3701
 #, fuzzy, perl-format
 msgid "Editing an all day event on the %s. %s %s"
 msgstr "Upravujem udalos» %s. %s %s"
 
-#: dayplanner:3917
+#: dayplanner:3703
 #, fuzzy
 msgid "Editing an all day event"
 msgstr "Upravujem udalos»"
 
-#: dayplanner:3931
+#: dayplanner:3717
 msgid "Discard changes"
 msgstr "Zahodi» zmeny"
 
-#: dayplanner:3932
+#: dayplanner:3718
 msgid "Accept changes"
 msgstr "Prija» a ulo¾i» zmeny"
 
-#: dayplanner:3991
+#: dayplanner:3777
 msgid "Time:"
 msgstr "Èas:"
 
-#: dayplanner:4001 dayplanner:4147
+#: dayplanner:3787 dayplanner:3933
 msgid "Description:"
 msgstr "Popis:"
 
-#: dayplanner:4013 dayplanner:4159
+#: dayplanner:3799 dayplanner:3945
 msgid "Enter a description of the event here"
 msgstr "Sem zadajte struèné zhrnutie toho, o akú udalos» ide"
 
-#: dayplanner:4071 dayplanner:4214
+#: dayplanner:3857 dayplanner:4000
 msgid "There is no summary for this event. Please enter a summary."
 msgstr "Táto udalos» nemá nijaké zhrnutie, zadajte ho, prosím."
 
-#: dayplanner:4170
+#: dayplanner:3956
 msgid "Additional information"
 msgstr "Dodatoèné informácie"
 
-#: dayplanner:4281
+#: dayplanner:4067
 msgid "Name:"
 msgstr "Meno:"
 
-#: dayplanner:4294
+#: dayplanner:4080
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Sem zadajte meno osoby, ktorá oslavuje narodeniny"
 
-#: dayplanner:4328 dayplanner:4329
+#: dayplanner:4120 dayplanner:4121
 msgid "THE NAMES OF THE TRANSLATORS"
 msgstr "Michal Spáda"
 
-#: dayplanner:4374
+#: dayplanner:4166
 #, fuzzy
 msgid "General"
 msgstr "V¹eobecné udalosti"
 
-#: dayplanner:4382
+#: dayplanner:4174
 msgid "Interface"
 msgstr "Rozhranie"
 
-#: dayplanner:4389
+#: dayplanner:4181
 #, fuzzy
 msgid "Show details by default"
 msgstr "Podrobnosti"
 
-#: dayplanner:4403
+#: dayplanner:4195
 #, fuzzy
 msgid ""
 "Check this if you want to show the details by default in the add and edit "
@@ -714,127 +635,127 @@ msgstr ""
 "Za¹krtnite, ak chcete, aby dochádzalo k automatickej expanzii \"%s\" pri "
 "pridávaní a úprave udalosti"
 
-#: dayplanner:4444
+#: dayplanner:4236
 #, fuzzy
 msgid "Event notifications"
 msgstr "Pou¾i» upozornenia na udalosti"
 
-#: dayplanner:4451
+#: dayplanner:4243
 #, fuzzy
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "Pri prihlasovaní u¾ívateµa automaticky spusti» pripomienky plánovaèa"
 
-#: dayplanner:4467
+#: dayplanner:4259
 msgid "When an event is coming up, remind me:"
 msgstr ""
 
-#: dayplanner:4474
+#: dayplanner:4266
 #, fuzzy
 msgid "One day in advance"
 msgstr "Upozorni ma deò vopred"
 
-#: dayplanner:4496 dayplanner:4497 dayplanner:4498 dayplanner:4499
+#: dayplanner:4288 dayplanner:4289 dayplanner:4290 dayplanner:4291
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minút"
 
-#: dayplanner:4500
+#: dayplanner:4292
 #, perl-format
 msgid "%s hour"
 msgstr "%s hodinu"
 
-#: dayplanner:4501 dayplanner:4502 dayplanner:4503
+#: dayplanner:4293 dayplanner:4294 dayplanner:4295
 #, perl-format
 msgid "%s hours"
 msgstr "%s hodín"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4519
+#: dayplanner:4311
 msgid "before the event time"
 msgstr ""
 
-#: dayplanner:4559
+#: dayplanner:4351
 msgid "Synchronization"
 msgstr ""
 
-#: dayplanner:4566
+#: dayplanner:4358
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr ""
 
-#: dayplanner:4597
+#: dayplanner:4389
 #, fuzzy
 msgid "Server:"
 msgstr "Slu¾by"
 
-#: dayplanner:4610
+#: dayplanner:4402
 msgid "Port:"
 msgstr ""
 
-#: dayplanner:4627
+#: dayplanner:4419
 msgid "Username:"
 msgstr ""
 
-#: dayplanner:4639
+#: dayplanner:4431
 #, fuzzy
 msgid "Password:"
 msgstr "Heslo"
 
-#: dayplanner:4676
+#: dayplanner:4468
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
 msgstr ""
 
-#: dayplanner:4774
+#: dayplanner:4566
 msgid "Event"
 msgstr "Udalos»"
 
-#: dayplanner:4857 dayplanner:4858 dayplanner:4859 dayplanner:4860
-#: dayplanner:4861
+#: dayplanner:4649 dayplanner:4650 dayplanner:4651 dayplanner:4652
+#: dayplanner:4653
 msgid "_Calendar"
 msgstr "_Kalendár"
 
-#: dayplanner:4858
+#: dayplanner:4650
 #, fuzzy
 msgid "_Import..."
 msgstr "_Import"
 
-#: dayplanner:4859
+#: dayplanner:4651
 #, fuzzy
 msgid "_Export..."
 msgstr "_Export"
 
-#: dayplanner:4864
+#: dayplanner:4656
 #, fuzzy
 msgid "_Add an Event..."
 msgstr "_Prida» udalos»"
 
-#: dayplanner:4865 dayplanner:4886
+#: dayplanner:4657 dayplanner:4678
 #, fuzzy
 msgid "_Edit This Event..."
 msgstr "_Upravi» udalos»"
 
-#: dayplanner:4866 dayplanner:4890
+#: dayplanner:4658 dayplanner:4682
 #, fuzzy
 msgid "_Delete this event..."
 msgstr "_Zmaza» udalos»"
 
-#: dayplanner:4986 dayplanner:4987
+#: dayplanner:4778 dayplanner:4779
 #, fuzzy
 msgid "Delete the selected event"
 msgstr "_Zmaza» udalos»"
 
-#: dayplanner:4994 dayplanner:4995
+#: dayplanner:4786 dayplanner:4787
 #, fuzzy
 msgid "Edit the selected event"
 msgstr "ImportovaÅ¥ zvolenÃ© Ãºdaje"
 
-#: dayplanner:5005 dayplanner:5006
+#: dayplanner:4797 dayplanner:4798
 #, fuzzy
 msgid "Add a new event"
 msgstr "Prida» udalos»"
 
-#: dayplanner:5103 dayplanner:5105
+#: dayplanner:4917 dayplanner:4919
 #, perl-format
 msgid ""
 "The home directory of the user %s doesn't exist at %s! Please verify that "
@@ -843,22 +764,22 @@ msgstr ""
 "Domovský adresár u¾ívateµa %s neexistuje v %s! Ubezpeète sa prosím, ¾e máte "
 "správne nastavenú premennú prostredia %s. Nemô¾em pokraèova»\n"
 
-#: dayplanner:5111 dayplanner:5112
+#: dayplanner:4925 dayplanner:4926
 #, perl-format
 msgid "The environment variable %s is not set! Unable to continue\n"
 msgstr "Premenná prostredia %s nie je nastavená! Nemô¾em pokraèova»\n"
 
-#: dayplanner-notifier:318 dayplanner-notifier:327
+#: dayplanner-notifier:208 dayplanner-notifier:217
 #, fuzzy
 msgid "Show details"
 msgstr "Podrobnosti"
 
-#: dayplanner-notifier:325
+#: dayplanner-notifier:215
 #, fuzzy
 msgid "Hide details"
 msgstr "Podrobnosti"
 
-#: dayplanner-notifier:403 dayplanner-notifier:499
+#: dayplanner-notifier:288 dayplanner-notifier:384
 #, perl-format
 msgid ""
 "Today at %s:\n"
@@ -867,7 +788,7 @@ msgstr ""
 "Dnes o %s:\n"
 "%s"
 
-#: dayplanner-notifier:405 dayplanner-notifier:501
+#: dayplanner-notifier:290 dayplanner-notifier:386
 #, perl-format
 msgid ""
 "Tomorrow at %s:\n"
@@ -876,7 +797,7 @@ msgstr ""
 "Zajtra o %s:\n"
 "%s"
 
-#: dayplanner-notifier:407 dayplanner-notifier:503
+#: dayplanner-notifier:292 dayplanner-notifier:388
 #, perl-format
 msgid ""
 "At %s on %s:\n"
@@ -885,18 +806,87 @@ msgstr ""
 "O %s dòa %s:\n"
 "%s"
 
-#: dayplanner-notifier:422
+#: dayplanner-notifier:307
 #, fuzzy
 msgid "Day Planner event"
 msgstr "Udalos» plánovaèa"
 
-#: dayplanner-notifier:431
+#: dayplanner-notifier:316
 msgid "Remind me later"
 msgstr ""
 
-#: dayplanner-notifier:438
+#: dayplanner-notifier:323
 msgid "Postpone this notification for 10 minutes"
 msgstr "Odlo¾i» toto upozornenie o 10 minút"
+
+#~ msgid "January"
+#~ msgstr "január"
+
+#~ msgid "February"
+#~ msgstr "február"
+
+#~ msgid "March"
+#~ msgstr "marec"
+
+#~ msgid "April"
+#~ msgstr "apríl"
+
+#~ msgid "May"
+#~ msgstr "máj"
+
+#~ msgid "June"
+#~ msgstr "jún"
+
+#~ msgid "July"
+#~ msgstr "júl"
+
+#~ msgid "August"
+#~ msgstr "august"
+
+#~ msgid "September"
+#~ msgstr "september"
+
+#~ msgid "October"
+#~ msgstr "október"
+
+#~ msgid "November"
+#~ msgstr "november"
+
+#~ msgid "December"
+#~ msgstr "december"
+
+#, fuzzy
+#~ msgid ""
+#~ "Unable to force the start. This is likely due to a bug in the "
+#~ "application, please contact the Day Planner developers."
+#~ msgstr ""
+#~ "Nepodarilo sa mi vynúti» spustenie aplikácie. Zapríèinila to "
+#~ "pravdepodobne chyba v programe, kontaktujte preto prosím vývojárov "
+#~ "Plánovaèa."
+
+#, fuzzy
+#~ msgid ""
+#~ "<b><big>Day Planner encountered an error while saving events</big></b>.\n"
+#~ "\n"
+#~ "There appears to be another instance of Day Planner running. This may "
+#~ "lead to data loss.\n"
+#~ "\n"
+#~ "Leaving this instance of Day Planner open while you resolve the issues "
+#~ "with the other instance of Day Planner will ensure your data remains "
+#~ "safe. Closing this instance of Day Planner before it can safely write "
+#~ "recent changes will result in data loss."
+#~ msgstr ""
+#~ "<b><big>Plánovaè narazil na chybu pri ukladaní udalostí</big></b>.\n"
+#~ "\n"
+#~ "Zdá sa, ¾e Plánovaè u¾ be¾í. Tento stav mô¾e spôsobi» stratu údajov.\n"
+#~ "\n"
+#~ "Ak ponecháte tento plánovaè otvorený, zatiaµ èo vyrie¹ite problémy s "
+#~ "druhým be¾iacim plánovaèom, zabezpeèíte tým, ¾e va¹e dáta zostanú v "
+#~ "bezpeèí. Zavretie tohto plánovaèa skôr, ne¾ bude môc» bezpeène zapísa» na "
+#~ "disk aktuálne zmeny, bude ma» za následok stratu údajov."
+
+#~ msgid "Quit anyway?"
+#~ msgstr "Ukonèi» napriek tomu program?"
 
 #~ msgid "Postpone"
 #~ msgstr "Odlo¾i» na neskôr"
