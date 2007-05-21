@@ -50,9 +50,9 @@ unless(defined($BinDir)) {
 }
 
 if(defined($IconsDir)) {
-	$Icon = "$IconsDir/dayplanner_48.png";
+	$Icon = "$IconsDir/dayplanner-48x48.png";
 } else {
-	$Icon = "dayplanner_48.png";
+	$Icon = "dayplanner-48x48.png";
 }
 
 # Set dirs
