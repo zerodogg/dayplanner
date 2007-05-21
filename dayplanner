@@ -880,7 +880,7 @@ sub LaunchWebBrowser {
 	}
 	# Then check for various known browsers (and browser launchers)
 	if(not $Browser) {
-		foreach(qw/xdg-open gnome-open www-browser mozffremote mozilla-firefox firefox iceweasel epiphany mozilla seamonkey konqueror opera/) {
+		foreach(qw/xdg-open gnome-open exo-open www-browser mozffremote mozilla-firefox firefox iceweasel epiphany mozilla seamonkey konqueror opera/) {
 			if(InPath($_)) {
 				$Browser = $_;
 				last;
@@ -1160,7 +1160,8 @@ sub HolidaySetup {
 	} else {
 		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. You didn't have any\n";
 		print $DUMMY_FILE ": environment variables set so Day Planner couldn't autodetect one.\n";
-		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file and re-run Day Planner";
+		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file and re-run Day Planner.\n";
+		print $DUMMY_FILE "Make sure one of the LC_* or LANG* environment variables are set when running Day Planner";
 	}
 	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
@@ -2248,7 +2249,7 @@ sub ImportDataFromProgram {
 	if($FirstTime) {
 		$ImportWindow->set_title($i18n->get('Day Planner') . ' - ' . $i18n->get('Import data'));
 		# Set the icon
-		my $WindowIcon = DetectImage('dayplanner_48.png','dayplanner_24.png', 'dayplanner_16.png', 'dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', 'dayplanner.png');
+		my $WindowIcon = DetectImage('dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
 		if ($WindowIcon) {
 			$ImportWindow->set_default_icon_from_file($WindowIcon);
 	}	
@@ -3346,7 +3347,7 @@ sub CreateAdvancedWidget {
 	$ExceptHBox->pack_start($ExceptEntry,0,0,0);
 		# The calendar button
 	my $CalButton = Gtk2::Button->new();
-	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png'));
+	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
 	$CalButton->set_image($CalImage);
 	$CalButton->show();
 	$CalButton->set_sensitive(0);
@@ -4176,7 +4177,7 @@ sub AboutBox {
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day Planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with Day Planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
 	# Logo
-	my $LogoImage = DetectImage('dayplanner-about.png','dayplanner_48.png','dayplanner_24.png', 'dayplanner_16.png', 'dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', 'dayplanner.png');
+	my $LogoImage = DetectImage('dayplanner-about.png','dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
 	if ($LogoImage) {
 		my $PixBuf = Gtk2::Gdk::Pixbuf->new_from_file($LogoImage);
 		$AboutDialog->set_logo($PixBuf);
@@ -4675,7 +4676,7 @@ sub DrawMainWindow {
 	}
 
 	# Set the icon
-	my $MainWindowIcon = DetectImage('dayplanner_48.png','dayplanner_24.png', 'dayplanner_16.png', 'dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', 'dayplanner.png');
+	my $MainWindowIcon = DetectImage('dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
 	if ($MainWindowIcon) {
 		$MainWindow->set_default_icon_from_file($MainWindowIcon);
 	}
