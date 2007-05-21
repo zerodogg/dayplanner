@@ -202,6 +202,21 @@ sub GetMessages {
 # HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Detect the path to the image file(s) supplied. Returns the path to the
+#		first one found or undef
+# Usage: $Image = DetectImage(image1, image2);
+sub DetectImage {
+	my $I_Am_At = dirname(Cwd::realpath($0));
+	foreach my $Image (@_) {
+		foreach my $Dir ("$I_Am_At/art", $I_Am_At, '/usr/share/dayplanner', '/usr/local/dayplanner', '/usr/local/share/dayplanner', '/usr/share/dayplanner/art', '/usr/local/dayplanner/art', '/usr/local/share/dayplanner/art', '/usr/share/icons/large', '/usr/share/icons', '/usr/share/icons/mini') {
+			if (-e "$Dir/$Image") {
+				return("$Dir/$Image");
+			}
+		}
+	}
+	return(undef);
+}
+
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
 sub CreateDetailsWidget {
@@ -300,6 +315,10 @@ sub GtkNotifier {
 							$DialogType,
 							'none',
 							$MainText);
+		my $WindowIcon = DetectImage('dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
+		if ($WindowIcon) {
+			$NotifyDialog->set_default_icon_from_file($WindowIcon);
+		}
 		# This is important, so set the urgency hint and keep it above all other windows
 		# and on all desktops
 		$NotifyDialog->set_keep_above(1);
