@@ -13,6 +13,7 @@ Version 0.7 (Unreleased)
 - Can now import data supplied on the commandline without a commandline parameter
 - DP can now communicate with other running DPs and shut them down
 - i18n now properly works on older distributions
+- New icons
 
 * Notifier (dayplanner-notifier)
 
