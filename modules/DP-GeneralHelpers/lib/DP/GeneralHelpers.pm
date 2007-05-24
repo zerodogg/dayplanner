@@ -122,7 +122,7 @@ sub AppendZero {
 	if ($Number =~ /^\d$/) {
 		return("0$Number");
 	}
-	return($Number]);
+	return($Number);
 }
 
 # Version number
