@@ -35,7 +35,7 @@ use constant {
 	};
 
 # Exported functions
-our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile);
+our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
@@ -113,6 +113,16 @@ sub LoadConfigFile {
 		$ConfigHash->{$Option} = $Value;
 	}
 	close($CONFIG);
+}
+
+# Purpose: Append a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = AppendZero(NUMBER);
+sub AppendZero {
+	my $Number = shift;
+	if ($Number =~ /^\d$/) {
+		return("0$Number");
+	}
+	return($Number]);
 }
 
 # Version number
