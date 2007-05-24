@@ -16,6 +16,7 @@ use Carp;
 use Exporter qw(import);
 use POSIX;
 use Data::Dumper;
+use Sys::Hostname;
 use constant { TRUE => 1, FALSE => 0 };
 
 # Exported functions
@@ -771,7 +772,7 @@ sub _UnSafe {
 }
 
 # Purpose: Get a unique ID for an event
-# Usage: $iCalendar .= $self->_UID($Year?$Month$Day$Hour?$Minute);
+# Usage: $iCalendar .= $self->_UID(NONRANDOM?);
 # 	NONRANDOM is a non random string to be included into
 # 	the UID. It should usually be something like $Year$Month$Day$Hour$Minute
 # 	or similar. NONRANDOM *can* be omitted, if it is then it will be replaced
@@ -786,7 +787,7 @@ sub _UID {
 		$NonRandom = int(rand(10000));
 	}
 	while(1) {
-		my $UID = 'dayplanner-' . time() . $NonRandom . int(rand(10000));
+		my $UID = 'dp-' . time() . $NonRandom . int(rand(10000)) . '-' . scalar(getpwuid($<)) . '@' . hostname();
 		if(not defined($self->{RawCalendar}{$UID})) {
 			return($UID);
 		}
