@@ -176,6 +176,42 @@ sub get_RRULE {
 	}
 }
 
+# Purpose: Get a list of dates which are excepted from recurrance for the supplied UID
+# Usage: my $List = $object->get_exceptions(UID);
+sub get_exceptions {
+	my ($self, $UID) = @_;
+	if(defined($self->{RawCalendar}{$UID})) {
+		if(defined($self->{RawCalendar}{$UID}{EXDATE})) {
+			return($self->{RawCalendar}{$UID}{EXDATE});
+		} else {
+			return([]);
+		}
+	} else {
+		carp('get_exceptions got an invalid UID');
+		return([]);
+	}
+}
+
+# Purpose: Set the EXDATEs for the supplied UID
+# Usage: $object->set_exceptions(UID, EXCEPTIONS_ARRAY);
+sub set_exceptions {
+	my $self = shift;
+	my $UID = shift;
+	my $Exceptions = shift;
+	# First, clean the current one.
+	delete($self->{RawCalendar}{$UID}{EXDATE});
+	# If Exceptions is undef then just return.
+	return(TRUE) if not defined($Exceptions);
+	# Create the array
+	$self->{RawCalendar}{$UID}{EXDATE} = [];
+	foreach(@{$Exceptions}) {
+		# This doesn't do any syntax checking. We (stupidly) assume the caller
+		# did the proper thing(tm)
+		push(@{$self->{RawCalendar}{$UID}{EXDATE}},$_);
+	}
+	return(TRUE);
+}
+
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
 sub write {
@@ -1369,6 +1405,21 @@ assigned.
 The same as ->add, except this takes an additional UID argument
 and makes changes to an existing entry instead of adding a new one.
 
+=head2 my $ArrayRef = $object->get_exceptions(UID);
+
+This function gets you an arrayref containing a list of dates which are to be
+excepted from RRULEs. DP::iCalendar already takes these into account when
+calculating RRULEs, but this is provided for your convinience when you need
+the information. The information is also included in ->get_info() like everything
+else (but unlike everything else, it is provided in the form of an arrayref
+instead of a key=value hash entry.)
+
+=head2 $object->set_exceptions(UID, ARRAYREF);
+
+This function sets the EXDATE entries that ->get_exceptions returns.
+Again this is provided for your convinience. It is also taken into
+account when present in ->change();
+
 =head2 $object->exists(UID);
 
 Returns 1 if the supplied UID exists. 0 if it doesn't.
@@ -1475,6 +1526,13 @@ The iCalendar support of this module is a little bit limited. It
 has the following limitations:
 
 =over
+
+=item
+
+Return values of keys might seem inconsistent. Most values are returned in the
+form of key => value pairs inside the hash, however certain values can be included
+more than once. Currently this is limited to the EXDATE entry, but this /might/
+change in the future if it is required.
 
 =item
 
