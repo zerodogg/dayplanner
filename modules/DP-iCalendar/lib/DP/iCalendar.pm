@@ -16,6 +16,7 @@ use Carp;
 use Exporter qw(import);
 use POSIX;
 use Data::Dumper;
+use constant { TRUE => 1, FALSE => 0 };
 
 # Exported functions
 our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime iCal_ConvertToUnixTime);
@@ -946,16 +947,36 @@ sub _RRULE_Handler {
 	}
 }
 
+# Purpose: Get a parsed list of EXDATES
+# Usage: $self->_Get_EXDATES_Parsed(UID);
+sub _Get_EXDATES_Parsed {
+	my $self = shift;
+	my $UID = shift;
+
+	my %ExDates;
+	foreach my $ExDate (@{$self->get_exceptions($UID)}) {
+		# We merely discard Time
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($ExDate);
+		$Year =~ s/^0*//;
+		$Month =~ s/^0*//;
+		$Day =~ s/^0*//;
+		$ExDates{$Year}{$Month}{$Day} = 1;
+	}
+	return(\%ExDates);
+}
+
 # Purpose: Add the supplied DATETIMEs to the sorted hash for the supplied UID.
 # 		Also fetches the TIME from the UIDs DTSTART.
 # 	This is the function that _RRULE_Handler() uses to add the dates that it has
 # 	calculated from the RRULE to the internal sorted hash.
+# 	This function also takes care of killing off entries matched by EXDATE entries.
 # Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR);
 sub _RRULE_AddDates {
 	my $self = shift;
 	my $AddDates = shift;
 	my $UID = shift;
 	my $GenYear = shift;
+	my $Exceptions = $self->_Get_EXDATES_Parsed($UID);
 	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
 	if (not defined($UID_Time) or not length($UID_Time)) {
 		$UID_Time = 'DAY';
@@ -976,7 +997,9 @@ sub _RRULE_AddDates {
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
-		push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
+		if(not $Exceptions->{$Year}{$Month}{$Day}) {
+			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
+		}
 	}
 }
 
