@@ -3275,11 +3275,12 @@ sub ExceptionDateSel {
 }
 
 # Purpose: Create the advanced settings widget
-# Usage: my $ExpanderWidget = CreateAdvancedWidget(RRULE?);
+# Usage: my $ExpanderWidget = CreateAdvancedWidget(RRULE?,EXDATE?);
 # 	RRULE is an RRULE hash as returned by DP::iCalendars ->get_RRULE.
 # 	It can be undef.
 sub CreateAdvancedWidget {
 	my $RRULE = shift;
+	my $EXDATE = shift;
 	# Create the expander and set up signal handlers
 	my $FT_Expander = Gtk2::Expander->new($i18n->get('Show advanced settings'));
 	$FT_Expander->show();
@@ -3380,6 +3381,13 @@ sub CreateAdvancedWidget {
 			$Recur_Combo->set_active(2);
 		} elsif($RRULE eq 'YEARLY') {
 			$Recur_Combo->set_active(3);
+		}
+	}
+		# Get EXDATE information if provided and set it
+	if($EXDATE) {
+		$ExceptCheckButton->set_active(1);
+		foreach my $entry (sort @{$EXDATE}) {
+			AddToField($ExceptEntry,iCal_ParseDateTime($entry));
 		}
 	}
 
@@ -3764,7 +3772,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# Get the text string to use (it differs if we're editing on another date than
 		# the selected
-		my $EditString = $Differs ? $i18n->get('Editing a repeating event starting on the %s. %s %s') : $i18n->get('Editing an event on the %s. %s %s');
+		my $EditString = $Differs ? $i18n->get("Editing a repeating event\nstarting on the %s. %s %s") : $i18n->get('Editing an event on the %s. %s %s');
 
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an event'), $EditString, 'gtk-ok',$EventUID);
 		# Create the widgets for the normal event selection
@@ -3832,7 +3840,7 @@ sub NormalEventWindow {
 	my $IsEditing = 0;
 	
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE);
+	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE,$EventEXDATE);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
@@ -3845,6 +3853,7 @@ sub NormalEventWindow {
 		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		$EventRRULE = $iCalendar->get_RRULE($EventUID);
+		$EventEXDATE = $iCalendar->get_exceptions($EventUID);
 		($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime) = ($EventYear,$EventMonth,$EventDay,$EventTime);
 		$IsEditing = 1;
 	}
@@ -3896,7 +3905,7 @@ sub NormalEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE);
+	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE,$EventEXDATE);
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
@@ -3998,7 +4007,7 @@ sub AllDayEventWindow {
 	my ($EventUID, $ParentVBox, $MyWindow) = @_;
 
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE);
+	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE,$EventEXDATE);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
@@ -4009,6 +4018,7 @@ sub AllDayEventWindow {
 		$EventSummary = GetSummaryString($EventUID);
 		$EventFulltext = $EventHash->{DESCRIPTION};
 		$EventRRULE = $iCalendar->get_RRULE($EventUID);
+		$EventEXDATE = $iCalendar->get_exceptions($EventUID);
 		($OldEventYear, $OldEventMonth,$OldEventDay) = ($EventYear,$EventMonth,$EventDay);
 	}
 
@@ -4049,7 +4059,7 @@ sub AllDayEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE);
+	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE,$EventEXDATE);
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
