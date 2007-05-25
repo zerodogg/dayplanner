@@ -44,10 +44,11 @@ use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
 use Date::HolidayParser;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
-use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile);
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
 # Scalars
 our $Version = '0.7';
+my $VersionName = 'Unia';
 my $RCSRev = '$Id$';
 my $MainEventsFile = 'events.dpd';			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
@@ -3258,6 +3259,7 @@ sub ExceptionDateSel {
 	$Calendar->signal_connect('day-selected' => sub {
 			my $Selected = $Calendar->selected_day();
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
+			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
 			if($SelHash{$Selected}) {
 				$Calendar->unmark_day($Selected);
 				delete($SelHash{$Selected});
@@ -3396,7 +3398,7 @@ sub CreateAdvancedWidget {
 	$FTFrame->add($FulltextWindow);
 	$FTFrame->set_label($i18n->get('Detailed description'));
 	$ExpanderVBox->pack_start($FTFrame,0,0,0);
-	return($FT_Expander,$FulltextEntry,$Recur_Combo);
+	return($FT_Expander,$FulltextEntry,$Recur_Combo,$ExceptEntry);
 }
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
@@ -3449,6 +3451,24 @@ sub GetRRULEFromCombo {
 	}
 }
 
+# Purpose: Get a list of formatted EXDATE entries from the exception entry box
+# Usage: my $List = GetExceptionsFromEntry(ENTRY WIDGET);
+sub GetExceptionsFromEntry {
+	my $Entry = shift;
+	if (not $Entry->is_sensitive) {
+		return([]);
+	}
+	my $EntryArray = ParseEntryField($Entry);
+	my @ReturnArray;
+	foreach my $Date (@{$EntryArray}) {
+		my($Year,$Month,$Day) = ParseDateString($Date);
+		$Month = AppendZero($Month);
+		$Day = AppendZero($Day);
+		push(@ReturnArray,"$Year$Month$Day");
+	}
+	return(\@ReturnArray);
+}
+	
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
 sub TimeSelection {
@@ -3876,7 +3896,7 @@ sub NormalEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my ($FT_Expander, $FulltextEntry,$RecurCombo) = CreateAdvancedWidget($EventRRULE);
+	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE);
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
@@ -3899,6 +3919,7 @@ sub NormalEventWindow {
 	$ReturnHash{SummaryEntry} = $SummaryEntry;
 	$ReturnHash{FulltextEntry} = $FulltextEntry;
 	$ReturnHash{RecurCombo} = $RecurCombo;
+	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	return(\%ReturnHash);
 }
 
@@ -3939,6 +3960,12 @@ sub NormalEvent_OK {
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
+		foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})}) {
+			if(not $EntryHash{EXDATE}) {
+				$EntryHash{EXDATE} = [];
+			}
+			push(@{$EntryHash{EXDATE}}, $EXDATE);
+		}
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
 		} else {
@@ -4022,7 +4049,7 @@ sub AllDayEventWindow {
 	# ==================================================================
 	my $FulltextWindow;
 	
-	my ($FT_Expander, $FulltextEntry,$RecurCombo) = CreateAdvancedWidget($EventRRULE);
+	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE);
 	if ($UserConfig{EditorVerboseDefault}) {
 		$FT_Expander->set_expanded(1);
 	}
@@ -4042,6 +4069,7 @@ sub AllDayEventWindow {
 	$ReturnHash{SummaryEntry} = $SummaryEntry;
 	$ReturnHash{FulltextEntry} = $FulltextEntry;
 	$ReturnHash{RecurCombo} = $RecurCombo;
+	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	
 	return(\%ReturnHash);
 }
@@ -4091,6 +4119,13 @@ sub AllDayEvent_OK {
 			my $FulltextBuff = $WidgetHash->{FulltextEntry}->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 			$EntryHash{DESCRIPTION} = $Fulltext;
+			# Get exceptions
+			foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})}) {
+				if(not $EntryHash{EXDATE}) {
+					$EntryHash{EXDATE} = [];
+				}
+				push(@{$EntryHash{EXDATE}}, $EXDATE);
+			}
 		}
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
@@ -5020,7 +5055,7 @@ GetOptions (
 		exit(0);
 	},
 	'version|v' => sub {
-		print "Day Planner version $Version\n";
+		print "Day Planner version $Version \"$VersionName\"\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
