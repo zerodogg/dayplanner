@@ -653,9 +653,6 @@ sub WriteConfig {
 	# The parameters
 	my ($Dir,$File) = ($SaveToDir, $ConfigFile);
 	# Verify the options first
-	unless(defined($UserConfig{EditorVerboseDefault}) and length($UserConfig{EditorVerboseDefault})) {
-		$UserConfig{EditorVerboseDefault} = 0;
-	}
 	unless(defined($UserConfig{Events_NotifyPre}) and length($UserConfig{Events_NotifyPre})) {
 		$UserConfig{Events_NotifyPre} = '30min';
 	}
@@ -671,7 +668,6 @@ sub WriteConfig {
 	}
 
 	my %Explanations = (
-		EditorVerboseDefault => "If the EventEditor should expand the \"details\" by default\n#  1 = expand\n#  0 = don't expand",
 		Events_NotifyPre => "If Day Planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
 		Events_DayNotify => "If Day Planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
 		DPS_host => 'The DPS host to connect to',
@@ -707,7 +703,6 @@ sub LoadConfig {
 	}
 	
 	my %OptionRegexHash = (
-			EditorVerboseDefault => '^\d+$',
 			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
 			Events_DayNotify => '^\d+$',
 			DPS_enable => '^(1|0)$',
@@ -3906,9 +3901,6 @@ sub NormalEventWindow {
 	my $FulltextWindow;
 	
 	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE,$EventEXDATE);
-	if ($UserConfig{EditorVerboseDefault}) {
-		$FT_Expander->set_expanded(1);
-	}
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	# Add text to it if needed
 	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
@@ -4060,9 +4052,6 @@ sub AllDayEventWindow {
 	my $FulltextWindow;
 	
 	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry) = CreateAdvancedWidget($EventRRULE,$EventEXDATE);
-	if ($UserConfig{EditorVerboseDefault}) {
-		$FT_Expander->set_expanded(1);
-	}
 	$Tooltips->set_tip($FT_Expander, $i18n->get('Additional information'));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	
@@ -4274,47 +4263,15 @@ sub PreferencesWindow {
 	
 	# ==================================================================
 	# ==================================================================
-	# GENERAL TAB
+	# REMINDERS TAB
 	# ==================================================================
 	# ==================================================================
 	
 	# Create the vbox
 	my $Config_VBox = Gtk2::VBox->new();
 	$Config_VBox->show();
-	$Notebook->append_page($Config_VBox,$i18n->get('General'));
+	$Notebook->append_page($Config_VBox,$i18n->get('Reminders'));
 	$Config_VBox->set_border_width(12);
-
-	# Create the primary vbox
-	my $General_VBox = Gtk2::VBox->new();
-	$General_VBox->show();
-	$Config_VBox->pack_start($General_VBox,0,0,0);
-	
-	my $UI_Label = Gtk2::Label->new('<b>' . $i18n->get('Interface') . '</b>');
-	$UI_Label->set_use_markup(1);
-	$UI_Label->set_alignment(0,1);
-	$General_VBox->pack_start($UI_Label,0,0,0);
-	$UI_Label->show();
-
-	# EDITOR VERBOSE DEFAULT
-	my $EDVDefaultCheckbox = Gtk2::CheckButton->new_with_label($i18n->get('Show details by default'));
-	$General_VBox->pack_start($EDVDefaultCheckbox,0,0,0);
-	$EDVDefaultCheckbox->show();
-	if ($UserConfig{EditorVerboseDefault}) {
-		$EDVDefaultCheckbox->set_active(1);
-	}
-	$EDVDefaultCheckbox->signal_connect( 'toggled' => sub {
-			if ($EDVDefaultCheckbox->get_active) {
-				$UserConfig{EditorVerboseDefault} = 1;
-			} else {
-				$UserConfig{EditorVerboseDefault} = 0;
-			}
-		});
-	
-	$Tooltips->set_tip($EDVDefaultCheckbox, $i18n->get('Check this if you want to show the details by default in the add and edit event dialog.'));
-
-	# ==================================================================
-	# EVENTS
-	# ==================================================================
 	
 	# A simple hash we use to parse back and forth between the PreNotification
 	# combo box and the config option itself
@@ -4345,22 +4302,10 @@ sub PreferencesWindow {
 		'readable_default' => '45mins',
 	);
 	
-	# Create the vbox
-	my $Events_VBox = Gtk2::VBox->new();
-	$Events_VBox->show();
-	$Config_VBox->pack_start($Events_VBox,0,0,0);
-
-	# The label
-	my $Events_Label = Gtk2::Label->new('<b>' . $i18n->get('Event notifications') . '</b>');
-	$Events_Label->set_use_markup(1);
-	$Events_Label->set_alignment(0,1);
-	$Events_VBox->pack_start($Events_Label,0,0,0);
-	$Events_Label->show();
-
-	# If the reminder should autostart on login or not
+	# If the reminder (daemon) should autostart on login or not
 	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label($i18n->get('Start the Day Planner reminder automatically when logging in'));
 	$AutostartReminder_Checkbox->show();
-	$Events_VBox->pack_start($AutostartReminder_Checkbox,0,0,0);
+	$Config_VBox->pack_start($AutostartReminder_Checkbox,0,0,0);
 	$AutostartReminder_Checkbox->set_active(1) if $InternalConfig{AddedAutostart};
 	$AutostartReminder_Checkbox->signal_connect('toggled' => sub {
 			if($AutostartReminder_Checkbox->get_active) {
@@ -4378,12 +4323,12 @@ sub PreferencesWindow {
 	$NotificationLabel->show();
 	$NotificationLabel->set_justify('left');
 	$NotificationLabel->set_alignment(0,0);
-	$Events_VBox->pack_start($NotificationLabel,0,0,0);
+	$Config_VBox->pack_start($NotificationLabel,0,0,0);
 	
 	# If the user wants to be notified in advance
 	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label($i18n->get('One day in advance'));
 	$NotifyAdvance_CheckBox->show();
-	$Events_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
+	$Config_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
 	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
 			$UserConfig{Events_DayNotify} = $NotifyAdvance_CheckBox->get_active();
 		});
@@ -4394,7 +4339,7 @@ sub PreferencesWindow {
 	# The widgets that selects when the user wants to be notified
 	# The HBox
 	my $TimeSel_HBox = Gtk2::HBox->new();
-	$Events_VBox->pack_start($TimeSel_HBox,0,0,0);
+	$Config_VBox->pack_start($TimeSel_HBox,0,0,0);
 	$TimeSel_HBox->show();
 	# The checkbutton
 	my $EnableDisablePreNotCB = Gtk2::CheckButton->new();
