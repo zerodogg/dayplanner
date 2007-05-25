@@ -8,15 +8,17 @@ may be subject to change.
 
 * Version 0.7
 - - - - - - -
-- Add support for choosing how long an event lasts
-- Add support for
-	- Repeat every X [days|months]
-	- Repeat until
 - Left align labels
-- 22:55:57 < reinouts> Zero_Dogg: you should *really* use a date format like 'dd MMMM yyyy' instead of '%s. %s %s'
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
-- Add a DP::GeneralHelpers and split general helper functions into it
+
+* Version 0.8
+- Add support for repeat event until
+- Add support for choosing how long an event lasts
+- Change date formats in translations to something readable like DD MM YYYY instead of
+	%s. %s %s
+- Have a third party look over all strings (in the pot-file) and try to
+	simplify those too technical
 
 * Longer term
 - - - - - - -
