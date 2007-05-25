@@ -24,7 +24,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 
 # Version number
 our $VERSION;
-$VERSION = 0.2;
+$VERSION = 0.3;
 
 # - Public methods
 
@@ -1317,7 +1317,7 @@ DP::iCalendar - Parser for iCalendar files
 
 =head1 VERSION
 
-0.1
+0.3
 
 =head1 SYNOPSIS
 
@@ -1555,7 +1555,8 @@ has the following limitations:
 
 Return values of keys might seem inconsistent. Most values are returned in the
 form of key => value pairs inside the hash, however certain values can be included
-more than once. Currently this is limited to the EXDATE entry, but this /might/
+more than once. These values are returned as arrays. So it becomes key => arrayref.
+Currently this is limited to the EXDATE entry, but this /might/
 change in the future if it is required.
 
 =item
