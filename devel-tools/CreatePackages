@@ -132,7 +132,7 @@ mkpath("$tempdir/dayplanner-$DPVersion/");
 print "Building tarball...\n";
 # Copy the files
 print " Copying files...";
-if (system("cp -r $OrigDir/* $tempdir/dayplanner-$DPVersion/ && cp -r $OrigDir/.svn $tempdir/dayplanner-$DPVersion/")) {
+if (system("cp --no-dereference -r $OrigDir/* $tempdir/dayplanner-$DPVersion/ && cp --no-dereference -r $OrigDir/.svn $tempdir/dayplanner-$DPVersion/")) {
 	die "failed\n";
 }
 print "done\n";
