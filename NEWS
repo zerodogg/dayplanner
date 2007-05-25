@@ -14,6 +14,9 @@ Version 0.7 "Unia" (Unreleased)
 - DP can now communicate with other running DPs and shut them down
 - i18n now properly works on older distributions
 - New icons
+- Now supports recurring events
+- Dropped the 'EditorVerboseDefault' configuration setting. It was,
+  for the most part, useless.
 
 * Notifier (dayplanner-notifier)
 
