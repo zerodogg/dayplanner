@@ -1018,7 +1018,7 @@ sub _RRULE_DAILY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(UNTIL|BYDAY|FREQ|WKST)/) {
+		if(not /^(BYDAY|FREQ|WKST)/) {
 			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 		}
@@ -1204,7 +1204,7 @@ sub _RRULE_MONTHLY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(UNTIL|BYDAY|FREQ|WKST)/) {
+		if(not /^(BYDAY|FREQ|WKST)/) {
 			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 		}
@@ -1281,7 +1281,7 @@ sub _RRULE_YEARLY {
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
+		if(not /^(BYDAY|FREQ|WKST|INTERVAL)/) {
 			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 		}
@@ -1291,10 +1291,16 @@ sub _RRULE_YEARLY {
 			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
+	# Fetch UNTIL first if it is set
+	if($RRULE->{UNTIL}) {
+		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
+	}
 
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Date);
 	my $NewDate = iCal_GenDateTime($YEAR,$Month,$Day,$Time);
-	$Dates{$NewDate} = 1;
+	if(not iCal_ConvertToUnixTime($NewDate) > $UNTIL) {
+		$Dates{$NewDate} = 1;
+	}
 	return(\%Dates);
 }
 
