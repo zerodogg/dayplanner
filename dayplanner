@@ -3333,6 +3333,10 @@ sub CreateAdvancedWidget {
 	$ExceptHBox->show();
 	$ExceptHBox->set_sensitive(0);
 	$ExpanderVBox->pack_start($ExceptHBox,0,0,0);
+		# This is exceedingly ugly. But...works
+	my $IndentLabel = Gtk2::Label->new(" ");
+	$IndentLabel->show();
+	$ExceptHBox->pack_start($IndentLabel,0,0,0);
 		# Checkbutton for it
 		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
 	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
