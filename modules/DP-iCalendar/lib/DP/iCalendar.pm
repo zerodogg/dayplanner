@@ -344,6 +344,7 @@ sub addfile {
 	if(ref($File)) {	# If we got a reference
 		if(not ref($File) eq 'ARRAY') {
 			carp('Supplied a reference, but the reference is not a ARRAYREF.');
+			return(undef);
 		}
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
