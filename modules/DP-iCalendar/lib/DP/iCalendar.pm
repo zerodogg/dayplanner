@@ -1278,6 +1278,7 @@ sub _RRULE_YEARLY {
 	my $YEAR = shift;
 	my $Date = $self->{RawCalendar}{$UID}{DTSTART};
 	my $TheRRULE= $self->{RawCalendar}{$UID}{RRULE};
+	my $UNTIL;
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
@@ -1298,7 +1299,7 @@ sub _RRULE_YEARLY {
 
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Date);
 	my $NewDate = iCal_GenDateTime($YEAR,$Month,$Day,$Time);
-	if(not iCal_ConvertToUnixTime($NewDate) > $UNTIL) {
+	if(not $UNTIL or not iCal_ConvertToUnixTime($NewDate) > $UNTIL) {
 		$Dates{$NewDate} = 1;
 	}
 	return(\%Dates);
