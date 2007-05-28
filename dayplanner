@@ -3479,7 +3479,7 @@ sub GetExceptionsFromEntry {
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
 sub TimeSelection {
-	my $Time = $_[0];
+	my $Time = shift;
 	my($HourAdjustment,$MinuteAdjustment, $HourSpinner,$MinuteSpinner,$AMPM);
 
 	if($i18n->get_clocktype() == 24) {
@@ -3844,7 +3844,7 @@ sub NormalEventWindow {
 	
 	# Check if the event is already defined, if it is then we assume that we're editing
 	if($EventUID eq 'NULL') {
-		$EventTime = '00:00';
+		$EventTime = '09:00';
 	} else {
 		my $EventHash = $iCalendar->get_info($EventUID);
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
