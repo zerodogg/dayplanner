@@ -156,9 +156,13 @@ sub CloseIPC {
 	if($ShutdownDaemon) {
 		$DaemonSocket->client_send('SHUTDOWN');
 	}
-	Daemon_SendData('BYE');
-	$DaemonSocket->destroy();
-	$IPC_Socket->destroy();
+	if($IPC_Socket) {
+		$IPC_Socket->destroy();
+	}
+	if($DaemonSocket) {
+		Daemon_SendData('BYE');
+		$DaemonSocket->destroy();
+	}
 	return(1);
 }
 
@@ -177,6 +181,9 @@ sub Daemon_ErrorHandler {
 # Purpose: Send a message to the daemon
 # Usage: Daemon_SendData(DATA);
 sub Daemon_SendData {
+	if(not $DaemonSocket) {
+		return(undef);
+	}
 	$DaemonSocket->client_send("$$ $_[0]");
 }
 
@@ -1061,18 +1068,31 @@ sub UpgradeVersion {
 sub DP_SigHandler {
 	$| = 1;
 	print "SIG$_[0] recieved.\nSaving data...";
-	if(SaveMainData() eq 'SAVE_FAILED') {
-		print 'FAILED';
+	if($iCalendar) {
+		if(SaveMainData() eq 'SAVE_FAILED') {
+			print 'FAILED';
+		} else {
+			print 'done';
+		}
 	} else {
-		print 'done';
+		print 'not needed';
 	}
 	print "\nWriting state file...";
-	WriteStateFile($SaveToDir, "state.conf");
-	print "done\nClosing the daemon connection...";
+	if($SaveToDir and scalar keys %InternalConfig) {
+		WriteStateFile($SaveToDir, "state.conf");
+		print "done\n";
+	} else {
+		print "not needed\n";
+	}
+	print "Closing the daemon connection...";
 	CloseIPC();
 	print "done\nExiting the gtk2 main loop...";
-	Gtk2->main_quit;
-	print "done\nExiting\n";
+	if($Gtk2Init) {
+		Gtk2->main_quit;
+		print "done\nExiting\n";
+	} else {
+		print "not running\nExiting\n";
+	}
 	exit(0);
 }
 
