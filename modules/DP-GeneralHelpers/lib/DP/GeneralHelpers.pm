@@ -25,7 +25,6 @@
 # http://www.gnu.org/copyleft/gpl.html.
 
 package DP::GeneralHelpers;
-use 5.008008;
 use strict;
 use warnings;
 use Exporter qw(import);
