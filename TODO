@@ -26,4 +26,5 @@ may be subject to change.
   Day Planner to take advantage of it and integrate better with the GNOME
   environment.
   When: This would require dbus support in the evolution-data-server.
-   When e-d-s will have support for this is uncertain.
+	This is planned for GNOME 2.20.
+	http://www.go-evolution.org/DbusPort
