@@ -359,7 +359,7 @@ sub new {
 		}
 		# Set up the i18n fetching type
 		if($Legacy) {
-			DPIntWarn('Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters');
+			DP::GeneralHelpers::DPIntWarn('Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters');
 			$self->{I18N_Mode} = 1;
 			if($BindTo) {
 				bindtextdomain('dayplanner', $BindTo);
@@ -393,7 +393,7 @@ sub new {
 	} else {
 		$self->{I18N_Mode} = 0;
 		# No Locale::Gettext available
-		DPIntWarn('Locale::gettext is not available. This will work, but localization will *not* be available');
+		DP::GeneralHelpers::DPIntWarn('Locale::gettext is not available. This will work, but localization will *not* be available');
 	}
 	# The reason we do not use strftime() or I18N::Langinfo is that these return
 	# values in random encodings. By using Gettext we get values
