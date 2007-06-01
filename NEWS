@@ -17,6 +17,9 @@ Version 0.7 "Unia" (Unreleased)
 - Now supports recurring events
 - Dropped the 'EditorVerboseDefault' configuration setting. It was,
   for the most part, useless.
+- The text entry field for details no longer accepts tab, so you
+  can now tab out of that field
+- Better i18n system
 
 * Notifier (dayplanner-notifier)
 
