@@ -2800,7 +2800,10 @@ sub PopulateUpcomingEvents {
 					if($time eq 'DAY') {
 						$h->{text} .= "\n" . GetSummaryString($UID);
 					} else {
-						$h->{text} .= "\n" . $i18n->get('At') . ' ' . $i18n->AMPM_From24($time) . ': ' . GetSummaryString($UID);
+						# TRANSLATORS: String used in the list of upcoming events in the
+						# 		lower right hand corner of the UI. You should
+						# 		probably keep this short.
+						$h->{text} .= "\n" . $i18n->get_advanced('At %(time)', { 'time' =>  $i18n->AMPM_From24($time)}) . ': ' . GetSummaryString($UID);
 					}
 				}
 			}
