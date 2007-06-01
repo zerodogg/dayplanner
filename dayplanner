@@ -2625,6 +2625,20 @@ sub PromptOverwrite {
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Work around limitations in older Gtk2 versions that don't have
+# 	->set_image on buttons
+# Usage: Gtk2_Button_SetImage(BUTTON, IMAGE, LABEL);
+# 	Sets LABEL if version is old
+sub Gtk2_Button_SetImage {
+	my($button,$image,$label) = @_;
+	if($Gtk2::VERSION <= 1.070) {
+		DPIntWarn("You're running Day Planner using an old version of Gtk2. This version contains certain limitations which will be worked around. This will cause the interface to look sub-optimal, you are encouraged to upgrade to a later version of Gtk2/Gtk2-perl");
+		return $button->set_label($i18n->get($label));
+	} else {
+		return $button->set_image($image);
+	}
+}	
+
 # Purpose: Initialize gtk2
 # Usage: Gtk2Init();
 sub Gtk2Init {
@@ -3370,7 +3384,7 @@ sub CreateAdvancedWidget {
 		# The calendar button
 	my $CalButton = Gtk2::Button->new();
 	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
-	$CalButton->set_image($CalImage);
+	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
 	$CalButton->show();
 	$CalButton->set_sensitive(0);
 	$CalButton->signal_connect('clicked' => sub { ExceptionDateSel($ExceptEntry,$CalButton)});
