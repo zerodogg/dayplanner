@@ -300,11 +300,11 @@ sub GtkNotifier {
 	while (1) {
 		my $MainText;
 		if($Date eq 'today') {
-			$MainText = sprintf($i18n->get("Today at %s:\n%s"),$Time,$Message);
+			$MainText = $i18n->get_advanced("Today at %(time):\n%(event_description)", { 'time' => $Time, 'event_description' => $Message});
 		} elsif ($Date eq 'tomorrow') {
-			$MainText = sprintf($i18n->get("Tomorrow at %s:\n%s"),$Time,$Message);
+			$MainText = $i18n->get_advanced("Tomorrow at %(time):\n%(event_description)", { 'time' => $Time, 'event_description' => $Message});
 		} else {
-			$MainText = sprintf($i18n->get("At %s on %s:\n%s"),$Time,$Date,$Message);
+			$MainText = $i18n->get_advanced("At %(time) on %(date):\n%(event_description)", { 'time' => $Time, date => $Date, event_description => $Message});
 		}
 		# If it is a warning then we use the "info" type.
 		# If it isn't a warning, then we use the "warning" type to attempt to
@@ -400,11 +400,11 @@ sub NonGUINotifier {
 	# adds the current DISPLAY or the display supplied to the display pool
 	my $MainText;
 	if($Date eq 'today') {
-		$MainText = sprintf($i18n->get("Today at %s:\n%s"),$Time,$Message);
+		$MainText = $i18n->get_advanced("Today at %(time):\n%(event_description)", { 'time' => $Time, 'event_description' => $Message});
 	} elsif ($Date eq 'tomorrow') {
-		$MainText = sprintf($i18n->get("Tomorrow at %s:\n%s"),$Time,$Message);
+		$MainText = $i18n->get_advanced("Tomorrow at %(time):\n%(event_description)", { 'time' => $Time, 'event_description' => $Message});
 	} else {
-		$MainText = sprintf($i18n->get("At %s on %s:\n%s"),$Time,$Date,$Message);
+		$MainText = $i18n->get_advanced("At %(time) on %(date):\n%(event_description)", { 'time' => $Time, date => $Date, event_description => $Message});
 	}
 	unless(WriteTo(cuserid(), $MainText)) {
 		print "---\n$MainText\n---\n";
