@@ -3235,12 +3235,19 @@ sub RemoveFromField {
 	$Entry->set_text($NewField);
 }
 
-# Purpose: Popup a calendar to select exception dates from
-# Usage: \&ExceptionDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON);
-sub ExceptionDateSel {
+# Purpose: Popup a calendar to select one or more dates from
+# Usage: \&PopupDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON, MODE);
+# 	MODE is one of:
+# 	SINGLE - Only allows a single date to be selected
+# 	MULTI - Allows an infinite number of dates to be selected
+sub PopupDateSel {
 	my $TextEntry = shift;
 	my $CalButton = shift;
 	$CalButton->set_sensitive(0);
+	my $Mode = shift;
+	if(not $Mode) {
+		$Mode = 'MULTI';
+	}
 
 	# Create the window and stuff inside the window
 	my $Window = Gtk2::Window->new();
@@ -3294,6 +3301,11 @@ sub ExceptionDateSel {
 				delete($SelHash{$Selected});
 				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
 			} else {
+				if($Mode eq 'SINGLE') {
+					$Calendar->clear_marks();
+					%SelHash = ();
+					$TextEntry->set_text('');
+				}
 				$Calendar->mark_day($Selected);
 				$SelHash{$Selected} = 1;
 				AddToField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
@@ -3336,7 +3348,7 @@ sub CreateAdvancedWidget {
 	my $RecurCheckButton = Gtk2::CheckButton->new($i18n->get('Repeat event every:') . ' ');
 	$RecurCheckButton->show();
 	$RecurHBox->pack_start($RecurCheckButton,0,0,0);
-	my $ExceptHBox;	# For use later, needs to be declared here to be used in the RecurCheckButton callback
+	my ($StopAtHBox, $ExceptHBox); # For use later, needs to be declared here to be used in the RecurCheckButton callback
 		# The combo for it
 	my $Recur_Combo = Gtk2::ComboBox->new_text();
 	# TRANSLATORS: Context: Repeat event every: THIS STRING
@@ -3355,9 +3367,11 @@ sub CreateAdvancedWidget {
 			if($RecurCheckButton->get_active) {
 				$Recur_Combo->set_sensitive(1);
 				$ExceptHBox->set_sensitive(1);
+				$StopAtHBox->set_sensitive(1);
 			} else {
 				$Recur_Combo->set_sensitive(0);
 				$ExceptHBox->set_sensitive(0);
+				$StopAtHBox->set_sensitive(0);
 			}
 		});
 	$RecurHBox->pack_start($Recur_Combo,0,0,0);
@@ -3387,7 +3401,7 @@ sub CreateAdvancedWidget {
 	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
 	$CalButton->show();
 	$CalButton->set_sensitive(0);
-	$CalButton->signal_connect('clicked' => sub { ExceptionDateSel($ExceptEntry,$CalButton)});
+	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI')});
 	$ExceptHBox->pack_end($CalButton,0,0,0);
 		# CheckButton callback
 	$ExceptCheckButton->signal_connect('toggled' => sub {
@@ -3399,7 +3413,44 @@ sub CreateAdvancedWidget {
 				$CalButton->set_sensitive(0);
 			}
 		});
-
+	# Create the recurrance ends checkbutton
+		# HBox for it
+	$StopAtHBox = Gtk2::HBox->new();
+	$StopAtHBox->show();
+	$StopAtHBox->set_sensitive(0);
+	$ExpanderVBox->pack_start($StopAtHBox,0,0,0);
+		# This is exceedingly ugly. But...works
+	my $SecondIndentLabel = Gtk2::Label->new(" ");
+	$SecondIndentLabel->show();
+	$StopAtHBox->pack_start($SecondIndentLabel,0,0,0);
+		# Checkbutton for it
+		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
+	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Stop repeating on:') . ' ');
+	$StopAtCheckButton->show();
+	$StopAtHBox->pack_start($StopAtCheckButton,0,0,0);
+		# The entry field
+	my $StopAt_Entry = Gtk2::Entry->new();
+	$StopAt_Entry->show();
+	$StopAt_Entry->set_sensitive(0);
+	$StopAtHBox->pack_start($StopAt_Entry,0,0,0);
+		# The calendar button
+	my $StopAt_CalButton = Gtk2::Button->new();
+	my $SecondCalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
+	Gtk2_Button_SetImage($StopAt_CalButton,$SecondCalImage,'Calendar');
+	$StopAt_CalButton->show();
+	$StopAt_CalButton->set_sensitive(0);
+	$StopAt_CalButton->signal_connect('clicked' => sub { PopupDateSel($StopAt_Entry,$StopAt_CalButton,'SINGLE')});
+	$StopAtHBox->pack_end($StopAt_CalButton,0,0,0);
+		# CheckButton callback
+	$StopAtCheckButton->signal_connect('toggled' => sub {
+			if($StopAtCheckButton->get_active) {
+				$StopAt_Entry->set_sensitive(1);
+				$StopAt_CalButton->set_sensitive(1);
+			} else {
+				$StopAt_Entry->set_sensitive(0);
+				$StopAt_CalButton->set_sensitive(0);
+			}
+		});
 		
 		# Get RRULE information if provided and set it
 	if($RRULE) {
@@ -3430,6 +3481,7 @@ sub CreateAdvancedWidget {
 	$FulltextEntry->set_editable(1);
 	$FulltextEntry->set_wrap_mode('word-char');
 	$FulltextEntry->show();
+	$FulltextEntry->set_accepts_tab(0);
 	my $FulltextWindow = Gtk2::ScrolledWindow->new;
 	$FulltextWindow->set_policy('automatic', 'automatic');
 	$FulltextWindow->add($FulltextEntry);
