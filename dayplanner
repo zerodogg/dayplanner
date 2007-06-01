@@ -1410,7 +1410,7 @@ sub DP_AddAutostart {
 # Purpose: Wrapper around RemoveAutostart that sets the config vars
 # Usage: DP_RemoveAutostart();
 sub DP_RemoveAutostart {
-	if(DPQuestion($i18n->get('Disabling automatic startup of the reminder will prevent notifications unless Day Planner has been manually started. Disable the automatic startup?'))) {
+	if(DPQuestion($i18n->get('Disabling automatic startup of the reminder will prevent notifications unless Day Planner has been manually started. Disable automatic startup?'))) {
 		$InternalConfig{AutostartOn} = 1;
 		return(RemoveAutostart());
 	}
