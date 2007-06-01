@@ -917,6 +917,7 @@ sub AlreadyRunningDP {
 						 $i18n->get("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nYou may force the other instance to quit if you wish."));
 
 		$ErrorDialog->add_buttons(
+			# TRANSLATORS: As in force another running Day Planner instance to quit
 			$i18n->get('_Force') => 'reject',
 			'gtk-ok' => 'accept',
 		);
@@ -976,6 +977,8 @@ sub GetSummaryString {
 	}
 	if(not $UID_Obj->{SUMMARY}) {
 		DPIntWarn("No SUMMARY found for the UID $UID");
+		# TRANSLATORS: This string is used when there is some issue getting the description
+		# 	of an event. It is rarely used but kept just in case.
 		return($i18n->get('Unknown'));
 	}
 	return($UID_Obj->{SUMMARY});
@@ -2872,6 +2875,8 @@ sub PopulateUpcomingEvents {
 					delete($InformationHash{$_});
 				}
 				# Append the last entries
+				# TRANSLATORS: This is used to bind together a list. It is a list of days
+				# 	such as: Friday, Saturday *and* Sunday.
 				$InformationHash{$key}{text} .= ' ' . $i18n->get('and') . " $InformationHash{$LastDay}{dayname}";
 			} else {
 				# Build the string
@@ -4264,6 +4269,7 @@ sub BirthdayEventWindow {
 	# ==================================================================
 	
 	# Create the summary label
+	# TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Name:'));
 	$SummaryLabel->show();
 	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
@@ -4718,6 +4724,7 @@ sub DrawEventlist {
 	# Create the widget and set up signal handlers
 	$EventlistWidget = Gtk2::SimpleList->new (
 		'UID' => 'hidden',
+		# TRANSLATORS: This is followed by the time of an event
 		$i18n->get('Time') => 'text',
 		$i18n->get('Event') => 'text',
 	);
