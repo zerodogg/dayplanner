@@ -313,6 +313,23 @@ sub get {
 	}
 }
 
+# Purpose: Better way to fetch advanced strings
+# Usage: $self->get_advanced("STRING",HASH);
+# 	The STRING is a normal string containing a series of % fields.
+# 	The HASH is a hash of % fields => values.
+# 	Ex:
+# 	$self->get_advanced('Adding an event at %(HH):%(MM)',{ 'HH' => $HOUR, 'MM' => $MINUTE, });
+sub get_advanced {
+	my $self = shift;
+	my $OrigString = shift;
+	my $Values = shift;
+	my $String = $self->get($OrigString);
+	foreach my $Key (keys(%{$Values})) {
+		$String =~ s/%\($Key\)/$Values->{$Key}/g;
+	}
+	return($String);
+}
+
 # Purpose: get month string
 # Usage: get_month(NUMBER);
 sub get_month {
