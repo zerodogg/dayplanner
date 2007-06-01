@@ -294,7 +294,7 @@ sub DPS_Download {
 		}
 		elsif(not md5_base64($MainData) eq $MD5) {
 			# FIXME: Rewrite this
-			DPS_Error($i18n->get('The data corrupted itself during download. You may want to attempt to synchronize again.'),'MD5 mismatch during download: got ' . md5_base64($MainData) . ' expected ' . $MD5);
+			DPS_Error($i18n->get('The data became corrupted during download. You may want to attempt to synchronize again.'),'MD5 mismatch during download: got ' . md5_base64($MainData) . ' expected ' . $MD5);
 		} else {
 			# Decode the base64 encoded data
 			$MainData = decode_base64($MainData);
