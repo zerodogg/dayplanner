@@ -2268,7 +2268,7 @@ sub ImportDataFromProgram {
 		my $WindowIcon = DetectImage('dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
 		if ($WindowIcon) {
 			$ImportWindow->set_default_icon_from_file($WindowIcon);
-	}	
+		}	
 	} else {
 		$ImportWindow->set_title($i18n->get("Import data"));
 		$ImportWindow->set_skip_taskbar_hint(1);
@@ -4039,7 +4039,7 @@ sub NormalEvent_OK {
 	
 	# TODO: Add tests for an event that is *identical*
 	unless ($Summary) {
-		DPError($i18n->get('There is no summary for this event. Please enter a summary.'));
+		DPError($i18n->get('There is no description for this event. Please enter a description.'));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
