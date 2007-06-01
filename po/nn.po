@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-06-01 18:59+0200\n"
-"PO-Revision-Date: 2007-06-01 18:53+0200\n"
+"POT-Creation-Date: 2007-06-01 19:12+0200\n"
+"PO-Revision-Date: 2007-06-01 19:14+0200\n"
 "Last-Translator: Gaute Hvoslef Kvalnes <gaute@verdsveven.com>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -500,9 +500,8 @@ msgid "Add an Event"
 msgstr "Legg til ei hending"
 
 #: dayplanner:3744
-#, perl-format
-msgid "Adding an event on the %s. %s %s"
-msgstr "Legg til ei hending den %s. %s %s"
+msgid "Adding an event on the %(day). %(monthname) %(year)"
+msgstr "Legg til ei hending den %(day). %(monthname) %(year)"
 
 #: dayplanner:3750
 msgid "Event type:"
@@ -532,18 +531,16 @@ msgid "Discard this event"
 msgstr "Ikkje legg til denne hendinga"
 
 #: dayplanner:3860
-#, perl-format
 msgid ""
 "Editing a repeating event\n"
-"starting on the %s. %s %s"
+"starting on the %(day). %(monthname) %(year)"
 msgstr ""
 "Redigerer ei gjentakande hending\n"
-"som startar den %s. %s %s"
+"som startar den %(day). %(monthname) %(year)"
 
 #: dayplanner:3860
-#, perl-format
-msgid "Editing an event on the %s. %s %s"
-msgstr "Redigerer ei hending den %s. %s %s"
+msgid "Editing an event on the %(day). %(monthname) %(year)"
+msgstr "Redigerer ei hending den %(day). %(monthname) %(year)"
 
 #: dayplanner:3862
 msgid "Editing an event"
@@ -554,19 +551,18 @@ msgid "Editing a birthday"
 msgstr "Redigerer ein bursdag"
 
 #: dayplanner:3875
-#, perl-format
-msgid "Editing a birthday on the %s. %s %s"
-msgstr "Redigerer ein bursdag på %s. %s %s"
+msgid "Editing a birthday on the %(day). %(monthname) %(year)"
+msgstr "Redigerer ein bursdag på %(day). %(monthname) %(year)"
 
 #: dayplanner:3887
-#, perl-format
-msgid "Editing a repeating all day event starting on the %s. %s %s"
-msgstr "Redigerer ei gjentakande heildagshending som startar den %s. %s %s"
+msgid ""
+"Editing a repeating all day event starting on the %(day). %(monthname) %"
+"(year)"
+msgstr "Redigerer ei gjentakande heildagshending som startar den %(day). %(monthname) %(year)"
 
 #: dayplanner:3887
-#, perl-format
-msgid "Editing an all day event on the %s. %s %s"
-msgstr "Redigerer ei heildagshending den %s. %s %s"
+msgid "Editing an all day event on the %(day). %(monthname) %(year)"
+msgstr "Redigerer ei heildagshending den %(day). %(monthname) %(year)"
 
 #: dayplanner:3889
 msgid "Editing an all day event"
@@ -785,51 +781,51 @@ msgstr "Påminn meg seinare"
 msgid "Postpone this notification for 10 minutes"
 msgstr "Utsett denne varslinga ti minuttar"
 
-#: GeneralHelpers.pm:419
+#: GeneralHelpers.pm:428
 msgid "January"
 msgstr "januar"
 
-#: GeneralHelpers.pm:420
+#: GeneralHelpers.pm:429
 msgid "February"
 msgstr "februar"
 
-#: GeneralHelpers.pm:421
+#: GeneralHelpers.pm:430
 msgid "March"
 msgstr "mars"
 
-#: GeneralHelpers.pm:422
+#: GeneralHelpers.pm:431
 msgid "April"
 msgstr "april"
 
-#: GeneralHelpers.pm:423
+#: GeneralHelpers.pm:432
 msgid "May"
 msgstr "mai"
 
-#: GeneralHelpers.pm:424
+#: GeneralHelpers.pm:433
 msgid "June"
 msgstr "juni"
 
-#: GeneralHelpers.pm:425
+#: GeneralHelpers.pm:434
 msgid "July"
 msgstr "juli"
 
-#: GeneralHelpers.pm:426
+#: GeneralHelpers.pm:435
 msgid "August"
 msgstr "august"
 
-#: GeneralHelpers.pm:427
+#: GeneralHelpers.pm:436
 msgid "September"
 msgstr "september"
 
-#: GeneralHelpers.pm:428
+#: GeneralHelpers.pm:437
 msgid "October"
 msgstr "oktober"
 
-#: GeneralHelpers.pm:429
+#: GeneralHelpers.pm:438
 msgid "November"
 msgstr "november"
 
-#: GeneralHelpers.pm:430
+#: GeneralHelpers.pm:439
 msgid "December"
 msgstr "desember"
 
