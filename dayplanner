@@ -3692,7 +3692,7 @@ sub CreateEventContainerWin {
 	$ADPrimVBox->show();
 	
 	# Add the label with the name
-	my $DateLabel = Gtk2::Label->new(sprintf($EventLabel,$EventDay, $i18n->get_month($EventMonth),$EventYear));
+	my $DateLabel = Gtk2::Label->new($i18n->raw_advanced($EventLabel, { day => $EventDay, monthname => $i18n->get_month($EventMonth), year => $EventYear}));
 	$DateLabel->show();
 	$ADPrimVBox->pack_start($DateLabel,1,0,0);
 	
@@ -3741,7 +3741,7 @@ sub AddEvent {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), $i18n->get('Adding an event on the %s. %s %s'), 'gtk-add');
+	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), $i18n->get('Adding an event on the %(day). %(monthname) %(year)'), 'gtk-add');
 	# HBox
 	my $SelectorHBox = Gtk2::HBox->new();
 	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
@@ -3857,7 +3857,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# Get the text string to use (it differs if we're editing on another date than
 		# the selected
-		my $EditString = $Differs ? $i18n->get("Editing a repeating event\nstarting on the %s. %s %s") : $i18n->get('Editing an event on the %s. %s %s');
+		my $EditString = $Differs ? $i18n->get("Editing a repeating event\nstarting on the %(day). %(monthname) %(year)") : $i18n->get('Editing an event on the %(day). %(monthname) %(year)');
 
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an event'), $EditString, 'gtk-ok',$EventUID);
 		# Create the widgets for the normal event selection
@@ -3872,7 +3872,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), $i18n->get('Editing a birthday on the %s. %s %s'), 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), $i18n->get('Editing a birthday on the %(day). %(monthname) %(year)'), 'gtk-ok',$EventUID);
 		
 		my ($BirthdayEvent) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, $EventUID, 1)});
@@ -3884,7 +3884,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# Get the text string to use (it differs if we're editing on another date than
 		# the selected
-		my $EditString = $Differs ? $i18n->get('Editing a repeating all day event starting on the %s. %s %s') : $i18n->get('Editing an all day event on the %s. %s %s');
+		my $EditString = $Differs ? $i18n->get('Editing a repeating all day event starting on the %(day). %(monthname) %(year)') : $i18n->get('Editing an all day event on the %(day). %(monthname) %(year)');
 
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an all day event'), $EditString, 'gtk-ok',$EventUID);
 		my ($AllDayEvent) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
