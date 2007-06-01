@@ -261,7 +261,7 @@ sub DPS_Upload {
 			DPS_Error($i18n->get('Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired.'), 'Account expired');
 		} else {
 			# Sending the data failed
-			DPS_Error(sprintf($i18n->get('The server did not accept the uploaded data and replied with an unknwown value: %s'), $Reply));
+			DPS_Error($i18n->get_advanced('The server did not accept the uploaded data and replied with an unknown value: %(value)', { value => $Reply }));
 		}
 		return(undef);
 	}
@@ -413,7 +413,7 @@ sub DPS_Perform {
 		return unless($Gtk2Init);
 		$DPServices{ProgressWin}->{Window}->destroy();
 		if(defined($DPServices{Error})) {
-			DPError(sprintf($i18n->get("An error ocurred with the Day Planner services:\n\n%s"), $DPServices{Error}));
+			DPError($i18n->get("An error occurred with the Day Planner services:\n\n%(error)",{ error => $DPServices{Error}}));
 			delete($DPServices{Error});
 		}
 		delete($DPServices{ProgressWin});
@@ -548,7 +548,7 @@ sub DPS_Connect {
 	# Authentication
 	# First verify the API level
 	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if DPS_ErrorIfNeeded('OK', $APIREPLY, sub { DPS_Disconnect();  DPS_Error(sprintf($i18n->get("The Day Planner services server you are connecting to does not support this version of Day Planner (%s)."), $Version), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
+	return(undef) if DPS_ErrorIfNeeded('OK', $APIREPLY, sub { DPS_Disconnect();  DPS_Error($i18n->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version =>  $Version}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
 	# Send AUTH
 	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
 	# If AUTH did not return OK then it failed and we just return undef.
@@ -731,7 +731,7 @@ sub LoadConfig {
 sub CreateSaveDir {
 	unless (-e $SaveToDir) {
 		mkpath($SaveToDir) or do {
-				DPError($i18n->get(sprintf("Unable to create the directory %s: %s\nManually create this directory before closing this dialog.", $SaveToDir, $!)));
+				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
 				unless(-d $SaveToDir) {
 					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
 				}
@@ -969,7 +969,7 @@ sub GetSummaryString {
 	my $UID_Obj = $iCalendar->get_info($UID);
 	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
-			return(sprintf($i18n->get("%s's birthday"),$UID_Obj->{'X-DP-BIRTHDAYNAME'}));
+			return($i18n->get_advanced("%(name)'s birthday",{ name => $UID_Obj->{'X-DP-BIRTHDAYNAME'}}));
 		} else {
 			DPIntWarn("UID $UID is set to be a birthday but is missing X-DP-BIRTHDAYNAME, using SUMMARY string");
 		}
@@ -1045,7 +1045,7 @@ sub UpgradeVersion {
 						$iCalData{'X-DP-BIRTHDAY'} = 'TRUE';
 						$iCalData{'X-DP-BIRTHDAYNAME'} = $Name;
 						$iCalData{RRULE} = 'FREQ=YEARLY';
-						$iCalData{SUMMARY} = sprintf($i18n->get("%s's birthday"), $Name);
+						$iCalData{SUMMARY} = $i18n->get_advanced("%(name)'s birthday",{ name => $Name});
 						$iCalendar->add(%iCalData);
 					}
 				}
@@ -1573,7 +1573,7 @@ sub HTML_Header {
 	if($NonDateMode) {
 		$Header .= "<title>" . HTML_Encode($Date) . "</title>";
 	} else {
-		$Header .= '<title>' . HTML_Encode(sprintf($i18n->get('Day Planner for %s'),$Date)) . '</title>';
+		$Header .= '<title>' . HTML_Encode($i18n->get('Day Planner for %(date)', { date => $Date})) . '</title>';
 	}
 	$Header .= "</head>\n";
 	$Header .= '<body>';
@@ -1630,7 +1630,7 @@ sub HTML_Menu {
 #	if(defined($NonDateMode) and not $NonDateMode eq "M") {
 #		$Menu .= HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode($i18n->get("View the main page")) . "</a><br/>\n";
 #	} elsif(not defined($NonDateMode) or not $NonDateMode eq "M") {
-		$Menu .= HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode($i18n->get("Change to another year")) . "</a> (" . HTML_Encode(sprintf($i18n->get("current: %s"), $Year)) . ") - </a><br />\n";
+		$Menu .= HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode($i18n->get("Change to another year")) . "</a> (" . HTML_Encode($i18n->get_advanced("current: %(year)", { year => $Year })) . ") - </a><br />\n";
 		$Menu .= HTML_Encode($i18n->get("Months")) .
 			": <a href='$Links{1}'>" . HTML_Encode($i18n->get_month(1)) .
 			"</a> - <a href='$Links{2}'>" . HTML_Encode($i18n->get_month(2)).
@@ -1664,7 +1664,7 @@ sub HTML_DayToHtml {
 	my (@AllDay, @OtherEvents);
 	open(my $FILE, '>', "$Directory/dp_$Year$Month$Day.html") or do {
 		DPIntWarn("Unable to open $Directory/dp_$Year$Month$Day.html for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$Directory/dp_$Year$Month$Day.html", $!));
+		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/dp_$Year$Month$Day.html", error => $!}));
 		return(undef);
 	};
 	# Header
@@ -1731,7 +1731,7 @@ sub HTML_MonthToHtml {
 	);
 	open(my $FILE, '>', "$Directory/$RawMonthNames{$Month}-$Year.html") or do {
 		DPIntWarn("Unable to open $Directory/$RawMonthNames{$Month}-$Year.html for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$RawMonthNames{$Month}-$Year.html", $!));
+		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$RawMonthNames{$Month}-$Year.html", error => $!}));
 		return(undef);
 	};
 	print $FILE HTML_Header($Year, $i18n->get_month($Month) . " $Year");
@@ -1800,7 +1800,7 @@ sub HTML_YearHtml {
 	my ($Year, $Directory) = @_;
 	open(my $FILE, '>', "$Directory/$Year.html") or do {
 		DPIntWarn("Unable to open $Directory/$Year.html for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$Directory/$Year.html", $!));
+		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/$Year.html", error => $!}));
 		return(undef);
 	};
 	print $FILE HTML_Header($Year, $Year, 'Y');
@@ -1814,7 +1814,7 @@ sub HTML_YearList {
 	my ($Directory) = @_;
 	open(my $FILE, '>', "$Directory/index.html") or do {
 		DPIntWarn("Unable to open $Directory/index.html for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$Directory/index.html", $!));
+		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/index.html", error => $!}));
 		return(undef);
 	};
 	print $FILE HTML_Header("", "Day Planner", "M");
@@ -1832,7 +1832,7 @@ sub HTML_PHPIndex {
 	my ($Directory) = @_;
 	open(my $FILE, '>', "$Directory/index.php") or do {
 		DPIntWarn("Unable to open $Directory/index.php for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$Directory/index.php", $!));
+		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/index.php", error => $!}));
 		return(undef);
 	};
 	print $FILE "<?php\n// This is a simple script written by Day Planner to add autodetection of\n// the current day to exported Day Planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of Day Planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as Day Planner\n";
@@ -1867,7 +1867,7 @@ sub HTML_Export {
 		eval("mkpath('$Dir')");
 		if($@) {
 			DPIntWarn("Unable to mkpath($Dir): $@");
-			DPError(sprintf($i18n->get("Unable to create the directory %s: %s", $Dir, $@)));
+			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $Dir, error => $@}));
 			return(undef);
 		}
 	}
@@ -1938,7 +1938,7 @@ sub PHP_Export {
 		eval("mkpath('$Dir')");
 		if($@) {
 			DPIntWarn("Unable to mkpath($Dir): $@");
-			DPError(sprintf($i18n->get("Unable to create the directory %s: %s", $Dir, $@)));
+			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $Dir, error => $@}));
 			return(undef);
 		}
 	}
@@ -2032,7 +2032,7 @@ sub PlanConvert_PurgeBuffer {
 			$TargetEvent{'X-DP-BIRTHDAY'} = 'TRUE';
 			$TargetEvent{'X-DP-BIRTHDAYNAME'} = $PlanConvertHash->{Summary};
 			$TargetEvent{RRULE} = 'FREQ=YEARLY';
-			$TargetEvent{SUMMARY} = sprintf($i18n->get("%s's birthday"), $PlanConvertHash->{Summary});
+			$TargetEvent{SUMMARY} = $i18n->get_advanced("%(name)'s birthday",  { name => $PlanConvertHash->{Summary}});
 			delete($PlanConvertHash->{Fulltext});
 			delete($PlanConvertHash->{Summary});
 			$iCalendar->add(%TargetEvent);
@@ -2581,7 +2581,7 @@ sub PromptOverwrite {
 			if(-d $File) {
 				while(glob("$File/*")) {
 					unless($_ =~ /^\./) {
-						if(DPQuestion(sprintf($i18n->get("There are already files in the directory \"%s\". If you continue any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?"), $File))) {
+						if(DPQuestion($i18n->get_advanced("There are already files in the directory \"%(dir)\". If you continue any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?", { dir =>  $File}))) {
 							return(1);
 						} else {
 							return(undef);
@@ -2590,7 +2590,7 @@ sub PromptOverwrite {
 				}
 				return(1);
 			} else {
-				DPInfo(sprintf($i18n->get("\"%s\" already exists and is not a directory."), $File));
+				DPInfo($i18n->get_advanced("\"%(file)\" already exists and is not a directory", { file => $File }));
 				return(undef);
 			}
 		} else {
@@ -2599,14 +2599,14 @@ sub PromptOverwrite {
 	} else {
 		my $FileDirname = dirname($File);
 		unless(-w $FileDirname) {
-			DPInfo(sprintf($i18n->get("\"%s\" is read only. Write permissions are required."), $FileDirname));
+			DPInfo($i18n->get_advanced("\"%(dir)\" is read only. Write permissions are required.", { dir => $FileDirname}));
 			return(undef);
 		}
 		if(-e $File) {
 			if(-d $File) {
-				DPInfo(sprintf($i18n->get("\"%s\" is a directory.")));
+				DPInfo($i18n->get_advanced("\"%(dir)\" is a directory.", { dir => $File }));
 				return(undef);
-			} elsif(DPQuestion(sprintf($i18n->get("\"%s\" already exists. Overwrite?"), $File))) {
+			} elsif(DPQuestion($i18n->get_advanced("\"%(file)\" already exists. Overwrite?", { file => $File}))) {
 				return(1);
 			} else {
 				return(undef);
@@ -4200,7 +4200,7 @@ sub AllDayEvent_OK {
 			$EntryHash{'X-DP-BIRTHDAY'} = 'TRUE';
 			$EntryHash{'X-DP-BIRTHDAYNAME'} = $Summary;
 			$EntryHash{RRULE} = 'FREQ=YEARLY';
-			$EntryHash{SUMMARY} = sprintf($i18n->get("%s's birthday"), $Summary);
+			$EntryHash{SUMMARY} = $i18n->get_advanced("%(name)'s birthday", { name => $Summary });
 		} else {
 			$EntryHash{SUMMARY} = $Summary;
 			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
@@ -5067,16 +5067,16 @@ sub DetectConfDir {
 			# Verify that HOME is set properly
 			if(not -d $ENV{HOME}) {
 				DP_InitI18n();
-				printf($i18n->get("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME");
+				print($i18n->get_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
 				Gtk2Init();
-				DPError(sprintf($i18n->get("The home directory of the user %s doesn't exist at %s! Please verify that the environment variable %s is properly set. Unable to continue\n"),[getpwuid($<)]->[0], $ENV{HOME}, "HOME"));
+				DPError($i18n->get_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
 				die("\n");
 			}
 			$XDG_CONFIG_HOME = "$ENV{HOME}/.config";
 		} else {
 			Gtk2Init();
-			DPError(sprintf($i18n->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
-			die(sprintf($i18n->get("The environment variable %s is not set! Unable to continue\n"), "HOME"));
+			DPError($i18n->get_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
+			die($i18n->get_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
 		}
 	}
 	return("$XDG_CONFIG_HOME/dayplanner");
