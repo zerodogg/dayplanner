@@ -14,11 +14,12 @@ fi
 cd $POTGEN
 cp ../dayplanner .
 cp ../dayplanner-notifier .
+cp ../modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm .
 # This works around an damned annoying bug in xgettext when using --keyword=$i18n->get.
 # Changing it to just gettext allows us to use the default, which isn't broken.
-perl -pi -e 's#gettext\(\@\_\)#BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG#g;s#\$i18n->get#gettext(#g' ./dayplanner ./dayplanner-notifier
+perl -pi -e 's#gettext\(\@\_\)#BUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUGBUG#g;s#\$(i18n|self)->get(_advanced)?#gettext(#g' ./dayplanner ./dayplanner-notifier ./GeneralHelpers.pm
 echo -n "."
-xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ../po/dayplanner.pot -d dayplanner --add-comments="TRANSLATORS" --language perl ./dayplanner ./dayplanner-notifier
+xgettext --copyright-holder 'Eskild Hustvedt' --msgid-bugs-address 'https://gna.org/bugs/?group=dayplanner' -o ../po/dayplanner.pot -d dayplanner --add-comments="TRANSLATORS" --language perl ./dayplanner ./dayplanner-notifier ./GeneralHelpers.pm
 cd ..
 rm -rf $POTGEN
 echo -n "."
