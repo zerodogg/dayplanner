@@ -324,6 +324,15 @@ sub get_advanced {
 	my $OrigString = shift;
 	my $Values = shift;
 	my $String = $self->get($OrigString);
+	return($self->raw_advanced($String,$Values));
+}
+
+# Purpose: Just do replacements on an advanced string. Don't get any translation.
+# Usage: Same as get_advanced
+sub raw_advanced {
+	my $self = shift;
+	my $String = shift;
+	my $Values = shift;
 	foreach my $Key (keys(%{$Values})) {
 		$String =~ s/%\($Key\)/$Values->{$Key}/g;
 	}
