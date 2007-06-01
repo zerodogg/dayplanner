@@ -258,7 +258,7 @@ sub DPS_Upload {
 		if($Reply =~ s/^ERR\s+(.*)$/$1/) {
 			DPS_Error($i18n->get('An error ocurred while uploading the data'), 'An error ocurred during upload of the data: ' . $Reply);
 		} elsif($Reply =~ /^EXPIRED/) {
-			DPS_Error($i18n->get('Your account has expired. If you are using a payed service this may be because you have not payed for the current period. If not, you should contact your service provider to get information on why your account has expired.'), 'Account expired');
+			DPS_Error($i18n->get('Your account has expired. If you are using a paid service this may be because you have not paid for the current period. If not, you should contact your service provider to get information on why your account has expired.'), 'Account expired');
 		} else {
 			# Sending the data failed
 			DPS_Error($i18n->get_advanced('The server did not accept the uploaded data and replied with an unknown value: %(value)', { value => $Reply }));
