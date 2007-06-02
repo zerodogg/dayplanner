@@ -4117,6 +4117,10 @@ sub NormalEvent_OK {
 		DPError($i18n->get('There is no description for this event. Please enter a description.'));
 		$Error = 1;
 	}
+	if(not $EventYear and not $Error) {
+		DPError($i18n->get('The date you have entered is invalid.'));
+		$Error = 1;
+	}
 	# We don't do this if an error occurred
 	unless ($Error) {
 		my %EntryHash;
@@ -4271,8 +4275,12 @@ sub AllDayEvent_OK {
 	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
 	
 	# TODO: Add tests for an event that is *identical* (wouldn't this be a job for DP::iCalendar ?)
-	unless ($Summary) {
-		DPError($i18n->get('There is no summary for this event. Please enter a summary.'));
+	if (not $Summary) {
+		DPError($i18n->get('There is no description of this event. Please enter a description.'));
+		$Error = 1;
+	}
+	if(not $EventYear and not $Error) {
+		DPError($i18n->get('The date you have entered is invalid.'));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
