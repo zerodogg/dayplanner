@@ -4036,9 +4036,9 @@ sub NormalEventWindow {
 	$DateLabel->show();
 	$ContentTable->attach_defaults($DateLabel, 0,1,1,2);
 	# Date  entry box
-	my ($DateHBox, $DateEntry) = DateSelection($EventUID);
+	my ($DateTable, $DateEntry) = DateSelection($EventUID);
 	# Attach them to our main widget
-	$ContentTable->attach_defaults($DateHBox, 1,2,1,2);
+	$ContentTable->attach_defaults($DateTable, 1,2,1,2);
 	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
@@ -4197,9 +4197,9 @@ sub AllDayEventWindow {
 	$DateLabel->show();
 	$ContentTable->attach_defaults($DateLabel, 0,1,0,1);
 	# Date  entry box
-	my ($DateHBox, $DateEntry) = DateSelection($EventUID);
+	my ($DateTable, $DateEntry) = DateSelection($EventUID);
 	# Attach them to our main widget
-	$ContentTable->attach_defaults($DateHBox, 1,2,0,1);
+	$ContentTable->attach_defaults($DateTable, 1,2,0,1);
 	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
@@ -4338,8 +4338,16 @@ sub BirthdayEventWindow {
 	$MainVBox->pack_start($ContentTable,1,1,0);
 	
 	# ==================================================================
-	# ADD THE TIME/SUMMARY BOXES
+	# ADD THE DATE/SUMMARY BOXES
 	# ==================================================================
+	# Create the date label
+	my $DateLabel = Gtk2::Label->new($i18n->get('Born:'));
+	$DateLabel->show();
+	$ContentTable->attach_defaults($DateLabel, 0,1,0,1);
+	# Date  entry box
+	my ($DateTable, $DateEntry) = DateSelection($UID);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($DateTable, 1,2,0,1);
 	
 	# Create the summary label
 	# TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
