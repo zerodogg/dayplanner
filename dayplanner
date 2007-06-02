@@ -3381,60 +3381,25 @@ sub CreateAdvancedWidget {
 			}
 		});
 	$RecurHBox->pack_start($Recur_Combo,0,0,0);
-	# Create the recurrance exception checkbutton
-		# Table
+		# Recurrance Table
 	$Table = Gtk2::Table->new(2,4);
 	$Table->set_sensitive(0);
 	$Table->show();
-		# HBox for it
-	$ExpanderVBox->pack_start($Table,0,0,0);
-		# This is exceedingly ugly. But...works
-	my $IndentLabel = Gtk2::Label->new('  ');
-	$IndentLabel->show();
-	$Table->attach_defaults($IndentLabel,0,1,0,1);
-		# Checkbutton for it
-		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
-	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
-	$ExceptCheckButton->show();
-	$Table->attach_defaults($ExceptCheckButton,1,2,0,1);
-		# The entry field
-	my $ExceptEntry = Gtk2::Entry->new();
-	$ExceptEntry->show();
-	$ExceptEntry->set_sensitive(0);
-	$Table->attach_defaults($ExceptEntry,2,3,0,1);
-		# The calendar button
-	my $CalButton = Gtk2::Button->new();
-	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
-	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
-	$CalButton->show();
-	$CalButton->set_sensitive(0);
-	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI')});
-	$Table->attach_defaults($CalButton,3,4,0,1);
-		# CheckButton callback
-	$ExceptCheckButton->signal_connect('toggled' => sub {
-			if($ExceptCheckButton->get_active) {
-				$ExceptEntry->set_sensitive(1);
-				$CalButton->set_sensitive(1);
-			} else {
-				$ExceptEntry->set_sensitive(0);
-				$CalButton->set_sensitive(0);
-			}
-		});
 	# Create the recurrance ends checkbutton
 		# This is exceedingly ugly. But...works
 	my $SecondIndentLabel = Gtk2::Label->new('  ');
 	$SecondIndentLabel->show();
-	$Table->attach_defaults($SecondIndentLabel,0,1,1,2);
+	$Table->attach_defaults($SecondIndentLabel,0,1,0,1);
 		# Checkbutton for it
 		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
 	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
 	$StopAtCheckButton->show();
-	$Table->attach_defaults($StopAtCheckButton,1,2,1,2);
+	$Table->attach_defaults($StopAtCheckButton,1,2,0,1);
 		# The entry field
 	my $StopAt_Entry = Gtk2::Entry->new();
 	$StopAt_Entry->show();
 	$StopAt_Entry->set_sensitive(0);
-	$Table->attach_defaults($StopAt_Entry,2,3,1,2);
+	$Table->attach_defaults($StopAt_Entry,2,3,0,1);
 		# The calendar button
 	my $StopAt_CalButton = Gtk2::Button->new();
 	my $SecondCalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
@@ -3442,7 +3407,7 @@ sub CreateAdvancedWidget {
 	$StopAt_CalButton->show();
 	$StopAt_CalButton->set_sensitive(0);
 	$StopAt_CalButton->signal_connect('clicked' => sub { PopupDateSel($StopAt_Entry,$StopAt_CalButton,'SINGLE')});
-	$Table->attach_defaults($StopAt_CalButton,3,4,1,2);
+	$Table->attach_defaults($StopAt_CalButton,3,4,0,1);
 		# CheckButton callback
 	$StopAtCheckButton->signal_connect('toggled' => sub {
 			if($StopAtCheckButton->get_active) {
@@ -3451,6 +3416,41 @@ sub CreateAdvancedWidget {
 			} else {
 				$StopAt_Entry->set_sensitive(0);
 				$StopAt_CalButton->set_sensitive(0);
+			}
+		});
+	# Create the recurrance exception checkbutton
+		# HBox for it
+	$ExpanderVBox->pack_start($Table,0,0,0);
+		# This is exceedingly ugly. But...works
+	my $IndentLabel = Gtk2::Label->new('  ');
+	$IndentLabel->show();
+	$Table->attach_defaults($IndentLabel,0,1,1,2);
+		# Checkbutton for it
+		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
+	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
+	$ExceptCheckButton->show();
+	$Table->attach_defaults($ExceptCheckButton,1,2,1,2);
+		# The entry field
+	my $ExceptEntry = Gtk2::Entry->new();
+	$ExceptEntry->show();
+	$ExceptEntry->set_sensitive(0);
+	$Table->attach_defaults($ExceptEntry,2,3,1,2);
+		# The calendar button
+	my $CalButton = Gtk2::Button->new();
+	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
+	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
+	$CalButton->show();
+	$CalButton->set_sensitive(0);
+	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI')});
+	$Table->attach_defaults($CalButton,3,4,1,2);
+		# CheckButton callback
+	$ExceptCheckButton->signal_connect('toggled' => sub {
+			if($ExceptCheckButton->get_active) {
+				$ExceptEntry->set_sensitive(1);
+				$CalButton->set_sensitive(1);
+			} else {
+				$ExceptEntry->set_sensitive(0);
+				$CalButton->set_sensitive(0);
 			}
 		});
 		
