@@ -3262,7 +3262,6 @@ sub PopupDateSel {
 
 	# Create the window and stuff inside the window
 	my $Window = Gtk2::Window->new();
-	$Window->set_decorated(1);
 	$Window->set_deletable(0);
 	$Window->set_modal(1);
 	$Window->set_skip_taskbar_hint(1);
@@ -3271,6 +3270,7 @@ sub PopupDateSel {
 	$Window->set_position('mouse');
 	$Window->set_resizable(0);
 	$Window->set_border_width(5);
+	$Window->set_transient_for($MainWindow);
 	my $VBox = Gtk2::VBox->new();
 	$Window->add($VBox);
 	my $Calendar = Gtk2::Calendar->new();
@@ -3716,7 +3716,7 @@ sub DateSelection {
 # Purpose: Create the window that will contain the event editor
 # Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, OK_BUTTON_TYPE, UID);
 #
-# TITLE is the title of the window, LABEL is the label to display on top of the window.
+# TITLE is the title of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
 # UID is the UID of the event. This can be undef.
 sub CreateEventContainerWin {
