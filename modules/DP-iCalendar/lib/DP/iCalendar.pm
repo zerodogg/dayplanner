@@ -1018,7 +1018,7 @@ sub _RRULE_DAILY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(BYDAY|FREQ|WKST|UNTIL)/) {
+		if(not /^(BYDAY|FREQ|WKST|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1026,6 +1026,11 @@ sub _RRULE_DAILY {
 				return(undef);
 			}
 		}
+	}
+	# Verify INTERVAL
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			return(undef);
 	}
 	
 	# Fetch UNTIL first if it is set
@@ -1097,7 +1102,7 @@ sub _RRULE_WEEKLY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(UNTIL|BYDAY|FREQ|WKST)/) {
+		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1105,6 +1110,11 @@ sub _RRULE_WEEKLY {
 				return(undef);
 			}
 		}
+	}
+	# Verify INTERVAL
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			return(undef);
 	}
 	
 	# We will add and eliminate dates as we go. This is inefficient, but functional.
@@ -1212,7 +1222,7 @@ sub _RRULE_MONTHLY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(BYDAY|FREQ|WKST|UNTIL)/) {
+		if(not /^(BYDAY|FREQ|WKST|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1220,6 +1230,11 @@ sub _RRULE_MONTHLY {
 				return(undef);
 			}
 		}
+	}
+	# Verify INTERVAL
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			return(undef);
 	}
 	
 	# Fetch UNTIL first if it is set
