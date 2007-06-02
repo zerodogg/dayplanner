@@ -3206,6 +3206,9 @@ sub ParseDateString {
 # Usage: AddToField(ENTRY, YEAR, MONTH, DAY);
 sub AddToField {
 	my($Entry,$Year,$Month,$Day) = @_;
+
+	$Month = AppendZero($Month);
+	$Day = AppendZero($Day);
 	# First get the text
 	my $FieldText = $Entry->get_text();
 	# Then add to the text
@@ -3674,15 +3677,47 @@ sub TimeSelection {
 	return($HourSpinner, $MinuteSpinner, $TimeSpinnerHBox, $AMPM);
 }
 
+# Purpose: Create the widgets for selecting the date
+# Usage: my ($DateTable, $DateEntry) = DateSelection(UID?);
+sub DateSelection {
+	my $UID = shift;
+
+	my $Table = Gtk2::Table->new(2,1);
+	$Table->show();
+		# The entry field
+	my $Entry = Gtk2::Entry->new();
+	$Entry->show();
+	$Table->attach_defaults($Entry,0,1,0,1);
+		# The calendar button
+	my $CalButton = Gtk2::Button->new();
+	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
+	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
+	$CalButton->show();
+	$CalButton->signal_connect('clicked' => sub { PopupDateSel($Entry,$CalButton,'SINGLE')});
+	$Table->attach_defaults($CalButton,1,2,0,1);
+	
+	# If we have an UID then get it from that, if not then get it from the calendar widget
+	if(defined($UID) and not $UID eq 'NULL') {
+		my $UIDObj = $iCalendar->get_info($UID);
+		# Get date information from the UID
+		AddToField($Entry,iCal_ParseDateTime($UIDObj->{DTSTART}))
+	} else {
+		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+		AddToField($Entry,$EventYear,$EventMonth,$EventDay);
+	}
+	
+	return($Table,$Entry);
+}
+
 # Purpose: Create the window that will contain the event editor
-# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE, UID);
+# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, OK_BUTTON_TYPE, UID);
 #
 # TITLE is the title of the window, LABEL is the label to display on top of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
 # UID is the UID of the event. This can be undef.
 sub CreateEventContainerWin {
 	# Get the options passed to the sub
-	my ($WindowTitle, $EventLabel, $OkButtonType, $UID) = @_;
+	my ($WindowTitle, $OkButtonType, $UID) = @_;
 	
 	# Get the date
 	my ($EventYear, $EventMonth, $EventDay);
@@ -3725,11 +3760,6 @@ sub CreateEventContainerWin {
 	my $ADPrimVBox = Gtk2::VBox->new();
 	$AddEventBox->add($ADPrimVBox);
 	$ADPrimVBox->show();
-	
-	# Add the label with the name
-	my $DateLabel = Gtk2::Label->new($i18n->raw_advanced($EventLabel, { day => $EventDay, monthname => $i18n->get_month($EventMonth), year => $EventYear}));
-	$DateLabel->show();
-	$ADPrimVBox->pack_start($DateLabel,1,0,0);
 	
 	# ==================================================================
 	# Call the functions that constructs the main window contents
@@ -3776,7 +3806,7 @@ sub AddEvent {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), $i18n->get('Adding an event on the %(day). %(monthname) %(year)'), 'gtk-add');
+	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), 'gtk-add');
 	# HBox
 	my $SelectorHBox = Gtk2::HBox->new();
 	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
@@ -3890,11 +3920,8 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		# Get the text string to use (it differs if we're editing on another date than
-		# the selected
-		my $EditString = $Differs ? $i18n->get("Editing a repeating event\nstarting on the %(day). %(monthname) %(year)") : $i18n->get('Editing an event on the %(day). %(monthname) %(year)');
 
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an event'), $EditString, 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an event'), 'gtk-ok',$EventUID);
 		# Create the widgets for the normal event selection
 		my ($NormalEvent) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub {
@@ -3907,7 +3934,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), $i18n->get('Editing a birthday on the %(day). %(monthname) %(year)'), 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), 'gtk-ok',$EventUID);
 		
 		my ($BirthdayEvent) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, $EventUID, 1)});
@@ -3919,9 +3946,8 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# Get the text string to use (it differs if we're editing on another date than
 		# the selected
-		my $EditString = $Differs ? $i18n->get('Editing a repeating all day event starting on the %(day). %(monthname) %(year)') : $i18n->get('Editing an all day event on the %(day). %(monthname) %(year)');
 
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an all day event'), $EditString, 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an all day event'), 'gtk-ok',$EventUID);
 		my ($AllDayEvent) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$AllDayEvent->{MainVBox}->show();
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, $EventUID, 0)});
@@ -3987,12 +4013,12 @@ sub NormalEventWindow {
 	$ParentVBox->pack_start($MainVBox,0,0,0);
 	
 	# Create the table inside the frame
-	my $ContentTable = Gtk2::Table->new(2,2);
+	my $ContentTable = Gtk2::Table->new(2,3);
 	$ContentTable->show();
 	$MainVBox->pack_start($ContentTable,1,1,0);
 	
 	# ==================================================================
-	# ADD THE TIME/SUMMARY BOXES
+	# ADD THE DATE/TIME/SUMMARY BOXES
 	# ==================================================================
 	
 	# Create the time label
@@ -4005,10 +4031,19 @@ sub NormalEventWindow {
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
 	
+	# Create the date label
+	my $DateLabel = Gtk2::Label->new($i18n->get('Date:'));
+	$DateLabel->show();
+	$ContentTable->attach_defaults($DateLabel, 0,1,1,2);
+	# Date  entry box
+	my ($DateHBox, $DateEntry) = DateSelection($EventUID);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($DateHBox, 1,2,1,2);
+	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
 	$SummaryLabel->show();
-	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
+	$ContentTable->attach_defaults($SummaryLabel, 0,1,2,3);
 
 	# Create the summary entry box
 	my $SummaryEntry = Gtk2::Entry->new();
@@ -4017,7 +4052,7 @@ sub NormalEventWindow {
 	}
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
-	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	$ContentTable->attach_defaults($SummaryEntry, 1,2,2,3);
 	$Tooltips->set_tip($SummaryEntry, $i18n->get('Enter a description of the event here'));
 	
 	# ==================================================================
@@ -4155,8 +4190,16 @@ sub AllDayEventWindow {
 	$MainVBox->pack_start($ContentTable,1,1,0);
 	
 	# ==================================================================
-	# ADD THE SUMMARY BOX
+	# ADD THE DATE/SUMMARY BOXES
 	# ==================================================================
+	# Create the date label
+	my $DateLabel = Gtk2::Label->new($i18n->get('Date:'));
+	$DateLabel->show();
+	$ContentTable->attach_defaults($DateLabel, 0,1,0,1);
+	# Date  entry box
+	my ($DateHBox, $DateEntry) = DateSelection($EventUID);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($DateHBox, 1,2,0,1);
 	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
