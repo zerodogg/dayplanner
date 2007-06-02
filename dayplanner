@@ -3396,8 +3396,8 @@ sub CreateAdvancedWidget {
 	$SecondIndentLabel->show();
 	$Table->attach_defaults($SecondIndentLabel,0,1,0,1);
 		# Checkbutton for it
-		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
-	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
+		# TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
+		my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
 	$StopAtCheckButton->show();
 	$Table->attach_defaults($StopAtCheckButton,1,2,0,1);
 		# The entry field
@@ -3431,7 +3431,7 @@ sub CreateAdvancedWidget {
 	$IndentLabel->show();
 	$Table->attach_defaults($IndentLabel,0,1,1,2);
 		# Checkbutton for it
-		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
+		# TRANSLATORS: Don't recur the event on the dates specified next to this string
 	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
 	$ExceptCheckButton->show();
 	$Table->attach_defaults($ExceptCheckButton,1,2,1,2);
