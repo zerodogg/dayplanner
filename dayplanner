@@ -3557,7 +3557,7 @@ sub GetRRULEFromCombo {
 		$RRULE = 'FREQ=YEARLY;INTERVAL=1';
 	}
 	# Get UNTIL
-	my $Until = GetUntilFromEntry($Hash->{StopAt_Entry});
+	my $Until = GetDateFromEntry($Hash->{StopAt_Entry});
 	if($Until) {
 		$RRULE .= ";UNTIL=$Until";
 	}
@@ -3583,8 +3583,8 @@ sub GetExceptionsFromEntry {
 }
 
 # Purpose: Get the until entry from the until entry box
-# Usage: my $UntilEntry = GetUntilFromEntry(ENTRY WIDGET);
-sub GetUntilFromEntry {
+# Usage: my $UntilEntry = GetDateFromEntry(ENTRY WIDGET);
+sub GetDateFromEntry {
 	my $Entry = shift;
 	if (not $Entry->is_sensitive) {
 		return(undef);
@@ -3595,7 +3595,11 @@ sub GetUntilFromEntry {
 		my($Year,$Month,$Day) = ParseDateString($Date);
 		$Month = AppendZero($Month);
 		$Day = AppendZero($Day);
-		return("$Year$Month$Day");
+		if(wantarray()) {
+			return($Year,$Month,$Day);
+		} else {
+			return("$Year$Month$Day");
+		}
 	}
 	return(undef);
 }
