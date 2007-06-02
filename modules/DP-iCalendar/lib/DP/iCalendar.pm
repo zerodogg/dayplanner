@@ -1018,7 +1018,7 @@ sub _RRULE_DAILY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(BYDAY|FREQ|WKST)/) {
+		if(not /^(BYDAY|FREQ|WKST|UNTIL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1212,7 +1212,7 @@ sub _RRULE_MONTHLY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(BYDAY|FREQ|WKST)/) {
+		if(not /^(BYDAY|FREQ|WKST|UNTIL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1294,7 +1294,7 @@ sub _RRULE_YEARLY {
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(BYDAY|FREQ|WKST|INTERVAL)/) {
+		if(not /^(BYDAY|FREQ|WKST|INTERVAL|UNTIL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
