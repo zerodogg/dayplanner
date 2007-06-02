@@ -3356,7 +3356,7 @@ sub CreateAdvancedWidget {
 	my $RecurCheckButton = Gtk2::CheckButton->new($i18n->get('Repeat event every:') . ' ');
 	$RecurCheckButton->show();
 	$RecurHBox->pack_start($RecurCheckButton,0,0,0);
-	my ($StopAtHBox, $ExceptHBox); # For use later, needs to be declared here to be used in the RecurCheckButton callback
+	my $Table;		# For use later, needs to be declared here to be used in the RecurCheckButton callback
 		# The combo for it
 	my $Recur_Combo = Gtk2::ComboBox->new_text();
 	# TRANSLATORS: Context: Repeat event every: THIS STRING
@@ -3374,35 +3374,34 @@ sub CreateAdvancedWidget {
 	$RecurCheckButton->signal_connect('toggled' => sub {
 			if($RecurCheckButton->get_active) {
 				$Recur_Combo->set_sensitive(1);
-				$ExceptHBox->set_sensitive(1);
-				$StopAtHBox->set_sensitive(1);
+				$Table->set_sensitive(1);
 			} else {
 				$Recur_Combo->set_sensitive(0);
-				$ExceptHBox->set_sensitive(0);
-				$StopAtHBox->set_sensitive(0);
+				$Table->set_sensitive(0);
 			}
 		});
 	$RecurHBox->pack_start($Recur_Combo,0,0,0);
 	# Create the recurrance exception checkbutton
+		# Table
+	$Table = Gtk2::Table->new(2,4);
+	$Table->set_sensitive(0);
+	$Table->show();
 		# HBox for it
-	$ExceptHBox = Gtk2::HBox->new();
-	$ExceptHBox->show();
-	$ExceptHBox->set_sensitive(0);
-	$ExpanderVBox->pack_start($ExceptHBox,0,0,0);
+	$ExpanderVBox->pack_start($Table,0,0,0);
 		# This is exceedingly ugly. But...works
-	my $IndentLabel = Gtk2::Label->new(" ");
+	my $IndentLabel = Gtk2::Label->new('  ');
 	$IndentLabel->show();
-	$ExceptHBox->pack_start($IndentLabel,0,0,0);
+	$Table->attach_defaults($IndentLabel,0,1,0,1);
 		# Checkbutton for it
 		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
 	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
 	$ExceptCheckButton->show();
-	$ExceptHBox->pack_start($ExceptCheckButton,0,0,0);
+	$Table->attach_defaults($ExceptCheckButton,1,2,0,1);
 		# The entry field
 	my $ExceptEntry = Gtk2::Entry->new();
 	$ExceptEntry->show();
 	$ExceptEntry->set_sensitive(0);
-	$ExceptHBox->pack_start($ExceptEntry,0,0,0);
+	$Table->attach_defaults($ExceptEntry,2,3,0,1);
 		# The calendar button
 	my $CalButton = Gtk2::Button->new();
 	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
@@ -3410,7 +3409,7 @@ sub CreateAdvancedWidget {
 	$CalButton->show();
 	$CalButton->set_sensitive(0);
 	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI')});
-	$ExceptHBox->pack_end($CalButton,0,0,0);
+	$Table->attach_defaults($CalButton,3,4,0,1);
 		# CheckButton callback
 	$ExceptCheckButton->signal_connect('toggled' => sub {
 			if($ExceptCheckButton->get_active) {
@@ -3422,25 +3421,20 @@ sub CreateAdvancedWidget {
 			}
 		});
 	# Create the recurrance ends checkbutton
-		# HBox for it
-	$StopAtHBox = Gtk2::HBox->new();
-	$StopAtHBox->show();
-	$StopAtHBox->set_sensitive(0);
-	$ExpanderVBox->pack_start($StopAtHBox,0,0,0);
 		# This is exceedingly ugly. But...works
-	my $SecondIndentLabel = Gtk2::Label->new(" ");
+	my $SecondIndentLabel = Gtk2::Label->new('  ');
 	$SecondIndentLabel->show();
-	$StopAtHBox->pack_start($SecondIndentLabel,0,0,0);
+	$Table->attach_defaults($SecondIndentLabel,0,1,1,2);
 		# Checkbutton for it
 		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
-	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Stop repeating on:') . ' ');
+	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
 	$StopAtCheckButton->show();
-	$StopAtHBox->pack_start($StopAtCheckButton,0,0,0);
+	$Table->attach_defaults($StopAtCheckButton,1,2,1,2);
 		# The entry field
 	my $StopAt_Entry = Gtk2::Entry->new();
 	$StopAt_Entry->show();
 	$StopAt_Entry->set_sensitive(0);
-	$StopAtHBox->pack_start($StopAt_Entry,0,0,0);
+	$Table->attach_defaults($StopAt_Entry,2,3,1,2);
 		# The calendar button
 	my $StopAt_CalButton = Gtk2::Button->new();
 	my $SecondCalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
@@ -3448,7 +3442,7 @@ sub CreateAdvancedWidget {
 	$StopAt_CalButton->show();
 	$StopAt_CalButton->set_sensitive(0);
 	$StopAt_CalButton->signal_connect('clicked' => sub { PopupDateSel($StopAt_Entry,$StopAt_CalButton,'SINGLE')});
-	$StopAtHBox->pack_end($StopAt_CalButton,0,0,0);
+	$Table->attach_defaults($StopAt_CalButton,3,4,1,2);
 		# CheckButton callback
 	$StopAtCheckButton->signal_connect('toggled' => sub {
 			if($StopAtCheckButton->get_active) {
@@ -3464,7 +3458,7 @@ sub CreateAdvancedWidget {
 	if($RRULE) {
 		$RRULE = $RRULE->{FREQ};
 		$RecurCheckButton->set_active(1);
-		$ExceptHBox->set_sensitive(1);
+		$Table->set_sensitive(1);
 		if($RRULE eq 'DAILY') {
 			$Recur_Combo->set_active(0);
 		} elsif($RRULE eq 'WEEKLY') {
