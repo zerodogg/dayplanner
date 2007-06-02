@@ -4086,6 +4086,7 @@ sub NormalEventWindow {
 	$ReturnHash{RecurCombo} = $RecurCombo;
 	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	$ReturnHash{StopAt_Entry} = $StopAt_Entry;
+	$ReturnHash{DateEntry} = $DateEntry;
 	return(\%ReturnHash);
 }
 
@@ -4104,13 +4105,12 @@ sub NormalEvent_OK {
 	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 
 	# Get variables from the TimeHash
-	my $EventYear = ${$TimeHash}{EventYear};
-	my $EventMonth = ${$TimeHash}{EventMonth};
-	my $EventDay = ${$TimeHash}{EventDay};
 	my $OldEventYear = ${$TimeHash}{OldEventYear};
 	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
 	my $OldEventTime = ${$TimeHash}{OldEventTime};
+	# Get time
+	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
 	
 	# TODO: Add tests for an event that is *identical*
 	unless ($Summary) {
@@ -4150,7 +4150,7 @@ sub NormalEvent_OK {
 # ALL DAY AND BIRTHDAY EVENT HANDLING FUNCTIONS
 
 # Purpose: Create the widgets for editing an all-day event
-# Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = AllDayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = AllDayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET, WIDGET HASHREF);
 #
 # UID is the UID of the event you're editing or undef
 # VBOX_WIDGET is the widget you want to pack our table into
@@ -4244,6 +4244,7 @@ sub AllDayEventWindow {
 	$ReturnHash{RecurCombo} = $RecurCombo;
 	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	$ReturnHash{StopAt_Entry} = $StopAt_Entry;
+	$ReturnHash{DateEntry} = $DateEntry;
 	
 	return(\%ReturnHash);
 }
@@ -4263,12 +4264,11 @@ sub AllDayEvent_OK {
 	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
 
 	# Get variables from the TimeHash
-	my $EventYear = ${$TimeHash}{EventYear};
-	my $EventMonth = ${$TimeHash}{EventMonth};
-	my $EventDay = ${$TimeHash}{EventDay};
 	my $OldEventYear = ${$TimeHash}{OldEventYear};
 	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
+	# From the widget hash
+	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
 	
 	# TODO: Add tests for an event that is *identical* (wouldn't this be a job for DP::iCalendar ?)
 	unless ($Summary) {
@@ -4375,6 +4375,7 @@ sub BirthdayEventWindow {
 	my %ReturnHash;
 	$ReturnHash{MainVBox} = $MainVBox;
 	$ReturnHash{SummaryEntry} = $SummaryEntry;
+	$ReturnHash{DateEntry} = $DateEntry;
 	return(\%ReturnHash);
 }
 
