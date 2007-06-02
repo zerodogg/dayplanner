@@ -3271,6 +3271,7 @@ sub PopupDateSel {
 	$Window->set_resizable(0);
 	$Window->set_border_width(5);
 	$Window->set_transient_for($MainWindow);
+	$Window->set_type_hint('dialog');
 	my $VBox = Gtk2::VBox->new();
 	$Window->add($VBox);
 	my $Calendar = Gtk2::Calendar->new();
@@ -3747,6 +3748,7 @@ sub CreateEventContainerWin {
 	$AddEventBox->set_border_width(5);
 	$AddEventBox->set_skip_taskbar_hint(1);
 	$AddEventBox->set_skip_pager_hint(1);
+	$AddEventBox->set_type_hint('dialog');
 	# This doesn't work. According to the people in #gtk-perl this is due to Gtk2's lack
 	# of width-for-height. But might be implemented in later releases of gtk2.
 	# For now I leave it commented out. It looks fine for English but doesn't look good
