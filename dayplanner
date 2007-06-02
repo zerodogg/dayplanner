@@ -3457,30 +3457,31 @@ sub CreateAdvancedWidget {
 		
 		# Get RRULE information if provided and set it
 	if($RRULE) {
-		$RRULE = $RRULE->{FREQ};
+		$FT_Expander->set_expanded(1);
+		my $FREQ = $RRULE->{FREQ};
 		$RecurCheckButton->set_active(1);
 		$Table->set_sensitive(1);
-		if($RRULE eq 'DAILY') {
+		if($FREQ eq 'DAILY') {
 			$Recur_Combo->set_active(0);
-		} elsif($RRULE eq 'WEEKLY') {
+		} elsif($FREQ eq 'WEEKLY') {
 			$Recur_Combo->set_active(1);
-		} elsif($RRULE eq 'MONTHLY') {
+		} elsif($FREQ eq 'MONTHLY') {
 			$Recur_Combo->set_active(2);
-		} elsif($RRULE eq 'YEARLY') {
+		} elsif($FREQ eq 'YEARLY') {
 			$Recur_Combo->set_active(3);
 		}
-	}
-		# Get EXDATE information if provided and set it
-	if($EXDATE) {
-		$ExceptCheckButton->set_active(1);
-		foreach my $entry (sort @{$EXDATE}) {
-			AddToField($ExceptEntry,iCal_ParseDateTime($entry));
-		}
-	}
 		# Get UNTIL information if provided and set it
-	if($UNTIL) {
-		$StopAtCheckButton->set_active(1);
-		AddToField($StopAt_Entry,iCal_ParseDateTime($UNTIL));
+		if($RRULE->{UNTIL}) {
+			$StopAtCheckButton->set_active(1);
+			AddToField($StopAt_Entry,iCal_ParseDateTime($RRULE->{UNTIL}));
+		}
+		# Get EXDATE information if provided and set it
+		if(@{$EXDATE}) {
+			$ExceptCheckButton->set_active(1);
+			foreach my $entry (sort @{$EXDATE}) {
+				AddToField($ExceptEntry,iCal_ParseDateTime($entry));
+			}
+		}
 	}
 
 	# Create the entry for the fulltext.
