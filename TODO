@@ -8,11 +8,12 @@ may be subject to change.
 
 * Version 0.7
 - - - - - - -
-- Left align labels
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
 * Version 0.8
+- - - - - - -
+- Left align labels
 - Add support for choosing how long an event lasts
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
