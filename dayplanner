@@ -4292,6 +4292,7 @@ sub AllDayEvent_OK {
 		if($IsBirthday) {
 			$EntryHash{'X-DP-BIRTHDAY'} = 'TRUE';
 			$EntryHash{'X-DP-BIRTHDAYNAME'} = $Summary;
+			$EntryHash{'X-DP-BORNATDTSTART'} = 'TRUE';
 			$EntryHash{RRULE} = 'FREQ=YEARLY';
 			$EntryHash{SUMMARY} = $i18n->get_advanced("%(name)'s birthday", { name => $Summary });
 		} else {
