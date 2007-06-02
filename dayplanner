@@ -3530,26 +3530,34 @@ sub GetTimeFromWidgets {
 }
 
 # Purpose: Get a formatted RRULE from the combo box.
-# Usage: my $RRULE = GetRRULEFromCombo(COMBO WIDGET);
+# Usage: my $RRULE = GetRRULEFromCombo(WIDGET_HASH);
 sub GetRRULEFromCombo {
-	my $combo = shift;
+	my $Hash = shift;
+	my $combo = $Hash->{RecurCombo};
 	if(not $combo->is_sensitive) {
 		return(undef);
 	}
+	my $RRULE;
 	# 0 == day
 	# 1 == week
 	# 2 == month
 	# 3 == year
 	my $ActiveIndex = $combo->get_active;
 	if($ActiveIndex == 0) {
-		return('FREQ=DAILY');
+		$RRULE = 'FREQ=DAILY';
 	} elsif ($ActiveIndex == 1) {
-		return('FREQ=WEEKLY');
+		$RRULE = 'FREQ=WEEKLY';
 	} elsif ($ActiveIndex == 2) {
-		return('FREQ=MONTHLY');
+		$RRULE = 'FREQ=MONTHLY';
 	} elsif ($ActiveIndex == 3) {
-		return('FREQ=YEARLY;INTERVAL=1');
+		$RRULE = 'FREQ=YEARLY;INTERVAL=1';
 	}
+	# Get UNTIL
+	my $Until = GetUntilFromEntry($Hash->{StopAt_Entry});
+	if($Until) {
+		$RRULE .= ";UNTIL=$Until";
+	}
+	return($RRULE);
 }
 
 # Purpose: Get a list of formatted EXDATE entries from the exception entry box
@@ -3570,7 +3578,23 @@ sub GetExceptionsFromEntry {
 	return(\@ReturnArray);
 }
 
-# Purpose: Get the exception entry from 
+# Purpose: Get the until entry from the until entry box
+# Usage: my $UntilEntry = GetUntilFromEntry(ENTRY WIDGET);
+sub GetUntilFromEntry {
+	my $Entry = shift;
+	if (not $Entry->is_sensitive) {
+		return(undef);
+	}
+	my $EntryArray = ParseEntryField($Entry);
+	my @ReturnArray;
+	foreach my $Date (@{$EntryArray}) {
+		my($Year,$Month,$Day) = ParseDateString($Date);
+		$Month = AppendZero($Month);
+		$Day = AppendZero($Day);
+		return("$Year$Month$Day");
+	}
+	return(undef);
+}
 
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
@@ -4061,16 +4085,13 @@ sub NormalEvent_OK {
 		$EntryHash{DESCRIPTION} = $Fulltext;
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
-		$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
+		$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash);
 		foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})}) {
 			if(not $EntryHash{EXDATE}) {
 				$EntryHash{EXDATE} = [];
 			}
 			push(@{$EntryHash{EXDATE}}, $EXDATE);
 		}
-#		if($WidgetHash->{StopAt_Entry}->is_sensitive()) {
-#			my $Contents = $WidgetHash->{StopAt_Entry}->get_text();
-#			if(length($Contents)) {
 
 		if($EventUID) {
 			$iCalendar->change($EventUID,%EntryHash);
@@ -4219,7 +4240,7 @@ sub AllDayEvent_OK {
 			$EntryHash{SUMMARY} = $i18n->get_advanced("%(name)'s birthday", { name => $Summary });
 		} else {
 			$EntryHash{SUMMARY} = $Summary;
-			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash->{RecurCombo});
+			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash);
 			# Get and add content to the fulltext
 			my $FulltextBuff = $WidgetHash->{FulltextEntry}->get_buffer;
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
