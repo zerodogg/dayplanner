@@ -767,14 +767,16 @@ sub SaveMainData {
 # Usage: UpdatedData(DONT_SAVE?, DONT_REDRAW_EVENTLIST);
 sub UpdatedData {
 	my ($DontSave,$DontRedrawEventList) = @_;
-	if(not $DontRedrawEventList) {
-		# Redraw the event list
-		PopulateEventList();
+	if($MainWindow) {
+		if(not $DontRedrawEventList) {
+			# Redraw the event list
+			PopulateEventList();
+		}
+		# Repopulate the upcoming events
+		PopulateUpcomingEvents();
+		# Redraw the calendar
+		CalendarChange();
 	}
-	# Repopulate the upcoming events
-	PopulateUpcomingEvents();
-	# Redraw the calendar
-	CalendarChange();
 	# Lastly, save the main data if needed.
 	# We do this last because that speeds up redrawing the calendar
 	if(not $DontSave) {
