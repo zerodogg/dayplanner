@@ -95,7 +95,7 @@ sub LoadConfigFile {
 		$Value =~ s/^\w+=\s*(.*)\s*/$1/;
 		if($OnlyValidOptions) {
 			unless(defined($OptionRegex->{$Option})) {
-				DPIntWarn("Unknown configuration option \"$Option\" in $File: Ignored.");
+				DPIntWarn("Unknown configuration option \"$Option\" (=$Value) in $File: Ignored.");
 				next;
 			}
 		}
@@ -105,7 +105,7 @@ sub LoadConfigFile {
 		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
 			my $MustMatch = $OptionRegex->{$Option};
 			unless ($Value =~ /$MustMatch/) {
-				print "Invalid setting of $Option in the config file: Must match $OptionRegex->{Option}.\n";
+				DPIntWarn("Invalid setting of $Option (=$Value) in the config file: Must match $OptionRegex->{Option}.");
 				next;
 			}
 		}
