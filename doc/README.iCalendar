@@ -19,3 +19,8 @@ X-DP-BIRTHDAYNAME:[NAME]
 
 X-DP-BIRTHDAYNAME is set to the name of the person whose birthday it is,
 and quoted according to iCalendar quoting standards.
+
+Newer versions of Day Planner (0.7 and later) also sets:
+X-DP-BORNATDTSTART:TRUE
+This means that DTSTART is the date the person in question was born.
+One should assume DTSTART is not if this isn't set.

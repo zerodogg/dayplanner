@@ -327,6 +327,8 @@ sub GtkNotifier {
 		$NotifyDialog->set_skip_pager_hint(0);
 		$NotifyDialog->set_skip_taskbar_hint(0);
 		$NotifyDialog->set_default_size(300,-1);
+		$NotifyDialog->set_type_hint('dialog');
+		$NotifyDialog->set_deletable(0);
 		if(Gtk2->CHECK_VERSION(2,10,0)) {
 			$NotifyDialog->set_urgency_hint(1);
 		}

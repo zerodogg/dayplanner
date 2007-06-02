@@ -3206,6 +3206,9 @@ sub ParseDateString {
 # Usage: AddToField(ENTRY, YEAR, MONTH, DAY);
 sub AddToField {
 	my($Entry,$Year,$Month,$Day) = @_;
+
+	$Month = AppendZero($Month);
+	$Day = AppendZero($Day);
 	# First get the text
 	my $FieldText = $Entry->get_text();
 	# Then add to the text
@@ -3259,7 +3262,6 @@ sub PopupDateSel {
 
 	# Create the window and stuff inside the window
 	my $Window = Gtk2::Window->new();
-	$Window->set_decorated(1);
 	$Window->set_deletable(0);
 	$Window->set_modal(1);
 	$Window->set_skip_taskbar_hint(1);
@@ -3268,6 +3270,8 @@ sub PopupDateSel {
 	$Window->set_position('mouse');
 	$Window->set_resizable(0);
 	$Window->set_border_width(5);
+	$Window->set_transient_for($MainWindow);
+	$Window->set_type_hint('dialog');
 	my $VBox = Gtk2::VBox->new();
 	$Window->add($VBox);
 	my $Calendar = Gtk2::Calendar->new();
@@ -3392,8 +3396,8 @@ sub CreateAdvancedWidget {
 	$SecondIndentLabel->show();
 	$Table->attach_defaults($SecondIndentLabel,0,1,0,1);
 		# Checkbutton for it
-		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
-	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
+		# TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
+		my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
 	$StopAtCheckButton->show();
 	$Table->attach_defaults($StopAtCheckButton,1,2,0,1);
 		# The entry field
@@ -3427,7 +3431,7 @@ sub CreateAdvancedWidget {
 	$IndentLabel->show();
 	$Table->attach_defaults($IndentLabel,0,1,1,2);
 		# Checkbutton for it
-		# TRANSLATORS: Context: Don't recur the event on the dates specified next to this string
+		# TRANSLATORS: Don't recur the event on the dates specified next to this string
 	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
 	$ExceptCheckButton->show();
 	$Table->attach_defaults($ExceptCheckButton,1,2,1,2);
@@ -3554,7 +3558,7 @@ sub GetRRULEFromCombo {
 		$RRULE = 'FREQ=YEARLY;INTERVAL=1';
 	}
 	# Get UNTIL
-	my $Until = GetUntilFromEntry($Hash->{StopAt_Entry});
+	my $Until = GetDateFromEntry($Hash->{StopAt_Entry});
 	if($Until) {
 		$RRULE .= ";UNTIL=$Until";
 	}
@@ -3580,8 +3584,8 @@ sub GetExceptionsFromEntry {
 }
 
 # Purpose: Get the until entry from the until entry box
-# Usage: my $UntilEntry = GetUntilFromEntry(ENTRY WIDGET);
-sub GetUntilFromEntry {
+# Usage: my $UntilEntry = GetDateFromEntry(ENTRY WIDGET);
+sub GetDateFromEntry {
 	my $Entry = shift;
 	if (not $Entry->is_sensitive) {
 		return(undef);
@@ -3592,7 +3596,11 @@ sub GetUntilFromEntry {
 		my($Year,$Month,$Day) = ParseDateString($Date);
 		$Month = AppendZero($Month);
 		$Day = AppendZero($Day);
-		return("$Year$Month$Day");
+		if(wantarray()) {
+			return($Year,$Month,$Day);
+		} else {
+			return("$Year$Month$Day");
+		}
 	}
 	return(undef);
 }
@@ -3674,15 +3682,47 @@ sub TimeSelection {
 	return($HourSpinner, $MinuteSpinner, $TimeSpinnerHBox, $AMPM);
 }
 
+# Purpose: Create the widgets for selecting the date
+# Usage: my ($DateTable, $DateEntry) = DateSelection(UID?);
+sub DateSelection {
+	my $UID = shift;
+
+	my $Table = Gtk2::Table->new(2,1);
+	$Table->show();
+		# The entry field
+	my $Entry = Gtk2::Entry->new();
+	$Entry->show();
+	$Table->attach_defaults($Entry,0,1,0,1);
+		# The calendar button
+	my $CalButton = Gtk2::Button->new();
+	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
+	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
+	$CalButton->show();
+	$CalButton->signal_connect('clicked' => sub { PopupDateSel($Entry,$CalButton,'SINGLE')});
+	$Table->attach_defaults($CalButton,1,2,0,1);
+	
+	# If we have an UID then get it from that, if not then get it from the calendar widget
+	if(defined($UID) and not $UID eq 'NULL') {
+		my $UIDObj = $iCalendar->get_info($UID);
+		# Get date information from the UID
+		AddToField($Entry,iCal_ParseDateTime($UIDObj->{DTSTART}))
+	} else {
+		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+		AddToField($Entry,$EventYear,$EventMonth,$EventDay);
+	}
+	
+	return($Table,$Entry);
+}
+
 # Purpose: Create the window that will contain the event editor
-# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, LABEL, OK_BUTTON_TYPE, UID);
+# Usage: my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin(TITLE, OK_BUTTON_TYPE, UID);
 #
-# TITLE is the title of the window, LABEL is the label to display on top of the window.
+# TITLE is the title of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
 # UID is the UID of the event. This can be undef.
 sub CreateEventContainerWin {
 	# Get the options passed to the sub
-	my ($WindowTitle, $EventLabel, $OkButtonType, $UID) = @_;
+	my ($WindowTitle, $OkButtonType, $UID) = @_;
 	
 	# Get the date
 	my ($EventYear, $EventMonth, $EventDay);
@@ -3708,6 +3748,7 @@ sub CreateEventContainerWin {
 	$AddEventBox->set_border_width(5);
 	$AddEventBox->set_skip_taskbar_hint(1);
 	$AddEventBox->set_skip_pager_hint(1);
+	$AddEventBox->set_type_hint('dialog');
 	# This doesn't work. According to the people in #gtk-perl this is due to Gtk2's lack
 	# of width-for-height. But might be implemented in later releases of gtk2.
 	# For now I leave it commented out. It looks fine for English but doesn't look good
@@ -3725,11 +3766,6 @@ sub CreateEventContainerWin {
 	my $ADPrimVBox = Gtk2::VBox->new();
 	$AddEventBox->add($ADPrimVBox);
 	$ADPrimVBox->show();
-	
-	# Add the label with the name
-	my $DateLabel = Gtk2::Label->new($i18n->raw_advanced($EventLabel, { day => $EventDay, monthname => $i18n->get_month($EventMonth), year => $EventYear}));
-	$DateLabel->show();
-	$ADPrimVBox->pack_start($DateLabel,1,0,0);
 	
 	# ==================================================================
 	# Call the functions that constructs the main window contents
@@ -3776,7 +3812,7 @@ sub AddEvent {
 	);
 		
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
-	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), $i18n->get('Adding an event on the %(day). %(monthname) %(year)'), 'gtk-add');
+	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), 'gtk-add');
 	# HBox
 	my $SelectorHBox = Gtk2::HBox->new();
 	$VBox_HBoxContainer->pack_start($SelectorHBox,0,0,0);
@@ -3890,11 +3926,8 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		# Get the text string to use (it differs if we're editing on another date than
-		# the selected
-		my $EditString = $Differs ? $i18n->get("Editing a repeating event\nstarting on the %(day). %(monthname) %(year)") : $i18n->get('Editing an event on the %(day). %(monthname) %(year)');
 
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an event'), $EditString, 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an event'), 'gtk-ok',$EventUID);
 		# Create the widgets for the normal event selection
 		my ($NormalEvent) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub {
@@ -3907,7 +3940,7 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), $i18n->get('Editing a birthday on the %(day). %(monthname) %(year)'), 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), 'gtk-ok',$EventUID);
 		
 		my ($BirthdayEvent) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, $EventUID, 1)});
@@ -3919,9 +3952,8 @@ sub EditEvent {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# Get the text string to use (it differs if we're editing on another date than
 		# the selected
-		my $EditString = $Differs ? $i18n->get('Editing a repeating all day event starting on the %(day). %(monthname) %(year)') : $i18n->get('Editing an all day event on the %(day). %(monthname) %(year)');
 
-		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an all day event'), $EditString, 'gtk-ok',$EventUID);
+		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing an all day event'), 'gtk-ok',$EventUID);
 		my ($AllDayEvent) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$AllDayEvent->{MainVBox}->show();
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, $EventUID, 0)});
@@ -3987,12 +4019,12 @@ sub NormalEventWindow {
 	$ParentVBox->pack_start($MainVBox,0,0,0);
 	
 	# Create the table inside the frame
-	my $ContentTable = Gtk2::Table->new(2,2);
+	my $ContentTable = Gtk2::Table->new(2,3);
 	$ContentTable->show();
 	$MainVBox->pack_start($ContentTable,1,1,0);
 	
 	# ==================================================================
-	# ADD THE TIME/SUMMARY BOXES
+	# ADD THE DATE/TIME/SUMMARY BOXES
 	# ==================================================================
 	
 	# Create the time label
@@ -4005,10 +4037,19 @@ sub NormalEventWindow {
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
 	
+	# Create the date label
+	my $DateLabel = Gtk2::Label->new($i18n->get('Date:'));
+	$DateLabel->show();
+	$ContentTable->attach_defaults($DateLabel, 0,1,1,2);
+	# Date  entry box
+	my ($DateTable, $DateEntry) = DateSelection($EventUID);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($DateTable, 1,2,1,2);
+	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
 	$SummaryLabel->show();
-	$ContentTable->attach_defaults($SummaryLabel, 0,1,1,2);
+	$ContentTable->attach_defaults($SummaryLabel, 0,1,2,3);
 
 	# Create the summary entry box
 	my $SummaryEntry = Gtk2::Entry->new();
@@ -4017,7 +4058,7 @@ sub NormalEventWindow {
 	}
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
-	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
+	$ContentTable->attach_defaults($SummaryEntry, 1,2,2,3);
 	$Tooltips->set_tip($SummaryEntry, $i18n->get('Enter a description of the event here'));
 	
 	# ==================================================================
@@ -4047,6 +4088,7 @@ sub NormalEventWindow {
 	$ReturnHash{RecurCombo} = $RecurCombo;
 	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	$ReturnHash{StopAt_Entry} = $StopAt_Entry;
+	$ReturnHash{DateEntry} = $DateEntry;
 	return(\%ReturnHash);
 }
 
@@ -4065,17 +4107,20 @@ sub NormalEvent_OK {
 	my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 
 	# Get variables from the TimeHash
-	my $EventYear = ${$TimeHash}{EventYear};
-	my $EventMonth = ${$TimeHash}{EventMonth};
-	my $EventDay = ${$TimeHash}{EventDay};
 	my $OldEventYear = ${$TimeHash}{OldEventYear};
 	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
 	my $OldEventTime = ${$TimeHash}{OldEventTime};
+	# Get time
+	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
 	
 	# TODO: Add tests for an event that is *identical*
 	unless ($Summary) {
 		DPError($i18n->get('There is no description for this event. Please enter a description.'));
+		$Error = 1;
+	}
+	if(not $EventYear and not $Error) {
+		DPError($i18n->get('The date you have entered is invalid.'));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
@@ -4111,7 +4156,7 @@ sub NormalEvent_OK {
 # ALL DAY AND BIRTHDAY EVENT HANDLING FUNCTIONS
 
 # Purpose: Create the widgets for editing an all-day event
-# Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = AllDayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my ($AllDayEventWidget, $SummaryWidget, $DetailsWidget) = AllDayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET, WIDGET HASHREF);
 #
 # UID is the UID of the event you're editing or undef
 # VBOX_WIDGET is the widget you want to pack our table into
@@ -4155,8 +4200,16 @@ sub AllDayEventWindow {
 	$MainVBox->pack_start($ContentTable,1,1,0);
 	
 	# ==================================================================
-	# ADD THE SUMMARY BOX
+	# ADD THE DATE/SUMMARY BOXES
 	# ==================================================================
+	# Create the date label
+	my $DateLabel = Gtk2::Label->new($i18n->get('Date:'));
+	$DateLabel->show();
+	$ContentTable->attach_defaults($DateLabel, 0,1,0,1);
+	# Date  entry box
+	my ($DateTable, $DateEntry) = DateSelection($EventUID);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($DateTable, 1,2,0,1);
 	
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
@@ -4197,6 +4250,7 @@ sub AllDayEventWindow {
 	$ReturnHash{RecurCombo} = $RecurCombo;
 	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	$ReturnHash{StopAt_Entry} = $StopAt_Entry;
+	$ReturnHash{DateEntry} = $DateEntry;
 	
 	return(\%ReturnHash);
 }
@@ -4216,16 +4270,19 @@ sub AllDayEvent_OK {
 	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
 
 	# Get variables from the TimeHash
-	my $EventYear = ${$TimeHash}{EventYear};
-	my $EventMonth = ${$TimeHash}{EventMonth};
-	my $EventDay = ${$TimeHash}{EventDay};
 	my $OldEventYear = ${$TimeHash}{OldEventYear};
 	my $OldEventMonth = ${$TimeHash}{OldEventMonth};
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
+	# From the widget hash
+	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
 	
 	# TODO: Add tests for an event that is *identical* (wouldn't this be a job for DP::iCalendar ?)
-	unless ($Summary) {
-		DPError($i18n->get('There is no summary for this event. Please enter a summary.'));
+	if (not $Summary) {
+		DPError($i18n->get('There is no description of this event. Please enter a description.'));
+		$Error = 1;
+	}
+	if(not $EventYear and not $Error) {
+		DPError($i18n->get('The date you have entered is invalid.'));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
@@ -4237,6 +4294,7 @@ sub AllDayEvent_OK {
 		if($IsBirthday) {
 			$EntryHash{'X-DP-BIRTHDAY'} = 'TRUE';
 			$EntryHash{'X-DP-BIRTHDAYNAME'} = $Summary;
+			$EntryHash{'X-DP-BORNATDTSTART'} = 'TRUE';
 			$EntryHash{RRULE} = 'FREQ=YEARLY';
 			$EntryHash{SUMMARY} = $i18n->get_advanced("%(name)'s birthday", { name => $Summary });
 		} else {
@@ -4295,8 +4353,16 @@ sub BirthdayEventWindow {
 	$MainVBox->pack_start($ContentTable,1,1,0);
 	
 	# ==================================================================
-	# ADD THE TIME/SUMMARY BOXES
+	# ADD THE DATE/SUMMARY BOXES
 	# ==================================================================
+	# Create the date label
+	my $DateLabel = Gtk2::Label->new($i18n->get('Born:'));
+	$DateLabel->show();
+	$ContentTable->attach_defaults($DateLabel, 0,1,0,1);
+	# Date  entry box
+	my ($DateTable, $DateEntry) = DateSelection($UID);
+	# Attach them to our main widget
+	$ContentTable->attach_defaults($DateTable, 1,2,0,1);
 	
 	# Create the summary label
 	# TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
@@ -4320,6 +4386,7 @@ sub BirthdayEventWindow {
 	my %ReturnHash;
 	$ReturnHash{MainVBox} = $MainVBox;
 	$ReturnHash{SummaryEntry} = $SummaryEntry;
+	$ReturnHash{DateEntry} = $DateEntry;
 	return(\%ReturnHash);
 }
 
