@@ -55,9 +55,9 @@ foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier ser
 	open(FILE, "<$OrigDir/$CurrentFile") or die "Unable to open $OrigDir/$CurrentFile: $!\n";
 	my @File;
 	foreach(<FILE>) {
-		s/^(my\s+\$D?P?Version\s+=\s+["']).*(["'];)/$1$NewVersion$2/i;
+		s/^((my|our)\s+\$D?P?Version\s+=\s+["']).*(["'];)/$1$NewVersion$3/i;
 		if($Name) {
-			s/^(my\s+\$D?P?VersionName\s+=\s["']).*(["'];)/$1$Name$2/i;
+			s/^((my|our)\s+\$D?P?VersionName\s+=\s["']).*(["'];)/$1$Name$3/i;
 		}
 		push(@File, $_);
 	}
