@@ -3288,6 +3288,15 @@ sub PopupDateSel {
 	$ButHBox->pack_end($CloseButton,0,0,0);
 	# Handle changes to the calendar
 	my %SelHash;
+	# Select the date in the entry field
+	my $CurrDate = ParseEntryField($TextEntry);
+	if(@{$CurrDate}) {
+		my($SelYear,$SelMonth,$SelDay) = ParseDateString($CurrDate->[0]);
+		$SelMonth--;
+		$Calendar->select_month($SelMonth,$SelYear);
+		$Calendar->select_day($SelDay);
+	}
+
 		# Get the dates
 	$Calendar->signal_connect('month-changed' => sub {
 			my $DateRef = ParseEntryField($TextEntry);
