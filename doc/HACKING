@@ -115,10 +115,14 @@ included in the Gtk2 perl base distribution (for instance like
 Gtk2::Gdk::Keysyms) then by all means use it, as long as the module
 isn't brand new.
 
-Currently the non-Gtk2 and non-perl-base-distribution modules day
-planner uses are:
-Locale::gettext
-Date::HolidayParser (though, this one is bundled with Day Planner)
+Currently Day Planner does not depend upon any modules that are
+not in the perl base-distribution nor the Gtk2 base-distribution,
+with the sole exception of the modules that are already bundled
+with Day Planner (DP::iCalendar, DP::GeneralHelpers and
+Date::HolidayParser).
+
+It does make use of Locale::gettext and IO::Socket::SSL if those are
+available, but neither of them are required.
 
 4 - API changes
 ===============
