@@ -5,11 +5,12 @@ $Id$
 The conversion between the plan data format and the Day Planner data format is lossy.
 This means that you can loose data. The current limitations are:
 - It doesn't accept recurring appointments. That means that "repeat until", "repeat forever" and
-	such is lost. Day Planner does not support this yet. The appointment isn't lost, but it
-	will not be repeated.
-	NOTE: Recurring appointments that reoccur once a year is NOT lost
+	such is lost. Day Planner does support this, but support for converting plan
+	recurrances to DP-recurrances has not been added (and is not planned).
+	The appointment is not lost, but it won't be repeated
+	NOTE: Recurring appointments that just reoccur once a year is NOT lost
 - It doesn't accept scripts that are to be run. This is because Day Planner does not support
-	this feature, and probably won't do so any time soon.
+	this feature, and most likely never will.
 - Warning times are lost. Day Planner implements this differently from plan, and
 	the plan way can not be layered upon the Day Planner way.
 - The holiday file is ignored.
