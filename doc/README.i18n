@@ -62,6 +62,8 @@ Helper scripts
 ./devel-tools/BuildLocale	Builds the entire locale/ directory tree
 				with mo-files and all
 
+./devel-tools/postat		Outputs translation statistics
+
 Holiday files
 - - - - - - -
 If your country doesn't have a holiday file or Day Planner doesn't autodetect
