@@ -75,10 +75,7 @@ sub newfile {
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
 sub get_monthinfo {
 	my($self, $Year, $Month) = @_;	# TODO: verify that they are set
-	if(not defined($self->{OrderedCalendar}{$Year})) {
-		# Generate the calendar for this year
-		$self->_GenerateCalendar($Year);
-	}
+	$self->_GenerateCalendar($Year);
 	my @DAYS;
 	if(defined($self->{OrderedCalendar}{$Year}{$Month})) {
 		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}})) {
@@ -92,10 +89,9 @@ sub get_monthinfo {
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
 sub get_dateinfo {
 	my($self, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
-	if(not defined($self->{OrderedCalendar}{$Year})) {
-		# Generate the calendar for this year
-		$self->_GenerateCalendar($Year);
-	}
+	
+	$self->_GenerateCalendar($Year);
+	
 	my @TIME;
 	if(defined($self->{OrderedCalendar}{$Year}{$Month}) and defined($self->{OrderedCalendar}{$Year}{$Month}{$Day})) {
 		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}{$Day}})) {
@@ -109,10 +105,7 @@ sub get_dateinfo {
 # Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
 sub get_timeinfo {
 	my($self, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
-	if(not defined($self->{OrderedCalendar}{$Year})) {
-		# Generate the calendar for this year
-		$self->_GenerateCalendar($Year);
-	}
+	$self->_GenerateCalendar($Year);
 	my @UIDs;
 	if(defined($self->{OrderedCalendar}{$Year}{$Month}) and defined($self->{OrderedCalendar}{$Year}{$Month}{$Day}) and defined($self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time})) {
 		foreach(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}) {
@@ -143,10 +136,7 @@ sub get_years {
 # Usage: my $ArrayRef = $object->get_months();
 sub get_months {
 	my ($self, $Year) = @_;
-	if(not defined($self->{OrderedCalendar}{$Year})) {
-		# Generate the calendar for this year
-		$self->_GenerateCalendar($Year);
-	}
+	$self->_GenerateCalendar($Year);
 	my @Months = sort keys(%{$self->{OrderedCalendar}{$Year}});
 	return(\@Months);
 }
@@ -283,8 +273,7 @@ sub delete {
 	my ($self, $UID) = @_;	# TODO verify UID
 	if(defined($self->{RawCalendar}{$UID})) {
 		delete($self->{RawCalendar}{$UID});
-		# FIXME: There are much more efficient ways to do this.
-		$self->{OrderedCalendar} = {};
+		$self->_ClearCalculated();
 		return(1);
 	} else {
 		carp('delete called without a valid UID');
@@ -301,8 +290,7 @@ sub add {
 		return(undef);
 	}
 	my $UID = $self->_UID($Hash{DTSTART});
-	# FIXME: There are much more efficient ways to do this.
-	$self->{OrderedCalendar} = {};
+	$self->_ClearCalculated();
 	$self->_ChangeEntry($UID,%Hash);
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
@@ -365,7 +353,7 @@ sub addfile {
 sub clean {
 	my $self = shift;
 	$self->{RawCalendar} = {};
-	$self->{OrderedCalendar} = {};
+	$self->_ClearCalculated();
 	return(1);
 }
 
@@ -531,6 +519,7 @@ sub _NewObj {
 	bless($self);
 	$self->{RawCalendar} = {};
 	$self->{OrderedCalendar} = {};
+	$self->{AlreadyCalculated} = {};
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	if($File) {
 		$self->{FILETYPE} = 'file';
@@ -559,7 +548,7 @@ sub _ChangeEntry {
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
-	delete($self->{OrderedCalendar});
+	$self->_ClearCalculated();
 	return(1);
 }
 
@@ -582,8 +571,7 @@ sub _LoadFile {
 	my $self = shift;
 	my $Data = _ParseData($_[0]);
 	return(undef) unless(defined($Data));
-	# Delete OrderedCalendar so that it gets recreated
-	delete($self->{OrderedCalendar});
+	$self->_ClearCalculated();
 	foreach(0..scalar(@{$Data})) {
 		my $Current = $Data->[$_];
 		my ($Summary, $Fulltext, $UID);
@@ -810,8 +798,8 @@ sub _AppendZero {
 #  It will create the normal calendar for all events.
 sub _GenerateCalendar {
 	my $self = shift;
-	my $EventYear = $_[0];
-	return if defined($self->{OrderedCalendar}{$EventYear});
+	my $EventYear = shift;
+	return if defined($self->{AlreadyCalculated}{$EventYear});
 	$self->{OrderedCalendar}{$EventYear} = {};
 	foreach my $UID (keys(%{$self->{RawCalendar}})) {
 		my $Current = $self->{RawCalendar}{$UID};
@@ -830,6 +818,19 @@ sub _GenerateCalendar {
 			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
 		}
 	}
+	$self->{AlreadyCalculated}{$EventYear} = 1;
+	return(TRUE);
+}
+
+# Purpose: Clear any calculated event data
+# Usage: $self->_ClearCalculated();
+sub _ClearCalculated {
+	# TODO: At one point we might want to do additional processing depending on the UID supplied (if any)
+	
+	my $self = shift;
+	$self->{OrderedCalendar} = {};
+	$self->{AlreadyCalculated} = {};
+	return(TRUE);
 }
 
 # --- Internal RRULE calculation functions ---
@@ -931,6 +932,10 @@ sub _RRULE_Handler {
 		}
 		return(undef);
 	}
+	# Don't bother doing anything if DTSTART is older than YEAR
+	my ($CalcYear,$CalcMonth,$CalcDay) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
+	return(undef) if $CalcYear > $YEAR;
+
 	my $RRULE = _RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
 	my $AddDates;
 	if	($RRULE->{FREQ} eq 'DAILY') {
