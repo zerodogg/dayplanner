@@ -976,7 +976,7 @@ sub GetSummaryString {
 	my $UID_Obj = $iCalendar->get_info($UID);
 	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
-			if($UID_Obj->{'X-DP-BORNATDTSTART'} eq 'TRUE') {
+			if(defined($UID_Obj->{'X-DP-BORNATDTSTART'}) and $UID_Obj->{'X-DP-BORNATDTSTART'} eq 'TRUE') {
 				# Calculate birthday here
 				my ($BYear,$BMonth,$BDay) = iCal_ParseDateTime($UID_Obj->{'DTSTART'});
 				my ($SelYear, $SelMonth, $SelDay);
