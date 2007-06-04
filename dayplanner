@@ -3251,8 +3251,8 @@ sub RemoveFromField {
 # Purpose: Popup a calendar to select one or more dates from
 # Usage: \&PopupDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON, MODE);
 # 	MODE is one of:
-# 	SINGLE - Only allows a single date to be selected
-# 	MULTI - Allows an infinite number of dates to be selected
+#	 	SINGLE - Only allows a single date to be selected
+# 		MULTI - Allows an infinite number of dates to be selected
 sub PopupDateSel {
 	my $TextEntry = shift;
 	my $CalButton = shift;
@@ -3320,9 +3320,11 @@ sub PopupDateSel {
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
 			if($SelHash{$Selected}) {
-				$Calendar->unmark_day($Selected);
-				delete($SelHash{$Selected});
-				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
+				if(not $Mode eq 'SINGLE') {
+					$Calendar->unmark_day($Selected);
+					delete($SelHash{$Selected});
+					RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
+				}
 			} else {
 				if($Mode eq 'SINGLE') {
 					$Calendar->clear_marks();
