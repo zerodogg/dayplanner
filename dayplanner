@@ -964,15 +964,49 @@ sub IPC_Handler {
 }
 
 # Purpose: Get the SUMMARY string for an UID
-# Usage: my $Summary = GetSummaryString(UID);
+# Usage: my $Summary = GetSummaryString(UID, CURRENT?);
 #  The returned summary string is properly formatted (ie. it will return
 #  a properly localized birthday string if needed).
+#
+# 	If CURRENT is true GetSummaryString() will base its birthday information
+# 	on the current date/time instead of the selected date/time
 sub GetSummaryString {
 	my $UID = shift;
+	my $CURRENT = shift;
 	my $UID_Obj = $iCalendar->get_info($UID);
 	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
-			return($i18n->get_advanced("%(name)'s birthday",{ name => $UID_Obj->{'X-DP-BIRTHDAYNAME'}}));
+			if($UID_Obj->{'X-DP-BORNATDTSTART'} eq 'TRUE') {
+				# Calculate birthday here
+				my ($BYear,$BMonth,$BDay) = iCal_ParseDateTime($UID_Obj->{'DTSTART'});
+				my ($SelYear, $SelMonth, $SelDay);
+				if(not $CURRENT) {
+					($SelYear, $SelMonth, $SelDay) = $CalendarWidget->get_date();$SelMonth++;
+				} else {
+					# Get the current time
+					my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
+					$SelYear = $curryear;
+					$SelMonth = $currmonth;
+				}
+
+				my $YearsOld = $SelYear - $BYear;
+
+				# Handle the December/January change
+				if($SelMonth == 12 && $BMonth == 1) {
+					$YearsOld++;
+				}
+
+				if($YearsOld == 0) {
+					return($i18n->get_advanced('%(name) was born', { name => $UID_Obj->{'X-DP-BIRTHDAYNAME'}}));
+				} elsif ($YearsOld < 0) {
+					return('');
+				} else {
+					return($i18n->get_advanced("%(name)'s birthday (%(year) years old)", { name => $UID_Obj->{'X-DP-BIRTHDAYNAME'}, year => $YearsOld}));
+				}
+
+			} else {
+				return($i18n->get_advanced("%(name)'s birthday",{ name => $UID_Obj->{'X-DP-BIRTHDAYNAME'}}));
+			}
 		} else {
 			DPIntWarn("UID $UID is set to be a birthday but is missing X-DP-BIRTHDAYNAME, using SUMMARY string");
 		}
@@ -2917,7 +2951,6 @@ sub DetectImage {
 
 # Purpose: Delete the event currently selected in the eventlist
 # Usage: DeleteEvent();
-#  (calls CalendarDelete/BirthdayDelete with the correct parameters)
 sub DeleteEvent {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
