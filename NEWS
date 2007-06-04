@@ -20,6 +20,8 @@ Version 0.7 "Unia" (Unreleased)
 - The text entry field for details no longer accepts tab, so you
   can now tab out of that field
 - Better i18n system
+- Can now calculate the age of people on their birthday if the birth date
+  is available
 
 * Notifier (dayplanner-notifier)
 
