@@ -3251,8 +3251,8 @@ sub RemoveFromField {
 # Purpose: Popup a calendar to select one or more dates from
 # Usage: \&PopupDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON, MODE);
 # 	MODE is one of:
-# 	SINGLE - Only allows a single date to be selected
-# 	MULTI - Allows an infinite number of dates to be selected
+#	 	SINGLE - Only allows a single date to be selected
+# 		MULTI - Allows an infinite number of dates to be selected
 sub PopupDateSel {
 	my $TextEntry = shift;
 	my $CalButton = shift;
@@ -3320,9 +3320,11 @@ sub PopupDateSel {
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
 			if($SelHash{$Selected}) {
-				$Calendar->unmark_day($Selected);
-				delete($SelHash{$Selected});
-				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
+				if(not $Mode eq 'SINGLE') {
+					$Calendar->unmark_day($Selected);
+					delete($SelHash{$Selected});
+					RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
+				}
 			} else {
 				if($Mode eq 'SINGLE') {
 					$Calendar->clear_marks();
@@ -3472,7 +3474,7 @@ sub CreateAdvancedWidget {
 		
 		# Get RRULE information if provided and set it
 	if($RRULE) {
-		$FT_Expander->set_expanded(1);
+		$FT_Expander->signal_emit('activate');
 		my $FREQ = $RRULE->{FREQ};
 		$RecurCheckButton->set_active(1);
 		$Table->set_sensitive(1);
@@ -4084,7 +4086,9 @@ sub NormalEventWindow {
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
-		$FT_Expander->set_expanded(1);
+		if(not $FT_Expander->get_expanded) {
+			$FT_Expander->signal_emit('activated');
+		}
 	}
 
 	# Create a hash containing the widgets that the caller might need
@@ -4251,7 +4255,10 @@ sub AllDayEventWindow {
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
-		$FT_Expander->set_expanded(1);
+		# Expand it if it isn't already
+		if(not $FT_Expander->get_expanded) {
+			$FT_Expander->signal_emit('activated');
+		}
 	}
 	
 	my %ReturnHash;
@@ -4338,7 +4345,7 @@ sub AllDayEvent_OK {
 }
 
 # Purpose: Create the widgets for editing a birthday event
-# Usage: my ($BirthdayEventWidget, $SummaryWidget) = NormalEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
+# Usage: my ($BirthdayEventWidget, $SummaryWidget) = BirthdayEventWindow(UID, VBOX_WIDGET, MAIN_WINDOW_WIDGET);
 #
 # UID is the event UID of the event being edited or undef
 # VBOX_WIDGET is the widget you want to pack our widgets into
