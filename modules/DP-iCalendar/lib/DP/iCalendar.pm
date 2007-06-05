@@ -223,7 +223,7 @@ sub write {
 		};
 		print $TARGET $iCalendar;
 		close($TARGET);
-		return(1);
+		return(TRUE);
 	} else {
 		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
 		return(undef);
@@ -274,7 +274,7 @@ sub delete {
 	if(defined($self->{RawCalendar}{$UID})) {
 		delete($self->{RawCalendar}{$UID});
 		$self->_ClearCalculated();
-		return(1);
+		return(TRUE);
 	} else {
 		carp('delete called without a valid UID');
 		return(undef);
@@ -295,7 +295,7 @@ sub add {
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Change an iCalendar entry
@@ -311,7 +311,7 @@ sub change {
 		return(undef);
 	}
 	$self->_ChangeEntry($UID,%Hash);
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Check if an UID exists
@@ -319,10 +319,10 @@ sub change {
 sub exists {
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		return(1);
+		return(TRUE);
 	}
 	delete($self->{RawCalendar}{$UID});
-	return(0);
+	return(FALSE);
 }
 
 # Purpose: Add another file
@@ -354,7 +354,7 @@ sub clean {
 	my $self = shift;
 	$self->{RawCalendar} = {};
 	$self->_ClearCalculated();
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Enable a feature
@@ -364,7 +364,7 @@ sub enable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$self->{FEATURE}{$_} = 1;
-		return(1);
+		return(TRUE);
 	}
 	carp("Attempted to enable unknown feature: $feature");
 	return(undef);
@@ -377,7 +377,7 @@ sub disable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$self->{FEATURE}{$_} = 0;
-		return(1);
+		return(TRUE);
 	}
 	carp("Attempted to disable unknown feature: $feature");
 	return(undef);
@@ -412,7 +412,7 @@ sub set_prodid {
 	}
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
-	return(1);
+	return(TRUE);
 }
 
 # - Public functions
@@ -509,6 +509,12 @@ sub iCal_ParseDateTime {
 }
 
 # - Internal functions
+# WARNING: Do NOT call ANY of the below functions from within programs using
+# 	DP::iCalendar. They are only meant for internal use and are subject to
+# 	radical API changes, or just disappearing.
+# 	If there is a feature provided below that you need in your program,
+# 	submit a bug report requesting a function with similar functionality to
+# 	be added to the public methods.
 
 # Purpose: Create a new object.
 # Usage: my $object = _NewObj(FILE?);
@@ -549,7 +555,7 @@ sub _ChangeEntry {
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
 	$self->_ClearCalculated();
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Output warning
@@ -647,7 +653,7 @@ sub _LoadFile {
 		}
 	}
 	$Data = undef;
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
@@ -950,7 +956,7 @@ sub _RRULE_Handler {
 		_WarnOut("STUB: _RRULE_Handler is unable to handle $self->{RawCalendar}{$UID}{RRULE} at this time.");
 	}
 	if($AddDates) {
-		$self->_RRULE_AddDates($AddDates,$UID,$YEAR);
+		$self->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
 	}
 }
 
@@ -976,14 +982,18 @@ sub _Get_EXDATES_Parsed {
 # 		Also fetches the TIME from the UIDs DTSTART.
 # 	This is the function that _RRULE_Handler() uses to add the dates that it has
 # 	calculated from the RRULE to the internal sorted hash.
-# 	This function also takes care of killing off entries matched by EXDATE entries.
-# Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR);
+# 	This function also takes care of killing off entries matched by EXDATE entries,
+# 	and entries not matched by BYDAY
+# Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
 sub _RRULE_AddDates {
 	my $self = shift;
 	my $AddDates = shift;
 	my $UID = shift;
 	my $GenYear = shift;
+	my $RRULE = shift;
 	my $Exceptions = $self->_Get_EXDATES_Parsed($UID);
+	my $BYDAY = $self->_Get_BYDAY_Parsed($RRULE,$UID);
+
 	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
 	if (not defined($UID_Time) or not length($UID_Time)) {
 		$UID_Time = 'DAY';
@@ -995,12 +1005,18 @@ sub _RRULE_AddDates {
 			$UID_Time = 'DAY';
 		}
 	}
+
 	foreach my $DateTimeString (keys(%{$AddDates})) {
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($DateTimeString);
 		if($Year ne $GenYear) {
 			_ErrOut("Wanted to add $Day.$Month.$Year, but we're generating $GenYear! This is a bug!");
 			next;
 		}
+		# Test for BYDAY
+		if($BYDAY and not $self->_BYDAY_Test($RRULE,$BYDAY,$UID,$DateTimeString)) {
+			next;
+		}
+
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
@@ -1338,6 +1354,66 @@ sub _RRULE_YEARLY {
 		$Dates{$NewDate} = 1;
 	}
 	return(\%Dates);
+}
+
+# Purpose: Returns a parsed map of localtime() values => byday values
+# 	as specified in the RRULE.
+# Usage: _RRULE_BYDAY_Parsed(RRULE,UID);
+# 	It returns a hashref. The hashref has one key per wday as of localtime().
+# 	Those matching the rule is true, those not, false.
+# 	If a BYDAY rule is not present then it returns FALSE.
+sub _Get_BYDAY_Parsed {
+	my $self = shift;
+	my $RRULE = shift;
+	my $UID = shift;
+
+	# The returned map
+	my %ReturnMap;
+
+	# If there is no BYDAY rule, return undef
+	if(not $RRULE->{BYDAY}) {
+		return(FALSE);
+	}
+
+	# BYDAY value -> localtime() mapping
+	my %BydayMap = (
+		SU => 0,
+		MO => 1,
+		TU => 2,
+		WE => 3,
+		TH => 4,
+		FR => 5,
+		SA => 6
+	);
+
+	foreach my $WD (split(/,/, $RRULE->{BYDAY})) {
+		if($BydayMap{$WD}) {
+			$ReturnMap{$BydayMap{$WD}} = TRUE;
+		} else {
+			_WarnOut("RRULE for UID $UID has an invalid day specified in BYDAY: $WD");
+		}
+	}
+
+	return(\%ReturnMap);
+}
+
+# Purpose: Test if a date matches a preparsed BYDAY rule
+# Usage: $self->_BYDAY_Test(RRULE, BYDAY, UID, DATETIME);
+sub _BYDAY_Test {
+	my $self = shift;
+	my $RRULE = shift;
+	my $BYDAY = shift;
+	my $UID = shift;
+	my $DateTime = shift;
+
+	# Create the UNIX time for said day
+	my $UnixTime = iCal_ConvertToUnixTime($DateTime);
+	my ($testsec,$testmin,$testhour,$testmday,$testmonth,$testyear,$testwday,$testyday,$testisdst) = localtime($UnixTime);
+	if($BYDAY->{$testwday}) {
+		return(TRUE);
+	} else {
+		return(FALSE);
+	}
 }
 
 # Purpose: Strip the time part of a DateTime string
