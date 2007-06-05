@@ -1430,14 +1430,19 @@ sub DP_AddAutostart {
 	}
 
 	my $Result = AddAutostart($Old_GNOME);
-	return(1) if $Result =~ /^okay$/;
+	return(1) if $Result eq 'okay';
 
-	if($Result =~ /^gnome-fail$/) {
+	if($Result eq 'gnome-fail') {
 		# GNOME failed, check if GNOME_DESKTOP_SESSION_ID is set.
 		# If it isn't set, then the user isn't running GNOME *now* so we don't want to display the
 		# error.
 		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
 			# It's set, so the user is running GNOME - display the error
+			# TRANSLATORS: This string appears when Day Planner fails to add dayplanner-daemon
+			# 	to autostart in old GNOME releases (version 2.12 and older).
+			# 	I am aware of the fact that it may not apply everywhere, but it's
+			# 	about as close as it gets, and users running GNOME 2.13 and later or
+			# 	not running GNOME at all will not see this.
 			DPError($i18n->get("A problem occurred while setting up automatic startup of the Day Planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
 		}
 	} else {
