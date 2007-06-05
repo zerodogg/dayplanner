@@ -13,8 +13,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-06-05 13:24+0200\n"
-"PO-Revision-Date: 2007-04-11 14:13+0200\n"
+"POT-Creation-Date: 2007-06-05 13:38+0200\n"
+"PO-Revision-Date: 2007-06-05 13:34+0200\n"
 "Last-Translator: Jørgen Grønlund <jorgenhg@broadpark.no>\n"
 "Language-Team: Norsk bokmål <i18n-nb@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -28,28 +28,25 @@ msgid "An error ocurred while uploading the data"
 msgstr "En feil oppstod under opplasting av dataene"
 
 #: dayplanner:261
-#, fuzzy
 msgid ""
 "Your account has expired. If you are using a paid service this may be "
 "because you have not paid for the current period. If not, you should contact "
 "your service provider to get information on why your account has expired."
 msgstr ""
-"Din konto er utgått på data. Hvis du bruker en betaltjeneste kan dette være "
+"Din konto er utgått på dato. Hvis du bruker en betaltjeneste kan dette være "
 "fordi du ikke har betalt for den gjeldende perioden. Hvis dette ikke er "
 "tilfelle, må du ta kontakt med tjenestelevrandøren din for å få informasjon "
 "om hvorfor kontoen har gått ut.gått ut."
 
 #: dayplanner:264
-#, fuzzy
 msgid ""
 "The server did not accept the uploaded data and replied with an unknown "
 "value: %(value)"
 msgstr ""
 "Tjeneren godtok ikke dataen som ble lastet opp og svarte med en ukjent "
-"verdi: %s"
+"verdi: %(value)"
 
 #: dayplanner:297
-#, fuzzy
 msgid ""
 "The data became corrupted during download. You may want to attempt to "
 "synchronize again."
@@ -64,7 +61,6 @@ msgid "Synchronizing"
 msgstr "Synkroniserer"
 
 #: dayplanner:416
-#, fuzzy
 msgid ""
 "An error occurred with the Day Planner services:\n"
 "\n"
@@ -72,7 +68,7 @@ msgid ""
 msgstr ""
 "En feil oppstod med dagsplanlegger tjenestene:\n"
 "\n"
-"%s"
+"%(error)"
 
 #: dayplanner:441
 msgid "Services"
@@ -129,29 +125,26 @@ msgid "If this problem persists, please contact your service provider"
 msgstr "Kontakt levrandøren hvis problemet fortsetter"
 
 #: dayplanner:551
-#, fuzzy
 msgid ""
 "The Day Planner services server you are connecting to does not support this "
 "version of Day Planner (%(version))."
 msgstr ""
 "Tjeneste tjenereren du kobler deg til støtter ikke denne versjonen av "
-"dagsplanleggeren (%s)."
+"dagsplanleggeren (%(version))."
 
 #: dayplanner:555
 msgid "The username and/or password is incorrect."
 msgstr "Brukernavnet og/eller passordet er feil."
 
 #: dayplanner:734
-#, fuzzy
 msgid ""
 "Unable to create the directory %(directory): %(error)\n"
 "Manually create this directory before closing this dialog."
 msgstr ""
-"Klarte ikke å opprette mappa %s: %s\n"
+"Klarte ikke å opprette mappa %(directory): %(error)\n"
 "Opprett denne mappa manuelt før du lukker dette dialogvinduet."
 
 #: dayplanner:919
-#, fuzzy
 msgid ""
 "Another instance of Day Planner appears to be running. Please quit the "
 "currently running instance of Day Planner before continuing\n"
@@ -161,8 +154,7 @@ msgstr ""
 "En annen dagsplanlegger kjører allerede. Avslutt dagsplanleggeren som "
 "allerede kjører før du fortsetter.\n"
 "\n"
-"Du kan tvinge dagsplanleggeren til å kjøre to instanser av programmet på en "
-"gang. Dette anbefales ikke da det kan ende opp med tap av data."
+"Du kan tvinge den andre instansen til å avslutte hvis du vil."
 
 #. TRANSLATORS: As in force another running Day Planner instance to quit
 #: dayplanner:923
@@ -170,19 +162,16 @@ msgid "_Force"
 msgstr "_Tving"
 
 #: dayplanner:1000
-#, fuzzy
 msgid "%(name) was born"
-msgstr "%ss bursdag"
+msgstr "%(name) ble født"
 
 #: dayplanner:1004
-#, fuzzy
 msgid "%(name)'s birthday (%(year) years old)"
-msgstr "%ss bursdag"
+msgstr "%(name) sin bursdag (%(year) år)"
 
 #: dayplanner:1008 dayplanner:1087 dayplanner:2079 dayplanner:4355
-#, fuzzy
 msgid "%(name)'s birthday"
-msgstr "%ss bursdag"
+msgstr "%(name) sin bursdag"
 
 #. TRANSLATORS: This string is used when there is some issue getting the description
 #. of an event. It is rarely used but kept just in case.
@@ -217,7 +206,6 @@ msgstr ""
 "trykk «OK». Automatisk oppstart av påminneren er nå satt opp."
 
 #: dayplanner:1457
-#, fuzzy
 msgid ""
 "Disabling automatic startup of the reminder will prevent notifications "
 "unless Day Planner has been manually started. Disable automatic startup?"
@@ -227,9 +215,8 @@ msgstr ""
 "oppstart?"
 
 #: dayplanner:1620
-#, fuzzy
 msgid "Day Planner for %(date)"
-msgstr "Dagsplanlegger for %s"
+msgstr "Dagsplanlegger for %(date)"
 
 #: dayplanner:1677
 msgid "Tools"
@@ -240,9 +227,8 @@ msgid "Change to another year"
 msgstr "Bytt år"
 
 #: dayplanner:1677
-#, fuzzy
 msgid "current: %(year)"
-msgstr "nåværende: %s"
+msgstr "nåværende: %(year)"
 
 #: dayplanner:1678
 msgid "Months"
@@ -262,9 +248,8 @@ msgstr "versjon"
 
 #: dayplanner:1711 dayplanner:1778 dayplanner:1847 dayplanner:1861
 #: dayplanner:1879
-#, fuzzy
 msgid "Unable to open %(file) for writing: %(error)"
-msgstr "Klarte ikke å åpne %s for skriving: %s"
+msgstr "Klarte ikke å åpne %(file) for skriving: %(error)"
 
 #. TRANSLATORS: This is followed by the time of an event
 #: dayplanner:1717 dayplanner:4881
@@ -292,9 +277,8 @@ msgid "Select the year to view:"
 msgstr "Velg året som skal vises:"
 
 #: dayplanner:1914 dayplanner:1985
-#, fuzzy
 msgid "Unable to create the directory %(dir): %(error)"
-msgstr "Klarte ikke å opprette mappa %s: %s"
+msgstr "Klarte ikke å opprette mappa %(dir): %(error)"
 
 #: dayplanner:2168 dayplanner:2310 dayplanner:2317
 msgid "Import data"
@@ -389,35 +373,30 @@ msgid "XHTML (exports to a directory)"
 msgstr "XHTML (eksporterer til en mappe)"
 
 #: dayplanner:2628
-#, fuzzy
 msgid ""
 "There are already files in the directory \"%(dir)\". If you continue any "
 "existing exported Day Planner data in that directory will be overwritten. Do "
 "you want to continue?"
 msgstr ""
-"Det er allerede filer i mappa «%s». Hvis du fortsetter vil data som "
+"Det er allerede filer i mappa «%(dir)». Hvis du fortsetter vil data som "
 "tidligere er eksportert av dagsplanleggeren til denne mappa bli overskrevet. "
 "Vil du fortsette?"
 
 #: dayplanner:2637
-#, fuzzy
 msgid "\"%(file)\" already exists and is not a directory"
-msgstr "«%s» finnes allerede og er ikke en mappe."
+msgstr "«%(file)» finnes allerede og er ikke en mappe."
 
 #: dayplanner:2646
-#, fuzzy
 msgid "\"%(dir)\" is read only. Write permissions are required."
-msgstr "«%s» er kun lesbar. Skrivetilgang er nødvendig."
+msgstr "«%(dir)» er kun lesbar. Skrivetilgang er nødvendig."
 
 #: dayplanner:2651
-#, fuzzy
 msgid "\"%(dir)\" is a directory."
-msgstr "«%s» er en mappe"
+msgstr "«%(dir)» er en mappe"
 
 #: dayplanner:2653
-#, fuzzy
 msgid "\"%(file)\" already exists. Overwrite?"
-msgstr "«%s» finnes allerede. Overskrive den?"
+msgstr "«%(file)» finnes allerede. Overskrive den?"
 
 #: dayplanner:2785
 msgid "Sunday"
@@ -456,7 +435,7 @@ msgstr "I morgen"
 #. probably keep this short.
 #: dayplanner:2850
 msgid "At %(time)"
-msgstr ""
+msgstr "Kl. %(time)"
 
 #. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
 #. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
@@ -491,57 +470,53 @@ msgstr "Noen filer kunne ikke lagres. Er du sikker på at du vil avslutte?"
 
 #: dayplanner:3186 dayplanner:3195 dayplanner:3390 dayplanner:3399
 msgid "Show advanced settings"
-msgstr ""
+msgstr "Vis avanserte valg"
 
 #: dayplanner:3193 dayplanner:3397
 msgid "Hide advanced settings"
-msgstr ""
+msgstr "Skjul avanserte valg"
 
 #: dayplanner:3309
-#, fuzzy
 msgid "Calendar"
-msgstr "_Kalender"
+msgstr "Kalender"
 
 #: dayplanner:3412
 msgid "Repeat event every:"
-msgstr ""
+msgstr "Gjenta hendelse hver(t):"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
 #: dayplanner:3419
-#, fuzzy
 msgid "day"
-msgstr "mai"
+msgstr "dag"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
 #: dayplanner:3421
 msgid "week"
-msgstr ""
+msgstr "uke"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
 #: dayplanner:3423
-#, fuzzy
 msgid "month"
-msgstr "Måneder"
+msgstr "måned"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
 #: dayplanner:3425
 msgid "year"
-msgstr ""
+msgstr "år"
 
 #. TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
 #: dayplanner:3451
 msgid "Until:"
-msgstr ""
+msgstr "Frem til:"
 
 #. TRANSLATORS: Don't recur the event on the dates specified next to this string
 #: dayplanner:3486
 msgid "But not on:"
-msgstr ""
+msgstr "Men ikke på:"
 
 #: dayplanner:3556
-#, fuzzy
 msgid "Detailed description"
-msgstr "Beskrivelse:"
+msgstr "Detaljert beskrivelse"
 
 #: dayplanner:3866
 msgid "Add an Event"
@@ -599,9 +574,8 @@ msgid "Time:"
 msgstr "Tidspunkt:"
 
 #: dayplanner:4092 dayplanner:4259
-#, fuzzy
 msgid "Date:"
-msgstr "Dato"
+msgstr "Dato:"
 
 #: dayplanner:4101 dayplanner:4268
 msgid "Description:"
@@ -611,32 +585,23 @@ msgstr "Beskrivelse:"
 msgid "Enter a description of the event here"
 msgstr "Skriv inn en beskrivelse av hendelsen her"
 
-#: dayplanner:4172
-#, fuzzy
-msgid "There is no description for this event. Please enter a description."
+#: dayplanner:4172 dayplanner:4337
+msgid "There is no description of this event. Please enter a description."
 msgstr ""
 "Du har ikke skrevet inn et sammendrag for denne hendelsen. Skriv inn et "
 "sammendrag."
 
 #: dayplanner:4176 dayplanner:4341
 msgid "The date you have entered is invalid."
-msgstr ""
+msgstr "Datoen du har skrevet inn er ikke gyldig."
 
 #: dayplanner:4288
 msgid "Additional information"
 msgstr "Mer informasjon"
 
-#: dayplanner:4337
-#, fuzzy
-msgid "There is no description of this event. Please enter a description."
-msgstr ""
-"Du har ikke skrevet inn et sammendrag for denne hendelsen. Skriv inn et "
-"sammendrag."
-
 #: dayplanner:4415
-#, fuzzy
 msgid "Born:"
-msgstr "Port:"
+msgstr "Født:"
 
 #. TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
 #: dayplanner:4425
@@ -655,7 +620,7 @@ msgstr ""
 
 #: dayplanner:4525
 msgid "Reminders"
-msgstr ""
+msgstr "Påminnelser"
 
 #: dayplanner:4558
 msgid "Start the Day Planner reminder automatically when logging in"
@@ -763,19 +728,17 @@ msgid "Add a new event"
 msgstr "Legg til en hendelse"
 
 #: dayplanner:5233 dayplanner:5235
-#, fuzzy
 msgid ""
 "The home directory of the user %(user) doesn't exist at %(path)! Please "
 "verify that the environment variable %(VAR) is properly set. Unable to "
 "continue\n"
 msgstr ""
-"Hjemmemappa til brukeren %s finnes ikke (%s). Sjekk at miljøvariabelen %s er "
-"satt. Kan ikke fortsette.\n"
+"Hjemmemappa til brukeren %(user) finnes ikke (%(path)). Sjekk at "
+"miljøvariabelen %(VAR) er satt. Kan ikke fortsette.\n"
 
 #: dayplanner:5241 dayplanner:5242
-#, fuzzy
 msgid "The environment variable %(VAR) is not set! Unable to continue\n"
-msgstr "Miljøvariabelen %s er ikke satt! Kan ikke fortsette.\n"
+msgstr "Miljøvariabelen %(VAR) er ikke satt! Kan ikke fortsette.\n"
 
 #: dayplanner-notifier:223 dayplanner-notifier:232
 msgid "Show details"
@@ -790,18 +753,24 @@ msgid ""
 "Today at %(time):\n"
 "%(event_description)"
 msgstr ""
+"I dag klokka %(time):\n"
+"%(event_description)"
 
 #: dayplanner-notifier:305 dayplanner-notifier:407
 msgid ""
 "Tomorrow at %(time):\n"
 "%(event_description)"
 msgstr ""
+"I morgen klokka %(time):\n"
+"%(event_description)"
 
 #: dayplanner-notifier:307 dayplanner-notifier:409
 msgid ""
 "At %(time) on %(date):\n"
 "%(event_description)"
 msgstr ""
+"Klokka %(time) den %(date):\n"
+"%(event_description)"
 
 #: dayplanner-notifier:326
 msgid "Day Planner event"
@@ -809,7 +778,7 @@ msgstr "Dagsplanlegger-hendelse"
 
 #: dayplanner-notifier:337
 msgid "Remind me later"
-msgstr ""
+msgstr "Påminn meg senere"
 
 #: dayplanner-notifier:344
 msgid "Postpone this notification for 10 minutes"
@@ -862,6 +831,11 @@ msgstr "november"
 #: GeneralHelpers.pm:439
 msgid "December"
 msgstr "desember"
+
+#~ msgid "There is no description for this event. Please enter a description."
+#~ msgstr ""
+#~ "Du har ikke skrevet inn et sammendrag for denne hendelsen. Skriv inn et "
+#~ "sammendrag."
 
 #, fuzzy
 #~ msgid "Adding an event on the %(day). %(monthname) %(year)"
