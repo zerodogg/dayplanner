@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-06-05 13:24+0200\n"
+"POT-Creation-Date: 2007-06-05 13:38+0200\n"
 "PO-Revision-Date: 2006-08-06 17:11+0200\n"
 "Last-Translator: Vlastimil Ott <vlastimil@e-ott.info>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -571,9 +571,9 @@ msgstr "Popis:"
 msgid "Enter a description of the event here"
 msgstr "Zadejte souhrn události"
 
-#: dayplanner:4172
+#: dayplanner:4172 dayplanner:4337
 #, fuzzy
-msgid "There is no description for this event. Please enter a description."
+msgid "There is no description of this event. Please enter a description."
 msgstr "Pro tuto událost neexistuje souhrn. Zadejte jej prosím."
 
 #: dayplanner:4176 dayplanner:4341
@@ -583,11 +583,6 @@ msgstr ""
 #: dayplanner:4288
 msgid "Additional information"
 msgstr ""
-
-#: dayplanner:4337
-#, fuzzy
-msgid "There is no description of this event. Please enter a description."
-msgstr "Pro tuto událost neexistuje souhrn. Zadejte jej prosím."
 
 #: dayplanner:4415
 msgid "Born:"
@@ -826,6 +821,10 @@ msgstr "listopad"
 #: GeneralHelpers.pm:439
 msgid "December"
 msgstr "prosinec"
+
+#, fuzzy
+#~ msgid "There is no description for this event. Please enter a description."
+#~ msgstr "Pro tuto událost neexistuje souhrn. Zadejte jej prosím."
 
 #, fuzzy
 #~ msgid "Adding an event on the %(day). %(monthname) %(year)"

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-06-05 13:24+0200\n"
+"POT-Creation-Date: 2007-06-05 13:38+0200\n"
 "PO-Revision-Date: 2007-06-04 20:35+0200\n"
 "Last-Translator: Gaute Hvoslef Kvalnes <gaute@verdsveven.com>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -582,8 +582,8 @@ msgstr "Skildring:"
 msgid "Enter a description of the event here"
 msgstr "Skriv inn ein skildring av hendinga her"
 
-#: dayplanner:4172
-msgid "There is no description for this event. Please enter a description."
+#: dayplanner:4172 dayplanner:4337
+msgid "There is no description of this event. Please enter a description."
 msgstr ""
 "Du har ikkje skrive inn ei skildring av denne hendinga. Skriv inn ei "
 "skildring."
@@ -595,12 +595,6 @@ msgstr "Datoen du skreiv inn er ikkje gyldig."
 #: dayplanner:4288
 msgid "Additional information"
 msgstr "Meir informasjon"
-
-#: dayplanner:4337
-msgid "There is no description of this event. Please enter a description."
-msgstr ""
-"Du har ikkje skrive inn ei skildring av denne hendinga. Skriv inn ei "
-"skildring."
 
 #: dayplanner:4415
 msgid "Born:"
@@ -834,6 +828,11 @@ msgstr "november"
 #: GeneralHelpers.pm:439
 msgid "December"
 msgstr "desember"
+
+#~ msgid "There is no description for this event. Please enter a description."
+#~ msgstr ""
+#~ "Du har ikkje skrive inn ei skildring av denne hendinga. Skriv inn ei "
+#~ "skildring."
 
 #~ msgid "Adding an event on the %(day). %(monthname) %(year)"
 #~ msgstr "Legg til ei hending den %(day). %(monthname) %(year)"

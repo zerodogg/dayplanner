@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: day planner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-06-05 13:25+0200\n"
+"POT-Creation-Date: 2007-06-05 13:38+0200\n"
 "PO-Revision-Date: 2007-06-04 21:18+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -581,9 +581,9 @@ msgstr "Beskrivning:"
 msgid "Enter a description of the event here"
 msgstr "Ange en beskrivning av händelsen här"
 
-#: dayplanner:4172
-msgid "There is no description for this event. Please enter a description."
-msgstr "Det finns ingen beskrivning för denna händelse. Ange en beskrivning."
+#: dayplanner:4172 dayplanner:4337
+msgid "There is no description of this event. Please enter a description."
+msgstr "Det finns ingen beskrivning av denna händelse. Ange en beskrivning."
 
 #: dayplanner:4176 dayplanner:4341
 msgid "The date you have entered is invalid."
@@ -592,10 +592,6 @@ msgstr "Datumet som du har angivit är ogiltigt."
 #: dayplanner:4288
 msgid "Additional information"
 msgstr "Ytterligare information"
-
-#: dayplanner:4337
-msgid "There is no description of this event. Please enter a description."
-msgstr "Det finns ingen beskrivning av denna händelse. Ange en beskrivning."
 
 #: dayplanner:4415
 msgid "Born:"
@@ -827,6 +823,10 @@ msgstr "November"
 #: GeneralHelpers.pm:439
 msgid "December"
 msgstr "December"
+
+#~ msgid "There is no description for this event. Please enter a description."
+#~ msgstr ""
+#~ "Det finns ingen beskrivning för denna händelse. Ange en beskrivning."
 
 #, fuzzy
 #~ msgid "Adding an event on the %(day). %(monthname) %(year)"
