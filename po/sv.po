@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: day planner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-06-05 13:24+0200\n"
-"PO-Revision-Date: 2007-06-02 22:56+0100\n"
+"POT-Creation-Date: 2007-06-05 13:25+0200\n"
+"PO-Revision-Date: 2007-06-04 21:18+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "MIME-Version: 1.0\n"
@@ -158,14 +158,12 @@ msgid "_Force"
 msgstr "_Tvinga"
 
 #: dayplanner:1000
-#, fuzzy
 msgid "%(name) was born"
-msgstr "Födelsedag för %(name)"
+msgstr "%(name) föddes"
 
 #: dayplanner:1004
-#, fuzzy
 msgid "%(name)'s birthday (%(year) years old)"
-msgstr "Födelsedag för %(name)"
+msgstr "Födelsedag för %(name) (%(year) år)"
 
 #: dayplanner:1008 dayplanner:1087 dayplanner:2079 dayplanner:4355
 msgid "%(name)'s birthday"
