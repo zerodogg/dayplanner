@@ -3287,15 +3287,24 @@ sub RemoveFromField {
 }
 
 # Purpose: Popup a calendar to select one or more dates from
-# Usage: \&PopupDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON, MODE);
+# Usage: \&PopupDateSel(TEXT ENTRY OBJECT, CALENDAR BUTTON, MODE, DEFAULT_DATE?);
 # 	MODE is one of:
 #	 	SINGLE - Only allows a single date to be selected
-# 		MULTI - Allows an infinite number of dates to be selected
+# 		MULTI/undef - Allows an infinite number of dates to be selected
+# 	DEFAULT_DATE is one of:
+# 		undef - Use the first entry in the entry field
+# 		CURRENT - Use todays date
 sub PopupDateSel {
 	my $TextEntry = shift;
 	my $CalButton = shift;
 	$CalButton->set_sensitive(0);
 	my $Mode = shift;
+	my $Default_Date = shift;
+	
+	# This is used to indicate when we are changing months,
+	# so that changing month doesn't inadvertedly change the date too.
+	my $ChangingNow;
+
 	if(not $Mode) {
 		$Mode = 'MULTI';
 	}
@@ -3327,16 +3336,29 @@ sub PopupDateSel {
 	# Handle changes to the calendar
 	my %SelHash;
 	# Select the date in the entry field
-	my $CurrDate = ParseEntryField($TextEntry);
-	if(@{$CurrDate}) {
-		my($SelYear,$SelMonth,$SelDay) = ParseDateString($CurrDate->[0]);
-		$SelMonth--;
-		$Calendar->select_month($SelMonth,$SelYear);
-		$Calendar->select_day($SelDay);
+	if(defined($Default_Date) and $Default_Date eq 'CURRENT') {
+		my ($year, $month, $day) = $CalendarWidget->get_date();
+		$Calendar->select_month($month, $year);
+	} else {
+		my $CurrDate = ParseEntryField($TextEntry);
+		if(@{$CurrDate}) {
+			my($SelYear,$SelMonth,$SelDay) = ParseDateString($CurrDate->[0]);
+			$SelMonth--;
+			$Calendar->select_month($SelMonth,$SelYear);
+			$Calendar->select_day($SelDay);
+		}
 	}
 
 		# Get the dates
 	$Calendar->signal_connect('month-changed' => sub {
+			# If ChangingNow is undef that means we just
+			# got created, so initialize it to zero instead of one
+			# so that selecting days work properly immedietly.
+			if(not $ChangingNow) {
+				$ChangingNow = 0;
+			} else {
+				$ChangingNow = 1;
+			}
 			my $DateRef = ParseEntryField($TextEntry);
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# 1-12 not 0-11
@@ -3354,6 +3376,10 @@ sub PopupDateSel {
 		# Set the handler for clicking on a date
 		# This will add and remove dates from the field
 	$Calendar->signal_connect('day-selected' => sub {
+			if($ChangingNow) {
+				$ChangingNow = 0;
+				return;
+			}
 			my $Selected = $Calendar->selected_day();
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
@@ -3462,7 +3488,7 @@ sub CreateAdvancedWidget {
 	Gtk2_Button_SetImage($StopAt_CalButton,$SecondCalImage,'Calendar');
 	$StopAt_CalButton->show();
 	$StopAt_CalButton->set_sensitive(0);
-	$StopAt_CalButton->signal_connect('clicked' => sub { PopupDateSel($StopAt_Entry,$StopAt_CalButton,'SINGLE')});
+	$StopAt_CalButton->signal_connect('clicked' => sub { PopupDateSel($StopAt_Entry,$StopAt_CalButton,'SINGLE','CURRENT')});
 	$Table->attach_defaults($StopAt_CalButton,3,4,0,1);
 		# CheckButton callback
 	$StopAtCheckButton->signal_connect('toggled' => sub {
@@ -3497,7 +3523,7 @@ sub CreateAdvancedWidget {
 	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
 	$CalButton->show();
 	$CalButton->set_sensitive(0);
-	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI')});
+	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI','CURRENT')});
 	$Table->attach_defaults($CalButton,3,4,1,2);
 		# CheckButton callback
 	$ExceptCheckButton->signal_connect('toggled' => sub {
