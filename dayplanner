@@ -3300,7 +3300,6 @@ sub PopupDateSel {
 	$CalButton->set_sensitive(0);
 	my $Mode = shift;
 	my $Default_Date = shift;
-	my $ParentW = $TextEntry->get_parent_window;
 	
 	# This is used to indicate when we are changing months,
 	# so that changing month doesn't inadvertedly change the date too.
@@ -3332,7 +3331,6 @@ sub PopupDateSel {
 	$CloseButton->signal_connect(clicked => sub {
 			$Window->destroy();
 			$CalButton->set_sensitive(1);
-			$ParentW->activate_focus();
 			$TextEntry->grab_focus();
 		});
 	$ButHBox->pack_end($CloseButton,0,0,0);
