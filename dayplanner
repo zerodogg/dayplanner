@@ -413,7 +413,7 @@ sub DPS_Perform {
 		return unless($Gtk2Init);
 		$DPServices{ProgressWin}->{Window}->destroy();
 		if(defined($DPServices{Error})) {
-			DPError($i18n->get("An error occurred with the Day Planner services:\n\n%(error)",{ error => $DPServices{Error}}));
+			DPError($i18n->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $DPServices{Error}}));
 			delete($DPServices{Error});
 		}
 		delete($DPServices{ProgressWin});
@@ -1617,7 +1617,7 @@ sub HTML_Header {
 	if($NonDateMode) {
 		$Header .= "<title>" . HTML_Encode($Date) . "</title>";
 	} else {
-		$Header .= '<title>' . HTML_Encode($i18n->get('Day Planner for %(date)', { date => $Date})) . '</title>';
+		$Header .= '<title>' . HTML_Encode($i18n->get_advanced('Day Planner for %(date)', { date => $Date})) . '</title>';
 	}
 	$Header .= "</head>\n";
 	$Header .= '<body>';
@@ -3300,6 +3300,7 @@ sub PopupDateSel {
 	$CalButton->set_sensitive(0);
 	my $Mode = shift;
 	my $Default_Date = shift;
+	my $ParentW = $TextEntry->get_parent_window;
 	
 	# This is used to indicate when we are changing months,
 	# so that changing month doesn't inadvertedly change the date too.
@@ -3331,6 +3332,8 @@ sub PopupDateSel {
 	$CloseButton->signal_connect(clicked => sub {
 			$Window->destroy();
 			$CalButton->set_sensitive(1);
+			$ParentW->activate_focus();
+			$TextEntry->grab_focus();
 		});
 	$ButHBox->pack_end($CloseButton,0,0,0);
 	# Handle changes to the calendar
@@ -3400,6 +3403,13 @@ sub PopupDateSel {
 				AddToField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
 			}
 			});
+	$Calendar->signal_connect('day-selected-double-click' => sub {
+			if($Mode eq 'SINGLE') {
+				$Calendar->signal_emit('day-selected');
+				$CloseButton->signal_emit('clicked');
+			}
+		});
+
 	# Show it all
 	$Window->show_all();
 }
