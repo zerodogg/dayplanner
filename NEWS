@@ -22,6 +22,7 @@ Version 0.7 "Unia" (Released on the 10th of June 2007)
 - Better i18n system
 - Can now calculate the age of people on their birthday if the birth date
   is available
+- Added the ability to select the date from the add/edit boxes
 
 * Notifier (dayplanner-notifier)
 
