@@ -24,7 +24,6 @@ use warnings;
 require 5.8.1;				# Require perl 5.8 to ensure things work smoothly
 					# (5.8.1 introduced some security enhancements we need)
 use IO::Socket::SSL;
-#use IO::Socket::INET;
 use IO::Socket::UNIX;
 use IO::Select;
 use Getopt::Long;
@@ -56,8 +55,9 @@ my %Clients;		# Hash of current network clients
 my %Users;		# User list
 my %Security;		# Security specific stuff. For now only handles banning
 			# of specific IP adresses.
-my %Config;
-my %Servers;
+my %Config;		# Configuration hash
+my %Servers;		# A list of all of our server objects. These are the objects
+			# closed gracefully upon shutdown
 
 # TODO: Not all user levels are fully functional
 # level 0 = EXPIRED - no access at all
@@ -633,6 +633,11 @@ sub InitNetwork {
 # Usage: OpenSocket(PORT);
 sub OpenSocket {
 	my $ListenPort = shift;
+	foreach(qw(server.key server.crt)) {
+		if(not -e "./$_") {
+			die("The SSL file ./$_ does not exist. Unable to open up an SSL server on $ListenPort. Exiting.\n");
+		}
+	}
 	my $NewServer = IO::Socket::SSL->new(
 					LocalPort => $ListenPort,
 					Listen	=> 5,
@@ -650,6 +655,18 @@ sub OpenSocket {
 # Usage: OpenLocalSocket(/PATH/);
 sub OpenLocalSocket {
 	my $Path = shift;
+	if (-e $Path) {
+		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $Path,
+							Type	=> SOCK_STREAM
+							Timeout => 2);
+		if (defined($TestSocket)) {
+			close($TestSocket);
+			die("A services daemon is already running and still responding. Tell it to exit before starting a new one\n");
+		} else {
+			unlink($Path);
+		}
+				
+	}
 	$AdminSocket = IO::Socket::UNIX->new(
 		Local	=> $Path,
 		Type	=> SOCK_STREAM,
