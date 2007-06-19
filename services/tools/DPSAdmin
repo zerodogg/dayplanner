@@ -126,7 +126,9 @@ sub SendDaemonCommand {
 	print $socket $Command,"\n";
 	my $Return = <$socket>;
 	close($socket);
-	chomp($Return);
+	if(defined($Return)) {
+		chomp($Return);
+	}
 	return($Return);
 }
 
