@@ -1229,7 +1229,7 @@ sub HolidaySetup {
 		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. You didn't have any\n";
 		print $DUMMY_FILE ": environment variables set so Day Planner couldn't autodetect one.\n";
 		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file and re-run Day Planner.\n";
-		print $DUMMY_FILE "Make sure one of the LC_* or LANG* environment variables are set when running Day Planner";
+		print $DUMMY_FILE ": Make sure one of the LC_* or LANG* environment variables are set when running Day Planner";
 	}
 	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
