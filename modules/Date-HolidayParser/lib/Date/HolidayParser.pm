@@ -401,13 +401,16 @@ sub _load_and_parse {
 	
 		# Parse PreDec
 		if($LineMode eq 'PreDec') {
+			my $Iterations = 0;
 			while(not $Line =~ /^\"/) {
+				$Iterations++;
 				my $PreDec = $Line;
 				$PreDec =~ s/^\s*(\w+)\s+.*$/$1/;
 				chomp($PreDec);
 				$Line =~ s/^\s*$PreDec\s+//;
 				unless(length($PreDec)) {
 						_HolidayError($LineNo, $File, "LineMode=PreDec, but the predec parser recieved \"$PreDec\" as PreDec", "Ignoring this predec");
+						last;
 					} else {
 						if($PreDec =~ /^(weekend|red)$/) {
 							$HolidayType = 'red';
@@ -415,9 +418,13 @@ sub _load_and_parse {
 							# These are often just "formatting" declerations, and thus ignored by the day planner
 							# parser. In these cases PostDec usually declares more valid stuff
 							$HolidayType = 'none';
+							$Line =~ s/^[^"]+//;
+							last;
 						} else {
 							$HolidayType = 'none';
 							_SyntaxError($LineNo, $File, "Unrecognized holiday type: \"$PreDec\".", "Defaulting to 'none'");
+							$Line =~ s/^[^"]+//;
+							last;
 						}
 				}
 			}
