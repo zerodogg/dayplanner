@@ -1,7 +1,11 @@
 Revision history for Date-HolidayParser
 
-Version 0.3 (Unreleased)
-------------------------
+Version 0.3.1 (Released 20th of June 2007)
+----------------------------------------
+- Fixed an eternal loop on some errornious lines
+
+Version 0.3 (Released 1st of August 2006)
+----------------------------------------
 - Added object oriented interface
 - Some code cleanup
 - Fixed parsing of some (valid) keyword combinations
