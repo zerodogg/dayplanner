@@ -964,15 +964,18 @@ sub IPC_Handler {
 }
 
 # Purpose: Get the SUMMARY string for an UID
-# Usage: my $Summary = GetSummaryString(UID, CURRENT?);
+# Usage: my $Summary = GetSummaryString(UID, CURRENT?, YEAR?, MONTH?);
 #  The returned summary string is properly formatted (ie. it will return
 #  a properly localized birthday string if needed).
 #
 # 	If CURRENT is true GetSummaryString() will base its birthday information
 # 	on the current date/time instead of the selected date/time
+# 	If YEAR/MONTH is true and CURRENT is false then that will be used in place
+# 	of the selection from $CalendarWidget
 sub GetSummaryString {
 	my $UID = shift;
 	my $CURRENT = shift;
+	my ($AltYear, $AltMonth) = @_;
 	my $UID_Obj = $iCalendar->get_info($UID);
 	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
@@ -980,8 +983,18 @@ sub GetSummaryString {
 				# Calculate birthday here
 				my ($BYear,$BMonth,$BDay) = iCal_ParseDateTime($UID_Obj->{'DTSTART'});
 				my ($SelYear, $SelMonth, $SelDay);
+				# If CalendarWidget is false and no arguments has been supplied, warn and set current
+				if(not $CURRENT and not $CalendarWidget and not ($AltYear and $AltMonth)) {
+					$CURRENT = 1;
+					DPIntWarn("Bug: GetSummaryString() called without CURRENT and without Year/Month. Assuming CURRENT");
+				}
 				if(not $CURRENT) {
-					($SelYear, $SelMonth, $SelDay) = $CalendarWidget->get_date();$SelMonth++;
+					if($AltYear and $AltMonth) {
+						$SelYear = $AltYear;
+						$SelMonth = $AltMonth;
+					} else {
+						($SelYear, $SelMonth, $SelDay) = $CalendarWidget->get_date();$SelMonth++;
+					}
 				} else {
 					# Get the current time
 					my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
@@ -1717,7 +1730,7 @@ sub HTML_DayToHtml {
 	print $FILE '<tbody><tr><td>' . HTML_Encode($i18n->get('Time')) . '</td><td>' . HTML_Encode($i18n->get('Description')) . "</td></tr>\n";
 	# Write allday and birthdays
 	foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,'DAY')})) {
-		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event));
+		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
 		my $EventInfo = $iCalendar->get_info($Event);
 		if(defined($EventInfo->{DESCRIPTION})) {
 			my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
@@ -1729,7 +1742,7 @@ sub HTML_DayToHtml {
 	foreach my $Time (sort(@{$iCalendar->get_dateinfo($Year,$Month,$Day)})) {
 		next if $Time eq 'DAY';
 		foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})) {
-			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event));
+			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
 			my $EventInfo = $iCalendar->get_info($Event);
 			if(defined($EventInfo->{DESCRIPTION})) {
 				my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
