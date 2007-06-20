@@ -24,7 +24,7 @@ my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
 # Version number
 my $VERSION;
-$VERSION = 0.3;
+$VERSION = 0.3.1;
 
 # The user should be able to tell us to be silent
 our $BeSilent;
@@ -401,9 +401,7 @@ sub _load_and_parse {
 	
 		# Parse PreDec
 		if($LineMode eq 'PreDec') {
-			my $Iterations = 0;
 			while(not $Line =~ /^\"/) {
-				$Iterations++;
 				my $PreDec = $Line;
 				$PreDec =~ s/^\s*(\w+)\s+.*$/$1/;
 				chomp($PreDec);
