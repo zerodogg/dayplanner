@@ -5,7 +5,7 @@
 #  The format is based off of the holiday files found bundled
 #  with the plan program, not any official spec. This because no
 #  official spec could be found.
-# Copyright (C) Eskild Hustvedt 2006
+# Copyright (C) Eskild Hustvedt 2006, 2007
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself. There is NO warranty;
@@ -827,7 +827,7 @@ your bug as I make changes.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2006 Eskild Hustvedt, all rights reserved.
+Copyright (C) 2006, 2007 Eskild Hustvedt, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself. There is NO warranty;
