@@ -25,6 +25,7 @@ use Getopt::Long;
 use Cwd qw/realpath/;
 use Digest::MD5 qw/md5_base64/;
 use MIME::Base64;
+use Fatal qw(open);
 
 my $PID = fork;
 exit if $PID;
