@@ -1,6 +1,20 @@
 Day Planner version history
 **************************
 
+Version 0.8 (Unreleased)
+------------------------
+* Client (dayplanner)
+- Fixed a bug that caused exporting HTML from the commandline to fail
+- Fixed a bug that could cause errornious birthday strings when exporting
+  to HTML
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
+* Services daemon (dayplanner-services-daemon)
+- Fixed startup after crashing
+
 Version 0.7 "Unia" (Released on the 10th of June 2007)
 ------------------------
 * Client (dayplanner)
