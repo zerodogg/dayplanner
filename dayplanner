@@ -5315,32 +5315,40 @@ GetOptions (
 		exit(0);
 	},
 	'debuginfo' => sub {
+		$| = 1;
 		$SaveToDir = DetectConfDir();
-		print "Day Planner version $Version\n";
-		print "RCS revision: $RCSRev\n";
+		print "Day Planner version $Version - $RCSRev\n";
 		print "Using config dir: $SaveToDir\n";
 		printf "Perl version %vd\n", $^V;
-		if(eval('use Locale::gettext;1')) {
-			print "Locale::gettext version: $Locale::gettext::VERSION\n";
-		} else {
-			print 'Locale::gettext version: MISSING\n';
-		}
 		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
-		print "Gtk2-perl version $Gtk2::VERSION\n";
 		print 'OS: ', GetDistVer(), "\n";
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar IO::Socket::SSL IPC::Open2/) {
+		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2/) {
 			if(eval("use $_; 1")) {
 				push(@AvailModules, $_);
 			} else {
 				push(@UnavailModules, $_);
 			}
 		}
-		print 'Available modules:';
-		print " $_" foreach(@AvailModules);
-		print ' (none)' unless(@AvailModules);
+		print "Available modules:";
+		my $Prev;
+		foreach my $Module (@AvailModules) {
+			if($Prev) {
+				print ',';
+			} else {
+				$Prev = 1;
+			}
+			my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}");
+			if($ModVer) {
+				$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
+							# printf() doesn't like it so we remove it.
+				printf(' %s %g', $Module, $ModVer);
+			} else {
+				print " $Module";
+			}
+		}
 		print "\nUnavailable modules:";
 		print " $_" foreach(@UnavailModules);
 		print ' (none)' unless(@UnavailModules);
