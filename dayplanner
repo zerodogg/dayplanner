@@ -5325,28 +5325,25 @@ GetOptions (
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2/) {
-			if(eval("use $_; 1")) {
-				push(@AvailModules, $_);
-			} else {
-				push(@UnavailModules, $_);
-			}
-		}
 		print "Available modules:";
 		my $Prev;
-		foreach my $Module (@AvailModules) {
-			if($Prev) {
-				print ',';
+		foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2/) {
+			if(eval("use $Module; 1")) {
+				if($Prev) {
+					print ',';
+				} else {
+					$Prev = 1;
+				}
+				my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}");
+				if($ModVer) {
+					$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
+								# printf() doesn't like it so we remove it.
+					printf(' %s %g', $Module, $ModVer);
+				} else {
+					print " $Module";
+				}
 			} else {
-				$Prev = 1;
-			}
-			my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}");
-			if($ModVer) {
-				$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
-							# printf() doesn't like it so we remove it.
-				printf(' %s %g', $Module, $ModVer);
-			} else {
-				print " $Module";
+				push(@UnavailModules, $_);
 			}
 		}
 		print "\nUnavailable modules:";
