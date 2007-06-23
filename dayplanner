@@ -5175,7 +5175,7 @@ sub DrawMainWindow {
 # Purpose: Call the main data initialization functions
 # Usage: MainInit();
 sub MainInit {
-	my $NoGui = $_[0];
+	my $NoGui = shift;
 	my $FirstStartup;
 	# Set SaveToDir if it isn't already set
 	if(not defined($SaveToDir)) {
@@ -5188,8 +5188,12 @@ sub MainInit {
 		$FirstStartup =	FirstStartup($NoGui);
 	}
 
-	# Load the configuration file
-	LoadConfig();
+	# If we're not in GUI mode, load the configuration file.
+	# We load it later if in GUI mode in order to give the illusion of the
+	# app starting faster
+	if($NoGui) {
+		LoadConfig();
+	}
 	# Load the calendar
 	LoadCalendar();
 	# Load the internal state file
@@ -5233,18 +5237,22 @@ sub InitDPCore {
 		AlreadyRunningDP($Client);
 		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	}
+	# Draw the main window
+	DrawMainWindow();
+	$MainWindow->show() if not $FirstStartup;
+	Gtk2->main_iteration while Gtk2->events_pending;
+	# Load the config
+	LoadConfig();
+	# Import data as told on the commandline
 	if(@ARGV) {
 		foreach(@ARGV) {
 			IPC_Handler("IMPORT_DATA $_");
 		}
 	}
-	# Draw the main window
-	DrawMainWindow();
-	$MainWindow->show() if not $FirstStartup;
-	# Initialize the daemon
-	DaemonInit() or die();
 	# Connect to a DPS server and sync the local data with it if it's enabled
 	DPS_Perform('SYNC');
+	# Initialize the daemon
+	DaemonInit() or die();
 	# Add autostart if needed
 	unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 		DP_AddAutostart();
