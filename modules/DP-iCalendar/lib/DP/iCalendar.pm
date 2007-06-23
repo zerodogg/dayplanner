@@ -457,14 +457,10 @@ sub iCal_ConvertToUnixTime {
 	$Month--;
 	my ($Hour,$Minute) = (0,0);
 	if($Time) {
-		$Hour = $Time;
-		$Hour =~ s/^(\d+):.+$/$1/;
-		$Minute = $Time;
-		$Minute =~ s/^\d+:(\d+)$/$1/;
+		($Hour,$Minute) = split(/:/,$Time,2);
 	}
 	
-	my $UnixTime = mktime(0,$Minute,$Hour,$Day,$Month,$Year);
-	return($UnixTime);
+	return(mktime(0,$Minute,$Hour,$Day,$Month,$Year));
 }
 
 # Purpose: Parse an iCalendar date-time
@@ -487,22 +483,18 @@ sub iCal_ParseDateTime {
 	# Stripping of TZID
 	$Value =~ s/^(DTSTART)?;?TZID=\D+://;
 
-	my $Year = $Value;
-	my $Month = $Value;
-	my $Day = $Value;
-	my $Hour = $Value;
-	my $Minutes = $Value;
+	my $Hour;
+	my $Minutes;
 	my $Time;
 
-	$Year =~ s/^(\d\d\d\d).*$/$1/;
-	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
-	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
+	my $Year = substr($Value, 0,4);
+	my $Month = substr($Value, 4, 2);
+	my $Day = substr($Value, 6, 2);
 
 	# Test if the time is set, if it is then process it.
-	if($Hour =~ s/^.+T//) {
-		$Hour =~ s/^(\d\d).*$/$1/;
-		$Minutes =~ s/^.+T//;
-		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
+	if($Value =~ s/^.+T//) {
+		$Hour = substr($Value,0,2);
+		$Minutes = substr($Value,2,2);
 		$Time = _AppendZero($Hour) . ':' . _AppendZero($Minutes);
 	}
 	return($Year,$Month,$Day,$Time);
@@ -656,17 +648,66 @@ sub _LoadFile {
 	return(TRUE);
 }
 
+# Purpose: Parses a single iCalendar line into the data hash supplied
+# Usage: _ParseiCalLine(DATA_HASHREF);
+# 
+# 	DATA_HASHREF is a ref of the hash declared at the beginning of _ParseData();
+sub _ParseiCalLine {
+	my $DataHash = shift;
+	chomp($DataHash->{Line});
+	if ($DataHash->{Line} =~ s/^\s//) {
+		if($DataHash->{ArrayFields}->{$DataHash->{LastName}}) {
+			my $LastArrayField = scalar(@{$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}}});
+			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}}->[$LastArrayField] .= _UnSafe($DataHash->{Line});
+		} else {
+			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}} .= _UnSafe($DataHash->{Line});
+		}
+	} elsif($DataHash->{Line} =~ /^END/) {
+		return;
+	} else {
+		my($Name,$Value) = split(/:/,$DataHash->{Line}, 2);
+		if($Name =~ /^BEGIN/) {
+			if($Value eq 'VCALENDAR') {
+				$DataHash->{FileBegun} = 1;
+				$DataHash->{iCalendarStructures} = [];
+				return();
+			}
+			$DataHash->{CurrentStructure}++;
+			$Name = 'X-PARSER_ENTRYTYPE';
+		}
+		$DataHash->{LastName} = $Name;
+		if($DataHash->{ArrayFields}->{$Name}) {
+			if(not $DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}) {
+				$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name} = [];
+			}
+			push(@{$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}}, _UnSafe($Value));
+		} else {
+			if($DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}) {
+				_WarnOut("Multiple entries of $Name found, but field isn't classified as an array field. Expect trouble");
+			}
+			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name} = _UnSafe($Value);
+		}
+	}
+	return();
+}
+
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
 # 	undef on failure.
 # Usage: my $iCalendar = _ParseData(FILE);
 sub _ParseData {
-	my $File = $_[0];
-	my @iCalendarStructures;
-	my $LastStructure;
-	my $LastName;
-	my $CurrentStructure;
+	my $File = shift;
+	my %DataHash = (
+		iCalendarStructures => [],
+		LastStructure => '',
+		LastName => '',
+		CurrentStructure => 0,
+		FileBegun => '',
+		ArrayFields => {
+			EXDATE => 1,
+		},
+		Line => '',
+	);
 	my @FileContents;
-	my $FileBegun;
 	my $Type;
 	# If $File is a ref...
 	if(ref($File)) {
@@ -680,6 +721,10 @@ sub _ParseData {
 			# Return an empty anonymous array
 			return([]);
 		}
+		foreach (@FileContents) {
+			$DataHash{Line} = $_;
+			_ParseiCalLine(\%DataHash);
+		}
 	}
 	# It isn't
 	else {
@@ -689,81 +734,40 @@ sub _ParseData {
 			# Return an empty anonymous array
 			return([]);
 		};
-		@FileContents = <$ICALENDAR>;
+		# Seperator is \r\n
+		$/ = "\r\n";
+		while($DataHash{Line} = <$ICALENDAR>) {
+			_ParseiCalLine(\%DataHash);
+		}
 		close($ICALENDAR);
+		# Reset seperator
+		$/ = "\n";
 	}
-	my %ArrayFields = (
-		EXDATE => 1,
-	);
 
-	foreach(@FileContents) {
-		s/\r//g;
-		chomp;
-		unless($FileBegun) {
-			if (/^BEGIN:VCALENDAR/) {
-				$FileBegun = 1;
-			} else {
-				next;
-			}
-		}
-		if (s/^\s//) {
-			if($ArrayFields{$LastName}) {
-				my $LastArrayField = scalar(@{$iCalendarStructures[$CurrentStructure]{$LastName}});
-				$iCalendarStructures[$CurrentStructure]{$LastName}->[$LastArrayField] .= _UnSafe($_);
-			} else {
-				$iCalendarStructures[$CurrentStructure]{$LastName} .= _UnSafe($_);
-			}
-		} elsif(/^END/) {
-			next;
-		} else {
-			my $Name = $_;
-			my $Value = $_;
-			$Name =~ s/^([A-Za-z\-]+)[:;](.*)$/$1/;
-			$Value =~ s/^([A-Za-z\-\_]+)[:;](.*)$/$2/;
-			if($Name =~ /^BEGIN/) {
-				$CurrentStructure++;
-				$Name = 'X-PARSER_ENTRYTYPE';
-			}
-			$LastName = $Name;
-			if($ArrayFields{$Name}) {
-				if(not $iCalendarStructures[$CurrentStructure]{$Name}) {
-					$iCalendarStructures[$CurrentStructure]{$Name} = [];
-				}
-				push(@{$iCalendarStructures[$CurrentStructure]{$Name}}, _UnSafe($Value));
-			} else {
-				if($iCalendarStructures[$CurrentStructure]{$Name}) {
-					_WarnOut("Multiple entries of $Name found, but field isn't classified as an array field. Expect trouble");
-				}
-				$iCalendarStructures[$CurrentStructure]{$Name} = _UnSafe($Value);
-			}
-		}
-	}
-	unless($FileBegun) {
+	unless($DataHash{FileBegun}) {
 		_WarnOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
 	}
-	return(\@iCalendarStructures);
+	return($DataHash{iCalendarStructures});
 }
 
 # Purpose: Escape certain characters that are special in iCalendar
 # Usage: my $SafeData = iCal_GetSafe($Data);
 sub _GetSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\/\\\\/g;
-	$Data =~ s/,/\,/g;
-	$Data =~ s/;/\;/g;
-	$Data =~ s/\n/\\n/g;
-	return($Data);
+	$_[0] =~ s/\\/\\\\/g;
+	$_[0] =~ s/,/\,/g;
+	$_[0] =~ s/;/\;/g;
+	$_[0] =~ s/\n/\\n/g;
+	return($_[0]);
 }
 
 # Purpose: Removes escaping of iCalendar entries
 # Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
 sub _UnSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\n/\n/g;
-	$Data =~ s/\\,/,/g;
-	$Data =~ s/\\;/;/g;
-	$Data =~ s/\\\\/\\/g;
-	return($Data);
+	$_[0] =~ s/\\n/\n/g;
+	$_[0] =~ s/\\,/,/g;
+	$_[0] =~ s/\\;/;/g;
+	$_[0] =~ s/\\\\/\\/g;
+	return($_[0]);
 }
 
 # Purpose: Get a unique ID for an event
