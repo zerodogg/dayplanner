@@ -8,6 +8,8 @@ Version 0.8 (Unreleased)
 - Fixed a bug that could cause errornious birthday strings when exporting
   to HTML
 - Some iCalendar compatibility fixes
+- Various optimizations in the underlying iCalendar library
+- Various Day Planner startup optimizations
 
 * Notifier (dayplanner-notifier)
 
