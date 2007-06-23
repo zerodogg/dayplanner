@@ -24,7 +24,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 
 # Version number
 our $VERSION;
-$VERSION = 0.3;
+$VERSION = 0.3.1;
 
 # - Public methods
 
@@ -1440,7 +1440,7 @@ DP::iCalendar - Parser for iCalendar files
 
 =head1 VERSION
 
-0.3
+0.3.1
 
 =head1 SYNOPSIS
 
