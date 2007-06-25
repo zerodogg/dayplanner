@@ -1391,7 +1391,7 @@ sub _Get_BYDAY_Parsed {
 	);
 
 	foreach my $WD (split(/,/, $RRULE->{BYDAY})) {
-		if($BydayMap{$WD}) {
+		if(defined($BydayMap{$WD})) {
 			$ReturnMap{$BydayMap{$WD}} = TRUE;
 		} else {
 			_WarnOut("RRULE for UID $UID has an invalid day specified in BYDAY: $WD");
