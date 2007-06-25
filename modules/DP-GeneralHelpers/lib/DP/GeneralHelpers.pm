@@ -187,7 +187,6 @@ sub new_server {
 	if(not $self->_CheckOrUnlink) {
 		return(FALSE);
 	}
-	# TODO: Handle the case of DYING much much more gracefully
 	$self->{Socket} = IO::Socket::UNIX->new(
 					Local	=> $self->{FileName},
 					Type	=> SOCK_STREAM,

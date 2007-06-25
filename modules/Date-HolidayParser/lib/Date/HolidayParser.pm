@@ -544,9 +544,6 @@ sub _load_and_parse {
 				_SyntaxError($LineNo, $File, "Unrecognized keyword \"$_\"", "Ignoring it. This might cause calculation mistakes! Consider using a combination of other keywords or report this as a bug to the author of this parser if you're certain the keyword should be supported");
 			}
 		}
-		
-		# TODO: This isn't an error with the OO interface, but rather the desired behaviour
-
 
 		# ==================================================================
 		# Finalize the interpretation and add it to $self
