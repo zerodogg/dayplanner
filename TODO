@@ -10,6 +10,15 @@ may be subject to change.
 - - - - - - -
 - Left align labels
 - Add support for choosing how long an event lasts
+- Write a simple way of plugging in functionality into DP::iCalendar.
+	So that one might for instance plug Date::HolidayParser into
+	DP::iCalendar, thus having Date::HolidayParser add UIDs to
+	DP::iCalendar and making the holidays available there.
+	Then when changed DP::iCalendar simply tells Date::HolidayParser
+	about the change instead. Date::HolidayParser can then either
+	make the change to the holiday file itself (unlikely for
+	 advanced holidays), or add the event to the iCalendar file
+	itself, dropping it from its local file.
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
