@@ -3,6 +3,9 @@ Day Planner version history
 
 Version 0.8 (Unreleased)
 ------------------------
+* All
+- Now licensed under the GNU General Public License version 3
+
 * Client (dayplanner)
 - Fixed a bug that caused exporting HTML from the commandline to fail
 - Fixed a bug that could cause errornious birthday strings when exporting
