@@ -1,7 +1,7 @@
 # PO file for Day Planner
 # Copyright (C) 2006 Eskild Hustvedt
 # This file is distributed under the GNU General Public License
-# as published by the Free Software Foundation; either version 2 of the license
+# as published by the Free Software Foundation; either version 3 of the license
 # or (at your option) any later version (the same license as Day Planner)
 # <>, 2006.
 # , fuzzy

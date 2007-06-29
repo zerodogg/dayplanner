@@ -6,7 +6,7 @@
 # it under the terms of either:
 # 
 #    a) the GNU General Public License as published by the Free
-#    Software Foundation; either version 2, or (at your option) any
+#    Software Foundation; either version 3, or (at your option) any
 #    later version, or
 #    b) the "Artistic License" which comes with this Kit.
 #
@@ -18,11 +18,9 @@
 # You should have received a copy of the Artistic License
 # in the file named "COPYING.artistic".  If not, I'll be glad to provide one.
 #
-# You should also have received a copy of the GNU General Public License
-# along with this program in the file named "COPYING.gpl". If not, write to the
-# Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-# 02111-1307, USA. Or visit their web page on the internet at
-# http://www.gnu.org/copyleft/gpl.html.
+# You should have received a copy of the GNU General Public License
+# along with this program in a file named COPYING.gpl. 
+# If not, see <http://www.gnu.org/licenses/>.
 
 package DP::GeneralHelpers;
 use strict;
