@@ -2580,7 +2580,8 @@ sub ExportData {
 	# Combo selector
 	my $Export_Combo = Gtk2::ComboBox->new_text;
 	$Export_Combo->insert_text(0, 'iCalendar (*.ics)');
-	$Export_Combo->insert_text(1,         $i18n->get('XHTML (exports to a directory)'));
+	# TRANSLATORS: Selects where to export to
+	$Export_Combo->insert_text(1, $i18n->get('XHTML (exports to a directory)'));
 	$ExportHBox->pack_end($Export_Combo,0,0,0);
 	$Export_Combo->show();
 
