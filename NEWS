@@ -10,6 +10,8 @@ Version 0.7.1 (Unreleased)
 - Fixed a bug that caused exporting HTML from the commandline to fail
 - Fixed a bug that could cause errornious birthday strings when exporting
   to HTML
+- Fixed a bug that caused Day Planner to add dates to the recurrance
+  exceptions field without the user requesting them
 - Some iCalendar compatibility fixes
 - Various optimizations in the underlying iCalendar library
 - Various Day Planner startup optimizations
