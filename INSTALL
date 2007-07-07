@@ -2,87 +2,27 @@ Installation documentation for Day Planner
 ------------------------------------------
 
 Index:
-1	Local install (single user)
-2	Global install (multi user and packagers)
-2.1	Special notes concerning the Date::HolidayParser module and packaging
-2.2	Special notes concerning the DP::iCalendar module and packaging
+1	Local install
+2	Packaging
 
-1 - LOCAL INSTALL (SINGLE USER)
--------------------------------
-There are two ways to install Day Planner locally. The first would be to
-simply run ./dayplanner from this directory (and ./devel-tools/BuildLocale first
-if you want localization).
+1 - LOCAL INSTALL
+-----------------
+In order to install Day Planner locally, simply type make install in the
+Day Planner base directory. Either as root or as the user you wish to
+use Day Planner as.
 
-The second one properly installs Day Planner. Run ./devel-tools/installer/InstallLocal
-This will start the Day Planner installer used in the Day Planner packages.
-The installer runs ./devel-tools/BuildLocale for you, so if you use the installer
-you don't need to run it manually.
+2 - PACKAGING
+-------------
+Packagers can use the distinstall make target. This does the same as make install
+but doesn't install the Date::HolidayParser module bundled with Day Planner
+(this is expected to be provided seperately in this case, if it isn't then you
+should also do make DHPinstall afterwards), fails if gettext is not available (make install doesn't)
+and doesn't install the tools. The .desktop file created using this also doesn't use
+any absolute paths.
 
-Building the locale files requires msgfmt from gettext installed.
+You must install (or symlink) the icons in the art/ directory yourself if you want them to
+be available outside of Day Planners own art/ tree.
 
-2 - GLOBAL INSTALL (MULTI USER and PACKAGERS)
----------------------------------------------
-If you're a packager you may want to look at devel-tools/rpm/* and perhaps also at
-devel-tools/CreatePackages and possibly devel-tools/installer/MainInstallerPart
-
-This is a bit trickier, these files should go into $PATH somewhere, such as in /usr/local/bin or
-/usr/bin/ and be +x:
-- dayplanner
-- dayplanner-notifier
-- dayplanner-daemon
-
-Note however that if either of the modules used are bundled inside the package
-the following is required:
-have a tree, such as /usr/share/dayplanner/ (path doesn't really matter, just an example)
-which contains dayplanner, dayplanner-notifier and dayplanner-daemon. Have the modules/
-directory be a subdirectory of this tree (see 2.1 and 2.2 for more information).
-Then symlink dayplanner, dayplanner-notifier and dayplanner-daemon into $PATH instead.
-This alows Day Planner to properly detect and use the bundled modules (which it
-otherwise wouldn't be able to find).
-
-These files should go into the systems standard icons directory OR either /usr/share/dayplanner/
-or /usr/local/dayplanner/:
-- art/dayplanner_16.png
-- art/dayplanner_24.png
-- art/dayplanner_48.png
-- art/dayplanner_HC16.png
-- art/dayplanner_HC24.png
-- art/dayplanner_HC48.png
-(The HC icons are high-contrast versions of the other ones)
-
-These files should go into either /usr/share/dayplanner/ or /usr/local/dayplanner/:
-- art/dayplanner-about.png
-
-If you place the executeables in the same dir as the *png's then the png's can be anywhere
-in the filesystem. A trick if Day Planner can't detect its images properly is to
-place the executeables in the same directory as the art/ subdirectory and then
-just symlink the executeables into $PATH, Day Planner handles $PATH fine.
-
-Lastly, for internationalization you want to run ./devel-tools/BuildLocale /dir.
-On most systems this would be: ./devel-tools/BuildLocale /usr/locale/
-or as it would be for RPM packagers:
-./devel-tools/BuildLocale $RPM_BUILD_ROOT/usr/locale/
-
-2.1 - SPECIAL NOTES CONCERNING THE Date::HolidayParser MODULE AND PACKAGING
----------------------------------------------------------------------------
-Most likely you will want to package Date::HolidayParser seperately from
-Day Planner. You can do this by getting the source tarball from
-CPAN. However, if for some reason you want to package the module along
-with Day Planner it is contained in ./modules/Date-HolidayParser/.
-Read the README in that directory for installation instructions and
-check your distributions perl module packaging guidelines.
-
-For an example of how Date::HolidayParser is bundled inside a distribution
-package have a look at devel-tools/rpm/package.spec
-
-2.2 - SPECIAL NOTES CONCERNING THE DP::iCalendar MODULE AND PACKAGING
----------------------------------------------------------------------------
-How to handle this is a bit less certain than the handling of
-Date::HolidayParser. As this module is much more Day Planner-centric.
-You should have the module in a tree identical to modules/
-in the source distribution. You do not, however, have to bundle any
-files except the ones in lib/. Have a look at devel-tools/rpm/package.spec
-for an example of how DP::iCalendar is bundled inside a distribution
-package.
+An example of a packaged Day Planner is in ./devel-tools/rpm/package.rpm
 
 $Id$
