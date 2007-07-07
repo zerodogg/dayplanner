@@ -38,7 +38,7 @@ all:
 	@echo " packages    - create packages"
 	@echo " DHPinstall  - install the Date::HolidayParser module (only needed with make install)"
 
-install: maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall tools desktop
+install: maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall tools desktop essentialdocs
 distinstall: maininstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
 
 updatepo:
@@ -52,6 +52,8 @@ mo:
 
 uninstall:
 	rm -rf $(DP_MAINTARGET)
+	rm -f $(DESTDIR)$(PREFIX)/$(BINDIR)/dayplanner $(DESTDIR)$(PREFIX)/$(BINDIR)/dayplanner-daemon $(DESTDIR)$(PREFIX)/$(BINDIR)/dayplanner-notifier
+	rm -f $(DESTDIR)$(DATADIR)/applications/dayplanner.desktop
 
 clean:
 	rm -f $(shell find|egrep '~$$')
@@ -110,9 +112,15 @@ holidayinstall:
 tools:
 	mkdir -p $(DP_MAINTARGET)/tools
 	install -m755 $(shell ls ./tools/) $(DP_MAINTARGET)/tools
+# Essential documentation
+essentialdocs:
+	install -m644 NEWS $(DP_MAINTARGET)
+	install -m644 COPYING $(DP_MAINTARGET)
+	install -m644 THANKS $(DP_MAINTARGET)
+	install -m644 TODO $(DP_MAINTARGET)
 # .desktop file installation
 desktop:
-	./devel-tools/GenDesktop $(DESTDIR) $(DP_MAINTARGET)/art/
+	./devel-tools/GenDesktop $(DESTDIR) $(DP_MAINTARGET)/doc/
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Distrib .desktop file installation
