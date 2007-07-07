@@ -3367,7 +3367,7 @@ sub PopupDateSel {
 			# If ChangingNow is undef that means we just
 			# got created, so initialize it to zero instead of one
 			# so that selecting days work properly immedietly.
-			if(not $ChangingNow) {
+			if(not defined $ChangingNow) {
 				$ChangingNow = 0;
 			} else {
 				$ChangingNow = 1;
@@ -5345,7 +5345,7 @@ GetOptions (
 				if($ModVer) {
 					$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
 								# printf() doesn't like it so we remove it.
-					printf(' %s %g', $Module, $ModVer);
+					print " $Module $ModVer";
 				} else {
 					print " $Module";
 				}
