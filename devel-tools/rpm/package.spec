@@ -70,5 +70,4 @@ rm -rf $RPM_BUILD_ROOT
 %{_iconsdir}/dayplanner*.png
 %{_miconsdir}/dayplanner*.png
 %{_liconsdir}/dayplanner*.png
-%{_menudir}/%{name}
 %{_datadir}/applications/%{name}.desktop
