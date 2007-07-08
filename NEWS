@@ -5,6 +5,7 @@ Version 0.7.1 (Unreleased)
 ------------------------
 * All
 - Now licensed under the GNU General Public License version 3
+- Added a Makefile
 
 * Client (dayplanner)
 - Fixed a bug that caused exporting HTML from the commandline to fail
