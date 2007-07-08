@@ -42,7 +42,7 @@ all:
 	@echo " clean       - clean up the tree"
 	@echo " updatepo    - update po-files"
 	@echo " mo          - build the locale/ tree"
-	@echo " packages    - create packages"
+	@echo " distrib     - create packages"
 	@echo " DHPinstall  - install the Date::HolidayParser module (only needed for distro packages)"
 
 install: $(INSTALLRULES)
@@ -50,7 +50,7 @@ install: $(INSTALLRULES)
 updatepo:
 	perl ./devel-tools/updatepo
 
-packages:
+distrib:
 	perl ./devel-tools/CreatePackages
 
 mo:
@@ -63,6 +63,7 @@ uninstall:
 
 clean:
 	rm -f $(shell find|egrep '~$$')
+	rm -rf packages/
 
 # Date::HolidayParser installation
 DHPinstall:
@@ -78,7 +79,7 @@ nice_i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale || true
-	cp -r locale $(DP_MAINTARGET)
+	cp -r locale $(DESTDIR)$(prefix)
 
 # This is the normal one, it will die if it fails and it won't create additional
 # symlinks
@@ -86,8 +87,7 @@ i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale ./locale
-	mkdir -p $(DESTDIR)$(prefix)/locale/
-	cp -r locale/* $(DESTDIR)$(prefix)/locale/
+	cp -r locale $(DESTDIR)$(prefix)
 
 # Installation of DP
 maininstall:
