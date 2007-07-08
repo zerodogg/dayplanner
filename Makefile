@@ -16,20 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # If prefix is already set then use some distro-friendly install rules
-ifdef PREFIX
+ifdef prefix
 INSTALLRULES=maininstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
 INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall tools desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
-# PREFIX is set by the builder.
-PREFIX=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
+# prefix is set by the builder.
+prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
 
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
-DATADIR ?= $(PREFIX)/share
+DATADIR ?= $(prefix)/share
 
 # So I have to type less
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
@@ -58,7 +58,7 @@ mo:
 
 uninstall:
 	rm -rf $(DP_MAINTARGET)
-	rm -f $(DESTDIR)$(PREFIX)/$(BINDIR)/dayplanner $(DESTDIR)$(PREFIX)/$(BINDIR)/dayplanner-daemon $(DESTDIR)$(PREFIX)/$(BINDIR)/dayplanner-notifier
+	rm -f $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-notifier
 	rm -f $(DESTDIR)$(DATADIR)/applications/dayplanner.desktop
 
 clean:
@@ -86,18 +86,19 @@ i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale ./locale
-	cp -r locale $(DP_MAINTARGET)
+	mkdir -p $(DESTDIR)$(prefix)/locale/
+	cp -r locale/* $(DESTDIR)$(prefix)/locale/
 
 # Installation of DP
 maininstall:
 	mkdir -p $(DP_MAINTARGET)
 	install -m755 ./dayplanner $(DP_MAINTARGET)
-	mkdir -p $(DESTDIR)$(PREFIX)/$(BINDIR)
-	-ln -s $(DP_MAINTARGET)/dayplanner $(DESTDIR)$(PREFIX)/$(BINDIR)
+	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -s $(DP_MAINTARGET)/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-daemon $(DP_MAINTARGET)
-	-ln -s $(DP_MAINTARGET)/dayplanner-daemon $(DESTDIR)$(PREFIX)/$(BINDIR)
+	-ln -s $(DP_MAINTARGET)/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-notifier $(DP_MAINTARGET)
-	-ln -s $(DP_MAINTARGET)/dayplanner-notifier $(DESTDIR)$(PREFIX)/$(BINDIR)
+	-ln -s $(DP_MAINTARGET)/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
 
 # Art installation
 artinstall:
