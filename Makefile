@@ -1,5 +1,5 @@
 # Makefile for Day Planner
-# Copyright (C) Eskild Hustvedt 2006, 2007
+# Copyright (C) Eskild Hustvedt 2007
 # $Id$
 #
 # This program is free software: you can redistribute it and/or modify
