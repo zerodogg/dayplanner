@@ -13,20 +13,15 @@ use Day Planner as.
 
 2 - PACKAGING
 -------------
-Packagers can use the distinstall make target. This does the same as make install
-but doesn't install the Date::HolidayParser module bundled with Day Planner
-(this is expected to be provided seperately in this case, if it isn't then you
-should also do make DHPinstall afterwards), fails if gettext is not available (make install doesn't)
-and doesn't install the tools. The .desktop file created using this also doesn't use
-any absolute paths.
+Simply make install. If PREFIX is set then it will detect that a distro package
+is being built and won't include Date::HolidayParser, nor any other files that
+distro packages don't need (or install seperately). If you still need to install
+Date::HolidayParser just make DHPinstall after make install. It will also create
+a .desktop file that doesn't use any absolute paths. 
 
 You must install (or symlink) the icons in the art/ directory yourself if you want them to
-be available outside of Day Planners own art/ tree.
+be available outside of Day Planners own art/ tree or the DATADIR/pixmaps/ tree.
 
 An example of a packaged Day Planner is in ./devel-tools/rpm/package.rpm
-
-Note also that you will need to explicitly set PREFIX for the package to build
-properly as a user. This is usually done automatically by distro
-macros, but if you're having problems - try that.
 
 $Id$

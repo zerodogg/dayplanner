@@ -15,10 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# If prefix is already set then use some distro-friendly install rules
+ifdef PREFIX
+INSTALLRULES=maininstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
+else
+# If not then use some user-friendly install rules
+INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall tools desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # PREFIX is set by the builder.
-PREFIX ?= $(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
+PREFIX=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
+endif
 
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
@@ -31,16 +38,14 @@ DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
 all:
 	@echo Valid targets:
 	@echo " install     - install Day Planner"
-	@echo " distinstall - install Day Planner with more package-friendly settings, see INSTALL"
 	@echo " uninstall   - uninstall a previously installed Day Planner"
 	@echo " clean       - clean up the tree"
 	@echo " updatepo    - update po-files"
 	@echo " mo          - build the locale/ tree"
 	@echo " packages    - create packages"
-	@echo " DHPinstall  - install the Date::HolidayParser module (only needed with make distinstall)"
+	@echo " DHPinstall  - install the Date::HolidayParser module (only needed for distro packages)"
 
-install: maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall tools desktop essentialdocs
-distinstall: maininstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
+install: $(INSTALLRULES)
 
 updatepo:
 	perl ./devel-tools/updatepo
