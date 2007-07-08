@@ -25,4 +25,8 @@ be available outside of Day Planners own art/ tree.
 
 An example of a packaged Day Planner is in ./devel-tools/rpm/package.rpm
 
+Note also that you will need to explicitly set PREFIX for the package to build
+properly as a user. This is usually done automatically by distro
+macros, but if you're having problems - try that.
+
 $Id$
