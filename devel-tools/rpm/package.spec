@@ -11,7 +11,7 @@ Summary:	An easy and clean Day Planner
 Version:	%{version} 
 Release:	%{release} 
 Source0:	%{name}-%{version}.tar.bz2
-URL:		http://home.gna.org/dayplanner/
+URL:		http://www.day-planner.org/
 Group:		Office
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 License:	GPL
@@ -25,46 +25,16 @@ Day Planner is designed to help you easily manage your time.
 It can manage appointments, birthdays and more. It makes sure you
 remember your appointments by popping up a dialog box reminding you about it.
 
-%if %include_holidayparser
-This package also includes the Date::HolidayParser perl module
-%endif
-
-%package tools
-Summary: Various tools for use with Day Planner
-Group: Office
-Requires: dayplanner
-
-%description tools
-This package contains various tools for use with Day Planner:
-
-dayplanner-commander     : Send raw commands to the Day Planner daemon
-
 %prep
 %setup -q
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT%{_bindir}/
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/
 
-# Install the binaries
-for a in dayplanner dayplanner-daemon dayplanner-notifier; do
-	install -m755 $a $RPM_BUILD_ROOT%{_datadir}/%name/
-	ln -s %{_datadir}/%name/$a $RPM_BUILD_ROOT%{_bindir}/
-done
-install -m755 ./tools/commander $RPM_BUILD_ROOT%{_bindir}/dayplanner-commander
-
-install -m644 ./art/dayplanner-about.png $RPM_BUILD_ROOT%{_datadir}/%name/
-
-# Install the DP:: modules
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/modules/DP/
-cp -r ./modules/DP-GeneralHelpers/lib/DP/* $RPM_BUILD_ROOT%{_datadir}/%name/modules/DP/
-cp -r ./modules/DP-iCalendar/lib/DP/* $RPM_BUILD_ROOT%{_datadir}/%name/modules/DP/
-chmod 644 $RPM_BUILD_ROOT%{_datadir}/%name/modules/*/*pm
-# Install Date::HolidayParser if needed
-%if %include_holidayparser
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%name/modules/Date/
-cp -r ./modules/Date-HolidayParser/lib/Date/* $RPM_BUILD_ROOT%{_datadir}/%name/modules/Date/
+%if include_holidayparser
+%makeinstall DHPinstall
+%else
+%makeinstall
 %endif
 
 # Install the icons
@@ -75,22 +45,6 @@ install -m644 ./art/dayplanner-48x48.png -D $RPM_BUILD_ROOT%{_liconsdir}/dayplan
 install -m644 ./art/dayplanner_HC24.png -D $RPM_BUILD_ROOT%{_iconsdir}/dayplanner_HC.png
 install -m644 ./art/dayplanner_HC16.png -D $RPM_BUILD_ROOT%{_miconsdir}/dayplanner_HC.png
 install -m644 ./art/dayplanner_HC48.png -D $RPM_BUILD_ROOT%{_liconsdir}/dayplanner_HC.png
-
-# Menu
-mkdir -p $RPM_BUILD_ROOT%{_menudir}
-cat << EOF > $RPM_BUILD_ROOT%{_menudir}/%{name}
-?package(%{name}):command="%{_bindir}/dayplanner" \
-	icon="dayplanner.png" \
-	needs="x11" \
-	section="Office/Time Management" \
-	title="Day Planner" \
-	longtitle="An easy to use graphical day planner" \
-	xdg="true"
-EOF
-./devel-tools/GenDesktop %{_bindir}
-install -m644 ./doc/%{name}.desktop -D $RPM_BUILD_ROOT%{_datadir}/applications/%{name}.desktop
-
-./devel-tools/BuildLocale $RPM_BUILD_ROOT/%{_datadir}/locale/
 
 # Find the localization
 %find_lang %{name}
@@ -118,6 +72,3 @@ rm -rf $RPM_BUILD_ROOT
 %{_liconsdir}/dayplanner*.png
 %{_menudir}/%{name}
 %{_datadir}/applications/%{name}.desktop
-
-%files tools
-%{_bindir}/dayplanner-commander
