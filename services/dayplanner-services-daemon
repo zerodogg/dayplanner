@@ -3,10 +3,10 @@
 # $Id$
 # Copyright (C) Eskild Hustvedt 2006, 2007
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,8 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # TODO: Maybe we should get -T enabled
 
@@ -24,7 +23,6 @@ use warnings;
 require 5.8.1;				# Require perl 5.8 to ensure things work smoothly
 					# (5.8.1 introduced some security enhancements we need)
 use IO::Socket::SSL;
-#use IO::Socket::INET;
 use IO::Socket::UNIX;
 use IO::Select;
 use Getopt::Long;
@@ -56,8 +54,9 @@ my %Clients;		# Hash of current network clients
 my %Users;		# User list
 my %Security;		# Security specific stuff. For now only handles banning
 			# of specific IP adresses.
-my %Config;
-my %Servers;
+my %Config;		# Configuration hash
+my %Servers;		# A list of all of our server objects. These are the objects
+			# closed gracefully upon shutdown
 
 # TODO: Not all user levels are fully functional
 # level 0 = EXPIRED - no access at all
@@ -67,7 +66,7 @@ my %Servers;
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = '0.7';
+my $Version = '0.7.1';
 
 $SIG{INT} = sub {
 	IntOutputMSG("Shutdown by SIG$_[0]\n");
@@ -633,6 +632,11 @@ sub InitNetwork {
 # Usage: OpenSocket(PORT);
 sub OpenSocket {
 	my $ListenPort = shift;
+	foreach(qw(server.key server.crt)) {
+		if(not -e "./$_") {
+			die("The SSL file ./$_ does not exist. Unable to open up an SSL server on $ListenPort. Exiting.\n");
+		}
+	}
 	my $NewServer = IO::Socket::SSL->new(
 					LocalPort => $ListenPort,
 					Listen	=> 5,
@@ -650,6 +654,18 @@ sub OpenSocket {
 # Usage: OpenLocalSocket(/PATH/);
 sub OpenLocalSocket {
 	my $Path = shift;
+	if (-e $Path) {
+		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $Path,
+							Type	=> SOCK_STREAM
+							Timeout => 2);
+		if (defined($TestSocket)) {
+			close($TestSocket);
+			die("A services daemon is already running and still responding. Tell it to exit before starting a new one\n");
+		} else {
+			unlink($Path);
+		}
+				
+	}
 	$AdminSocket = IO::Socket::UNIX->new(
 		Local	=> $Path,
 		Type	=> SOCK_STREAM,

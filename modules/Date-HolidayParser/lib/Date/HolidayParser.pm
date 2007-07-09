@@ -5,7 +5,7 @@
 #  The format is based off of the holiday files found bundled
 #  with the plan program, not any official spec. This because no
 #  official spec could be found.
-# Copyright (C) Eskild Hustvedt 2006
+# Copyright (C) Eskild Hustvedt 2006, 2007
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself. There is NO warranty;
@@ -24,7 +24,7 @@ my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
 # Version number
 my $VERSION;
-$VERSION = 0.3;
+$VERSION = 0.3.1;
 
 # The user should be able to tell us to be silent
 our $BeSilent;
@@ -408,6 +408,7 @@ sub _load_and_parse {
 				$Line =~ s/^\s*$PreDec\s+//;
 				unless(length($PreDec)) {
 						_HolidayError($LineNo, $File, "LineMode=PreDec, but the predec parser recieved \"$PreDec\" as PreDec", "Ignoring this predec");
+						last;
 					} else {
 						if($PreDec =~ /^(weekend|red)$/) {
 							$HolidayType = 'red';
@@ -415,9 +416,13 @@ sub _load_and_parse {
 							# These are often just "formatting" declerations, and thus ignored by the day planner
 							# parser. In these cases PostDec usually declares more valid stuff
 							$HolidayType = 'none';
+							$Line =~ s/^[^"]+//;
+							last;
 						} else {
 							$HolidayType = 'none';
 							_SyntaxError($LineNo, $File, "Unrecognized holiday type: \"$PreDec\".", "Defaulting to 'none'");
+							$Line =~ s/^[^"]+//;
+							last;
 						}
 				}
 			}
@@ -539,9 +544,6 @@ sub _load_and_parse {
 				_SyntaxError($LineNo, $File, "Unrecognized keyword \"$_\"", "Ignoring it. This might cause calculation mistakes! Consider using a combination of other keywords or report this as a bug to the author of this parser if you're certain the keyword should be supported");
 			}
 		}
-		
-		# TODO: This isn't an error with the OO interface, but rather the desired behaviour
-
 
 		# ==================================================================
 		# Finalize the interpretation and add it to $self
@@ -822,7 +824,7 @@ your bug as I make changes.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2006 Eskild Hustvedt, all rights reserved.
+Copyright (C) 2006, 2007 Eskild Hustvedt, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself. There is NO warranty;

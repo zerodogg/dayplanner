@@ -4,10 +4,10 @@
 # Copyright (C) Eskild Hustvedt 2006, 2007
 # $Id$
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require 5.6.0;			# We need perl 5.6.0 at the very least
 				# and even this is mostly untested.
@@ -47,8 +46,8 @@ use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
 # Scalars
-our $Version = '0.7';
-my $VersionName = 'Unia';
+our $Version = '0.7.1';
+my $VersionName = 'SVN';
 my $RCSRev = '$Id$';
 my $MainEventsFile = 'events.dpd';			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
@@ -964,15 +963,18 @@ sub IPC_Handler {
 }
 
 # Purpose: Get the SUMMARY string for an UID
-# Usage: my $Summary = GetSummaryString(UID, CURRENT?);
+# Usage: my $Summary = GetSummaryString(UID, CURRENT?, YEAR?, MONTH?);
 #  The returned summary string is properly formatted (ie. it will return
 #  a properly localized birthday string if needed).
 #
 # 	If CURRENT is true GetSummaryString() will base its birthday information
 # 	on the current date/time instead of the selected date/time
+# 	If YEAR/MONTH is true and CURRENT is false then that will be used in place
+# 	of the selection from $CalendarWidget
 sub GetSummaryString {
 	my $UID = shift;
 	my $CURRENT = shift;
+	my ($AltYear, $AltMonth) = @_;
 	my $UID_Obj = $iCalendar->get_info($UID);
 	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
@@ -980,8 +982,18 @@ sub GetSummaryString {
 				# Calculate birthday here
 				my ($BYear,$BMonth,$BDay) = iCal_ParseDateTime($UID_Obj->{'DTSTART'});
 				my ($SelYear, $SelMonth, $SelDay);
+				# If CalendarWidget is false and no arguments has been supplied, warn and set current
+				if(not $CURRENT and not $CalendarWidget and not ($AltYear and $AltMonth)) {
+					$CURRENT = 1;
+					DPIntWarn("Bug: GetSummaryString() called without CURRENT and without Year/Month. Assuming CURRENT");
+				}
 				if(not $CURRENT) {
-					($SelYear, $SelMonth, $SelDay) = $CalendarWidget->get_date();$SelMonth++;
+					if($AltYear and $AltMonth) {
+						$SelYear = $AltYear;
+						$SelMonth = $AltMonth;
+					} else {
+						($SelYear, $SelMonth, $SelDay) = $CalendarWidget->get_date();$SelMonth++;
+					}
 				} else {
 					# Get the current time
 					my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
@@ -1216,7 +1228,7 @@ sub HolidaySetup {
 		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. You didn't have any\n";
 		print $DUMMY_FILE ": environment variables set so Day Planner couldn't autodetect one.\n";
 		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file and re-run Day Planner.\n";
-		print $DUMMY_FILE "Make sure one of the LC_* or LANG* environment variables are set when running Day Planner";
+		print $DUMMY_FILE ": Make sure one of the LC_* or LANG* environment variables are set when running Day Planner";
 	}
 	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
@@ -1717,7 +1729,7 @@ sub HTML_DayToHtml {
 	print $FILE '<tbody><tr><td>' . HTML_Encode($i18n->get('Time')) . '</td><td>' . HTML_Encode($i18n->get('Description')) . "</td></tr>\n";
 	# Write allday and birthdays
 	foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,'DAY')})) {
-		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event));
+		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
 		my $EventInfo = $iCalendar->get_info($Event);
 		if(defined($EventInfo->{DESCRIPTION})) {
 			my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
@@ -1729,7 +1741,7 @@ sub HTML_DayToHtml {
 	foreach my $Time (sort(@{$iCalendar->get_dateinfo($Year,$Month,$Day)})) {
 		next if $Time eq 'DAY';
 		foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})) {
-			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event));
+			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
 			my $EventInfo = $iCalendar->get_info($Event);
 			if(defined($EventInfo->{DESCRIPTION})) {
 				my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
@@ -2013,7 +2025,7 @@ sub PHP_WriteFiles {
 	# ...
 	open(my $INDEX, '>', "$BaseDir/index.php");
 	# Write index.php
-	print $INDEX "<?php\n// Day Planner index.php\n// Copyright (C) Eskild Hustvedt 2006\n// Licensed under the GNU General Public License version 2 or newer\n// as published by the Free Software Foundation\n\n";
+	print $INDEX "<?php\n// Day Planner index.php\n// Copyright (C) Eskild Hustvedt 2006\n// Licensed under the GNU General Public License version 3 or newer\n// as published by the Free Software Foundation\n\n";
 	print $INDEX '$year = $_GET[\'year\'];' . "\n";
 	print $INDEX '$month = $_GET[\'month\'];' . "\n";
 	print $INDEX '$day = $_GET[\'day\'];' . "\n";
@@ -2568,7 +2580,8 @@ sub ExportData {
 	# Combo selector
 	my $Export_Combo = Gtk2::ComboBox->new_text;
 	$Export_Combo->insert_text(0, 'iCalendar (*.ics)');
-	$Export_Combo->insert_text(1,         $i18n->get('XHTML (exports to a directory)'));
+	# TRANSLATORS: Selects where to export to
+	$Export_Combo->insert_text(1, $i18n->get('XHTML (exports to a directory)'));
 	$ExportHBox->pack_end($Export_Combo,0,0,0);
 	$Export_Combo->show();
 
@@ -3355,7 +3368,7 @@ sub PopupDateSel {
 			# If ChangingNow is undef that means we just
 			# got created, so initialize it to zero instead of one
 			# so that selecting days work properly immedietly.
-			if(not $ChangingNow) {
+			if(not defined $ChangingNow) {
 				$ChangingNow = 0;
 			} else {
 				$ChangingNow = 1;
@@ -4502,7 +4515,7 @@ sub AboutBox {
 	$AboutDialog->set_name($i18n->get('Day Planner'));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
-	$AboutDialog->set_license("Day Planner is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with Day Planner; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.");
+	$AboutDialog->set_license("Day Planner is free software: you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation, either version 3\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\nGNU General Public License for more details.\n\nYou should have recieved a copy of the GNU General Public License\nalong with this program. If not, see <http://www.gnu.org/licenses/>.");
 	# Logo
 	my $LogoImage = DetectImage('dayplanner-about.png','dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
 	if ($LogoImage) {
@@ -5162,7 +5175,7 @@ sub DrawMainWindow {
 # Purpose: Call the main data initialization functions
 # Usage: MainInit();
 sub MainInit {
-	my $NoGui = $_[0];
+	my $NoGui = shift;
 	my $FirstStartup;
 	# Set SaveToDir if it isn't already set
 	if(not defined($SaveToDir)) {
@@ -5175,8 +5188,12 @@ sub MainInit {
 		$FirstStartup =	FirstStartup($NoGui);
 	}
 
-	# Load the configuration file
-	LoadConfig();
+	# If we're not in GUI mode, load the configuration file.
+	# We load it later if in GUI mode in order to give the illusion of the
+	# app starting faster
+	if($NoGui) {
+		LoadConfig();
+	}
 	# Load the calendar
 	LoadCalendar();
 	# Load the internal state file
@@ -5220,18 +5237,22 @@ sub InitDPCore {
 		AlreadyRunningDP($Client);
 		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	}
+	# Draw the main window
+	DrawMainWindow();
+	$MainWindow->show() if not $FirstStartup;
+	Gtk2->main_iteration while Gtk2->events_pending;
+	# Load the config
+	LoadConfig();
+	# Import data as told on the commandline
 	if(@ARGV) {
 		foreach(@ARGV) {
 			IPC_Handler("IMPORT_DATA $_");
 		}
 	}
-	# Draw the main window
-	DrawMainWindow();
-	$MainWindow->show() if not $FirstStartup;
-	# Initialize the daemon
-	DaemonInit() or die();
 	# Connect to a DPS server and sync the local data with it if it's enabled
 	DPS_Perform('SYNC');
+	# Initialize the daemon
+	DaemonInit() or die();
 	# Add autostart if needed
 	unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 		DP_AddAutostart();
@@ -5302,32 +5323,37 @@ GetOptions (
 		exit(0);
 	},
 	'debuginfo' => sub {
+		$| = 1;
 		$SaveToDir = DetectConfDir();
-		print "Day Planner version $Version\n";
-		print "RCS revision: $RCSRev\n";
+		print "Day Planner version $Version - $RCSRev\n";
 		print "Using config dir: $SaveToDir\n";
 		printf "Perl version %vd\n", $^V;
-		if(eval('use Locale::gettext;1')) {
-			print "Locale::gettext version: $Locale::gettext::VERSION\n";
-		} else {
-			print 'Locale::gettext version: MISSING\n';
-		}
 		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
-		print "Gtk2-perl version $Gtk2::VERSION\n";
 		print 'OS: ', GetDistVer(), "\n";
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
-		foreach(sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar IO::Socket::SSL IPC::Open2/) {
-			if(eval("use $_; 1")) {
-				push(@AvailModules, $_);
+		print "Available modules:";
+		my $Prev;
+		foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2/) {
+			if(eval("use $Module; 1")) {
+				if($Prev) {
+					print ',';
+				} else {
+					$Prev = 1;
+				}
+				my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}");
+				if($ModVer) {
+					$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
+								# printf() doesn't like it so we remove it.
+					print " $Module $ModVer";
+				} else {
+					print " $Module";
+				}
 			} else {
 				push(@UnavailModules, $_);
 			}
 		}
-		print 'Available modules:';
-		print " $_" foreach(@AvailModules);
-		print ' (none)' unless(@AvailModules);
 		print "\nUnavailable modules:";
 		print " $_" foreach(@UnavailModules);
 		print ' (none)' unless(@UnavailModules);
