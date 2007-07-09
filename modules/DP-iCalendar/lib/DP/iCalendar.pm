@@ -24,7 +24,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 
 # Version number
 our $VERSION;
-$VERSION = 0.3;
+$VERSION = 0.3.1;
 
 # - Public methods
 
@@ -223,7 +223,7 @@ sub write {
 		};
 		print $TARGET $iCalendar;
 		close($TARGET);
-		return(1);
+		return(TRUE);
 	} else {
 		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
 		return(undef);
@@ -274,7 +274,7 @@ sub delete {
 	if(defined($self->{RawCalendar}{$UID})) {
 		delete($self->{RawCalendar}{$UID});
 		$self->_ClearCalculated();
-		return(1);
+		return(TRUE);
 	} else {
 		carp('delete called without a valid UID');
 		return(undef);
@@ -295,7 +295,7 @@ sub add {
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Change an iCalendar entry
@@ -311,7 +311,7 @@ sub change {
 		return(undef);
 	}
 	$self->_ChangeEntry($UID,%Hash);
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Check if an UID exists
@@ -319,10 +319,10 @@ sub change {
 sub exists {
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		return(1);
+		return(TRUE);
 	}
 	delete($self->{RawCalendar}{$UID});
-	return(0);
+	return(FALSE);
 }
 
 # Purpose: Add another file
@@ -354,7 +354,7 @@ sub clean {
 	my $self = shift;
 	$self->{RawCalendar} = {};
 	$self->_ClearCalculated();
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Enable a feature
@@ -364,7 +364,7 @@ sub enable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$self->{FEATURE}{$_} = 1;
-		return(1);
+		return(TRUE);
 	}
 	carp("Attempted to enable unknown feature: $feature");
 	return(undef);
@@ -377,7 +377,7 @@ sub disable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$self->{FEATURE}{$_} = 0;
-		return(1);
+		return(TRUE);
 	}
 	carp("Attempted to disable unknown feature: $feature");
 	return(undef);
@@ -412,7 +412,7 @@ sub set_prodid {
 	}
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
-	return(1);
+	return(TRUE);
 }
 
 # - Public functions
@@ -457,14 +457,10 @@ sub iCal_ConvertToUnixTime {
 	$Month--;
 	my ($Hour,$Minute) = (0,0);
 	if($Time) {
-		$Hour = $Time;
-		$Hour =~ s/^(\d+):.+$/$1/;
-		$Minute = $Time;
-		$Minute =~ s/^\d+:(\d+)$/$1/;
+		($Hour,$Minute) = split(/:/,$Time,2);
 	}
 	
-	my $UnixTime = mktime(0,$Minute,$Hour,$Day,$Month,$Year);
-	return($UnixTime);
+	return(mktime(0,$Minute,$Hour,$Day,$Month,$Year));
 }
 
 # Purpose: Parse an iCalendar date-time
@@ -487,28 +483,30 @@ sub iCal_ParseDateTime {
 	# Stripping of TZID
 	$Value =~ s/^(DTSTART)?;?TZID=\D+://;
 
-	my $Year = $Value;
-	my $Month = $Value;
-	my $Day = $Value;
-	my $Hour = $Value;
-	my $Minutes = $Value;
+	my $Hour;
+	my $Minutes;
 	my $Time;
 
-	$Year =~ s/^(\d\d\d\d).*$/$1/;
-	$Month =~ s/^\d\d\d\d(\d\d).*$/$1/;
-	$Day =~ s/^\d\d\d\d\d\d(\d\d).*$/$1/;
+	my $Year = substr($Value, 0,4);
+	my $Month = substr($Value, 4, 2);
+	my $Day = substr($Value, 6, 2);
 
 	# Test if the time is set, if it is then process it.
-	if($Hour =~ s/^.+T//) {
-		$Hour =~ s/^(\d\d).*$/$1/;
-		$Minutes =~ s/^.+T//;
-		$Minutes =~ s/^\d\d(\d\d).*$/$1/;
+	if($Value =~ s/^.+T//) {
+		$Hour = substr($Value,0,2);
+		$Minutes = substr($Value,2,2);
 		$Time = _AppendZero($Hour) . ':' . _AppendZero($Minutes);
 	}
 	return($Year,$Month,$Day,$Time);
 }
 
 # - Internal functions
+# WARNING: Do NOT call ANY of the below functions from within programs using
+# 	DP::iCalendar. They are only meant for internal use and are subject to
+# 	radical API changes, or just disappearing.
+# 	If there is a feature provided below that you need in your program,
+# 	submit a bug report requesting a function with similar functionality to
+# 	be added to the public methods.
 
 # Purpose: Create a new object.
 # Usage: my $object = _NewObj(FILE?);
@@ -549,7 +547,7 @@ sub _ChangeEntry {
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
 	$self->_ClearCalculated();
-	return(1);
+	return(TRUE);
 }
 
 # Purpose: Output warning
@@ -647,20 +645,69 @@ sub _LoadFile {
 		}
 	}
 	$Data = undef;
-	return(1);
+	return(TRUE);
+}
+
+# Purpose: Parses a single iCalendar line into the data hash supplied
+# Usage: _ParseiCalLine(DATA_HASHREF);
+# 
+# 	DATA_HASHREF is a ref of the hash declared at the beginning of _ParseData();
+sub _ParseiCalLine {
+	my $DataHash = shift;
+	chomp($DataHash->{Line});
+	if ($DataHash->{Line} =~ s/^\s//) {
+		if($DataHash->{ArrayFields}->{$DataHash->{LastName}}) {
+			my $LastArrayField = scalar(@{$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}}});
+			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}}->[$LastArrayField] .= _UnSafe($DataHash->{Line});
+		} else {
+			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}} .= _UnSafe($DataHash->{Line});
+		}
+	} elsif($DataHash->{Line} =~ /^END/) {
+		return;
+	} else {
+		my($Name,$Value) = split(/:/,$DataHash->{Line}, 2);
+		if($Name =~ /^BEGIN/) {
+			if($Value eq 'VCALENDAR') {
+				$DataHash->{FileBegun} = 1;
+				$DataHash->{iCalendarStructures} = [];
+				return();
+			}
+			$DataHash->{CurrentStructure}++;
+			$Name = 'X-PARSER_ENTRYTYPE';
+		}
+		$DataHash->{LastName} = $Name;
+		if($DataHash->{ArrayFields}->{$Name}) {
+			if(not $DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}) {
+				$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name} = [];
+			}
+			push(@{$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}}, _UnSafe($Value));
+		} else {
+			if($DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}) {
+				_WarnOut("Multiple entries of $Name found, but field isn't classified as an array field. Expect trouble");
+			}
+			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name} = _UnSafe($Value);
+		}
+	}
+	return();
 }
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
 # 	undef on failure.
 # Usage: my $iCalendar = _ParseData(FILE);
 sub _ParseData {
-	my $File = $_[0];
-	my @iCalendarStructures;
-	my $LastStructure;
-	my $LastName;
-	my $CurrentStructure;
+	my $File = shift;
+	my %DataHash = (
+		iCalendarStructures => [],
+		LastStructure => '',
+		LastName => '',
+		CurrentStructure => 0,
+		FileBegun => '',
+		ArrayFields => {
+			EXDATE => 1,
+		},
+		Line => '',
+	);
 	my @FileContents;
-	my $FileBegun;
 	my $Type;
 	# If $File is a ref...
 	if(ref($File)) {
@@ -674,6 +721,10 @@ sub _ParseData {
 			# Return an empty anonymous array
 			return([]);
 		}
+		foreach (@FileContents) {
+			$DataHash{Line} = $_;
+			_ParseiCalLine(\%DataHash);
+		}
 	}
 	# It isn't
 	else {
@@ -683,81 +734,40 @@ sub _ParseData {
 			# Return an empty anonymous array
 			return([]);
 		};
-		@FileContents = <$ICALENDAR>;
+		# Seperator is \r\n
+		$/ = "\r\n";
+		while($DataHash{Line} = <$ICALENDAR>) {
+			_ParseiCalLine(\%DataHash);
+		}
 		close($ICALENDAR);
+		# Reset seperator
+		$/ = "\n";
 	}
-	my %ArrayFields = (
-		EXDATE => 1,
-	);
 
-	foreach(@FileContents) {
-		s/\r//g;
-		chomp;
-		unless($FileBegun) {
-			if (/^BEGIN:VCALENDAR/) {
-				$FileBegun = 1;
-			} else {
-				next;
-			}
-		}
-		if (s/^\s//) {
-			if($ArrayFields{$LastName}) {
-				my $LastArrayField = scalar(@{$iCalendarStructures[$CurrentStructure]{$LastName}});
-				$iCalendarStructures[$CurrentStructure]{$LastName}->[$LastArrayField] .= _UnSafe($_);
-			} else {
-				$iCalendarStructures[$CurrentStructure]{$LastName} .= _UnSafe($_);
-			}
-		} elsif(/^END/) {
-			next;
-		} else {
-			my $Name = $_;
-			my $Value = $_;
-			$Name =~ s/^([A-Za-z\-]+)[:;](.*)$/$1/;
-			$Value =~ s/^([A-Za-z\-\_]+)[:;](.*)$/$2/;
-			if($Name =~ /^BEGIN/) {
-				$CurrentStructure++;
-				$Name = 'X-PARSER_ENTRYTYPE';
-			}
-			$LastName = $Name;
-			if($ArrayFields{$Name}) {
-				if(not $iCalendarStructures[$CurrentStructure]{$Name}) {
-					$iCalendarStructures[$CurrentStructure]{$Name} = [];
-				}
-				push(@{$iCalendarStructures[$CurrentStructure]{$Name}}, _UnSafe($Value));
-			} else {
-				if($iCalendarStructures[$CurrentStructure]{$Name}) {
-					_WarnOut("Multiple entries of $Name found, but field isn't classified as an array field. Expect trouble");
-				}
-				$iCalendarStructures[$CurrentStructure]{$Name} = _UnSafe($Value);
-			}
-		}
-	}
-	unless($FileBegun) {
+	unless($DataHash{FileBegun}) {
 		_WarnOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
 	}
-	return(\@iCalendarStructures);
+	return($DataHash{iCalendarStructures});
 }
 
 # Purpose: Escape certain characters that are special in iCalendar
 # Usage: my $SafeData = iCal_GetSafe($Data);
 sub _GetSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\/\\\\/g;
-	$Data =~ s/,/\,/g;
-	$Data =~ s/;/\;/g;
-	$Data =~ s/\n/\\n/g;
-	return($Data);
+	$_[0] =~ s/\\/\\\\/g;
+	$_[0] =~ s/,/\,/g;
+	$_[0] =~ s/;/\;/g;
+	$_[0] =~ s/\n/\\n/g;
+	return($_[0]);
 }
 
 # Purpose: Removes escaping of iCalendar entries
 # Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
 sub _UnSafe {
-	my $Data = $_[0];
-	$Data =~ s/\\n/\n/g;
-	$Data =~ s/\\,/,/g;
-	$Data =~ s/\\;/;/g;
-	$Data =~ s/\\\\/\\/g;
-	return($Data);
+	$_[0] =~ s/\\n/\n/g;
+	$_[0] =~ s/\\,/,/g;
+	$_[0] =~ s/\\;/;/g;
+	$_[0] =~ s/\\\\/\\/g;
+	return($_[0]);
 }
 
 # Purpose: Get a unique ID for an event
@@ -950,7 +960,7 @@ sub _RRULE_Handler {
 		_WarnOut("STUB: _RRULE_Handler is unable to handle $self->{RawCalendar}{$UID}{RRULE} at this time.");
 	}
 	if($AddDates) {
-		$self->_RRULE_AddDates($AddDates,$UID,$YEAR);
+		$self->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
 	}
 }
 
@@ -976,14 +986,18 @@ sub _Get_EXDATES_Parsed {
 # 		Also fetches the TIME from the UIDs DTSTART.
 # 	This is the function that _RRULE_Handler() uses to add the dates that it has
 # 	calculated from the RRULE to the internal sorted hash.
-# 	This function also takes care of killing off entries matched by EXDATE entries.
-# Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR);
+# 	This function also takes care of killing off entries matched by EXDATE entries,
+# 	and entries not matched by BYDAY
+# Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
 sub _RRULE_AddDates {
 	my $self = shift;
 	my $AddDates = shift;
 	my $UID = shift;
 	my $GenYear = shift;
+	my $RRULE = shift;
 	my $Exceptions = $self->_Get_EXDATES_Parsed($UID);
+	my $BYDAY = $self->_Get_BYDAY_Parsed($RRULE,$UID);
+
 	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
 	if (not defined($UID_Time) or not length($UID_Time)) {
 		$UID_Time = 'DAY';
@@ -995,12 +1009,18 @@ sub _RRULE_AddDates {
 			$UID_Time = 'DAY';
 		}
 	}
+
 	foreach my $DateTimeString (keys(%{$AddDates})) {
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($DateTimeString);
 		if($Year ne $GenYear) {
 			_ErrOut("Wanted to add $Day.$Month.$Year, but we're generating $GenYear! This is a bug!");
 			next;
 		}
+		# Test for BYDAY
+		if($BYDAY and not $self->_BYDAY_Test($RRULE,$BYDAY,$UID,$DateTimeString)) {
+			next;
+		}
+
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
@@ -1023,7 +1043,7 @@ sub _RRULE_DAILY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(FREQ|WKST|UNTIL|INTERVAL)/) {
+		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1106,7 +1126,7 @@ sub _RRULE_WEEKLY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(UNTIL|FREQ|WKST|INTERVAL)/) {
+		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1226,7 +1246,7 @@ sub _RRULE_MONTHLY {
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(FREQ|WKST|UNTIL|INTERVAL)/) {
+		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1313,7 +1333,7 @@ sub _RRULE_YEARLY {
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
-		if(not /^(FREQ|WKST|INTERVAL|UNTIL)/) {
+		if(not /^(FREQ|WKST|INTERVAL|BYDAY|UNTIL)/) {
 			if(/^X-/) {
 				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
@@ -1340,6 +1360,66 @@ sub _RRULE_YEARLY {
 	return(\%Dates);
 }
 
+# Purpose: Returns a parsed map of localtime() values => byday values
+# 	as specified in the RRULE.
+# Usage: _RRULE_BYDAY_Parsed(RRULE,UID);
+# 	It returns a hashref. The hashref has one key per wday as of localtime().
+# 	Those matching the rule is true, those not, false.
+# 	If a BYDAY rule is not present then it returns FALSE.
+sub _Get_BYDAY_Parsed {
+	my $self = shift;
+	my $RRULE = shift;
+	my $UID = shift;
+
+	# The returned map
+	my %ReturnMap;
+
+	# If there is no BYDAY rule, return undef
+	if(not $RRULE->{BYDAY}) {
+		return(FALSE);
+	}
+
+	# BYDAY value -> localtime() mapping
+	my %BydayMap = (
+		SU => 0,
+		MO => 1,
+		TU => 2,
+		WE => 3,
+		TH => 4,
+		FR => 5,
+		SA => 6
+	);
+
+	foreach my $WD (split(/,/, $RRULE->{BYDAY})) {
+		if(defined($BydayMap{$WD})) {
+			$ReturnMap{$BydayMap{$WD}} = TRUE;
+		} else {
+			_WarnOut("RRULE for UID $UID has an invalid day specified in BYDAY: $WD");
+		}
+	}
+
+	return(\%ReturnMap);
+}
+
+# Purpose: Test if a date matches a preparsed BYDAY rule
+# Usage: $self->_BYDAY_Test(RRULE, BYDAY, UID, DATETIME);
+sub _BYDAY_Test {
+	my $self = shift;
+	my $RRULE = shift;
+	my $BYDAY = shift;
+	my $UID = shift;
+	my $DateTime = shift;
+
+	# Create the UNIX time for said day
+	my $UnixTime = iCal_ConvertToUnixTime($DateTime);
+	my ($testsec,$testmin,$testhour,$testmday,$testmonth,$testyear,$testwday,$testyday,$testisdst) = localtime($UnixTime);
+	if($BYDAY->{$testwday}) {
+		return(TRUE);
+	} else {
+		return(FALSE);
+	}
+}
+
 # Purpose: Strip the time part of a DateTime string
 # Usage: _DT_StripTime
 sub _DT_StripTime {
@@ -1360,7 +1440,7 @@ DP::iCalendar - Parser for iCalendar files
 
 =head1 VERSION
 
-0.3
+0.3.1
 
 =head1 SYNOPSIS
 

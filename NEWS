@@ -1,6 +1,29 @@
 Day Planner version history
 **************************
 
+Version 0.7.1 "GPLv3" (Released on the 9th of July 2007)
+------------------------
+* All
+- Now licensed under the GNU General Public License version 3
+- Added a Makefile
+
+* Client (dayplanner)
+- Fixed a bug that caused exporting HTML from the commandline to fail
+- Fixed a bug that could cause errornious birthday strings when exporting
+  to HTML
+- Fixed a bug that caused Day Planner to add dates to the recurrance
+  exceptions field without the user requesting them
+- Some iCalendar compatibility fixes
+- Various optimizations in the underlying iCalendar library
+- Various Day Planner startup optimizations
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
+* Services daemon (dayplanner-services-daemon)
+- Fixed startup after crashing
+
 Version 0.7 "Unia" (Released on the 10th of June 2007)
 ------------------------
 * Client (dayplanner)
