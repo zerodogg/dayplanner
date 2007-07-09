@@ -63,7 +63,11 @@ uninstall:
 
 clean:
 	rm -f $(shell find|egrep '~$$')
+	rm -f po/*.mo
+	rm -f po/*.pot
+	rm -f doc/dayplanner.desktop
 	rm -rf packages/
+	rm -rf locale/
 
 # Date::HolidayParser installation
 DHPinstall:
