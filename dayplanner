@@ -47,7 +47,7 @@ use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile App
 
 # Scalars
 our $Version = '0.7.1';
-my $VersionName = 'SVN';
+my $VersionName = 'GPLv3';
 my $RCSRev = '$Id$';
 my $MainEventsFile = 'events.dpd';			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
