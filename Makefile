@@ -98,11 +98,11 @@ maininstall:
 	mkdir -p $(DP_MAINTARGET)
 	install -m755 ./dayplanner $(DP_MAINTARGET)
 	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)
-	-ln -s $(DP_MAINTARGET)/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -s ../share/dayplanner/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-daemon $(DP_MAINTARGET)
-	-ln -s $(DP_MAINTARGET)/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -s ../share/dayplanner/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-notifier $(DP_MAINTARGET)
-	-ln -s $(DP_MAINTARGET)/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -s ../share/dayplanner/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
 
 # Art installation
 artinstall:
