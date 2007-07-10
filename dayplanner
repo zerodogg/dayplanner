@@ -46,7 +46,7 @@ use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
 # Scalars
-our $Version = '0.7.1';
+our $Version = '0.8';
 my $VersionName = 'SVN';
 my $RCSRev = '$Id$';
 my $MainEventsFile = 'events.dpd';			# The filename to save the events to
