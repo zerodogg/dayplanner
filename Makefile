@@ -43,6 +43,7 @@ all:
 	@echo " updatepo    - update po-files"
 	@echo " mo          - build the locale/ tree"
 	@echo " distrib     - create packages"
+	@echo " test        - verify release sanity"
 	@echo " DHPinstall  - install the Date::HolidayParser module (only needed for distro packages)"
 
 install: $(INSTALLRULES)
@@ -68,6 +69,25 @@ clean:
 	rm -f doc/dayplanner.desktop
 	rm -rf packages/
 	rm -rf locale/
+
+# Verify sanity
+test:
+	@perl -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
+	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
+	@perl -c ./dayplanner
+	@perl -c ./dayplanner-daemon
+	@perl -c ./dayplanner-notifier
+	@perl -c ./devel-tools/installer/MainInstallerPart
+	@perl -c ./devel-tools/installer/InstallLocal
+	@perl -c ./devel-tools/GenDesktop
+	@perl -c ./devel-tools/BuildLocale
+	@perl -c ./devel-tools/SetVersion
+	@perl -c ./devel-tools/postat
+	@perl -c ./devel-tools/updatepo
+	@perl -c ./devel-tools/CreatePackages
+	@perl -c ./services/tools/DPSAdmin
+	@perl -c ./services/tools/GenHTML
+	@perl -c ./services/dayplanner-services-daemon
 
 # Date::HolidayParser installation
 DHPinstall:
