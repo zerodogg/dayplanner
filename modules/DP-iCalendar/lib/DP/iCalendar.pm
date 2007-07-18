@@ -148,7 +148,11 @@ sub get_months {
 sub get_info {
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		return($self->{RawCalendar}{$UID});
+		if(ref($self->{RawCalendar}{$UID} eq 'HASH')) {
+			return($self->{RawCalendar}{$UID});
+		} else {
+			$self->_API_GetUID($UID);
+		}
 	}
 	carp('get_info got invalid UID');
 	return(undef);
@@ -1476,6 +1480,15 @@ sub _API_Verify_Params {
 		}
 	}
 	return($return);
+}
+
+# Purpose: Get an UID from a plugin
+# Usage: my $UID_Obj = $self->_API_GetUID('UID');
+sub _API_GetUID {
+	my $self = shift;
+	my $UID = shift
+
+	return($self->{RawCalendar}{$UID}->DPI_API_Call("GET_UID", { UID => $UID }));
 }
 
 # ADD_UID handler
