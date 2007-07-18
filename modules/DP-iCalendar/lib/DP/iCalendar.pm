@@ -26,7 +26,9 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 our $VERSION;
 $VERSION = 0.3.1;
 
-# - Public methods
+# ------------------
+# - Public methods -
+# ------------------
 
 # Purpose: Create a new object, call _LoadFile and  _parse_file on it
 # Usage: my $object = DP::iCalendar->new(/FILE/);
@@ -408,14 +410,37 @@ sub set_prodid {
 	}
 	# Verify that it is nicely formatted
 	unless($ProdId =~ m#^-//.+//NONSGML\s.+//EN$#) {
-		croak('ProdId is not nicely formatted, see the DP::iCalendar documentation.');
+		carp('ProdId is not nicely formatted, see the DP::iCalendar documentation.');
 	}
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
 	return(TRUE);
 }
 
-# - Public functions
+# Purpose: Call the plugin API
+# Usage: $object->API_Call(FUNCTION, { PARAM1 => OPT, PARAM2 => OPT });
+sub API_Call {
+	my $self = shift;
+	my ($Function, $Parameters) = @_;
+
+	if($Function eq 'ADD_UID') {
+		return($self->_API_AddUID($Parameters));
+	}
+
+	if($Function eq 'KILL_UID') {
+		return($self->_API_KillUID($Parameters));
+	}
+
+	if($Function eq 'REGISTER') {
+		return($self->API_Register($Parameters));
+	}
+	carp("API: Unrecognized API call to $Function");
+	return(FALSE);
+}
+
+# --------------------
+# - Public functions -
+# --------------------
 
 # Purpose: Generate an iCalendar date-time from multiple values
 # Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
@@ -500,7 +525,10 @@ sub iCal_ParseDateTime {
 	return($Year,$Month,$Day,$Time);
 }
 
-# - Internal functions
+# ----------------------
+# - Internal functions -
+# ----------------------
+
 # WARNING: Do NOT call ANY of the below functions from within programs using
 # 	DP::iCalendar. They are only meant for internal use and are subject to
 # 	radical API changes, or just disappearing.
@@ -518,6 +546,7 @@ sub _NewObj {
 	$self->{RawCalendar} = {};
 	$self->{OrderedCalendar} = {};
 	$self->{AlreadyCalculated} = {};
+	$self->{Plugins} = {};
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	if($File) {
 		$self->{FILETYPE} = 'file';
@@ -843,7 +872,9 @@ sub _ClearCalculated {
 	return(TRUE);
 }
 
+# --------------------------------------------
 # --- Internal RRULE calculation functions ---
+# --------------------------------------------
 
 # Purpose: Parse an RRULE
 # Usage: _RRULE_Parser(UID);
@@ -1426,6 +1457,94 @@ sub _DT_StripTime {
 	my $DT = shift;
 	$DT =~ s/Z.+$//i;
 	return($DT);
+}
+
+# ----------------------------------
+# --- Internal API Call handlers ---
+# ----------------------------------
+
+# Purpose: Help verify parameters
+# Usage: _API_Verify_Params(params_hashref, CALL, PARAM1, PARAM2);
+sub _API_Verify_Params {
+	my $params = shift;
+	my $call = shift;
+	my $return = TRUE;
+	foreach(@_) {
+		if(not defined($params->{$_})) {
+			croak("API: Missing parameter: $_ in call to $call");
+			$return = FALSE;
+		}
+	}
+	return($return);
+}
+
+# ADD_UID handler
+#	Parameters:
+#		UID => The_uid,
+#		OWNER => The_parent_object
+sub _API_AddUID {
+	my $self = shift;
+	my $params = shift;
+
+	return(FALSE) if not _API_Verify_Params($params, 'ADD_UID', 'UID','OWNER');
+	
+	if(not defined($self->{RawCalendar}{$params->{UID}})) {
+		$self->{RawCalendar}{$params->{UID}} = $params->{OWNER};
+	} else {
+		carp("API: ADD_UID: UID already existed");
+		return(FALSE);
+	}
+	return(TRUE);
+}
+
+# KILL_UID handler
+# 	Parameters:
+# 		UID => The_uid,
+# 		CALLER => Caller,
+sub _API_KillUID {
+	my $self = shift;
+	my $params = shift;
+
+	return(FALSE) if not _API_Verify_Params($params, 'KILL_UID', 'UID','OWNER');
+	
+	if(not defined($self->{RawCalendar}{$params->{UID}})) {
+		carp("API: KILL_UID: $params->{UID} did not exist");
+		return(FALSE);
+	} elsif (not $self->{RawCalendar}{$params->{UID}} eq $params->{OWNER}) {
+		carp(sprintf("API: KILL_UID: $params->{UID} is not owned by %s", ref($params->{OWNER})));
+		return(FALSE);
+	} else {
+		$self->delete($params->{UID});
+		return(TRUE);
+	}
+}
+
+# REGISTER handler
+# 	Parameters:
+# 		OBJECT => Object,
+# 		VERSION => API Version,
+sub _API_Register {
+	my $self = shift;
+	my $params = shift;
+	
+	return(FALSE) if not _API_Verify_Params($params, 'REGISTER', 'OBJECT','VERSION');
+
+	if(not $params->{VERSION} eq '1Alpha') {
+		carp("Unsupported API version: $params->{VERSION}. Refusing.");
+		if(wantarray()) {
+			return(FALSE, '1Alpha');
+		} else {
+			return(FALSE);
+		}
+	}
+
+	if(not $self->{Plugins}{$params->{OBJECT}}) {
+		$self->{Plugins}{$params->{OBJECT}} = 1;
+		return(TRUE);
+	} else {
+		carp("API: REGISTER: Plugin attempted to re-register");
+		return(FALSE);
+	}
 }
 
 # End of DP::iCalendar
