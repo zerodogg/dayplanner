@@ -278,12 +278,16 @@ sub get_rawdata {
 sub delete {
 	my ($self, $UID) = @_;	# TODO verify UID
 	if(defined($self->{RawCalendar}{$UID})) {
-		delete($self->{RawCalendar}{$UID});
-		$self->_ClearCalculated();
-		return(TRUE);
+		if(ref($self->{RawCalendar}{$UID} eq 'HASH')) {
+			delete($self->{RawCalendar}{$UID});
+			$self->_ClearCalculated();
+			return(TRUE);
+		} else {
+			return($self->_API_RemoveUID($UID));
+		}
 	} else {
 		carp('delete called without a valid UID');
-		return(undef);
+		return(FALSE);
 	}
 }
 
@@ -297,7 +301,7 @@ sub add {
 	}
 	my $UID = $self->_UID($Hash{DTSTART});
 	$self->_ClearCalculated();
-	$self->_ChangeEntry($UID,%Hash);
+	$self->_ChangeEntry($UID,\%Hash);
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
@@ -305,7 +309,7 @@ sub add {
 }
 
 # Purpose: Change an iCalendar entry
-# Usage: $object->change(%EntryHash);
+# Usage: $object->change($UID, %EntryHash);
 sub change {
 	my ($self, $UID, %Hash) = @_;
 	unless(defined($UID)) {
@@ -316,7 +320,7 @@ sub change {
 		carp('Refusing to change a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
-	$self->_ChangeEntry($UID,%Hash);
+	$self->_ChangeEntry($UID,\%Hash);
 	return(TRUE);
 }
 
@@ -562,14 +566,20 @@ sub _NewObj {
 }
 
 # Purpose: Make changes to the raw calendar (append or change)
-# Usage: $self->_ChangeEntry(UID,%Hash);
+# Usage: $self->_ChangeEntry(UID,\%Hash);
 sub _ChangeEntry {
-	my($self,$UID,%Hash) = @_;
-	foreach my $key (keys(%Hash)) {
+	my($self,$UID,$HashRef) = @_;
+	# Check if it is an API UID, if so pass it on to the API function.
+	# Otherwise just continue.
+	if(defined($self->{RawCalendar}{$UID}) and not ref($self->{RawCalendar}{$UID}) eq 'HASH') {
+		return($self->_API_ChangeEntry($UID,$HashRef));
+	}
+
+	foreach my $key (keys(%{$HashRef})) {
 		# If the key isn't defined that means we should remove the key if it
 		# exists.
-		if(defined($Hash{$key})) {
-			$self->{RawCalendar}{$UID}{$key} = $Hash{$key};
+		if(defined($HashRef->{$key})) {
+			$self->{RawCalendar}{$UID}{$key} = $HashRef->{$key};
 		} else {
 			if(defined($self->{RawCalendar}{$UID}{$key})) {
 				delete($self->{RawCalendar}{$UID}{$key});
@@ -861,6 +871,7 @@ sub _GenerateCalendar {
 			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
 		}
 	}
+	$self->_API_GenerateCalYear($EventYear);
 	$self->{AlreadyCalculated}{$EventYear} = 1;
 	return(TRUE);
 }
@@ -1482,6 +1493,18 @@ sub _API_Verify_Params {
 	return($return);
 }
 
+# Purpose: Generate a year in all registrered plugins
+# Usage: $self->_API_GenerateCalYear(YEAR);
+sub _API_GenerateCalYear {
+	my $self = shift;
+	my $Year = shift;
+	
+	foreach my $plugin (keys %{$self->{Plugins}}) {
+		$plugin->DPI_API_Call('GENERATE_YEAR', { YEAR => $Year });
+	}
+	return(TRUE);
+}
+
 # Purpose: Get an UID from a plugin
 # Usage: my $UID_Obj = $self->_API_GetUID('UID');
 sub _API_GetUID {
@@ -1489,6 +1512,39 @@ sub _API_GetUID {
 	my $UID = shift
 
 	return($self->{RawCalendar}{$UID}->DPI_API_Call("GET_UID", { UID => $UID }));
+}
+
+# Purpose: Remove an UID from a plugin
+# Usage: $self->_API_RemoveUID('UID');
+sub _API_RemoveUID {
+	my $self = shift;
+	my $uid = shift;
+
+	return($self->{RawCalendar}{$UID}->DPI_API_Call('KILL_UID', { UID => $UID }));
+}
+
+# Purpose: Change an UID
+# Usage: $self->_API_ChangeEntry(UID,\%HASH);
+sub _API_ChangeEntry {
+	my $self = shift;
+	my $UID = shift;
+	my $NewContents = shift;
+
+	# Call the owner module to change it
+	my $Reply = $self->{RawCalendar}{$UID}->DPI_API_Call('ChangeUID', { UID => $UID, NEWHASH => $NewContents});
+
+	# If the returned value isn't a reference then just return
+	if(not ref($Reply)) {
+		$self->_ClearCalculated();
+		return(TRUE);
+	}
+
+	# Okay, it's a reference, do stuff
+	$Reply->{'X-DPI-OrigModule'} = ref($self->{RawCalendar}{$UID});
+	delete($self->{RawCalendar}{$UID});
+
+	# Hand it to the real entry changing function to re-add it
+	return($self->_ChangeEntry($UID,$Reply));
 }
 
 # ADD_UID handler
