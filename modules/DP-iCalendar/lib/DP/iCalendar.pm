@@ -1509,7 +1509,7 @@ sub _API_GenerateCalYear {
 # Usage: my $UID_Obj = $self->_API_GetUID('UID');
 sub _API_GetUID {
 	my $self = shift;
-	my $UID = shift
+	my $UID = shift;
 
 	return($self->{RawCalendar}{$UID}->DPI_API_Call("GET_UID", { UID => $UID }));
 }
@@ -1518,7 +1518,7 @@ sub _API_GetUID {
 # Usage: $self->_API_RemoveUID('UID');
 sub _API_RemoveUID {
 	my $self = shift;
-	my $uid = shift;
+	my $UID = shift;
 
 	return($self->{RawCalendar}{$UID}->DPI_API_Call('KILL_UID', { UID => $UID }));
 }
