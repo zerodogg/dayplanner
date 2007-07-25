@@ -440,7 +440,7 @@ sub API_Call {
 	}
 
 	if($Function eq 'REGISTER') {
-		return($self->API_Register($Parameters));
+		return($self->_API_Register($Parameters));
 	}
 	carp("API: Unrecognized API call to $Function");
 	return(FALSE);
