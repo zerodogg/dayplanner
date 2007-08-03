@@ -14,6 +14,13 @@ DP_FORCE_GETTEXT_WORKAROUND
 			on and off by using this env var.
 			Forced to on if set to 1, forced to off if
 			set to anything else.
+DP_FORCE_PLUGIN_MODULES
+			This var contains a list of modules that
+			supports ->new_DPI(DP::iCalendar object); that
+			should be loaded. The list should be
+			space-seperated.
+			NOTE: Do NOT report ANY bugs when using loaded
+			modules.
 DP_FORCE_24H
 			Forces Day Planner into 24 hour mode if
 			set to 1.

@@ -793,6 +793,22 @@ sub LoadCalendar {
 	} else {
 		$iCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
+	if(defined($ENV{DP_FORCE_PLUGIN_MODULES})) {
+		print "*** Day Planner: Loading DP::iCalendar plugins:";
+		foreach my $Plugin (split(/\s+/,$ENV{DP_FORCE_PLUGIN_MODULES})) {
+			print " $Plugin";
+			if (eval("use $Plugin;1;")) {
+				my $Object = $Plugin->new_DPI($iCalendar);
+				if(not $Object) {
+					print "(failed)";
+				}
+			} else {
+				print "(failed)";
+			}
+		}
+		print "\n";
+		print "*** Day Planner: Warning: Do NOT report any bugs while having DP::iCalendar plugins loaded.\n";
+	}
 	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
 	return(1);
 }
