@@ -554,7 +554,7 @@ sub _NewObj {
 	$self->{RawCalendar} = {};
 	$self->{OrderedCalendar} = {};
 	$self->{AlreadyCalculated} = {};
-	$self->{Plugins} = {};
+	$self->{Plugins} = [];
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	if($File) {
 		$self->{FILETYPE} = 'file';
@@ -1499,7 +1499,7 @@ sub _API_GenerateCalYear {
 	my $self = shift;
 	my $Year = shift;
 	
-	foreach my $plugin (keys %{$self->{Plugins}}) {
+	foreach my $plugin (@{$self->{Plugins}}) {
 		$plugin->DPI_API_Call('GENERATE_YEAR', { YEAR => $Year });
 	}
 	return(TRUE);
@@ -1606,9 +1606,8 @@ sub _API_Register {
 			return(FALSE);
 		}
 	}
-
-	if(not $self->{Plugins}{$params->{OBJECT}}) {
-		$self->{Plugins}{$params->{OBJECT}} = 1;
+	if(not(grep($params->{OBJECT}, @{$self->{Plugins}}))) {
+		push(@{$self->{Plugins}}, $params->{OBJECT});
 		return(TRUE);
 	} else {
 		carp("API: REGISTER: Plugin attempted to re-register");
