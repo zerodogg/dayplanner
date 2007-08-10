@@ -339,7 +339,7 @@ sub DPS_DataSync {
 	# Okay, the required information is available.
 	# First check if our current local MD5 sum matches the one on the server.
 	# If it does then we return without doing anything at all.
-	if(defined($LocalMD5) and $ServerMD5 eq $LocalMD5) {
+	if(defined($LocalMD5) and defined($ServerMD5) and $ServerMD5 eq $LocalMD5) {
 		DPS_Log("ServerMD5[$ServerMD5] matched our LocalMD5[$LocalMD5]. Not doing anything");
 		return(1);
 	} 
