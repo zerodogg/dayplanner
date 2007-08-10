@@ -148,9 +148,10 @@ sub get_months {
 sub get_info {
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		if(ref($self->{RawCalendar}{$UID} eq 'HASH')) {
+		if(ref($self->{RawCalendar}{$UID}) eq 'HASH') {
 			return($self->{RawCalendar}{$UID});
 		} else {
+			print "Getting due to: ", ref($self->{RawCalendar}{$UID}),"\n";
 			$self->_API_GetUID($UID);
 		}
 	}
