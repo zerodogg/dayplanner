@@ -1,3 +1,11 @@
+#!/usr/bin/perl
+# DP::GeneralHelpers::HTTPFetch
+# $Id$
+# Copyright (C) Eskild Hustvedt 2007
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the same terms as Perl itself. There is NO warranty;
+# not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 package DP::GeneralHelpers::HTTPFetch;
 use IPC::Open3;
 use POSIX;
@@ -151,3 +159,56 @@ sub _WgetFetch {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+DP::GeneralHelpers::HTTPFetch - A simple perl module for fetching data from HTTP
+
+=head1 SYNOPSIS
+
+  use DP::GeneralHelpers;
+  my $data = DP::GeneralHelpers::HTTPFetch->get("http://www.day-planner.org/");
+
+=head1 DESCRIPTION
+
+This module helps you fetch data from any HTTP server.
+It uses LWP, curl, wget or lynx for the actual fetching.
+
+=head1 FUNCTIONS
+
+=head2 my $content = DP::GeneralHelpers::HTTPFetch->get("URL",Callback);
+
+This function will download URL and return the data. It will also call
+callback for progress updates. Callback is optional.
+
+If callback is present then it will be called at random intervals whenever
+the download has progressed. It will either be called with a numerical value
+between 1-100 (the percentage completed) or the string value UNKNOWN. UNKOWN means
+that it has progressed but that it does not know how much is left.
+
+It can return NORESOLVE if the address doesn't resolve (ie. machine is offline,
+URL is not valid). Return NOPROGRAM if no downloader is available (this will
+be very rare, but can happen). Return FAIL if the download failed for some
+other reason. If none of the above is returned then the data downloaded is returned.
+
+=head2 EXPORT
+
+Nothing.
+
+=head1 SEE ALSO
+
+wget(1), curl(1), lynx(1), LWP, LWP::Simple
+
+=head1 AUTHOR
+
+Eskild Hustvedt - C<< <zerodogg@cpan.org> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (C) 2006, 2007 Eskild Hustvedt, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself. There is NO warranty;
+not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+=cut
