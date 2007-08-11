@@ -531,6 +531,15 @@ use IPC::Open3;
 use POSIX;
 use Socket;
 
+# Purpose: Download a file from HTTP (other protocols might also work, but there are
+# 		no guarantees for that)
+# Usage: my $Data = DP::GeneralHelpers::HTTPFetch->get("URL",$ProgressCallback);
+# 	Progresscallback is a function that can recieve values in order to run
+# 	a progress window. It can also be undef.
+# 	If not undef then the function referenced will recieve either a vlue from
+# 	1-100, which is the percentage completed, or the string UNKOWN.
+# 	UNKNOWN means that the download has progressed, but it is not known how
+# 	much is left.
 sub get {
 	my $self = shift;
 	my $file = shift;
@@ -563,9 +572,12 @@ sub get {
 	return('NOPROGRAM');
 }
 
+# Purpose: Download a file from HTTP using LWP
+# Usage: $self->_LWPFetch(FILE,PROGRESS);
 sub _LWPFetch {
 	my $self = shift;
 	my $file = shift;
+	my $progress = shift;
 
 	my $UserAgent = LWP::UserAgent->new;
 	$UserAgent->agent('DP::GeneralHelpers::HTTPFetch//LWP');
@@ -580,7 +592,7 @@ sub _LWPFetch {
 }
 
 # Purpose: Download a file from HTTP using lynx.
-# Usage: $self->_LynxFetch(FILE);
+# Usage: $self->_LynxFetch(FILE,PROGRESS);
 sub _LynxFetch {
 	my $self = shift;
 	my $file = shift;
@@ -609,7 +621,7 @@ sub _LynxFetch {
 }
 
 # Purpose: Download a file from HTTP using curl.
-# Usage: $self->_CurlFetch(FILE);
+# Usage: $self->_CurlFetch(FILE,PROGRESS);
 sub _CurlFetch {
 	my $self = shift;
 	my $file = shift;
@@ -638,7 +650,7 @@ sub _CurlFetch {
 }
 
 # Purpose: Download a file from HTTP using wget.
-# Usage: $self->_WgetFetch(FILE);
+# Usage: $self->_WgetFetch(FILE,PROGRESS);
 sub _WgetFetch {
 	my $self = shift;
 	my $file = shift;
