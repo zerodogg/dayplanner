@@ -139,7 +139,9 @@ artinstall:
 # Module installation
 moduleinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/DP
+	mkdir -p $(DP_MAINTARGET)/modules/DP/GeneralHelpers
 	install -m755 $(shell ls ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
+	install -m755 $(shell ls ./modules/*/lib/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
 
 # Holiday installation
 holidayinstall:
