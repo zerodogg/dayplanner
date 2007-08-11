@@ -69,6 +69,8 @@ clean:
 	rm -f doc/dayplanner.desktop
 	rm -rf packages/
 	rm -rf locale/
+distclean: clean
+	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 
 # Verify sanity
 test:
