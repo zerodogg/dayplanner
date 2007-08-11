@@ -540,17 +540,16 @@ sub get {
 	# error out.
 	my $addy = $file;
 	$addy =~ s#^\w+://##;
-	$addy =~ s#^(\w+)/.*##;
+	$addy =~ s#^([^/]+)/.*#$1#;
 	my $resolved = inet_ntoa(inet_aton($addy));
 	if(not $resolved) {
 		return('NORESOLVE');
 	}
 
 	# First try LWP
-	#  TODO: LWP
-#	if(eval("use LWP;")) {
-#		return($self->_LWPFetch($file));
-#	}
+	if(eval("use LWP;")) {
+		return($self->_LWPFetch($file));
+	}
 	# Okay, LWP isn't available. Check for others
 	if(DP::GeneralHelpers::InPath('wget')) {
 		return($self->_WgetFetch($file));
@@ -567,6 +566,17 @@ sub get {
 sub _LWPFetch {
 	my $self = shift;
 	my $file = shift;
+
+	my $UserAgent = LWP::UserAgent->new;
+	$UserAgent->agent('DP::GeneralHelpers::HTTPFetch//LWP');
+
+	my $Request = HTTP::Request->new(GET => $file);
+	my $Reply = $UserAgent->request($Request);
+	if($Reply->is_success) {
+		return($Reply->content);
+	} else {
+		return('FAILED');
+	}
 }
 
 # Purpose: Download a file from HTTP using lynx.
@@ -576,10 +586,10 @@ sub _LynxFetch {
 	my $file = shift;
 	my $progress = shift;
 
-	# Have curl output the file to STDOUT and read from that.
+	# Have lynx output the file to STDOUT and read from that.
 	# Ignore STDERR
 	my ($in, $out, $err);
-	my $ChildPID = open3($in,$out,$err,'lynx','-useragent=DP::GeneralHelpers::HTTPFetch//curl','-source',$file);
+	my $ChildPID = open3($in,$out,$err,'lynx','-useragent=DP::GeneralHelpers::HTTPFetch//lynx','-source',$file);
 	my $output;
 	while($output .= <$out> and not eof($out)) {
 		if($progress) {
@@ -637,7 +647,7 @@ sub _WgetFetch {
 	# Have wget output the file to STDOUT and read from that. Ignore
 	# STDERR.
 	my ($in, $out, $err);
-	my $ChildPID = open3($in,$out,$err,'wget','--user-agent','DP::GeneralHelpers::HTTPFetch//curl','--quiet','-O','-',$file);
+	my $ChildPID = open3($in,$out,$err,'wget','--user-agent','DP::GeneralHelpers::HTTPFetch//wget','--quiet','-O','-',$file);
 	my $output;
 	while($output .= <$out> and not eof($out)) {
 		if($progress) {
