@@ -1612,6 +1612,7 @@ sub _API_Register {
 # 	Parameters:
 # 		NONE
 sub _API_Recalculate {
+	my $self = shift;
 	return($self->_ClearCalculated());
 }
 
