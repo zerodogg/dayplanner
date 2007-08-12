@@ -37,16 +37,23 @@ DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
 # --- USER USABLE RULES ---
 all:
 	@echo Valid targets:
-	@echo " install     - install Day Planner"
-	@echo " uninstall   - uninstall a previously installed Day Planner"
-	@echo " clean       - clean up the tree"
-	@echo " updatepo    - update po-files"
-	@echo " mo          - build the locale/ tree"
-	@echo " distrib     - create packages"
-	@echo " test        - verify release sanity"
-	@echo " DHPinstall  - install the Date::HolidayParser module (only needed for distro packages)"
+	@echo " install      - install Day Planner"
+	@echo " uninstall    - uninstall a previously installed Day Planner"
+	@echo " clean        - clean up the tree"
+	@echo " updatepo     - update po-files"
+	@echo " mo           - build the locale/ tree"
+	@echo " distrib      - create packages"
+	@echo " test         - verify release sanity"
+	@echo " DHPinstall   - install the Date::HolidayParser module (only needed for distro packages)"
+	@-[ -e "./.svn" ] && echo " localinstall - install symlinks and .desktop files to use the current SVN checkout";true
 
 install: $(INSTALLRULES)
+
+localinstall: localdesktop
+	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)/
+	ln -sf $(shell pwd)/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner
+	ln -sf $(shell pwd)/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-notifier
+	ln -sf $(shell pwd)/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-daemon
 
 updatepo:
 	perl ./devel-tools/updatepo
@@ -123,11 +130,11 @@ maininstall:
 	mkdir -p $(DP_MAINTARGET)
 	install -m755 ./dayplanner $(DP_MAINTARGET)
 	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)
-	-ln -s ../share/dayplanner/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -sf ../share/dayplanner/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-daemon $(DP_MAINTARGET)
-	-ln -s ../share/dayplanner/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -sf ../share/dayplanner/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-notifier $(DP_MAINTARGET)
-	-ln -s ../share/dayplanner/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -sf ../share/dayplanner/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
 
 # Art installation
 artinstall:
@@ -161,6 +168,11 @@ essentialdocs:
 # .desktop file installation
 desktop:
 	./devel-tools/GenDesktop $(DESTDIR) $(DP_MAINTARGET)/doc/
+	mkdir -p $(DESTDIR)$(DATADIR)/applications
+	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
+# Local .desktop file installation
+localdesktop:
+	./devel-tools/GenDesktop $(shell pwd) $(shell pwd)/art/
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Distrib .desktop file installation
