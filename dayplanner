@@ -4528,6 +4528,8 @@ sub AboutBox {
 	$AboutDialog->set_copyright('Copyright (C) Eskild Hustvedt 2006, 2007');
 	$AboutDialog->set_url_hook(\&LaunchWebBrowser);
 	$AboutDialog->set_website('http://www.day-planner.org/');
+	# TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
+	#		For instance "Dagsplanleggar" for Norwegian.
 	$AboutDialog->set_name($i18n->get('Day Planner'));
 	$AboutDialog->set_version($Version);
 	# GPL summary, should never be marked as translateable
