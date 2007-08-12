@@ -1,6 +1,17 @@
 Day Planner version history
 **************************
 
+Version 0.8 (Unreleased)
+------------------------
+* Client (dayplanner)
+- Fixed a bug that caused the calendar popup to not work when closed
+	using the WMs close button
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
+
 Version 0.7.1 "GPLv3" (Released on the 9th of July 2007)
 ------------------------
 * All
