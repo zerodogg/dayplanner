@@ -246,6 +246,7 @@ sub get_rawdata {
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$self->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
 
 	foreach my $UID (sort keys(%{$self->{RawCalendar}})) {
+		next if $self->{RawCalendar}{$UID}{'DP-iCalendar-PluggedinUID'};
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
 		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
@@ -440,6 +441,10 @@ sub API_Call {
 		return($self->_API_KillUID($Parameters));
 	}
 
+	if($Function eq 'RECALCULATE') {
+		return($self->_API_Recalculate($Parameters));
+	}
+
 	if($Function eq 'REGISTER') {
 		return($self->_API_Register($Parameters));
 	}
@@ -572,7 +577,7 @@ sub _ChangeEntry {
 	my($self,$UID,$HashRef) = @_;
 	# Check if it is an API UID, if so pass it on to the API function.
 	# Otherwise just continue.
-	if(defined($self->{RawCalendar}{$UID}) and not ref($self->{RawCalendar}{$UID}) eq 'HASH') {
+	if(defined($self->{RawCalendar}{$UID}) and $self->{RawCalendar}{$UID}{'DP-iCalendar-PluggedinUID'}) {
 		return($self->_API_ChangeEntry($UID,$HashRef));
 	}
 
@@ -872,7 +877,6 @@ sub _GenerateCalendar {
 			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
 		}
 	}
-	$self->_API_GenerateCalYear($EventYear);
 	$self->{AlreadyCalculated}{$EventYear} = 1;
 	return(TRUE);
 }
@@ -1494,18 +1498,6 @@ sub _API_Verify_Params {
 	return($return);
 }
 
-# Purpose: Generate a year in all registrered plugins
-# Usage: $self->_API_GenerateCalYear(YEAR);
-sub _API_GenerateCalYear {
-	my $self = shift;
-	my $Year = shift;
-	
-	foreach my $plugin (@{$self->{Plugins}}) {
-		$plugin->DPI_API_Call('GENERATE_YEAR', { YEAR => $Year });
-	}
-	return(TRUE);
-}
-
 # Purpose: Get an UID from a plugin
 # Usage: my $UID_Obj = $self->_API_GetUID('UID');
 sub _API_GetUID {
@@ -1550,16 +1542,16 @@ sub _API_ChangeEntry {
 
 # ADD_UID handler
 #	Parameters:
-#		UID => The_uid,
+#		UIDREF => The_uid_contents,
 #		OWNER => The_parent_object
 sub _API_AddUID {
 	my $self = shift;
 	my $params = shift;
 
-	return(FALSE) if not _API_Verify_Params($params, 'ADD_UID', 'UID','OWNER');
+	return(FALSE) if not _API_Verify_Params($params, 'ADD_UID', 'UIDREF','OWNER');
 	
 	if(not defined($self->{RawCalendar}{$params->{UID}})) {
-		$self->{RawCalendar}{$params->{UID}} = $params->{OWNER};
+		$self->{RawCalendar}{$params->{UID}} = $params;
 	} else {
 		carp("API: ADD_UID: UID already existed");
 		return(FALSE);
@@ -1614,6 +1606,13 @@ sub _API_Register {
 		carp("API: REGISTER: Plugin attempted to re-register");
 		return(FALSE);
 	}
+}
+
+# RECALCULATE handler
+# 	Parameters:
+# 		NONE
+sub _API_Recalculate {
+	return($self->_ClearCalculated());
 }
 
 # End of DP::iCalendar
