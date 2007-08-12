@@ -87,9 +87,9 @@ print $Desktop "Encoding=UTF-8\n";
 print $Desktop "MimeType=text/calendar\n";
 print $Desktop "Categories=X-MandrivaLinux-Office-TimeManagement;Office;Calendar;GTK;GNOME;\n";
 if($BinDir eq '.') {
-	print $Desktop "Exec=$BinDir/dayplanner\n";
-} else {
 	print $Desktop "Exec=dayplanner\n";
+} else {
+	print $Desktop "Exec=$BinDir/dayplanner\n";
 }
 print $Desktop "Icon=$Icon\n";
 print $Desktop "Name=Day Planner\n";
