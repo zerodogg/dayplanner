@@ -3350,6 +3350,16 @@ sub PopupDateSel {
 	$Window->set_border_width(5);
 	$Window->set_transient_for($MainWindow);
 	$Window->set_type_hint('dialog');
+	$Window->signal_connect('destroy' => sub {
+		$Window->destroy();
+			$CalButton->set_sensitive(1);
+			$TextEntry->grab_focus();
+		});
+	$Window->signal_connect('delete-event' => sub {
+		$Window->destroy();
+			$CalButton->set_sensitive(1);
+			$TextEntry->grab_focus();
+		});
 	my $VBox = Gtk2::VBox->new();
 	$Window->add($VBox);
 	my $Calendar = Gtk2::Calendar->new();
