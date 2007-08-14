@@ -167,11 +167,11 @@ print $ICS_Target decode_base64($ICS_Content);
 close($ICS_Target);
 
 # Run Day Planner to generate the html
-system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --importical $Dir/.tmp/file.ics");
+system('dayplanner', '--shutdaemon', '--confdir', "$Dir/.tmp/", '--importical', "$Dir/.tmp/file.ics");
 system("rm -f $Dir/*.html");
 open(my $TempHtml, ">", "$Dir/index.html");
 print $TempHtml "HTML is currently being generated...";
 close($TempHtml);
-system("dayplanner --shutdaemon --confdir '$Dir/.tmp/' --exporthtml $Dir/");
+system('dayplanner', '--shutdaemon', '--confdir', "$Dir/.tmp/", '--exporthtml', "$Dir/");
 system("rm -rf $Dir/.tmp");		# TODO: Don't use rm
 UnlockFile("$Dir/.DP_GenHTML.lock");
