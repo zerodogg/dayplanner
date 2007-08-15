@@ -12,8 +12,6 @@ postat			View translation statistics
 updatepo		Run buildpot and then msgmerge existing *.po files with
 			the new pot-file
 
-CreatePackages		Helper script for producing Day Planner packages
-
 installer/		Contains the source code for the generic Day Planner
 			installer
 
