@@ -46,7 +46,7 @@ foreach my $CurrentFile (qw#dayplanner dayplanner-daemon dayplanner-notifier ser
 		print " didn't exist - skipping\n";
 		next;
 	}
-	if($CurrentFile eq 'devel-tools/CreatePackages') {
+	if($CurrentFile eq 'Makefile'{
 		$NewVersion =~ s/\s+/_/g;
 		$NewVersion = lc($NewVersion);
 	}
