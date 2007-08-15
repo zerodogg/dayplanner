@@ -27,6 +27,7 @@ INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice
 prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
 
+VERSION = 0.7
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
@@ -39,13 +40,18 @@ all:
 	@echo Valid targets:
 	@echo " install      - install Day Planner"
 	@echo " uninstall    - uninstall a previously installed Day Planner"
+	@-[ -e "./.svn" ] && echo " localinstall - install symlinks and .desktop files to use the current SVN checkout";true
+	@echo "Advanced targets:"
 	@echo " clean        - clean up the tree"
 	@echo " updatepo     - update po-files"
 	@echo " mo           - build the locale/ tree"
-	@echo " distrib      - create packages"
-	@echo " test         - verify release sanity"
 	@echo " DHPinstall   - install the Date::HolidayParser module (only needed for distro packages)"
-	@-[ -e "./.svn" ] && echo " localinstall - install symlinks and .desktop files to use the current SVN checkout";true
+	@echo "Developer targets:"
+	@echo " distrib      - create packages (tarball, installer and rpm)"
+	@echo " tarball      - create tarball"
+	@echo " installer    - create tarball and installer"
+	@echo " rpm          - create tarball and rpm"
+	@echo " test         - verify release sanity"
 
 install: $(INSTALLRULES)
 
@@ -57,9 +63,6 @@ localinstall: localdesktop
 
 updatepo:
 	perl ./devel-tools/updatepo
-
-distrib:
-	perl ./devel-tools/CreatePackages
 
 mo:
 	perl ./devel-tools/BuildLocale
@@ -76,6 +79,10 @@ clean:
 	rm -f doc/dayplanner.desktop
 	rm -rf packages/
 	rm -rf locale/
+	rm -rf dayplanner-$(VERSION)
+	rm -f dayplanner.spec
+	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+	rm -rf installer
 distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 
@@ -180,3 +187,34 @@ distribdesktop:
 	./devel-tools/GenDesktop .
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
+# --- DISTRIB TARGETS ---
+distrib: prepdistrib tarball rpm installer
+prepdistrib: test clean
+	mkdir -p packages
+tarball: prepdistrib
+	mkdir -p dayplanner-$(VERSION)
+	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.svn ./dayplanner-$(VERSION)
+	make -C ./dayplanner-$(VERSION) distclean
+	rm -rf `find dayplanner-$(VERSION) -name \\.svn`
+	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
+	rm -rf dayplanner-$(VERSION)
+rpm: prepdistrib tarball
+	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
+	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
+	perl -pi -e 's#\[DAYPLANNER_VERSION\]#$(VERSION)#gi' ./dayplanner.spec
+	rpmbuild --define '_with_unstable 1' --with old_menu --with holidayparser -ba ./dayplanner.spec &> packages/rpmbuild.log
+	rm -f packages/rpmbuild.log
+	rm -f ./dayplanner.spec
+	mv $$HOME/rpm/RPMS/noarch/dayplanner*.rpm $$HOME/rpm/SRPMS/dayplanner*.rpm ./packages/
+	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+installer: prepdistrib tarball
+	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
+	mkdir -p installer
+	mv dayplanner-$(VERSION) installer/dayplanner-data
+	cp ./devel-tools/installer/* ./installer
+	rm -f installer/InstallLocal
+	./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art &> /dev/null
+	./installer/dayplanner-data/devel-tools/BuildLocale &> /dev/null
+	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; ./makeself.sh --bzip2 --nox11 $$OLDPWD/installer/ dayplanner-$(VERSION).run 'Generic Day Planner installation script' ./StartInstaller &> /dev/null || exit 1; mv ./dayplanner-$(VERSION).run $$OLDPWD/packages )
+	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+	rm -rf installer
