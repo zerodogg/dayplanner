@@ -103,7 +103,6 @@ test:
 	@perl -c ./devel-tools/SetVersion
 	@perl -c ./devel-tools/postat
 	@perl -c ./devel-tools/updatepo
-	@perl -c ./devel-tools/CreatePackages
 	@perl -c ./services/tools/DPSAdmin
 	@perl -c ./services/tools/GenHTML
 	@perl -c ./services/dayplanner-services-daemon
