@@ -36,8 +36,8 @@ DATADIR ?= $(prefix)/share
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
 
 # --- USER USABLE RULES ---
-all:
-	@echo Valid targets:
+help:
+	@echo "User targets:"
 	@echo " install      - install Day Planner"
 	@echo " uninstall    - uninstall a previously installed Day Planner"
 	@-[ -e "./.svn" ] && echo " localinstall - install symlinks and .desktop files to use the current SVN checkout";true
