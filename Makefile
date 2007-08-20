@@ -173,7 +173,7 @@ essentialdocs:
 	install -m644 TODO $(DP_MAINTARGET)
 # .desktop file installation
 desktop:
-	./devel-tools/GenDesktop $(DESTDIR) $(DP_MAINTARGET)/doc/
+	./devel-tools/GenDesktop $(DP_MAINTARGET) $(DP_MAINTARGET)/art
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Local .desktop file installation
