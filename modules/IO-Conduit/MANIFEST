@@ -1,0 +1,6 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/IO-Conduit.t
+lib/IO/Conduit.pm
