@@ -73,7 +73,7 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/applications/dayplanner.desktop
 
 clean:
-	rm -f $(shell find|egrep '~$$')
+	rm -f `find|egrep '(~|\.swp)$$'`
 	rm -f po/*.mo
 	rm -f po/*.pot
 	rm -f doc/dayplanner.desktop
