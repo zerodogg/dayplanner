@@ -7,8 +7,18 @@ use Net::DBus;
 our $VERSION;
 $VERSION = '0.01';
 
-
-# Preloaded methods go here.
+sub new {
+	my $Package = shift;
+	my $self = {};
+	bless($self,$Package);
+	$self->{dbus} = Net::DBus->find();
+	print "DBus connected\n";
+	$self->{conduit} = $self->{dbus}->get_service('org.conduit.Application');
+	print "Conduit service got\n";
+	$self->{c_service} = $self->{conduit}->get_object('org/conduit/Application');
+	print "Conduit Application object got\n";
+	return($self);
+}
 
 1;
 __END__
