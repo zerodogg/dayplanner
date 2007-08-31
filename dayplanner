@@ -5237,19 +5237,21 @@ sub MainInit {
 # Usage: Gtk2->init_add(\&InitDPCore);
 sub InitDPCore {
 	DP_InitI18n();
-	my $Exception =  Glib->install_exception_handler(sub {
-		my $Exception = shift;
-		my $Chomped = $Exception;
-		chomp($Chomped);
-		# This is the DP perl exception handler
-		DPIntWarn("An exception occurred: $Chomped");
-		# Display an error
-		DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n$Exception");
-		# Make the main window sensitive - this so that the program is at least
-		# partially usable after the exception occurred.
-		$MainWindow->set_sensitive(1);
-		1;
-	});
+	if(not defined($ENV{DP_DISABLE_EXCEPTIONSHANDLER}) or $ENV{DP_DISABLE_EXCEPTIONSHANDLER}) {
+		my $Exception =  Glib->install_exception_handler(sub {
+			my $Exception = shift;
+			my $Chomped = $Exception;
+			chomp($Chomped);
+			# This is the DP perl exception handler
+			DPIntWarn("An exception occurred: $Chomped");
+			# Display an error
+			DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n$Exception");
+			# Make the main window sensitive - this so that the program is at least
+			# partially usable after the exception occurred.
+			$MainWindow->set_sensitive(1);
+			1;
+		});
+	}
 	
 	# MainInit() returns 1 if we're in "FirstStartup" mode AND are displaying the import window.
 	# If we're not displaying the import window it returns 0 in any case.
