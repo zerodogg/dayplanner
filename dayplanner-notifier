@@ -38,7 +38,7 @@ use DP::GeneralHelpers qw(DPIntWarn);
 my $RealZero = $0;
 $0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
-my $Version = '0.7.1';
+my $Version = '0.7.2';
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 

@@ -36,7 +36,7 @@ use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
 Getopt::Long::Configure ('bundling', 'prefix_pattern=(--|-)');
 
 # Scalars
-my $Version = '0.7.1';
+my $Version = '0.7.2';
 my $RCSRev = '$Id$';
 my $DaemonFile = 'daemondata.dpd';		# The filename to save and read daemon data from
 my $LogfileName = 'daemon.log';			# The filename to log to
