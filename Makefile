@@ -1,6 +1,6 @@
 # Makefile for Day Planner
 # Copyright (C) Eskild Hustvedt 2007
-# $Id: Makefile 1604 2007-07-12 11:01:34Z zero_dogg $
+# $Id: Makefile 1653 2007-08-31 20:16:35Z zero_dogg $
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice
 prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
 
+VERSION=0.7.2
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
@@ -35,24 +36,33 @@ DATADIR ?= $(prefix)/share
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
 
 # --- USER USABLE RULES ---
-all:
-	@echo Valid targets:
-	@echo " install     - install Day Planner"
-	@echo " uninstall   - uninstall a previously installed Day Planner"
-	@echo " clean       - clean up the tree"
-	@echo " updatepo    - update po-files"
-	@echo " mo          - build the locale/ tree"
-	@echo " distrib     - create packages"
-	@echo " test        - verify release sanity"
-	@echo " DHPinstall  - install the Date::HolidayParser module (only needed for distro packages)"
+help:
+	@echo "User targets:"
+	@echo " install      - install Day Planner"
+	@echo " uninstall    - uninstall a previously installed Day Planner"
+	@-[ -e "./.svn" ] && echo " localinstall - install symlinks and .desktop files to use the current SVN checkout";true
+	@echo "Advanced targets:"
+	@echo " clean        - clean up the tree"
+	@echo " updatepo     - update po-files"
+	@echo " mo           - build the locale/ tree"
+	@echo " DHPinstall   - install the Date::HolidayParser module (only needed for distro packages)"
+	@echo "Developer targets:"
+	@echo " distrib      - create packages (tarball, installer and rpm)"
+	@echo " tarball      - create tarball"
+	@echo " installer    - create tarball and installer"
+	@echo " rpm          - create tarball and rpm"
+	@echo " test         - verify release sanity"
 
 install: $(INSTALLRULES)
 
+localinstall: localdesktop
+	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)/
+	ln -sf $(shell pwd)/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner
+	ln -sf $(shell pwd)/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-notifier
+	ln -sf $(shell pwd)/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-daemon
+
 updatepo:
 	perl ./devel-tools/updatepo
-
-distrib:
-	perl ./devel-tools/CreatePackages
 
 mo:
 	perl ./devel-tools/BuildLocale
@@ -63,17 +73,26 @@ uninstall:
 	rm -f $(DESTDIR)$(DATADIR)/applications/dayplanner.desktop
 
 clean:
-	rm -f $(shell find|egrep '~$$')
+	rm -f `find|egrep '(~|\.swp)$$'`
 	rm -f po/*.mo
 	rm -f po/*.pot
 	rm -f doc/dayplanner.desktop
 	rm -rf packages/
 	rm -rf locale/
+	rm -rf dayplanner-$(VERSION)
+	rm -f dayplanner.spec
+	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+	rm -rf installer
+distclean: clean
+	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 
 # Verify sanity
 test:
 	@perl -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
-	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
+	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
+	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
+	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
 	@perl -c ./dayplanner
 	@perl -c ./dayplanner-daemon
 	@perl -c ./dayplanner-notifier
@@ -84,7 +103,6 @@ test:
 	@perl -c ./devel-tools/SetVersion
 	@perl -c ./devel-tools/postat
 	@perl -c ./devel-tools/updatepo
-	@perl -c ./devel-tools/CreatePackages
 	@perl -c ./services/tools/DPSAdmin
 	@perl -c ./services/tools/GenHTML
 	@perl -c ./services/dayplanner-services-daemon
@@ -118,11 +136,11 @@ maininstall:
 	mkdir -p $(DP_MAINTARGET)
 	install -m755 ./dayplanner $(DP_MAINTARGET)
 	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)
-	-ln -s ../share/dayplanner/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -sf ../share/dayplanner/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-daemon $(DP_MAINTARGET)
-	-ln -s ../share/dayplanner/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -sf ../share/dayplanner/dayplanner-daemon $(DESTDIR)$(prefix)/$(BINDIR)
 	install -m755 ./dayplanner-notifier $(DP_MAINTARGET)
-	-ln -s ../share/dayplanner/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
+	-ln -sf ../share/dayplanner/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)
 
 # Art installation
 artinstall:
@@ -134,7 +152,9 @@ artinstall:
 # Module installation
 moduleinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/DP
+	mkdir -p $(DP_MAINTARGET)/modules/DP/GeneralHelpers
 	install -m755 $(shell ls ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
+	install -m755 $(shell ls ./modules/*/lib/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
 
 # Holiday installation
 holidayinstall:
@@ -153,7 +173,12 @@ essentialdocs:
 	install -m644 TODO $(DP_MAINTARGET)
 # .desktop file installation
 desktop:
-	./devel-tools/GenDesktop $(DESTDIR) $(DP_MAINTARGET)/doc/
+	./devel-tools/GenDesktop $(DP_MAINTARGET) $(DP_MAINTARGET)/art
+	mkdir -p $(DESTDIR)$(DATADIR)/applications
+	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
+# Local .desktop file installation
+localdesktop:
+	./devel-tools/GenDesktop $(shell pwd) $(shell pwd)/art/
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Distrib .desktop file installation
@@ -161,3 +186,35 @@ distribdesktop:
 	./devel-tools/GenDesktop .
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
+# --- DISTRIB TARGETS ---
+distrib: prepdistrib tarball rpm installer
+prepdistrib: test clean
+	mkdir -p packages
+tarball: prepdistrib
+	mkdir -p dayplanner-$(VERSION)
+	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.svn ./dayplanner-$(VERSION)
+	make -C ./dayplanner-$(VERSION) distclean
+	rm -rf `find dayplanner-$(VERSION) -name \\.svn`
+	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
+	rm -rf dayplanner-$(VERSION)
+rpm: prepdistrib tarball
+	mkdir -p $$HOME/rpm/SOURCES/ $$HOME/rpm/RPMS/noarch/
+	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
+	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
+	perl -pi -e 's#\[DAYPLANNER_VERSION\]#$(VERSION)#gi' ./dayplanner.spec
+	rpmbuild --define '_with_unstable 1' --with old_menu --with holidayparser -ba ./dayplanner.spec &> packages/rpmbuild.log
+	rm -f packages/rpmbuild.log
+	rm -f ./dayplanner.spec
+	mv $$HOME/rpm/RPMS/noarch/dayplanner*.rpm $$HOME/rpm/SRPMS/dayplanner*.rpm ./packages/
+	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+installer: prepdistrib tarball
+	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
+	mkdir -p installer
+	mv dayplanner-$(VERSION) installer/dayplanner-data
+	cp ./devel-tools/installer/* ./installer
+	rm -f installer/InstallLocal
+	./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art &> /dev/null
+	./installer/dayplanner-data/devel-tools/BuildLocale &> /dev/null
+	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; ./makeself.sh --bzip2 --nox11 $$OLDPWD/installer/ dayplanner-$(VERSION).run 'Generic Day Planner installation script' ./StartInstaller &> /dev/null || exit 1; mv ./dayplanner-$(VERSION).run $$OLDPWD/packages )
+	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+	rm -rf installer
