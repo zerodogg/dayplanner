@@ -89,9 +89,6 @@ distclean: clean
 # Verify sanity
 test:
 	@perl -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
-	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
-	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
-	@perl -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
 	@perl -c ./dayplanner
 	@perl -c ./dayplanner-daemon
