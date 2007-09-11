@@ -47,7 +47,7 @@ use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile App
 
 # Scalars
 our $Version = '0.7.2';
-my $VersionName = 'GPLv3-2';
+my $VersionName = 'NFS';
 my $RCSRev = '$Id$';
 my $MainEventsFile = 'events.dpd';			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
@@ -5411,6 +5411,6 @@ GetOptions (
 my $Gtk2_Initialized = 0;
 
 Gtk2Init();
-Gtk2->init_add(\&InitDPCore);
+InitDPCore();
 # Rest in the Gtk2 main loop
 Gtk2->main;
