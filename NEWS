@@ -6,6 +6,8 @@ Version 0.7.2 "GPLv3-2" (Unreleased)
 * Client (dayplanner)
 - Fixed a bug that caused the calendar popup to not work when closed
 	using the WMs close button
+- Fixed a bug that caused Day Planner not to run on certain distributions
+	such as Fedora 7
 
 * Notifier (dayplanner-notifier)
 
