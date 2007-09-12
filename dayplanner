@@ -4184,7 +4184,7 @@ sub NormalEventWindow {
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
 		if(not $FT_Expander->get_expanded) {
-			$FT_Expander->signal_emit('activated');
+			$FT_Expander->signal_emit('activate');
 		}
 	}
 
@@ -4354,7 +4354,7 @@ sub AllDayEventWindow {
 		$FulltextEntry->set_buffer($AddEventBuffer);
 		# Expand it if it isn't already
 		if(not $FT_Expander->get_expanded) {
-			$FT_Expander->signal_emit('activated');
+			$FT_Expander->signal_emit('activate');
 		}
 	}
 	
@@ -5218,7 +5218,7 @@ sub MainInit {
 }
 
 # Purpose: Initialize the core program
-# Usage: Gtk2->init_add(\&InitDPCore);
+# Usage: InitDPCore();
 sub InitDPCore {
 	DP_InitI18n();
 	if(not defined($ENV{DP_DISABLE_EXCEPTIONSHANDLER}) or $ENV{DP_DISABLE_EXCEPTIONSHANDLER}) {
