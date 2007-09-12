@@ -7,7 +7,8 @@ Version 0.7.2 "NFS" (Unreleased)
 - Fixed a bug that caused the calendar popup to not work when closed
 	using the WMs close button
 - Fixed a bug that caused Day Planner not to run on certain distributions
-	such as Fedora 7
+	such as Fedora 7 (#9897)
+- Fixed a bug that caused events containing details not to work (#9983)
 
 * Notifier (dayplanner-notifier)
 
