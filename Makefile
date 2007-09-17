@@ -151,7 +151,6 @@ moduleinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/DP
 	mkdir -p $(DP_MAINTARGET)/modules/DP/GeneralHelpers
 	install -m755 $(shell ls ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
-	install -m755 $(shell ls ./modules/*/lib/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
 
 # Holiday installation
 holidayinstall:
@@ -195,7 +194,7 @@ tarball: prepdistrib
 	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
 	rm -rf dayplanner-$(VERSION)
 rpm: prepdistrib tarball
-	mkdir -p $$HOME/rpm/SOURCES/ $$HOME/rpm/RPMS/noarch/
+	mkdir -p $$HOME/rpm/SOURCES/ $$HOME/rpm/RPMS/noarch/ $$HOME/rpm/BUILD/
 	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
 	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
 	perl -pi -e 's#\[DAYPLANNER_VERSION\]#$(VERSION)#gi' ./dayplanner.spec
