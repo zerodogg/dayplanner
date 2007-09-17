@@ -1,7 +1,7 @@
 Day Planner version history
 **************************
 
-Version 0.7.2 "NFS" (Unreleased)
+Version 0.7.2 "NFS" (Released on the 17th of September 2007)
 ------------------------
 * Client (dayplanner)
 - Fixed a bug that caused the calendar popup to not work when closed
