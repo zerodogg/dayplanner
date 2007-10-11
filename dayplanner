@@ -483,36 +483,24 @@ sub DPS_SSLSocketTest {
 	return(1);
 }
 
-# Purpose: Back up data to ~/.dayplanner/ before getting data
-# Usage: DPS_BackupData();
-sub DPS_BackupData {
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(time);
-	my $Target = "$SaveToDir/dps_backup-$curryear.$currmonth.$currmday-$currhour$currmin$currsec.ics";
-	$iCalendar->write($Target);
-	DPS_Log("Backup written to $Target");
-	DPIntInfo("DPS: Backup written to $Target");
-	return($Target);
-}
-
 # Purpose: Connect to a Day Planner services server.
-# Usage: my $Return = DPS_Connect(HOST, PORT, USER, PASS);
+# Usage: my $Return = DPS_Connect();
 #		The arguments are optional and will be read from %DPServices if not supplied
 sub DPS_Connect {
-	my ($Host, $Port, $User, $Password) = @_;
-	$Host = $Host ? $Host : $DPServices{host};
-	$Port = $Port ? $Port : $DPServices{port};
-	$User = $User ? $User : $DPServices{user};
-	$Password = $Password ? $Password : $DPServices{pass};
+	my $Host = $DPServices{host};
+	my $Port = $DPServices{port};
+	my $User = $DPServices{user};
+	my $Password = $DPServices{pass};
 	my $Error;
 	# Connect
-	my $OLDLocale = setlocale(LC_ALL, 'C');		# Need errors that are not localized for IO_Socket_INET_Errors();
+	setlocale(LC_ALL, 'C');		# Need errors that are not localized for IO_Socket_INET_Errors();
 	$DPServices{socket} = IO::Socket::SSL->new(
 					PeerAddr => $Host,
 					PeerPort => $Port,
 					Timeout => 10,
 			) or do { $Error = $@; };
 			
-	setlocale(LC_ALL, ''); #, $OLDLocale);	# Reset the locale
+	setlocale(LC_ALL, '');		# Reset the locale
 	# Process errors if any occurred
 	if($Error) {
 		# If we have already displayed an error to the user this session, don't do it again
@@ -792,22 +780,6 @@ sub LoadCalendar {
 	} else {
 		$iCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
-	if(defined($ENV{DP_FORCE_PLUGIN_MODULES})) {
-		print "*** Day Planner: Loading DP::iCalendar plugins:";
-		foreach my $Plugin (split(/\s+/,$ENV{DP_FORCE_PLUGIN_MODULES})) {
-			print " $Plugin";
-			if (eval("use $Plugin;1;")) {
-				my $Object = $Plugin->new_DPI($iCalendar);
-				if(not $Object) {
-					print "(failed)";
-				}
-			} else {
-				print "(failed)";
-			}
-		}
-		print "\n";
-		print "*** Day Planner: Warning: Do NOT report any bugs while having DP::iCalendar plugins loaded.\n";
-	}
 	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
 	return(1);
 }
@@ -940,7 +912,7 @@ sub AlreadyRunningDP {
 	
 		$ErrorDialog->set_default_response('accept');
 		if($ErrorDialog->run eq 'accept') {
-			$ErrorDialog->destroy;
+			$ErrorDialog->destroy();
 			$ClientConnection->destroy();
 			exit(0)
 		} else {
@@ -1537,7 +1509,7 @@ sub Set_DayChangeTimer {
 # Purpose: Find out if a command is in PATH or not
 # Usage: InPath(COMMAND);
 sub InPath {
-foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
 
 # =============================================================================
