@@ -4,13 +4,27 @@ Day Planner version history
 Version 0.8 (Unreleased)
 ------------------------
 * Client (dayplanner)
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayaplnner-daemon)
+
+Version 0.7.2 "NFS" (Released on the 17th of September 2007)
+------------------------
+* Client (dayplanner)
 - Fixed a bug that caused the calendar popup to not work when closed
 	using the WMs close button
+- Fixed a bug that caused Day Planner not to run on certain distributions
+	such as Fedora 7 (#9897)
+- Fixed a bug that caused events containing details not to work (#9983)
 
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
 
+* Makefile
+- Fixed a bunch of issues with the desktop-generation
+- Some improvements
 
 Version 0.7.1 "GPLv3" (Released on the 9th of July 2007)
 ------------------------
