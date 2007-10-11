@@ -26,9 +26,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 our $VERSION;
 $VERSION = 0.3.1;
 
-# ------------------
-# - Public methods -
-# ------------------
+# - Public methods
 
 # Purpose: Create a new object, call _LoadFile and  _parse_file on it
 # Usage: my $object = DP::iCalendar->new(/FILE/);
@@ -148,12 +146,7 @@ sub get_months {
 sub get_info {
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		if(ref($self->{RawCalendar}{$UID}) eq 'HASH') {
-			return($self->{RawCalendar}{$UID});
-		} else {
-			print "Getting due to: ", ref($self->{RawCalendar}{$UID}),"\n";
-			$self->_API_GetUID($UID);
-		}
+		return($self->{RawCalendar}{$UID});
 	}
 	carp('get_info got invalid UID');
 	return(undef);
@@ -246,7 +239,6 @@ sub get_rawdata {
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$self->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
 
 	foreach my $UID (sort keys(%{$self->{RawCalendar}})) {
-		next if $self->{RawCalendar}{$UID}{'DP-iCalendar-PluggedinUID'};
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
 		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
@@ -280,16 +272,12 @@ sub get_rawdata {
 sub delete {
 	my ($self, $UID) = @_;	# TODO verify UID
 	if(defined($self->{RawCalendar}{$UID})) {
-		if(ref($self->{RawCalendar}{$UID} eq 'HASH')) {
-			delete($self->{RawCalendar}{$UID});
-			$self->_ClearCalculated();
-			return(TRUE);
-		} else {
-			return($self->_API_RemoveUID($UID));
-		}
+		delete($self->{RawCalendar}{$UID});
+		$self->_ClearCalculated();
+		return(TRUE);
 	} else {
 		carp('delete called without a valid UID');
-		return(FALSE);
+		return(undef);
 	}
 }
 
@@ -303,7 +291,7 @@ sub add {
 	}
 	my $UID = $self->_UID($Hash{DTSTART});
 	$self->_ClearCalculated();
-	$self->_ChangeEntry($UID,\%Hash);
+	$self->_ChangeEntry($UID,%Hash);
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
@@ -311,7 +299,7 @@ sub add {
 }
 
 # Purpose: Change an iCalendar entry
-# Usage: $object->change($UID, %EntryHash);
+# Usage: $object->change(%EntryHash);
 sub change {
 	my ($self, $UID, %Hash) = @_;
 	unless(defined($UID)) {
@@ -322,7 +310,7 @@ sub change {
 		carp('Refusing to change a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
-	$self->_ChangeEntry($UID,\%Hash);
+	$self->_ChangeEntry($UID,%Hash);
 	return(TRUE);
 }
 
@@ -420,41 +408,14 @@ sub set_prodid {
 	}
 	# Verify that it is nicely formatted
 	unless($ProdId =~ m#^-//.+//NONSGML\s.+//EN$#) {
-		carp('ProdId is not nicely formatted, see the DP::iCalendar documentation.');
+		croak('ProdId is not nicely formatted, see the DP::iCalendar documentation.');
 	}
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
 	return(TRUE);
 }
 
-# Purpose: Call the plugin API
-# Usage: $object->API_Call(FUNCTION, { PARAM1 => OPT, PARAM2 => OPT });
-sub API_Call {
-	my $self = shift;
-	my ($Function, $Parameters) = @_;
-
-	if($Function eq 'ADD_UID') {
-		return($self->_API_AddUID($Parameters));
-	}
-
-	if($Function eq 'KILL_UID') {
-		return($self->_API_KillUID($Parameters));
-	}
-
-	if($Function eq 'RECALCULATE') {
-		return($self->_API_Recalculate($Parameters));
-	}
-
-	if($Function eq 'REGISTER') {
-		return($self->_API_Register($Parameters));
-	}
-	carp("API: Unrecognized API call to $Function");
-	return(FALSE);
-}
-
-# --------------------
-# - Public functions -
-# --------------------
+# - Public functions
 
 # Purpose: Generate an iCalendar date-time from multiple values
 # Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
@@ -539,10 +500,7 @@ sub iCal_ParseDateTime {
 	return($Year,$Month,$Day,$Time);
 }
 
-# ----------------------
-# - Internal functions -
-# ----------------------
-
+# - Internal functions
 # WARNING: Do NOT call ANY of the below functions from within programs using
 # 	DP::iCalendar. They are only meant for internal use and are subject to
 # 	radical API changes, or just disappearing.
@@ -560,7 +518,6 @@ sub _NewObj {
 	$self->{RawCalendar} = {};
 	$self->{OrderedCalendar} = {};
 	$self->{AlreadyCalculated} = {};
-	$self->{Plugins} = [];
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	if($File) {
 		$self->{FILETYPE} = 'file';
@@ -572,20 +529,14 @@ sub _NewObj {
 }
 
 # Purpose: Make changes to the raw calendar (append or change)
-# Usage: $self->_ChangeEntry(UID,\%Hash);
+# Usage: $self->_ChangeEntry(UID,%Hash);
 sub _ChangeEntry {
-	my($self,$UID,$HashRef) = @_;
-	# Check if it is an API UID, if so pass it on to the API function.
-	# Otherwise just continue.
-	if(defined($self->{RawCalendar}{$UID}) and $self->{RawCalendar}{$UID}{'DP-iCalendar-PluggedinUID'}) {
-		return($self->_API_ChangeEntry($UID,$HashRef));
-	}
-
-	foreach my $key (keys(%{$HashRef})) {
+	my($self,$UID,%Hash) = @_;
+	foreach my $key (keys(%Hash)) {
 		# If the key isn't defined that means we should remove the key if it
 		# exists.
-		if(defined($HashRef->{$key})) {
-			$self->{RawCalendar}{$UID}{$key} = $HashRef->{$key};
+		if(defined($Hash{$key})) {
+			$self->{RawCalendar}{$UID}{$key} = $Hash{$key};
 		} else {
 			if(defined($self->{RawCalendar}{$UID}{$key})) {
 				delete($self->{RawCalendar}{$UID}{$key});
@@ -892,9 +843,7 @@ sub _ClearCalculated {
 	return(TRUE);
 }
 
-# --------------------------------------------
 # --- Internal RRULE calculation functions ---
-# --------------------------------------------
 
 # Purpose: Parse an RRULE
 # Usage: _RRULE_Parser(UID);
@@ -1477,143 +1426,6 @@ sub _DT_StripTime {
 	my $DT = shift;
 	$DT =~ s/Z.+$//i;
 	return($DT);
-}
-
-# ----------------------------------
-# --- Internal API Call handlers ---
-# ----------------------------------
-
-# Purpose: Help verify parameters
-# Usage: _API_Verify_Params(params_hashref, CALL, PARAM1, PARAM2);
-sub _API_Verify_Params {
-	my $params = shift;
-	my $call = shift;
-	my $return = TRUE;
-	foreach(@_) {
-		if(not defined($params->{$_})) {
-			croak("API: Missing parameter: $_ in call to $call");
-			$return = FALSE;
-		}
-	}
-	return($return);
-}
-
-# Purpose: Get an UID from a plugin
-# Usage: my $UID_Obj = $self->_API_GetUID('UID');
-sub _API_GetUID {
-	my $self = shift;
-	my $UID = shift;
-
-	return($self->{RawCalendar}{$UID}->DPI_API_Call("GET_UID", { UID => $UID }));
-}
-
-# Purpose: Remove an UID from a plugin
-# Usage: $self->_API_RemoveUID('UID');
-sub _API_RemoveUID {
-	my $self = shift;
-	my $UID = shift;
-
-	return($self->{RawCalendar}{$UID}->DPI_API_Call('KILL_UID', { UID => $UID }));
-}
-
-# Purpose: Change an UID
-# Usage: $self->_API_ChangeEntry(UID,\%HASH);
-sub _API_ChangeEntry {
-	my $self = shift;
-	my $UID = shift;
-	my $NewContents = shift;
-
-	# Call the owner module to change it
-	my $Reply = $self->{RawCalendar}{$UID}->DPI_API_Call('ChangeUID', { UID => $UID, NEWHASH => $NewContents});
-
-	# If the returned value isn't a reference then just return
-	if(not ref($Reply)) {
-		$self->_ClearCalculated();
-		return(TRUE);
-	}
-
-	# Okay, it's a reference, do stuff
-	$Reply->{'X-DPI-OrigModule'} = ref($self->{RawCalendar}{$UID});
-	delete($self->{RawCalendar}{$UID});
-
-	# Hand it to the real entry changing function to re-add it
-	return($self->_ChangeEntry($UID,$Reply));
-}
-
-# ADD_UID handler
-#	Parameters:
-#		UIDREF => The_uid_contents,
-#		OWNER => The_parent_object
-sub _API_AddUID {
-	my $self = shift;
-	my $params = shift;
-
-	return(FALSE) if not _API_Verify_Params($params, 'ADD_UID', 'UIDREF','OWNER');
-	
-	if(not defined($self->{RawCalendar}{$params->{UID}})) {
-		$self->{RawCalendar}{$params->{UID}} = $params;
-	} else {
-		carp("API: ADD_UID: UID already existed");
-		return(FALSE);
-	}
-	return(TRUE);
-}
-
-# KILL_UID handler
-# 	Parameters:
-# 		UID => The_uid,
-# 		CALLER => Caller,
-sub _API_KillUID {
-	my $self = shift;
-	my $params = shift;
-
-	return(FALSE) if not _API_Verify_Params($params, 'KILL_UID', 'UID','OWNER');
-	
-	if(not defined($self->{RawCalendar}{$params->{UID}})) {
-		carp("API: KILL_UID: $params->{UID} did not exist");
-		return(FALSE);
-	} elsif (not $self->{RawCalendar}{$params->{UID}} eq $params->{OWNER}) {
-		carp(sprintf("API: KILL_UID: $params->{UID} is not owned by %s", ref($params->{OWNER})));
-		return(FALSE);
-	} else {
-		$self->delete($params->{UID});
-		return(TRUE);
-	}
-}
-
-# REGISTER handler
-# 	Parameters:
-# 		OBJECT => Object,
-# 		VERSION => API Version,
-sub _API_Register {
-	my $self = shift;
-	my $params = shift;
-	
-	return(FALSE) if not _API_Verify_Params($params, 'REGISTER', 'OBJECT','VERSION');
-
-	if(not $params->{VERSION} eq '1Alpha') {
-		carp("Unsupported API version: $params->{VERSION}. Refusing.");
-		if(wantarray()) {
-			return(FALSE, '1Alpha');
-		} else {
-			return(FALSE);
-		}
-	}
-	if(not(grep($params->{OBJECT}, @{$self->{Plugins}}))) {
-		push(@{$self->{Plugins}}, $params->{OBJECT});
-		return(TRUE);
-	} else {
-		carp("API: REGISTER: Plugin attempted to re-register");
-		return(FALSE);
-	}
-}
-
-# RECALCULATE handler
-# 	Parameters:
-# 		NONE
-sub _API_Recalculate {
-	my $self = shift;
-	return($self->_ClearCalculated());
 }
 
 # End of DP::iCalendar
