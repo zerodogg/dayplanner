@@ -450,7 +450,7 @@ GetOptions (
 		print "Day Planner notifier version $Version\n";
 		print "This program is for use by the dayplanner daemon.\n\n";
 		print "Use a --time/--message/--date (and --fulltext) combo if you want to call it manually,\n";
-		print "the daemon uses --id.\n\n";
+		print "the daemon uses --id and --socket.\n\n";
 		PrintHelp('-h','--help','Display this help screen');
 		PrintHelp('-v', '--version', 'Display version information and exit');
 		PrintHelp('-s','--socket','Select the daemon socket');
