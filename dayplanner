@@ -17,22 +17,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# vim: set tabstop=4 shiftwidth=4 :
+
 require 5.6.0;			# We need perl 5.6.0 at the very least
-				# and even this is mostly untested.
-use strict;			# Force strict coding
+						# and even this is mostly untested.
+use strict;				# Force strict coding
 use warnings;			# Tell perl to warn about things
-use POSIX;			# We need strftime
-use Gtk2;			# Use Gtk2 :)
-use Gtk2::SimpleList;		# We use Gtk2::SimpleList to create the eventlist
-use Gtk2::Gdk::Keysyms;		# Easier keybindings
-use File::Basename;             # We meed dirname to help Cwd::Realpath finding the directory
+use POSIX;				# We need strftime
+use Gtk2;				# Use Gtk2 :)
+use Gtk2::SimpleList;	# We use Gtk2::SimpleList to create the eventlist
+use Gtk2::Gdk::Keysyms;	# Easier keybindings
+use File::Basename;     # We meed dirname to help Cwd::Realpath finding the directory
 use File::Copy;			# We need to copy the holiday file
 use File::Path qw/mkpath/;	# We need mkpath
 use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
 use MIME::Base64;		# Used for import/export
 use Getopt::Long;		# Commandline options
-use IO::Socket::UNIX;		# Network layer to communicate with the daemon
-use Cwd;			# We need Cwd::Realpath to find out which directory we live in
+use Cwd;				# We need Cwd::Realpath to find out which directory we live in
 use FindBin;			# So that we can detect module dirs during runtime
 use constant { TRUE => 1, FALSE => 0 };
 # This here is done so that we can use local versions of our libs
@@ -42,28 +43,26 @@ use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
 use Date::HolidayParser;	# Parsing of .holiday files
-use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
+use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
 # Scalars
 our $Version = '0.8';
 my $VersionName = 'SVN';
 my $RCSRev = '$Id$';
-my $MainEventsFile = 'events.dpd';			# The filename to save the events to
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
-my $BirthdayFile = 'birthdays.dpd';			# The filename to save birthdays to
-my $ICSFile = 'calendar.ics';				# The ICS calendar
-my $ConfigFile = 'dayplanner.conf';			# The filename to save the configuration to
-my $DaemonName = 'dayplanner-daemon';			# The name of the daemon
-my $DaemonInitialized = 0;				# Has the daemon been initialized?
-my $DaemonSocketName = 'dayplannerd';			# The name of the daemon socket
+my $ICSFile = 'calendar.ics';		# The ICS calendar
+my $ConfigFile = 'dayplanner.conf';	# The filename to save the configuration to
+my $DaemonName = 'dayplanner-daemon';# The name of the daemon
+my $DaemonInitialized = 0;			# Has the daemon been initialized?
+my $DaemonSocketName = 'dayplannerd';# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 my $i18n;
-my $DPS_APILevel = '06';				# The DPS API level used/supported
+my $DPS_APILevel = '06';			# The DPS API level used/supported
 my $HTML_PHP = 0;					# If set to 1 the HTML exporter will not
-							#  output the header/footer. This is used by the
-							#  PHP exporter.
+									#  output the header/footer. This is used by the
+									#  PHP exporter.
 my $iCalendar;						# The DP::iCalendar object.
 my $IPC_Socket;
 
@@ -1101,7 +1100,7 @@ sub UpgradeVersion {
 		ProgressMade(4, $Total, $ProgressWin) if($Gtk2Init);
 		# Birthday events (birthdays.dpd)
 		if(-e "$SaveToDir/birthdays.dpd") {
-			my %BirthdayContents = do("$SaveToDir/$BirthdayFile");
+			my %BirthdayContents = do("$SaveToDir/birthdays.dpd");
 			foreach my $Month (keys(%BirthdayContents)) {
 				foreach my $Day (keys(%{$BirthdayContents{$Month}})) {
 					foreach my $Name (keys(%{$BirthdayContents{$Month}{$Day}})) {
@@ -1538,7 +1537,7 @@ sub Set_DayChangeTimer {
 # Purpose: Find out if a command is in PATH or not
 # Usage: InPath(COMMAND);
 sub InPath {
-	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
 
 # =============================================================================
@@ -5253,6 +5252,11 @@ sub InitDPCore {
 		});
 	}
 	
+	# Flush filehandles faster if requested
+	if(defined($ENV{DP_FH_FORCEFLUSH}) and $ENV{DP_FH_FORCEFLUSH}) {
+		$| = 1;
+	}
+
 	# MainInit() returns 1 if we're in "FirstStartup" mode AND are displaying the import window.
 	# If we're not displaying the import window it returns 0 in any case.
 	my $FirstStartup = MainInit();
