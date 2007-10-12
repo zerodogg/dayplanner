@@ -75,7 +75,7 @@ sub newfile {
 # Usage: get_manager_version();
 sub get_manager_version
 {
-	return('01 capable');
+	return('01_capable');
 }
 
 sub get_manager_capabilities
