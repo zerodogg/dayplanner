@@ -80,7 +80,8 @@ sub get_manager_version
 
 sub get_manager_capabilities
 {
-	return([]);
+	# All capabilites as of 01_capable
+	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS'])
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
