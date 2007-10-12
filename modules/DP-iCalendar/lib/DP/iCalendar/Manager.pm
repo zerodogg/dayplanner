@@ -48,7 +48,11 @@ sub add_object
 		carp('added_object: undef returned from get_manager_capabilities()')
 	}
 	foreach(@{$capabilities}) {
-		push(@{$this->{$_}},$object);
+		if(defined($this->{$_})) {
+			push(@{$this->{$_}},$object);
+		} else {
+			carp('Unknown capability: '.$_);
+		}
 	}
 	if($primary) {
 		# TODO: Ensure that PRIMARY has *ALL* capabilities
@@ -78,10 +82,9 @@ sub get_info {
 	my($this,$UID) = @_;
 	my $obj = $this->_locate_UID($UID);
 	if(not $obj) {
-		warn("ERR\n"); # FIXME
 		return;
 	}
-	return($obj->get_info($this->_get_real_UID($UID)));
+	return($obj->get_info($UID);
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
@@ -132,7 +135,11 @@ sub get_years {
 # Usage: my $ArrayRef = $object->get_months();
 sub get_months {
 	my ($this, $Year) = @_;
-	warn('get_months: STUB'); return(undef);
+	my @OBJArray;
+	foreach my $obj (@{$this->{LIST_DPI}}) {
+			push(@OBJArray,$obj->get_months($Year));
+	}
+	return(_merge_arrays_unique(\@OBJArray));
 }
 
 # Purpose: Get a parsed RRULE for the supplied UID
@@ -141,7 +148,6 @@ sub get_RRULE {
 	my ($this, $UID) = @_;
 	my $obj = $this->_locate_UID($UID);
 	if(not $obj) {
-		warn("ERR\n"); # FIXME
 		return;
 	}
 	if(not $this->_verify_capab($obj,'RRULE')) {
@@ -156,7 +162,6 @@ sub get_exceptions {
 	my ($this, $UID) = @_;
 	my $obj = $this->_locate_UID($UID);
 	if(not $obj) {
-		warn("ERR\n"); # FIXME
 		return;
 	}
 	if(not $this->_verify_capab($obj,'exceptions')) {
@@ -186,6 +191,7 @@ sub set_exceptions {
 # Usage: $object->write(FILE?);
 sub write {
 	my ($this, $file) = @_;
+	$this->_verify_capab($this->{'PRIMARY'},'SAVE');
 	if($file) {
 		if(not $this->{'PRIMARY'}) {
 			carp('No primary set - unable to '."write($file)");
@@ -233,7 +239,6 @@ sub change {
 	my ($this, $UID, %Hash) = @_;
 	my $obj = $this->_locate_UID($UID);
 	if(not $obj) {
-		warn("ERR\n"); # FIXME
 		return;
 	}
 	return($obj->change($UID,%Hash));
@@ -243,7 +248,7 @@ sub change {
 # Usage: $object->exists($UID);
 sub exists {
 	my($this,$UID) = @_;
-	my $obj = $this->_locate_UID($UID);
+	my $obj = $this->_locate_UID($UID,true);
 	if($obj) {
 		return(true);
 	} else {
@@ -308,24 +313,14 @@ sub _locate_UID
 {
 	my $this = shift;
 	my $UID = shift;
+	my $silent = shift;
 	foreach my $obj (@{$this->{objects}}) {
 			if($obj->exists($UID)) {
 				return($obj);
 			}
 	}
+	carp("Unable to locate owner of $UID: invalid UID") if not $silent;
 	return(undef);
-}
-
-sub _convert_UID
-{
-	warn('_convert_UID: STUB');
-}
-
-sub _get_real_UID
-{
-	my $this = shift;
-	my $UID = shift;
-	return($UID);
 }
 
 sub _verify_capab
@@ -333,9 +328,10 @@ sub _verify_capab
 	my $this = shift;
 	my $object = shift;
 	my $capab = shift;
-	if(grep($object,$this->{$capab})) {
+	if(grep($object,@{$this->{$capab}})) {
 		return true;
 	} else {
+		carp("Can't perform requested action: owner (".ref($object).") doesn't support capability $capab");
 		return false;
 	}
 }
