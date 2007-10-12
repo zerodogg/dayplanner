@@ -47,12 +47,12 @@ sub add_object
 
 sub remove_object
 {
-	warn('STUB');
+	warn('remove_object: STUB');
 }
 
 sub list_objects
 {
-	warn('STUB');
+	warn('liast_objects: STUB');
 }
 
 # -- DP::iCalendar API wrapper --
@@ -118,7 +118,7 @@ sub get_years {
 # Usage: my $ArrayRef = $object->get_months();
 sub get_months {
 	my ($self, $Year) = @_;
-	warn('STUB'); return(undef);
+	warn('get_months: STUB'); return(undef);
 }
 
 # Purpose: Get a parsed RRULE for the supplied UID
@@ -163,7 +163,7 @@ sub set_exceptions {
 # Usage: $object->write(FILE?);
 sub write {
 	my ($self, $file) = @_;
-	warn('STUB'); return(undef);
+	warn('write: STUB'); return(undef);
 }
 
 # Purpose: Get raw iCalendar data
@@ -198,7 +198,12 @@ sub add {
 # Usage: $object->change(%EntryHash);
 sub change {
 	my ($self, $UID, %Hash) = @_;
-	warn('STUB'); return(undef);
+	my $obj = $self->_locate_UID($UID);
+	if(not $obj) {
+		warn("ERR\n"); # FIXME
+		return;
+	}
+	return($obj->change($UID,%Hash));
 }
 
 # Purpose: Check if an UID exists
@@ -217,7 +222,7 @@ sub exists {
 # Usage: $object->addfile(FILE);
 sub addfile {
 	my ($self,$File) = @_;
-	warn('STUB'); return(undef);
+	warn('addfile: STUB'); return(undef);
 }
 
 # Purpose: Remove all loaded data
@@ -242,7 +247,7 @@ sub enable {
 # Usage: $object->disable(FEATURE);
 sub disable {
 	my($self, $feature) = @_;
-	warn('STUB'); return(undef);
+	warn('disable: STUB'); return(undef);
 	foreach my $obj (@{$self->{objectlist}}) {
 		$obj->enable($feature);
 	}
@@ -281,7 +286,7 @@ sub _locate_UID
 
 sub _convert_UID
 {
-	warn('STUB');
+	warn('_convert_UID: STUB');
 }
 
 sub _get_real_UID
