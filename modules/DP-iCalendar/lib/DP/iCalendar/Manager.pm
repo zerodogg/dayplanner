@@ -11,6 +11,7 @@
 package DP::iCalendar::Manager;
 
 use Carp;
+use constant { true => 1, false => 0 };
 
 our $VERSION;
 $VERSION = 0.1;
@@ -124,14 +125,24 @@ sub get_months {
 # Usage: my $Info = $object->get_RRULE(UID);
 sub get_RRULE {
 	my ($self, $UID) = @_;
-	warn('STUB'); return(undef);
+	my $obj = $self->_locate_UID($UID);
+	if(not $obj) {
+		warn("ERR\n"); # FIXME
+		return;
+	}
+	return($obj->get_RRULE($UID));
 }
 
 # Purpose: Get a list of dates which are excepted from recurrance for the supplied UID
 # Usage: my $List = $object->get_exceptions(UID);
 sub get_exceptions {
 	my ($self, $UID) = @_;
-	warn('STUB'); return(undef);
+	my $obj = $self->_locate_UID($UID);
+	if(not $obj) {
+		warn("ERR\n"); # FIXME
+		return;
+	}
+	return($obj->get_exceptions($UID));
 }
 
 # Purpose: Set the EXDATEs for the supplied UID
@@ -140,7 +151,12 @@ sub set_exceptions {
 	my $self = shift;
 	my $UID = shift;
 	my $Exceptions = shift;
-	warn('STUB'); return(undef);
+	my $obj = $self->_locate_UID($UID);
+	if(not $obj) {
+		warn("ERR\n"); # FIXME
+		return;
+	}
+	return($obj->set_exceptions($UID,$Exceptions));
 }
 
 # Purpose: Write the data to a file.
@@ -155,22 +171,27 @@ sub write {
 # 	NOTE: WORKS ONLY ON PRIMARY
 sub get_rawdata {
 	my ($self) = @_;
-	my $iCalendar;
-	warn('STUB'); return(undef);
+	return($this->{PRIMARY}->get_rawdata());
 }
 
 # Purpose: Delete an iCalendar entry
 # Usage: $object->delete(UID);
 sub delete {
 	my ($self, $UID) = @_;	# TODO verify UID
-	warn('STUB'); return(undef);
+	my $obj = $self->_locate_UID($UID);
+	if(not $obj) {
+		warn("ERR\n"); # FIXME
+		return;
+	}
+	return($obj->delete($UID));
 }
 
 # Purpose: Add an iCalendar entry
 # Usage: $object->add(%EntryHash);
+# 	NOTE: WORKS ONLY ON PRIMARY
 sub add {
 	my ($self, %Hash) = @_;
-	warn('STUB'); return(undef);
+	return($this->{PRIMARY}->add(%Hash));
 }
 
 # Purpose: Change an iCalendar entry
@@ -184,7 +205,12 @@ sub change {
 # Usage: $object->exists($UID);
 sub exists {
 	my($self,$UID) = @_;
-	warn('STUB'); return(undef);
+	my $obj = $self->_locate_UID($UID);
+	if($obj) {
+		return(true);
+	} else {
+		return(false);
+	}
 }
 
 # Purpose: Add another file
@@ -198,14 +224,18 @@ sub addfile {
 # Usage: $object->clean()
 sub clean {
 	my $self = shift;
-	warn('STUB'); return(undef);
+	foreach my $obj (@{$self->{objectlist}}) {
+		$obj->clean();
+	}
 }
 
 # Purpose: Enable a feature
 # Usage: $object->enable(FEATURE);
 sub enable {
 	my($self, $feature) = @_;
-	warn('STUB'); return(undef);
+	foreach my $obj (@{$self->{objectlist}}) {
+		$obj->enable($feature);
+	}
 }
 
 # Purpose: Disable a feature
@@ -213,20 +243,27 @@ sub enable {
 sub disable {
 	my($self, $feature) = @_;
 	warn('STUB'); return(undef);
+	foreach my $obj (@{$self->{objectlist}}) {
+		$obj->enable($feature);
+	}
 }
 
 # Purpose: Reload the data
 # Usage: $object->reload();
 sub reload {
 	my $self = shift;
-	warn('STUB'); return(undef);
+	foreach my $obj (@{$self->{objectlist}}) {
+		$obj->reload();
+	}
 }
 
 # Purpose: Set the prodid
 # Usage: $object->set_prodid(PRODID);
 sub set_prodid {
 	my($self, $ProdId) = @_;
-	warn('STUB'); return(undef);
+	foreach my $obj (@{$self->{objectlist}}) {
+		$obj->set_prodid($ProdId);
+	}
 }
 
 # -- Internal methods --
