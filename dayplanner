@@ -44,6 +44,7 @@ use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
 use Date::HolidayParser;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
+use DP::iCalendar::Manager;
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
 # Scalars
@@ -781,6 +782,9 @@ sub LoadCalendar {
 		$iCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
 	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
+	my $Manager = DP::iCalendar::Manager->new();
+	$Manager->add_object($iCalendar,TRUE);
+	$iCalendar = $Manager;
 	return(1);
 }
 
