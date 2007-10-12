@@ -12,6 +12,8 @@ package DP::iCalendar::Manager;
 
 use Carp;
 use constant { true => 1, false => 0 };
+use strict;
+use warnings;
 
 our $VERSION;
 $VERSION = 0.1;
@@ -38,10 +40,16 @@ sub add_object
 	my $primary = shift;
 	my $version = $object->get_manager_version();
 	if(not $version eq '01_capable') {
-		carp("added_object: does not support this version. Supported: $version, this version: 01_capable\n");
+		carp("added_object: does not support this version. Supported: $version, this version: 01_capable");
 	}
 	push(@{$self->{objects}},$object);
-	my $capabilites = $object->get_manager_capabilities();
+	my $capabilities = $object->get_manager_capabilities();
+	if(not defined($capabilities)) {
+		carp("added_object: undef returned from get_manager_capabilities()")
+	}
+	foreach(@{$capabilities}) {
+		push(@{$self->{$_}},$object);
+	}
 	if($primary) {
 		# TODO: Ensure that PRIMARY has *ALL* capabilities
 		$self->{'PRIMARY'} = $primary;
@@ -55,7 +63,8 @@ sub remove_object
 
 sub list_objects
 {
-	return($this->{objects});
+	my $self = shift;
+	return($self->{objects});
 }
 
 # -- DP::iCalendar API wrapper --
@@ -82,7 +91,6 @@ sub get_monthinfo {
 	}
 	return(_merge_arrays_unique(\@OBJArray));
 }
-
 
 # Purpose: Get information for the supplied date (list of times in the day there are events)
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
@@ -133,7 +141,7 @@ sub get_RRULE {
 		warn("ERR\n"); # FIXME
 		return;
 	}
-	if(not $this->verify_capab($obj,'RRULE')) {
+	if(not $self->_verify_capab($obj,'RRULE')) {
 		return false;
 	}
 	return($obj->get_RRULE($UID));
@@ -148,7 +156,7 @@ sub get_exceptions {
 		warn("ERR\n"); # FIXME
 		return;
 	}
-	if(not $this->verify_capab($obj,'exceptions')) {
+	if(not $self->_verify_capab($obj,'exceptions')) {
 		return false;
 	}
 	return($obj->get_exceptions($UID));
@@ -165,7 +173,7 @@ sub set_exceptions {
 		warn("ERR\n"); # FIXME
 		return;
 	}
-	if(not $this->verify_capab($obj,'exceptions')) {
+	if(not $self->_verify_capab($obj,'exceptions')) {
 		return false;
 	}
 	return($obj->set_exceptions($UID,$Exceptions));
@@ -183,7 +191,7 @@ sub write {
 # 	NOTE: WORKS ONLY ON PRIMARY
 sub get_rawdata {
 	my ($self) = @_;
-	return($this->{PRIMARY}->get_rawdata());
+	return($self->{PRIMARY}->get_rawdata());
 }
 
 # Purpose: Delete an iCalendar entry
@@ -203,7 +211,7 @@ sub delete {
 # 	NOTE: WORKS ONLY ON PRIMARY
 sub add {
 	my ($self, %Hash) = @_;
-	return($this->{PRIMARY}->add(%Hash));
+	return($self->{PRIMARY}->add(%Hash));
 }
 
 # Purpose: Change an iCalendar entry
@@ -312,12 +320,11 @@ sub _verify_capab
 	my $self = shift;
 	my $object = shift;
 	my $capab = shift;
-	if(grep($object,$this->{$capab})) {
+	if(grep($object,$self->{$capab})) {
 		return true;
 	} else {
 		return false;
 	}
-}
 }
 
 # -- Internal functions --
@@ -325,12 +332,15 @@ sub _verify_capab
 sub _merge_arrays_unique
 {
 	my $array = shift;
-	warn("_merge_arrays_unique: STUB - doesn't merge ANYTHING - returns array->[0]");
-	if(not ref($array)) {
-		warn("_merge_arrays_unique: Didn't get an arrayref :'(");
+	if(not ref($array) or not ref($array) eq 'ARRAY') {
+		warn("_merge_arrays_unique: Didn't get an arrayref :'( - got: ". ref($array));
 		return(undef);
 	}
-	return($array->[0]);
+	my @NewArray;
+	foreach(@{$array}) {
+		push(@NewArray,@{$_});
+	}
+	return(\@NewArray);
 }
 
 __END__
