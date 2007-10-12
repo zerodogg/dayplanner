@@ -15,16 +15,19 @@ use constant { true => 1, false => 0 };
 
 our $VERSION;
 $VERSION = 0.1;
+my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS');
 
 # -- Manager stuff --
 sub new
 {
 	my $self = {};
 	bless($self);
-	$self->{objects} = {};
 	$self->{UID_Cache} = {};
 	$self->{'PRIMARY'} = undef;
-	$self->{objectlist} = [];
+	$self->{objects} = [];
+	foreach(@Capabilities) {
+		$self->{$_} = [];
+	}
 	return($self);
 }
 
@@ -37,8 +40,8 @@ sub add_object
 	if(not $version eq '01_capable') {
 		carp("added_object: does not support this version. Supported: $version, this version: 01_capable\n");
 	}
-	$self->{objects}->{$object} = $object->get_manager_capabilities();
-	push(@{$self->{objectlist}},$object);
+	push(@{$self->{objects}},$object);
+	my $capabilites = $object->get_manager_capabilities();
 	if($primary) {
 		# TODO: Ensure that PRIMARY has *ALL* capabilities
 		$self->{'PRIMARY'} = $primary;
@@ -52,7 +55,7 @@ sub remove_object
 
 sub list_objects
 {
-	warn('liast_objects: STUB');
+	return($this->{objects});
 }
 
 # -- DP::iCalendar API wrapper --
@@ -74,7 +77,7 @@ sub get_info {
 sub get_monthinfo {
 	my($self, $Year, $Month) = @_;	# TODO: verify that they are set
 	my @OBJArray;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{LIST_DPI}}) {
 			push(@OBJArray,$obj->get_monthinfo($Year,$Month));
 	}
 	return(_merge_arrays_unique(\@OBJArray));
@@ -86,7 +89,7 @@ sub get_monthinfo {
 sub get_dateinfo {
 	my($self, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
 	my @OBJArray;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{LIST_DPI}}) {
 			push(@OBJArray,$obj->get_dateinfo($Year,$Month,$Day));
 	}
 	return(_merge_arrays_unique(\@OBJArray));
@@ -97,7 +100,7 @@ sub get_dateinfo {
 sub get_timeinfo {
 	my($self, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
 	my @OBJArray;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{LIST_DPI}}) {
 			push(@OBJArray,$obj->get_timeinfo($Year,$Month,$Day,$Time));
 	}
 	return(_merge_arrays_unique(\@OBJArray));
@@ -108,7 +111,7 @@ sub get_timeinfo {
 sub get_years {
 	my $self = shift;
 	my @OBJArray;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{LIST_DPI}}) {
 			push(@OBJArray,$obj->get_years());
 	}
 	return(_merge_arrays_unique(\@OBJArray));
@@ -130,6 +133,9 @@ sub get_RRULE {
 		warn("ERR\n"); # FIXME
 		return;
 	}
+	if(not $this->verify_capab($obj,'RRULE')) {
+		return false;
+	}
 	return($obj->get_RRULE($UID));
 }
 
@@ -141,6 +147,9 @@ sub get_exceptions {
 	if(not $obj) {
 		warn("ERR\n"); # FIXME
 		return;
+	}
+	if(not $this->verify_capab($obj,'exceptions')) {
+		return false;
 	}
 	return($obj->get_exceptions($UID));
 }
@@ -155,6 +164,9 @@ sub set_exceptions {
 	if(not $obj) {
 		warn("ERR\n"); # FIXME
 		return;
+	}
+	if(not $this->verify_capab($obj,'exceptions')) {
+		return false;
 	}
 	return($obj->set_exceptions($UID,$Exceptions));
 }
@@ -229,7 +241,7 @@ sub addfile {
 # Usage: $object->clean()
 sub clean {
 	my $self = shift;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{objects}}) {
 		$obj->clean();
 	}
 }
@@ -238,7 +250,7 @@ sub clean {
 # Usage: $object->enable(FEATURE);
 sub enable {
 	my($self, $feature) = @_;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{objects}}) {
 		$obj->enable($feature);
 	}
 }
@@ -247,9 +259,8 @@ sub enable {
 # Usage: $object->disable(FEATURE);
 sub disable {
 	my($self, $feature) = @_;
-	warn('disable: STUB'); return(undef);
-	foreach my $obj (@{$self->{objectlist}}) {
-		$obj->enable($feature);
+	foreach my $obj (@{$self->{objects}}) {
+		$obj->disable($feature);
 	}
 }
 
@@ -257,7 +268,7 @@ sub disable {
 # Usage: $object->reload();
 sub reload {
 	my $self = shift;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{objects}}) {
 		$obj->reload();
 	}
 }
@@ -266,7 +277,7 @@ sub reload {
 # Usage: $object->set_prodid(PRODID);
 sub set_prodid {
 	my($self, $ProdId) = @_;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{objects}}) {
 		$obj->set_prodid($ProdId);
 	}
 }
@@ -276,7 +287,7 @@ sub _locate_UID
 {
 	my $self = shift;
 	my $UID = shift;
-	foreach my $obj (@{$self->{objectlist}}) {
+	foreach my $obj (@{$self->{objects}}) {
 			if($obj->exists($UID)) {
 				return($obj);
 			}
@@ -294,6 +305,19 @@ sub _get_real_UID
 	my $self = shift;
 	my $UID = shift;
 	return($UID);
+}
+
+sub _verify_capab
+{
+	my $self = shift;
+	my $object = shift;
+	my $capab = shift;
+	if(grep($object,$this->{$capab})) {
+		return true;
+	} else {
+		return false;
+	}
+}
 }
 
 # -- Internal functions --
