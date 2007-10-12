@@ -71,6 +71,18 @@ sub newfile {
 	return(_NewObj($File));
 }
 
+# Purpose: Return manager information
+# Usage: get_manager_version();
+sub get_manager_version
+{
+	return('01 capable');
+}
+
+sub get_manager_capabilities
+{
+	return([]);
+}
+
 # Purpose: Get information for the supplied month (list of days there are events)
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
 sub get_monthinfo {
