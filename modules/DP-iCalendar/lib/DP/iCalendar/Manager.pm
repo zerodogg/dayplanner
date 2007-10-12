@@ -1,5 +1,5 @@
 # DP::iCalendar::Manager
-# $Id: iCalendar.pm 1615 2007-08-10 17:58:24Z zero_dogg $
+# $Id$
 # An wrapper around DP::iCalendar that allows subscriptions to iCalendar calendars
 # via the internet.
 # Copyright (C) Eskild Hustvedt 2007
@@ -10,6 +10,11 @@
 
 package DP::iCalendar::Manager;
 
+use Carp;
+
+our $VERSION;
+$VERSION = 0.1;
+
 # -- Manager stuff --
 sub new
 {
@@ -18,6 +23,7 @@ sub new
 	$self->{objects} = {};
 	$self->{UID_Cache} = {};
 	$self->{'PRIMARY'} = undef;
+	$self->{objectlist} = [];
 	return($self);
 }
 
@@ -28,14 +34,14 @@ sub add_object
 	my $primary = shift;
 	my $version = $object->get_manager_version();
 	if(not $version eq '01_capable') {
-		warn("ERR\n"); # FIXME
+		carp("added_object: does not support this version. Supported: $version, this version: 01_capable\n");
 	}
 	$self->{objects}->{$object} = $object->get_manager_capabilities();
+	push(@{$self->{objectlist}},$object);
 	if($primary) {
 		# TODO: Ensure that PRIMARY has *ALL* capabilities
 		$self->{'PRIMARY'} = $primary;
 	}
-}
 }
 
 sub remove_object
@@ -59,28 +65,52 @@ sub get_info {
 		warn("ERR\n"); # FIXME
 		return;
 	}
-	return($self->get_info($self->_get_real_UID($UID)));
+	return($obj->get_info($self->_get_real_UID($UID)));
 }
+
+# Purpose: Get information for the supplied month (list of days there are events)
+# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
+sub get_monthinfo {
+	my($self, $Year, $Month) = @_;	# TODO: verify that they are set
+	my @OBJArray;
+	foreach my $obj (@{$self->{objectlist}}) {
+			push(@OBJArray,$obj->get_monthinfo($Year,$Month));
+	}
+	return(_merge_arrays_unique(\@OBJArray));
+}
+
 
 # Purpose: Get information for the supplied date (list of times in the day there are events)
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
 sub get_dateinfo {
 	my($self, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
-	warn('STUB'); return(undef);
+	my @OBJArray;
+	foreach my $obj (@{$self->{objectlist}}) {
+			push(@OBJArray,$obj->get_dateinfo($Year,$Month,$Day));
+	}
+	return(_merge_arrays_unique(\@OBJArray));
 }
 
 # Purpose: Get the list of UIDs for the supplied time
 # Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
 sub get_timeinfo {
 	my($self, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
-	warn('STUB'); return(undef);
+	my @OBJArray;
+	foreach my $obj (@{$self->{objectlist}}) {
+			push(@OBJArray,$obj->get_timeinfo($Year,$Month,$Day,$Time));
+	}
+	return(_merge_arrays_unique(\@OBJArray));
 }
 
 # Purpose: Get a list of years which have events (those with *only* recurring not counted)
 # Usage: my $ArrayRef = $object->get_years();
 sub get_years {
 	my $self = shift;
-	warn('STUB'); return(undef);
+	my @OBJArray;
+	foreach my $obj (@{$self->{objectlist}}) {
+			push(@OBJArray,$obj->get_years());
+	}
+	return(_merge_arrays_unique(\@OBJArray));
 }
 
 # Purpose: Get a list of months which have events (those with *only* recurring not counted)
@@ -122,6 +152,7 @@ sub write {
 
 # Purpose: Get raw iCalendar data
 # Usage: my $Data = $object->get_rawdata();
+# 	NOTE: WORKS ONLY ON PRIMARY
 sub get_rawdata {
 	my ($self) = @_;
 	my $iCalendar;
@@ -198,14 +229,17 @@ sub set_prodid {
 	warn('STUB'); return(undef);
 }
 
-# -- Internal functions --
+# -- Internal methods --
 sub _locate_UID
 {
-}
-
-sub _merge_arrays_unique
-{
-	warn('STUB');
+	my $self = shift;
+	my $UID = shift;
+	foreach my $obj (@{$self->{objectlist}}) {
+			if($obj->exists($UID)) {
+				return($obj);
+			}
+	}
+	return(undef);
 }
 
 sub _convert_UID
@@ -215,8 +249,24 @@ sub _convert_UID
 
 sub _get_real_UID
 {
-	warn('STUB');
+	my $self = shift;
+	my $UID = shift;
+	return($UID);
 }
+
+# -- Internal functions --
+
+sub _merge_arrays_unique
+{
+	my $array = shift;
+	warn("_merge_arrays_unique: STUB - doesn't merge ANYTHING - returns array->[0]");
+	if(not ref($array)) {
+		warn("_merge_arrays_unique: Didn't get an arrayref :'(");
+		return(undef);
+	}
+	return($array->[0]);
+}
+
 __END__
 
 Capabilities:
