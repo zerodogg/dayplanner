@@ -84,7 +84,7 @@ sub get_info {
 	if(not $obj) {
 		return;
 	}
-	return($obj->get_info($UID);
+	return($obj->get_info($UID));
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
