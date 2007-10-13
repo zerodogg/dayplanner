@@ -63,12 +63,4 @@ sub update {
 
 	return(TRUE);
 }
-
-sub DPI_API_Call {
-	my $self = shift;
-	my $call = shift;
-	my $params = shift;
-
-	return(1);
-}
 1;
