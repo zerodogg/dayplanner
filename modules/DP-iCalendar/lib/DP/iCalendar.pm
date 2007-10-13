@@ -71,19 +71,6 @@ sub newfile {
 	return(_NewObj($File));
 }
 
-# Purpose: Return manager information
-# Usage: get_manager_version();
-sub get_manager_version
-{
-	return('01_capable');
-}
-
-sub get_manager_capabilities
-{
-	# All capabilites as of 01_capable
-	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS'])
-}
-
 # Purpose: Get information for the supplied month (list of days there are events)
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
 sub get_monthinfo {
@@ -426,6 +413,23 @@ sub set_prodid {
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
 	return(TRUE);
+}
+
+# - Public methods for use by DP::iCalendar::Manager
+
+# Purpose: Return manager information
+# Usage: get_manager_version();
+sub get_manager_version
+{
+	return('01_capable');
+}
+
+# Purpose: Return manager capability information
+# Usage: get_manager_capabilities
+sub get_manager_capabilities
+{
+	# All capabilites as of 01_capable
+	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS'])
 }
 
 # - Public functions
