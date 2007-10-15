@@ -10,23 +10,25 @@
 
 package DP::iCalendar::HTTPSubscription;
 use constant { TRUE => 1, FALSE => 0 };
+use strict;
+use warnings;
+use DP::iCalendar;
+use DP::GeneralHelpers::HTTPFetch;
 
 my $DPI_API_Version = '1Alpha';
 
-# Usage: DP::iCalendar::HTTPSubscription->new(ADDRESS, DP::ICALENDAR_OBJECT, CALLBACK);
+our @ISA = ('DP::iCalendar');
+
+# Usage: DP::iCalendar::HTTPSubscription->new(ADDRESS, CALLBACK);
 sub new {
-	my $self = shift;
-	$self = {};
-	bless($self);
-	$self->{address} = shift;
-	$self->{DPI} = shift;
-	$self->{callback} = shift;
-
-	if(not $self->{DPI}->API_Call('REGISTER', { OBJECT => $self, VERSION => $DPI_API_Version })) {
-		return(FALSE);
-	}
-
-	$self->{private_DPI} = DP::iCalendar->new([]);
+	my $name = shift;
+	my $tempbless = {};
+	bless($tempbless,'DP::iCalendar::HTTPSubscription');
+	my $self = $tempbless->_NewObj();
+	bless($self,'DP::iCalendar::HTTPSubscription');
+	$self->{HTTP_address} = shift;
+	$self->{HTTP_callback} = shift;
+	$self->{HTTP_data} = '';
 	
 	# Do the actual adding
 	$self->update();
@@ -34,7 +36,8 @@ sub new {
 }
 
 sub update {
-	$self->{data} = DP::GeneralHelpers::HTTPFetch->get($self->{address},$self->{callback});
+	my $self = shift;
+	$self->{HTTP_data} = DP::GeneralHelpers::HTTPFetch->get($self->{HTTP_address},$self->{HTTP_callback});
 
 	my %ErrorInformation = (
 		NORESOLVE => "Unable to resolve the address",
@@ -42,24 +45,14 @@ sub update {
 		FAIL => "Unknown failure",
 	);
 	# Check for errors
-	foreach(keys(%ErrorInformation)) {
-		if($self->{data} eq $_) {
-			print " DP::iCalendar::HTTPSubscription: Unable to download icalendar file: $ErrorInformation{$_}\n";
-			return(FALSE);
-		}
+	if($ErrorInformation{$self->{HTTP_data}}) {
+			print " DP::iCalendar::HTTPSubscription: Unable to download icalendar file: $ErrorInformation{$self->{HTTP_data}}\n";
 	}
 
-	# Clean the objects
-	$self->{private_DPI}->clean();
-	$self->{DPI}->API_Call('RECALCULATE',{});
-	# We call private DPI functions since technically we are part of DPI
-	my $arrayref = $self->{private_DPI}->_ParseData($self->{data});
-	$self->{private_DPI}->addfile($arrayref);
-
-	foreach my $href (keys(%{$self->{private_DPI}->{RawCalendar}})) {
-		$href->{'DP-iCalendar-PluggedinUID'} = 1;
-		$self->API_Call
-	}
+	my @Array;
+	$self->{HTTP_data} =~ s/\r//g;
+	push(@Array, $_) foreach(split(/\n/,$self->{HTTP_data}));
+	$self->addfile(\@Array);
 
 	return(TRUE);
 }
