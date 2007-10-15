@@ -5,6 +5,7 @@ Version 0.8 (Unreleased)
 ------------------------
 * Client (dayplanner)
 - Cleanups
+- Added DP::iCalendar::Manager - supports multiple iCalendar sources
 
 * Notifier (dayplanner-notifier)
 
