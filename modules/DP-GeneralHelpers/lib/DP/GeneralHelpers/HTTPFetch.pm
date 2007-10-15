@@ -10,6 +10,7 @@ package DP::GeneralHelpers::HTTPFetch;
 use IPC::Open3;
 use POSIX;
 use Socket;
+use DP::GeneralHelpers;
 
 # Purpose: Download a file from HTTP (other protocols might also work, but there are
 # 		no guarantees for that)
@@ -33,6 +34,33 @@ sub get {
 	my $resolved = inet_ntoa(inet_aton($addy));
 	if(not $resolved) {
 		return('NORESOLVE');
+	}
+
+	if($ENV{DP_HTTP_FORCEUSEOF}) {
+		if($ENV{DP_HTTP_FORCEUSEOF} =~ /^(LWP|wget|curl|lynx)/i)
+		{
+			if($ENV{DP_HTTP_FORCEUSEOF} =~ /LWP/i) {
+				if(eval("use LWP;")) {
+					return($self->_LWPFetch($file));
+				}
+			} elsif($ENV{DP_HTTP_FOCEUSEOF} =~ /wget/i) {
+				if(DP::GeneralHelpers::InPath('wget')) {
+					return($self->_WgetFetch($file));
+				}
+			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /curl/i) {
+
+				if(DP::GeneralHelpers::InPath('curl')) {
+					return($self->_CurlFetch($file));
+				}
+			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /lynx/i) {
+				if(DP::GeneralHelpers::InPath('lynx')) {
+					return($self->_LynxFetch($file));
+				}
+			}
+			warn("DP_HTTP_FORCEUSEOF: $ENV{DP_HTTP_FORCEUSEOF}: Not available, falling back to automatic detection\n");
+		} else {
+			warn("DP_HTTP_FORCEUSEOF: $ENV{DP_HTTP_FORCEUSEOF}: Invalid setting, must be one of LWP, wget, curl, lynx\n");
+		}
 	}
 
 	# First try LWP
