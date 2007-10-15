@@ -289,12 +289,19 @@ sub add {
 		carp('Refusing to add a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
-	my $UID = $self->_UID($Hash{DTSTART});
+	my $UID;
+	if(not length($Hash{UID})) {
+		$UID = $self->_UID($Hash{DTSTART});
+	} else {
+		$UID = $Hash{UID};
+	}
 	$self->_ClearCalculated();
 	$self->_ChangeEntry($UID,%Hash);
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
-	$curryear += 1900;
-	$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
+	if(not $Hash{CREATED}) {
+		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
+		$curryear += 1900;
+		$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
+	}
 	return(TRUE);
 }
 
@@ -429,7 +436,7 @@ sub get_manager_version
 sub get_manager_capabilities
 {
 	# All capabilites as of 01_capable
-	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS'])
+	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE'])
 }
 
 # - Public functions
