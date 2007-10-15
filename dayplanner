@@ -35,17 +35,19 @@ use MIME::Base64;		# Used for import/export
 use Getopt::Long;		# Commandline options
 use Cwd;				# We need Cwd::Realpath to find out which directory we live in
 use FindBin;			# So that we can detect module dirs during runtime
-use constant { TRUE => 1, FALSE => 0 };
+use constant { true => 1, false => 0 };
 # This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
-use Date::HolidayParser;	# Parsing of .holiday files
+use Date::HolidayParser 0.4;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
-use DP::iCalendar::Manager;
+use DP::iCalendar::Manager;		# Support for multiple iCalendars using a single object
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
+use DP::GeneralHelpers::IPC;
+use DP::GeneralHelpers::I18N;
 
 # Scalars
 our $Version = '0.8';
@@ -61,10 +63,7 @@ my $DaemonSocketName = 'dayplannerd';# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 my $i18n;
 my $DPS_APILevel = '06';			# The DPS API level used/supported
-my $HTML_PHP = 0;					# If set to 1 the HTML exporter will not
-									#  output the header/footer. This is used by the
-									#  PHP exporter.
-my $iCalendar;						# The DP::iCalendar object.
+my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
 
 # FIXME: Unused
@@ -78,6 +77,7 @@ my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
 my %DPServices;			# Day Planner services hash
+my %RuntimeModules;		# Keeps track of modules loaded during runtime
 
 # Gtk2 objects
 my (
@@ -130,7 +130,7 @@ sub DaemonInit {
 		return(DaemonInit());
 	}
 	$DaemonSocket->client_send("$$ HI client2");
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Start the Day Planner daemon
@@ -138,8 +138,8 @@ sub DaemonInit {
 sub StartDaemon {
 	foreach(split(/:/, sprintf('%s:%s', dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
 		if (-x "$_/$DaemonName") {
-			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
-			# and 1-255 on FALSE, so it's the other way around from perl
+			# Yes this is a bit weird statement. But remember that commands return 0 on true
+			# and 1-255 on false, so it's the other way around from perl
 			unless(system("$_/$DaemonName", '--force-fork', '--dayplannerdir', $SaveToDir)) {
 				return(1);
 			}
@@ -469,19 +469,14 @@ sub DPS_Perform {
 # Usage: DPS_SSLSocketTest();
 sub DPS_SSLSocketTest {
 	# Make sure the IO::Socket::SSL module is available and loaded
-	if(not $DPServices{IO_SOCKET_SSL_LOADED}) {
-		if(not eval('use IO::Socket::SSL; 1')) {
-			if (not $DPServices{IO_SOCKET_SSL_ERR_DISPLAYED}) {
-				DPError($i18n->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
-			}
-			$DPServices{IO_SOCKET_SSL_ERR_DISPLAYED} = 1;
-			return(undef);
-		} else {
-			$DPServices{IO_SOCKET_SSL_LOADED} = 1;
-			return(1);
+	if(not runtime_use('IO::Socket::SSL')) {
+		if (not $DPServices{IO_SOCKET_SSL_ERR_DISPLAYED}) {
+			DPError($i18n->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
+			$DPServices{IO_SOCKET_SSL_ERR_DISPLAYED} = true;
 		}
+		return(false);
 	}
-	return(1);
+	return(true);
 }
 
 # Purpose: Connect to a Day Planner services server.
@@ -747,7 +742,7 @@ sub SaveMainData {
 	$iCalendar->write();	# TODO: Check return value
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	Daemon_SendData('RELOAD_DATA');
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Save the data file and redraw the needed windows
@@ -776,15 +771,15 @@ sub UpdatedData {
 # Usage: LoadCalendar();
 sub LoadCalendar {
 	my $IsFirstStartup = shift;
+	$iCalendar = DP::iCalendar::Manager->new();
+	my $MainCalendar;
 	if(-e "$SaveToDir/$ICSFile") {
-		$iCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
+		$MainCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
 	} else {
-		$iCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
+		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
+	$iCalendar->add_object($MainCalendar,true);
 	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
-	my $Manager = DP::iCalendar::Manager->new();
-	$Manager->add_object($iCalendar,TRUE);
-	$iCalendar = $Manager;
 	return(1);
 }
 
@@ -897,7 +892,29 @@ sub LaunchWebBrowser {
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Display an error dialog about the inability to connect to the daemon
+# Purpose: Check if we can load a module, and error out if not
+# Usage: runtime_use('MODULENAME',SILENT?);
+# 	If not in silent mode it will output an error about a missing core module
+# 	and explain that the installation is corrupt.
+sub runtime_use
+{
+	my $module = shift;
+	my $silent = shift;
+	return($RuntimeModules{$module}) if $RuntimeModules{$module};
+	if(eval("use $module; 1")) {
+		$RuntimeModules{$module} = true;
+		return(true);
+	} else {
+		$RuntimeModules{$module} = false;
+		if(not $silent) {
+			DPIntWarn("FATAL: Module missing: $module");
+			DPError($i18n->get_advanced("A fatal error has occurred. Your installation of Day Planner is missing some files. This makes certain functions in Day Planner unusable. Please re-install Day Planner. See %(website) for more information on how to download and re-install Day Planner.\n\n(The missing file was: %(module))", { website => 'http://www.day-planner.org/', module => $module }));
+		}
+		return(false);
+	}
+}
+
+# Purpose: Display an error about an already running Day Planner session
 # Usage: AlreadyRunningDP(IPC_CLIENT);
 sub AlreadyRunningDP {
 	my $ClientConnection = shift;
@@ -928,7 +945,7 @@ sub AlreadyRunningDP {
 			# Unlink the IPC socket
 			unlink("$SaveToDir/ipcsocket");
 			$iCalendar->reload();
-			return(TRUE);
+			return(true);
 		}
 	} else {
 		$ClientConnection->destroy();
@@ -1594,448 +1611,18 @@ sub CLI_Import {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# HTML export functions (almost all of these are shared with the PHP exporter)
+# HTML/PHP export functions 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Encode special HTML entities
-# Usage: HTML_Encode(STRING);
-sub HTML_Encode {
-	my $String = shift;
-	study($String);
-	$String =~ s#\n#<br />#g;
-	$String =~ s/&/&amp;/g;
-	$String =~ s/</&lt;/g;
-	$String =~ s/>/&gt;/g;
-	$String =~ s/"/&quot;/g;
-	return($String);
-}
-
-# Purpose: Output the header for all Day Planner HTML files
-# Usage: print $FILE HTML_Header(YEAR,DATE,NONDATEMODE?);
-sub HTML_Header {
-	return('') if $HTML_PHP;
-	my ($Year,$Date,$NonDateMode) = @_;
-	my $Header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-	$Header .= "<html><head>\n";
-	$Header .= '<meta content="text/html; charset=iso-8859-1" http-equiv="content-type" />';
-	$Header .= "<meta name='generator' content='Day Planner $Version - http://www.day-planner.org' />\n";;
-	if($NonDateMode) {
-		$Header .= "<title>" . HTML_Encode($Date) . "</title>";
-	} else {
-		$Header .= '<title>' . HTML_Encode($i18n->get_advanced('Day Planner for %(date)', { date => $Date})) . '</title>';
-	}
-	$Header .= "</head>\n";
-	$Header .= '<body>';
-	$Header .= '<h2>' . HTML_Encode($Date) . '</h2>';
-	$Header .= "<!-- Generated by Day Planner version $Version - $RCSRev -->\n";
-	$Header .= HTML_Menu(@_);
-	$Header .= '<hr />';
-	return($Header);
-}
-
-# Purpose: Print the menu for a Day Planner HTML doc
-# Usage: print $FILE HTML_Menu(YEAR,DATE,NONDATEMODE?);
-sub HTML_Menu {
-	my ($Year,$Date,$NonDateMode) = @_;
-	my $Menu = '';
-	my %Links;
-	if($HTML_PHP) {
-		# PHP-style links
-		%Links = (
-			1 => 'index.php?year=<?php print "$Year" ?>&amp;month=1',
-			2 => 'index.php?year=<?php print "$Year" ?>&amp;month=2',
-			3 => 'index.php?year=<?php print "$Year" ?>&amp;month=3',
-			4 => 'index.php?year=<?php print "$Year" ?>&amp;month=4',
-			5 => 'index.php?year=<?php print "$Year" ?>&amp;month=5',
-			6 => 'index.php?year=<?php print "$Year" ?>&amp;month=6',
-			7 => 'index.php?year=<?php print "$Year" ?>&amp;month=7',
-			8 => 'index.php?year=<?php print "$Year" ?>&amp;month=8',
-			9 => 'index.php?year=<?php print "$Year" ?>&amp;month=9',
-			10 => 'index.php?year=<?php print "$Year" ?>&amp;month=10',
-			11 => 'index.php?year=<?php print "$Year" ?>&amp;month=11',
-			12 => 'index.php?year=<?php print "$Year" ?>&amp;month=12',
-			yearindex => 'index.php?page=yearindex',
-		);
-	} else {
-		# HTML-style links
-		%Links = (
-			1 => "january-$Year.html",
-			2 => "february-$Year.html",
-			3 => "march-$Year.html",
-			4 => "april-$Year.html",
-			5 => "may-$Year.html",
-			6 => "june-$Year.html",
-			7 => "july-$Year.html",
-			8 => "august-$Year.html",
-			9 => "september-$Year.html",
-			10 => "october-$Year.html",
-			11 => "november-$Year.html",
-			12 => "december-$Year.html",
-			yearindex => 'index.html',
-		);
-	}
-	if(not defined($NonDateMode) or not $NonDateMode eq 'M') {
-		
-#	if(defined($NonDateMode) and not $NonDateMode eq "M") {
-#		$Menu .= HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode($i18n->get("View the main page")) . "</a><br/>\n";
-#	} elsif(not defined($NonDateMode) or not $NonDateMode eq "M") {
-		$Menu .= HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . HTML_Encode($i18n->get("Change to another year")) . "</a> (" . HTML_Encode($i18n->get_advanced("current: %(year)", { year => $Year })) . ") - </a><br />\n";
-		$Menu .= HTML_Encode($i18n->get("Months")) .
-			": <a href='$Links{1}'>" . HTML_Encode($i18n->get_month(1)) .
-			"</a> - <a href='$Links{2}'>" . HTML_Encode($i18n->get_month(2)).
-			"</a> - <a href='$Links{3}'>" . HTML_Encode($i18n->get_month(3)) .
-			"</a> - \n<a href='$Links{4}'>" . HTML_Encode($i18n->get_month(4)) .
-			"</a> - <a href='$Links{5}'>" . HTML_Encode($i18n->get_month(5)) .
-			"</a> - <a href='$Links{6}'>" . HTML_Encode($i18n->get_month(6)) .
-			"</a> - \n<a href='$Links{7}'>" . HTML_Encode($i18n->get_month(7)) .
-			"</a> - <a href='$Links{8}'>" . HTML_Encode($i18n->get_month(8)) .
-			"</a> - <a href='$Links{9}'>" . HTML_Encode($i18n->get_month(9)) .
-			"</a> - \n<a href='$Links{10}'>" . HTML_Encode($i18n->get_month(10)) .
-			"</a> - <a href='$Links{11}'>" . HTML_Encode($i18n->get_month(11)) .
-			"</a> - <a href='$Links{12}'>" . HTML_Encode($i18n->get_month(12)) . "</a><br/>\n";
-	}
-	return($Menu);
-}
-
-# Purpose: Print the footer of all Day Planner HTML documents
-# Usage: print $FILE HTML_Footer();
-sub HTML_Footer {
-	return('') if $HTML_PHP;
-	my $Footer = '<br /><small><small>' . HTML_Encode($i18n->get('Generated by')) .  ' <a href="http://www.day-planner.org/">' . HTML_Encode($i18n->get('Day Planner')) . '</a> ' . HTML_Encode($i18n->get('version')) . " $Version</small></small><br />";
-	$Footer .= "</body></html>";
-	return($Footer);
-}
-
-# Purpose: Output a specified day to HTML
-# Usage: HTML_DayToHtml(YEAR,MONTH,DAY,DIRECTORY);
-sub HTML_DayToHtml {
-	my ($Year,$Month,$Day,$Directory) = @_;
-	my (@AllDay, @OtherEvents);
-	open(my $FILE, '>', "$Directory/dp_$Year$Month$Day.html") or do {
-		DPIntWarn("Unable to open $Directory/dp_$Year$Month$Day.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/dp_$Year$Month$Day.html", error => $!}));
-		return(undef);
-	};
-	# Header
-	print $FILE HTML_Header($Year,"$Day-$Month-$Year");
-	print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
-	print $FILE '<tbody><tr><td>' . HTML_Encode($i18n->get('Time')) . '</td><td>' . HTML_Encode($i18n->get('Description')) . "</td></tr>\n";
-	# Write allday and birthdays
-	foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,'DAY')})) {
-		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
-		my $EventInfo = $iCalendar->get_info($Event);
-		if(defined($EventInfo->{DESCRIPTION})) {
-			my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
-			print $FILE "<br /><i>$HTML_Fulltext</i>";
-		}
-		print $FILE "</td></tr>\n";
-	}
-	# Write others
-	foreach my $Time (sort(@{$iCalendar->get_dateinfo($Year,$Month,$Day)})) {
-		next if $Time eq 'DAY';
-		foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})) {
-			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
-			my $EventInfo = $iCalendar->get_info($Event);
-			if(defined($EventInfo->{DESCRIPTION})) {
-				my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
-				print $FILE "<br /><i>$HTML_Fulltext</i>";
-			}
-			print $FILE "</td></tr>\n";
-		}
-	}
-	# Prepare and write holidays
-	unless(defined($HolidayParser)) {
-		$HolidayParser = Date::HolidayParser->new($HolidayFile);
-	}
-	unless(defined($Holidays{$Year})) {
-		$Holidays{$Year} = $HolidayParser->get($Year);
-	}
-	if(defined($Holidays{$Year}) and defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
-		foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
-			print $FILE '<tr><td></td><td> ' . HTML_Encode($CurrHoliday) . "</td></tr>\n";
-		}
-	}
-	print $FILE '</tbody></table>';
-	print $FILE HTML_Footer();
-	close($FILE);
-}
-
-# Purpose: Output a specified month in HTML
-# Usage: HTML_MonthToHtml
-sub HTML_MonthToHtml {
-	my ($Year,$Month,$Directory) = @_;
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	open(my $FILE, '>', "$Directory/$RawMonthNames{$Month}-$Year.html") or do {
-		DPIntWarn("Unable to open $Directory/$RawMonthNames{$Month}-$Year.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$RawMonthNames{$Month}-$Year.html", error => $!}));
-		return(undef);
-	};
-	print $FILE HTML_Header($Year, $i18n->get_month($Month) . " $Year");
-	my $HadContent;
-	my $MonthInfo = $iCalendar->get_monthinfo($Year,$Month);
-	foreach my $Day (sort @{$MonthInfo}) {
-		$HadContent = 1;
-		print $FILE "<a href='dp_$Year$Month$Day.html'>" . HTML_Encode("$Day. " . $i18n->get_month($Month) ." $Year") . "</a><br/>\n";
-	}
-	unless($HadContent) {
-		print $FILE '<i>' . HTML_Encode($i18n->get('There are no events this month')) . '</i>';
-	}
-	# Prepare and write holidays
-	unless(defined($HolidayParser)) {
-		$HolidayParser = Date::HolidayParser->new($HolidayFile);
-	}
-	unless(defined($Holidays{$Year})) {
-		$Holidays{$Year} = $HolidayParser->get($Year);
-	}
-	if(defined($Holidays{$Year}) and defined($Holidays{$Year}->{$Month})) {
-		print $FILE '<h4>' . HTML_Encode($i18n->get('Special days this month:')) . '</h4>';
-		foreach my $Day (sort {$a <=> $b} keys %{$Holidays{$Year}->{$Month}}) {
-			foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
-				print $FILE HTML_Encode("$Day. " . $i18n->get_month($Month) . ": $CurrHoliday") . "<br/>\n"
-			}
-		}
-	}
-	print $FILE HTML_Footer();
-	close($FILE);
-}
-
-# Purpose: Output all birthdays to a file
-# Usage: HTML_BirthdayList(DIRECTORY);
-sub HTML_BirthdayList {
-	warn("HTML_BirthdayList: STUBBED, using \%BirthdayContents!");
-=cut
-	my($Directory) = @_;
-	open(my $FILE, '>', "$Directory/birthdays.html") or do {
-		DPIntWarn("Unable to open $Directory/birthdays.html for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$Directory/birthdays.html", $!));
-		return(undef);
-	};
-	print $FILE HTML_Header(undef,$i18n->get("Birthdays"),1);
-	if(keys(%BirthdayContents)) {
-		print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
-		print $FILE "<tbody><tr><td>" . HTML_Encode($i18n->get("Date")) . "</td><td>" . HTML_Encode($i18n->get("Name")) . "</td></tr>\n";
-		foreach my $Month (sort {$a <=> $b}  keys(%BirthdayContents)) {
-			foreach my $Day (sort {$a <=> $b} keys(%{$BirthdayContents{$Month}})) {
-				my $PrintDay = AppendZero($Day);
-				foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
-					print $FILE "<tr><td>" . HTML_Encode("$PrintDay $MonthNames{$Month}") . "</td><td>" . HTML_Encode($Name) . "</td></tr>\n";
-				}
-			}
-		}
-		print $FILE '</tbody></table>';
-	} else {
-		print $FILE . "<i>" .  HTML_Encode($i18n->get("No birthdays are defined.")) . "</i><br/>";
-	}
-	print $FILE HTML_Footer();
-=cut
-}
-
-# Purpose: Output a year information page to HTML
-# Usage: HTML_YearHtml(YEAR,DIRECTORY);
-sub HTML_YearHtml {
-	my ($Year, $Directory) = @_;
-	open(my $FILE, '>', "$Directory/$Year.html") or do {
-		DPIntWarn("Unable to open $Directory/$Year.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/$Year.html", error => $!}));
-		return(undef);
-	};
-	print $FILE HTML_Header($Year, $Year, 'Y');
-	print $FILE HTML_Encode($i18n->get('Select the month to view in the list above')) . "<br />\n";
-	print $FILE HTML_Footer();
-}
-
-# Purpose: Output a list of years (aka. the index page) to HTML
-# Usage: HTML_YearList(DIRECTORY);
-sub HTML_YearList {
-	my ($Directory) = @_;
-	open(my $FILE, '>', "$Directory/index.html") or do {
-		DPIntWarn("Unable to open $Directory/index.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/index.html", error => $!}));
-		return(undef);
-	};
-	print $FILE HTML_Header("", "Day Planner", "M");
-	print $FILE HTML_Encode($i18n->get("Select the year to view:")) . "<br />\n";
-	foreach(@{$iCalendar->get_years()}) {
-		print $FILE "<a href='$_.html'>" . HTML_Encode($_) . "</a><br />\n";
-	}
-	print $FILE HTML_Footer();
-}
-
-# Purpose: Output a php file that adds autodetection of todays date to
-#	Day Planner HTML exports. (NOTE: Not used for actual PHP exporting)
-# Usage: HTML_PHPIndex(DIRECTORY);
-sub HTML_PHPIndex {
-	my ($Directory) = @_;
-	open(my $FILE, '>', "$Directory/index.php") or do {
-		DPIntWarn("Unable to open $Directory/index.php for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$Directory/index.php", error => $!}));
-		return(undef);
-	};
-	print $FILE "<?php\n// This is a simple script written by Day Planner to add autodetection of\n// the current day to exported Day Planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of Day Planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as Day Planner\n";
-	print $FILE HTML_PHP_DayDetectFunc();
-	print $FILE '$file = DayDetectFunc("./");' . "\n";
-	print $FILE 'if($file) {' . "\n";
-	print $FILE "\t" . 'include($file);' . "\n";
-	print $FILE "} else {" . "\n";
-	print $FILE "\t" . 'print("Unable to detect files. This export is corrupt!");' . "\n";
-	print $FILE "}\n?>";
-}
 
 # Purpose: Export Day Planner data to HTML
 # Usage: HTML_Export(DIRECTORY);
 sub HTML_Export {
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	my $Dir = $_[0];
-	unless(-d $Dir) {
-		eval("mkpath('$Dir')");
-		if($@) {
-			DPIntWarn("Unable to mkpath($Dir): $@");
-			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $Dir, error => $@}));
-			return(undef);
-		}
-	}
-	foreach my $Year (@{$iCalendar->get_years}) {
-		HTML_YearHtml($Year,$Dir);
-		foreach my $Month (@{$iCalendar->get_months($Year)}) {
-			foreach my $Day (@{$iCalendar->get_monthinfo($Year,$Month)}) {
-				HTML_DayToHtml($Year, $Month, $Day, $Dir);
-			}
-		}
-		foreach(1..12) {
-			HTML_MonthToHtml($Year,$_,$Dir);
-		}
-	}
-	HTML_YearList($Dir);
-	HTML_PHPIndex($Dir);
-	# TODO: Either FIXME or DROPME!
-#	HTML_BirthdayList($Dir);
+	warn('STUB: Should use the new lib');
 }
-
-# Purpose: Function to detect todays day using php
-# Usage: print HTML_PHP_DayDetectFunc();
-sub HTML_PHP_DayDetectFunc {
-	my $Return = 'function DayDetectFunc ($datadir) {' . "\n";
-	$Return .= "\t" . '$Year = date("Y");' . "\n";
-	$Return .= "\t" . '$Month = date("n");' . "\n";
-	$Return .= "\t" . '$Day = date("j");' . "\n";
-	$Return .= "\t" . '$Months = array(1 => "january", 2 => "february", 3 => "march", 4 => "april", 5 => "may", 6 => "june", 7 => "july", 8 =>"august", 9 =>"september", 10 => "october", 11 => "november", 12 =>"december");' . "\n";
-	$Return .= "\t" . 'if(file_exists("$datadir/dp_$Year$Month$Day.html")) {' . "\n";
-	$Return .= "\t\t" . 'return("$datadir/dp_$Year$Month$Day.html");' . "\n";
-	$Return .= "\t" . '} elseif(file_exists("$datadir/$Months[$Month]-$Year.html")) {' . "\n";
-	$Return .= "\t\t" . 'return("$datadir/$Months[$Month]-$Year.html");' . "\n";
-	$Return .= "\t" . '} elseif(file_exists("$datadir/index.html")) {' . "\n";
-	$Return .= "\t\t" . 'return("$datadir/index.html");' . "\n";
-	$Return .= "\t} else {" . "\n";
-	$Return .= "\t\treturn 0;\n";
-	$Return .= "\t}\n}\n";
-	return($Return);
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# PHP export functions
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 # Purpose: Export Day Planner data to PHP/HTML
 # Usage: PHP_Export(DIRECTORY);
 sub PHP_Export {
-	$HTML_PHP = 1;
-	# FIXME: Code from HTML_Export needlessly copied here
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	my $Dir = $_[0];
-	my $BaseDir = $Dir;
-	$Dir = $Dir . '/dp_data/';
-	unless(-d $Dir) {
-		eval("mkpath('$Dir')");
-		if($@) {
-			DPIntWarn("Unable to mkpath($Dir): $@");
-			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $Dir, error => $@}));
-			return(undef);
-		}
-	}
-=cut
-	foreach my $Year (keys(%CalendarContents)) {
-		HTML_YearHtml($Year,$Dir);
-		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
-			foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
-				HTML_DayToHtml($Year, $Month, $Day, $Dir);
-			}
-		}
-		foreach(1..12) {
-			HTML_MonthToHtml($Year,$_,$Dir);
-		}
-	}
-=cut
-	warn("PHP_Export: STUBBED");
-	HTML_BirthdayList($Dir);
-	$HTML_PHP = 0;
-	PHP_WriteFiles($BaseDir, $Dir);
-}
-
-# Purpose: Create the PHP files used by the Day Planner PHP/HTML UI
-# Usage: PHP_WriteFiles(DIRECTORY);
-sub PHP_WriteFiles {
-	my ($BaseDir, $DataDir) = @_;
-	# Write the header and footer files
-	# ...
-	open(my $INDEX, '>', "$BaseDir/index.php");
-	# Write index.php
-	print $INDEX "<?php\n// Day Planner index.php\n// Copyright (C) Eskild Hustvedt 2006\n// Licensed under the GNU General Public License version 3 or newer\n// as published by the Free Software Foundation\n\n";
-	print $INDEX '$year = $_GET[\'year\'];' . "\n";
-	print $INDEX '$month = $_GET[\'month\'];' . "\n";
-	print $INDEX '$day = $_GET[\'day\'];' . "\n";
-	print $INDEX '$page = $_GET[\'page\'];' . "\n";
-	# NOTES:
-	# $page should always be used if present, but should also be limited to one of
-	# birthdays and yearindex
-	#
-	# TODO: Drop yearindex in favor of a drop-down box?
-	print $INDEX "// Begin by including the header here\n";
-	print $INDEX "// Include the page here\n";
-	print $INDEX '?>';
-	close($INDEX);
-	
-	# TODO: Write a dummy index.html that just redirects to ../
-	#	maybe this could just be done using a .htaccess file too
-	#	but if so, have both so that it'll work on non-apache httpds.
+	warn('STUB: Should use the new lib');
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
