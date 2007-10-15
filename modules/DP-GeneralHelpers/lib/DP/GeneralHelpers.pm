@@ -22,12 +22,6 @@
 # along with this program in a file named COPYING.gpl. 
 # If not, see <http://www.gnu.org/licenses/>.
 
-# When someone simply uses DP::GeneralHelpers; that means they want the
-# entire package. So give them the entire package.
-use DP::GeneralHelpers::IPC;
-use DP::GeneralHelpers::HTTPFetch;
-use DP::GeneralHelpers::I18N;
-
 package DP::GeneralHelpers;
 use strict;
 use warnings;
