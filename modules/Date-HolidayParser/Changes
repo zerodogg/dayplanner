@@ -1,8 +1,9 @@
 Revision history for Date-HolidayParser
 
-Version 0.3.1 (Released 20th of June 2007)
-----------------------------------------
+Version 0.4 (Released 14th of October 2007)
+-------------------------------------------
 - Fixed an eternal loop on some errornious lines
+- DP::iCalendar::Manager support
 
 Version 0.3 (Released 1st of August 2006)
 ----------------------------------------

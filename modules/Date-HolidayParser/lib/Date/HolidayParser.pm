@@ -18,13 +18,14 @@ use warnings;
 use Carp;
 use Exporter;
 use POSIX;
+use constant { true => 1, false => 0 };
 
 # Exportable functions are ParseHoliday (main parser function) and EasterCalc
 my @EXPORT_OK = qw(EasterCalc ParseHoliday);
 
 # Version number
-my $VERSION;
-$VERSION = 0.3.1;
+our $VERSION;
+$VERSION = 0.4;
 
 # The user should be able to tell us to be silent
 our $BeSilent;
@@ -160,17 +161,17 @@ sub Parse {
 }
 
 # Purpose: Interperate and calculate the holiday file
-# Usage: $self->_interperate_year(YEAR);
+# Usage: $this->_interperate_year(YEAR);
 sub _interperate_year {
-	my $self = $_[0];
+	my $this = $_[0];
 	my $Year = $_[1];
 	my $PosixYear = $Year - 1900;
 	my $FinalParsing = {};
-	foreach my $LineNo (keys(%{$self->{parsed}})) {
+	foreach my $LineNo (keys(%{$this->{parsed}})) {
 		my ($FinalYDay, $NumericYDay);
-		my $CreativeParser = $self->{parsed}->{$LineNo};
-		my $HolidayName = $self->{parsed}->{$LineNo}{name};
-		my $File = $self->{FILE};
+		my $CreativeParser = $this->{parsed}->{$LineNo};
+		my $HolidayName = $this->{parsed}->{$LineNo}{name};
+		my $File = $this->{FILE};
 		my %MonthMapping = (
 			'january' => 0,
 			'february' => 1,
@@ -339,8 +340,18 @@ sub _interperate_year {
 					my $PosixYear = $Year - 1900;
 					my ($final_sec,$final_min,$final_hour,$final_mday,$final_mon,$final_year,$final_wday,$final_yday,$final_isdst) = localtime(POSIX::mktime(0, 0, 0, $FinalYDay, 0, $PosixYear));
 					$final_mon++;
-					$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
-				} 
+					# If we're in iCalendar emulation mode, then create an iCalendar object out of it all
+					if($this->{ICAL}) {
+						my $UID = $this->_event_to_iCalendar(POSIX::mktime(0, 0, 0, $FinalYDay, 0, $PosixYear),$HolidayName);
+						if(not $FinalParsing->{$final_mon}{$final_mday}{'DAY'}) {
+							$FinalParsing->{$final_mon}{$final_mday}{'DAY'} = [];
+						}
+						push(@{$FinalParsing->{$final_mon}{$final_mday}{'DAY'}}, $UID);
+					} else {
+						# If not then just add it to our regular hash
+						$FinalParsing->{$final_mon}{$final_mday}{$HolidayName} = $CreativeParser->{HolidayType};
+					}
+				}
 				if(defined($CreativeParser->{Every}) and defined($CreativeParser->{Number})) {
 					delete($CreativeParser->{Every});
 					if($CreativeParser->{Number} ne "second") {
@@ -366,9 +377,9 @@ sub _interperate_year {
 }
 
 # Purpose: Load and parse the holiday file
-# Usage: $self->_load_and_parse(FILE);
+# Usage: $this->_load_and_parse(FILE);
 sub _load_and_parse {
-	my $self = $_[0];
+	my $this = $_[0];
 	my $File = $_[1];
 
 	carp("$File does not exist") and return(undef) unless -e $File;
@@ -546,12 +557,12 @@ sub _load_and_parse {
 		}
 
 		# ==================================================================
-		# Finalize the interpretation and add it to $self
+		# Finalize the interpretation and add it to $this
 		# ==================================================================
 
 		$CreativeParser{HolidayType} = $HolidayType;
 		$CreativeParser{name} = $HolidayName;
-		$self->{parsed}{$LineNo} = \%CreativeParser;
+		$this->{parsed}{$LineNo} = \%CreativeParser;
 	}
 	close($HolidayFile);
 }
@@ -567,24 +578,193 @@ sub new {
 		carp("\"$_[1]\": does not exist");
 		return(undef);
 	}
-	my $self = {};
-	bless($self);
-	$self->{FILE} = $_[1];
-	$self->_load_and_parse($self->{FILE});
-	return($self);
+	my $this = {};
+	bless($this);
+	$this->{FILE} = $_[1];
+	$this->_load_and_parse($this->{FILE});
+	return($this);
 }
 
 # Purpose: Get the holiday information for YEAR
 # Usage: my $HashRef = $object->get(YEAR);
 sub get {
-	my $self = $_[0];
+	my $this = $_[0];
 	carp("Date::HolidayParser->get needs an parameter: The year to parse") and return(undef) unless(defined($_[1]));
 	my $Year = $_[1];
 	carp("Date::HolidayParser: The year must be a digit") and return(undef) if $Year =~ /\D/;
 	carp("Date::HolidayParser: Can't parse years lower than 1971") and return(undef) if $Year < 1971;
 	carp("Date::HolidayParser: Can't parse years higher than 2037") and return(undef) if $Year > 2037;
-	return($self->_interperate_year($Year));
+	if(not $this->{cache}{$Year}) {
+		$this->{cache}{$Year} = $this->_interperate_year($Year);
+	}
+	return($this->{cache}{$Year});
 }
+
+# DP::iCalendar::Manager part
+
+# Purpose: Enable iCalendar emulation
+# Usage: obj->enable_ical_interface();
+sub enable_ical_interface
+{
+	my $this = shift;
+	$this->{ICAL} = true;
+	$this->{UID_LIST} = {};
+	return(true);
+}
+
+# Purpose: Return manager information
+# Usage: get_manager_version();
+sub get_manager_version
+{
+	my $this = shift;
+	return(false) if not $this->{ICAL}; # Don't allow this to be enabled if we're not in iCalendar emulation mode
+	return('01_capable');
+}
+
+# Purpose: Return manager capability information
+# Usage: get_manager_capabilities
+sub get_manager_capabilities
+{
+	# All capabilites as of 01_capable
+	return(['LIST_DPI',])
+}
+
+# Purpose: Get an emulated UID
+# Usage: get_info(UID);
+sub get_info {
+	my $this = shift;
+	my $UID = shift;
+	return($this->{UID_LIST}{$UID}) if $this->{UID_LIST}{$UID};
+	return(false);
+}
+
+# Purpose: Generate an iCalendar entry
+# Usage: this->_event_to_iCalendar(UNIXTIME, NAME);
+sub _event_to_iCalendar
+{
+	my $this = shift;
+	my $unixtime = shift;
+	my $name = shift;
+	# Generate the UID of the event, this is simply a 
+	my $sum = unpack("%32C*", $name);
+	# This should be unique enough for our needs.
+	# We don't want it to be random, because if someone copies the events to their
+	# own calendar, we want DP::iCalendar::Manager to fetch the information from
+	# the changed calendar, instead of from the HolidayParser object.
+	my $UID = 'D-HP-ICS-'.$unixtime.$name;
+	
+	$this->{UID_LIST}{$UID} = {
+		UID => $UID,
+		DTSTART => iCal_ConvertFromUnixTime($unixtime),
+		DTEND => iCal_ConvertFromUnixTime($unixtime+86390), # Yes, this is purposefully not 86400
+		SUMMARY => $name,
+	};
+	return($UID);
+}
+
+# Purpose: Get information for the supplied month (list of days there are events)
+# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
+sub get_monthinfo {
+	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
+	$this->get($Year);
+	my @Array;
+	if(defined($this->{cache}{$Year}) and defined($this->{cache}{$Year}{$Month})){
+		@Array = sort keys(%{$this->{cache}{$Year}{$Month}});
+	}
+	return(\@Array);
+}
+
+# Purpose: Get information for the supplied date (list of times in the day there are events)
+# Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
+sub get_dateinfo {
+	my($this, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
+	$this->get($Year);
+	my @Array;
+	if(defined($this->{cache}{$Year}) and defined($this->{cache}{$Year}{$Month}) and defined($this->{cache}{$Year}{$Month}{$Day})) {
+		@Array = sort keys(%{$this->{cache}{$Year}{$Month}{$Day}});
+	}
+	return(\@Array);
+}
+
+# Purpose: Return an empty array, unsupported.
+# Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
+sub get_timeinfo {
+	my($this, $Year, $Month, $Day,$Time) = @_;
+	return(undef) if not $Time eq 'DAY';
+	$this->get($Year);
+	if(defined($this->{cache}{$Year}) and defined($this->{cache}{$Year}{$Month}) and defined($this->{cache}{$Year}{$Month}{$Day})) {
+		return($this->{cache}{$Year}{$Month}{$Day}{$Time});
+	}
+	return([]);
+}
+
+# Purpose: Return an empty array, unsupported.
+# Usage: my $ArrayRef = $object->get_years();
+sub get_years {
+	return([]);
+}
+
+# Purpose: Get a list of months which have events (those with *only* recurring not counted)
+# Usage: my $ArrayRef = $object->get_months();
+sub get_months {
+	my ($this, $Year) = @_;
+	$this->get($Year);
+	my @Array = sort keys(%{$this->{cache}{$Year}});
+	return(\@Array);
+}
+
+sub exists {
+	my $this = shift;
+	my $UID = shift;
+	return(true) if defined($this->{UID_LIST}{$UID});
+	return(false);
+}
+
+sub set_prodid { }
+
+# The following three functions are from DP::iCalendar
+#
+# Included here so that Date::HolidayParser can be used alone.
+
+# Purpose: Generate an iCalendar date-time from multiple values
+# Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
+sub iCal_GenDateTime {
+	my ($Year, $Month, $Day, $Time) = @_;
+	# Fix the month and day
+	my $iCalMonth = _AppendZero($Month);
+	my $iCalDay = _AppendZero($Day);
+	if($Time) {
+		# Get the time
+		my $Hour = $Time;
+		my $Minute = $Time;
+		$Hour =~ s/^(\d+):\d+$/$1/;
+		$Minute =~ s/^\d+:(\d+)$/$1/;
+		return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
+	} else {
+		return("$Year$iCalMonth$iCalDay");
+	}
+}
+
+# Purpose: Generate an iCalendar date-time string from a UNIX time string
+# Usage: my $iCalDateTime = iCal_ConvertFromUnixTime(UNIX TIME);
+sub iCal_ConvertFromUnixTime {
+	my $UnixTime = shift;
+	my ($realsec,$realmin,$realhour,$realmday,$realmonth,$realyear,$realwday,$realyday,$realisdst) = localtime($UnixTime);
+	$realyear += 1900;	# Fix the year
+	$realmonth++;		# Fix the month
+	# Return data from iCal_GenDateTime
+	return(iCal_GenDateTime($realyear,$realmonth,$realmday,"$realhour:$realmin"));
+}
+
+# Purpose: Append a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = AppendZero(NUMBER);
+sub _AppendZero {
+	if ($_[0] =~ /^\d$/) {
+		return("0$_[0]");
+	}
+	return($_[0]);
+}
+
 # End of Date::HolidayParser
 1;
 
