@@ -258,7 +258,7 @@ sub change {
 	}
 	# Check if we can call obj->change() - if we can't then we ->add it to PRIMARY
 	if (not $this->_verify_capab($obj,'CHANGE',true)) {
-		return($this->_move_UID_to_PRIMARY($UID,%Hash));
+		return($this->_move_UID_to_PRIMARY($UID,$obj,%Hash));
 	}
 
 	return($obj->change($UID,%Hash));
@@ -368,9 +368,10 @@ sub _move_UID_to_PRIMARY
 {
 	my $this = shift;
 	my $UID = shift;
+	my $CurrentOwner = shift;
 	my %Hash = shift;
-	if($this->_verify_capab($obj,'DELETE',true)) {
-		$obj->delete($UID);
+	if($this->_verify_capab($CurrentOwner,'DELETE',true)) {
+		$CurrentOwner->delete($UID);
 	}
 	$Hash{UID} = $UID;
 	$this->{UID_Cache}{$UID} = $this->{PRIMARY};
