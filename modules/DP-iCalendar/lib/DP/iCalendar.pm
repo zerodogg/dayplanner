@@ -290,7 +290,7 @@ sub add {
 		return(undef);
 	}
 	my $UID;
-	if(not length($Hash{UID})) {
+	if(not ($Hash{UID}) or not length($Hash{UID})) {
 		$UID = $self->_UID($Hash{DTSTART});
 	} else {
 		$UID = $Hash{UID};
@@ -436,7 +436,7 @@ sub get_manager_version
 sub get_manager_capabilities
 {
 	# All capabilites as of 01_capable
-	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE'])
+	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD'])
 }
 
 # - Public functions

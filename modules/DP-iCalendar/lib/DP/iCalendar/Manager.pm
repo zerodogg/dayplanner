@@ -17,7 +17,7 @@ use warnings;
 
 our $VERSION;
 $VERSION = 0.1;
-my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE');
+my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD');
 
 # -- Manager stuff --
 sub new
@@ -261,6 +261,7 @@ sub change {
 		if($this->_verify_capab($obj,'DELETE',true)) {
 			$obj->delete($UID);
 		}
+		$Hash{UID} = $UID;
 		return($this->add(%Hash));
 	}
 
@@ -317,7 +318,7 @@ sub disable {
 # Usage: $object->reload();
 sub reload {
 	my $this = shift;
-	foreach my $obj (@{$this->{objects}}) {
+	foreach my $obj (@{$this->{RELOAD}}) {
 		$obj->reload();
 	}
 }
