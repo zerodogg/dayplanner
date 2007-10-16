@@ -258,11 +258,7 @@ sub change {
 	}
 	# Check if we can call obj->change() - if we can't then we ->add it to PRIMARY
 	if (not $this->_verify_capab($obj,'CHANGE',true)) {
-		if($this->_verify_capab($obj,'DELETE',true)) {
-			$obj->delete($UID);
-		}
-		$Hash{UID} = $UID;
-		return($this->add(%Hash));
+		return($this->_move_UID_to_PRIMARY($UID,%Hash));
 	}
 
 	return($obj->change($UID,%Hash));
@@ -367,6 +363,19 @@ sub _verify_capab
 }
 
 # -- Internal functions --
+
+sub _move_UID_to_PRIMARY
+{
+	my $this = shift;
+	my $UID = shift;
+	my %Hash = shift;
+	if($this->_verify_capab($obj,'DELETE',true)) {
+		$obj->delete($UID);
+	}
+	$Hash{UID} = $UID;
+	$this->{UID_Cache}{$UID} = $this->{PRIMARY};
+	return($this->add(%Hash));
+}
 
 sub _merge_arrays_unique
 {
