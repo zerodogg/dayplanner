@@ -92,7 +92,7 @@ sub get_info {
 		return;
 	}
 	if(not $this->_verify_capab($obj,'DELETE',true)) {
-		$info = $obj->get_info($UID);
+		my $info = $obj->get_info($UID);
 		$info->{'X-DPM-NODELETE'} = 'TRUE';
 		return($info);
 	}
