@@ -369,7 +369,7 @@ sub _move_UID_to_PRIMARY
 	my $this = shift;
 	my $UID = shift;
 	my $CurrentOwner = shift;
-	my %Hash = shift;
+	my (%Hash) = @_;
 	if($this->_verify_capab($CurrentOwner,'DELETE',true)) {
 		$CurrentOwner->delete($UID);
 	}
