@@ -37,3 +37,15 @@ may be subject to change.
   When: This would require dbus support in the evolution-data-server.
 	This is planned for GNOME 2.20.
 	http://www.go-evolution.org/DbusPort
+
+1.0 Milestone
+- - - - - - -
+- Support for calendar subscriptions
+- e-d-s support
+- Synchronization with more online services (Conduit support)
+- No known usability issues
+- Support for PHP-exporting
+- Support for viewing read-only calendars
+- Visual indicators that an event has details
+- A better way than having to use "edit" to view details (Gtk2::Expander
+  in the list?)
