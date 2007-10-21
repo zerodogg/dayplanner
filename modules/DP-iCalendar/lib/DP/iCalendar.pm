@@ -402,6 +402,164 @@ sub reload {
 	return($self->addfile($self->{FILE}));
 }
 
+# Purpose: Find duplicate events
+# Usage: $object->locateDupes();
+sub locateDupes
+{
+	# The object
+	my $this = shift;
+	# List of all UIDs
+	my @keyList = keys %{$this->{RawCalendar}};
+	# The total number of UIDs - cached so we don't have to evaluate the array every turn through the loop
+	my $total = @keyList;
+	# List of processed files - so that no events gets tested twice
+	my %Processed;
+	# List of identical event -> UID pairs
+	my %Identical;
+	# This is a helper hash for creating Identical.
+	# It contains UID -> array pairs, one for each event.
+	my %IdenticalArrayHelper;
+	# Go through everything in the array, saving the info to $i
+	for(my $i=0; $i < $total; $i++)
+	{
+		# Get the keys from the current array
+		my $thiskeys = join(' ',sort keys %{$this->{RawCalendar}{$keyList[$i]}});
+		# Mark this one as processed for future use
+		$Processed{$keyList[$i]} = TRUE;
+		# Now go through every other event
+		foreach my $key (@keyList)
+		{
+			# If this has already been processed then skip forwards
+			next if $Processed{$key};
+			# Will contain a list of possible keys to perform an array check on
+			my @ArrayChecks;
+			# A sorted list of all of the events keys - events which doesn't have all
+			# the same keys can't be identical.
+			my $uidkeys = join(' ',sort keys %{$this->{RawCalendar}{$key}});
+			# If they don't have the same keys skip forwards
+			next if not $uidkeys eq $thiskeys;
+
+			my $notEq;
+			my $equals;
+			# Now go through every iCalendar entry
+			foreach my $mkey (sort keys %{$this->{RawCalendar}{$keyList[$i]}})
+			{
+				# Skip tags that doesn't define anything useful and that often changes.
+				# Events are considered dupes even if these are not identical
+				next if($mkey =~ /^(UID|CREATED|LAST-MODIFIED)$/);
+				# Make sure it isn't an array
+				if(ref($this->{RawCalendar}{$key}{$mkey}) eq 'ARRAY') {
+					# The array check is slower than the simple string check we otherwise use.
+					# Therefore we only do array checks if everything else is identical
+					push(@ArrayChecks,$mkey);
+				}
+				# If the two strings aren't equal then the events can't be dupes
+				elsif(not $this->{RawCalendar}{$key}{$mkey} eq $this->{RawCalendar}{$keyList[$i]}{$mkey})
+				{
+					$notEq = 1;
+					last;
+				}
+				# If the two strings are identical then the events *can* be dupes.
+				# This must happen for each event for them to be considered dupes.
+				else
+				{
+					$equals = 1;
+				}
+			}
+			# If two strings in the event wasn't equal then skip forward to the next one
+			next if $notEq;
+			# If no two strings in the event was equal then skip forward to the next one
+			next if not $equals;
+			# Okay we got so far - do array checks before we say for sure they are identical
+			# - most that get this far will be, but better safe than sorry
+			my $ArrayEqual = 1;
+			# Go through each key marked as an array
+			foreach my $arrayKey(@ArrayChecks)
+			{
+				# This hash will contain everything in the array being processed
+				my %ArrayContents;
+				# Go through each key in the array and add it to $ArrayContents
+				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$arrayKey}})
+				{
+					$ArrayContents{$arrayElement} = TRUE;
+				}
+				# Go through each key in THIS array and make sure it is in $ArrayContents
+				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$keyList[$i]}})
+				{
+					# If it isn't then they can't be equal
+					if(not $ArrayContents{$arrayElement})
+					{
+						$ArrayEqual = 0;
+						last;
+					}
+					# If it is then remove it from the hash so we can make sure that all
+					# values have been checked later
+					else
+					{
+						delete($ArrayContents{$arrayElement});
+					}
+				}
+				# If ArrayEqual is not true then it means something wasn't identical, so the
+				# events can't be equal
+				last if not $ArrayEqual;
+				# If ArrayContents contain one or more keys now, then some keys where present
+				# in only one of the arrays, so the events can't be equal.
+				last if keys(%ArrayContents);
+			}
+			# If ArrayEqual is not true then these two events can't be equal. Skip forwards to the
+			# next one.
+			next if not $ArrayEqual;
+			# They're equal!
+			# Now we do some black magic involving a load of references
+			#
+			# If there is already an IdenticalArrayHelper entry for either $keyList[$i] or 
+			if(not defined($IdenticalArrayHelper{$keyList[$i]}) and not defined($IdenticalArrayHelper{$key}))
+			{
+				# If there is an entry in Identical for key then use that
+				if(defined($Identical{$key}))
+				{
+					$IdenticalArrayHelper{$key} = $Identical{$key};
+				}
+				else
+				{
+					# If there isn't an entry in Identical for $keyList[$i] create one
+					if(not defined($Identical{$keyList[$i]}))
+					{
+						$Identical{$keyList[$i]} = [];
+					}
+					# And in any case - use it.
+					$IdenticalArrayHelper{$keyList[$i]} = $Identical{$keyList[$i]};
+				}
+			}
+			# Now use the values generated above.
+			#
+			# If keyList is in there push key into that
+			if($IdenticalArrayHelper{$keyList[$i]})
+			{
+				push(@{$IdenticalArrayHelper{$keyList[$i]}},$key);
+				$IdenticalArrayHelper{$key} = $IdenticalArrayHelper{$keyList[$i]};
+			}
+			# If key is there push keyList into that
+			elsif($IdenticalArrayHelper{$key})
+			{
+				push(@{$IdenticalArrayHelper{$key}},$keyList[$i]);
+				$IdenticalArrayHelper{$keyList[$i]} = $IdenticalArrayHelper{$key};
+			}
+			else
+			{
+				# If we reach this, then there is some bug in the above logic
+				warn('Bug: no IdenticalArrayHelper array to push key into. Events: '.$key.' '.$keyList[$i]);
+			}
+			# Mark key as processed too. It has found its dupe. More dupes will be
+			# found by the current loop and running it again for this key won't find anything
+			# new - it will just waste processing time and add the key to the list more than once.
+			$Processed{$key} = TRUE;
+		}
+	}
+	# Return the hash of duplicate events
+	return(\%Identical);
+}
+
 # Purpose: Set the prodid
 # Usage: $object->set_prodid(PRODID);
 sub set_prodid {
