@@ -28,9 +28,6 @@ use Gtk2;				# Use Gtk2 :)
 use Gtk2::SimpleList;	# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;	# Easier keybindings
 use File::Basename;     # We meed dirname to help Cwd::Realpath finding the directory
-use File::Copy;			# We need to copy the holiday file
-use File::Path qw/mkpath/;	# We need mkpath
-use Digest::MD5 qw(md5_base64 md5_hex);	# Used for import/export and .holiday upgrading
 use MIME::Base64;		# Used for import/export
 use Getopt::Long;		# Commandline options
 use Cwd;				# We need Cwd::Realpath to find out which directory we live in
@@ -404,6 +401,7 @@ sub DPS_Log {
 #	SYNC
 #	...
 sub DPS_Perform {
+	runtime_use('Digest::MD5 qw(md5_base64 md5_hex)');
 	# The function we are going to perform
 	my $Function = shift;
 	# A coderef to the code which we need to run to close the GUI
@@ -469,7 +467,7 @@ sub DPS_Perform {
 # Usage: DPS_SSLSocketTest();
 sub DPS_SSLSocketTest {
 	# Make sure the IO::Socket::SSL module is available and loaded
-	if(not runtime_use('IO::Socket::SSL')) {
+	if(not runtime_use('IO::Socket::SSL',true)) {
 		if (not $DPServices{IO_SOCKET_SSL_ERR_DISPLAYED}) {
 			DPError($i18n->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
 			$DPServices{IO_SOCKET_SSL_ERR_DISPLAYED} = true;
@@ -712,6 +710,7 @@ sub LoadConfig {
 # Usage: CreateSaveDir();
 sub CreateSaveDir {
 	unless (-e $SaveToDir) {
+		runtime_use('File::Path');
 		mkpath($SaveToDir) or do {
 				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
 				unless(-d $SaveToDir) {
@@ -911,7 +910,7 @@ sub runtime_use
 		$RuntimeModules{$module} = false;
 		if(not $silent) {
 			DPIntWarn("FATAL: Module missing: $module");
-			DPError($i18n->get_advanced("A fatal error has occurred. Your installation of Day Planner is missing some files. This makes certain functions in Day Planner unusable. Please re-install Day Planner. See %(website) for more information on how to download and re-install Day Planner.\n\n(The missing file was: %(module))", { website => 'http://www.day-planner.org/', module => $module }));
+			DPError($i18n->get_advanced("A fatal error has occurred. Your installation of Day Planner is missing some files. This makes certain functions in Day Planner unusable. Please re-install Day Planner. See %(website) for more information on how to download and re-install Day Planner.\nDay Planner will continue to run but it is likely to crash.\n\n(The missing file was: %(module))", { website => 'http://www.day-planner.org/', module => $module }));
 		}
 		return(false);
 	}
@@ -1061,6 +1060,7 @@ sub UpgradeVersion {
 			close($ReadHoliday);
 			if($UpgradeInfo{$HolidayMd5}) {
 				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}") {
+					runtime_use('File::Copy');
 					# Copy the new file in place
 					unlink($HolidayFile);
 					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
@@ -1218,6 +1218,7 @@ sub HolidaySetup {
 		}
 		if(defined($CopyFile)) {
 			if(-e "$FindBin::RealBin/holiday/holiday_$CopyFile") {
+				runtime_use('File::Copy');
 				copy("$FindBin::RealBin/holiday/holiday_$CopyFile", $HolidayFile);
 				$InternalConfig{Holiday_Setup} = 1; delete($InternalConfig{Holiday_Attempted}) if defined($InternalConfig{Holiday_Attempted});
 				return(1);
