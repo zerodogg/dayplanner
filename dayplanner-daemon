@@ -1,8 +1,6 @@
 #!/usr/bin/perl
-# Day Planner daemon
-# The notification daemon for Day Planner
-# Copyright (C) Eskild Hustvedt 2006, 2007
-# $Id$
+# dayplanner-daemon-rewrite
+# Copyright (C) Eskild Hustvedt 2007
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,236 +15,144 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use strict;			# Force strict coding
-use warnings;			# Tell perl to print warnings
-use IO::Socket;			# We use IO::Socket for communication with dayplanner
-use IO::Select;			# We use IO::Select to wait for connections and at the same
-				#  time wait for a timeout
+# TODO:
+# - Make changes to notifier to use the calendar and not attempt to
+#   fetch things from the daemon.
+# - Change dayplanner to use the simplified API
+# - Simplify the comander
+
+use strict;
+use warnings;
+
+# We use IO::Socket for communication with dayplanenr and
+# IO::Select to wait for connections and a timeout
+use IO::Socket;
+use IO::Select;
+# These constants prettify things
+use constant { true => 1, false => 0 };
+# Parameter parser
 use Getopt::Long;
-use Cwd;			# We need Cwd::realpath to find the notifier
-use File::Basename;		# Ditto
-use Data::Dumper;		# We need to be able to dump data
-use POSIX qw/setsid/;		# We need setsid();
+Getopt::Long::Configure ('bundling', 'prefix_pattern=(--|-)');
+# Used to locate the notifier
+use Cwd;
+use File::Basename;
+# We need mktime and setsid
+use POSIX qw/ mktime setsid/;		# We need setsid();
+# Used to locate our own modules
 use FindBin;			# So that we can detect module dirs during runtime
-# So that we can use locally shipped modules
+# This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
-use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime);# iCalendar support
+use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
+# Day Planner-specific libs
+use DP::iCalendar qw(iCal_ConvertToUnixTime); # iCalendar support
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 
-Getopt::Long::Configure ('bundling', 'prefix_pattern=(--|-)');
+# Hash containing unixtime -> array of events pairs.
+# This should contain all the events for the current day
+# and all the events for the upcoming day
+my %Notifications;
+# Hash containing information used for pre-notifications
+my %PreNotValues = (
+	PreNotSeconds => undef,
+	PreNotDay => 1,
+);
 
-# Scalars
-my $Version = '0.8';
-my $RCSRev = '$Id$';
-my $DaemonFile = 'daemondata.dpd';		# The filename to save and read daemon data from
-my $LogfileName = 'daemon.log';			# The filename to log to
-my $iCalFile = 'calendar.ics';			# The filename containing the iCalendar data
-my $ConfigFile = 'dayplanner.conf';		# The dayplanner config
-my $SocketName = 'dayplannerd';			# The name of the socket to use
-my $NotifierName = 'dayplanner-notifier';	# The name of the dayplanner notifier
-my $iCalendar;					# The iCalendar object
+# The path to us
 my $Self = $0;
-my (
-	$NoFork,	$DayplannerDir,		$DaemonSocket,
-	$Server,	$ConnectionSelect,	$ForceFork,
-	$Shutdown,	$LastAlarm,
-	$LastCalculate,	$NotificationID,	$Logfile
-);						# Global scalars
+# The name of the notifier
+my $NotifierName = 'dayplanner-notifier';
+# Our version number
+my $Version = 0.8;
+# Our RCS revision
+my $RCSRev = '$Id$';
+# The iCalendar object
+my $iCalendar;
+# The Day Planner directory
+my $DataDir; 
+# The calendar filename
+my $CalendarFile = 'calendar.ics';
+# The socket filename
+my $SocketName = 'Daemon_Socket';
+# The socket path
+my $SocketPath;
+# The socket FH
+my $ServerSocket;
+# The connection selection object
+my $ConnectionSelector;
+# Scalar that identifies what the next event is.
+# It can be the string DAYCHANGE, if it isn't then it is assumed to be
+# an int containing the time of which the next event will occur on.
+my $NextEventIs;
 
-my (
-	$DebuggingOutput,	$OutputVerbose,	$OutputVeryVerbose,
-) = (0,0,0);
+# The current log level
+my $LogLevel = 5;
+# The log file
+my $Logfile;
 
-# Hashes
-my %NotificationHash;		# The internal hash data
-my %Config;			# The configuration hash
-my %CurrentNotification;
-
-my %AccessStatus = (
-	Connected => 0,
-	ClientList => {
-	},
-	HandlePIDS => {
-	},
-);				# Hash containing current connection status
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ----
 # HELPER FUNCTIONS
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ----
 
-# Purpose: Print formatted --help output
-# Usage: PrintHelp("-shortoption", "--longoption", "description");
-sub PrintHelp {
-	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+# Purpose: Output log information.
+# Usage: DaemonLog(LEVEL,Message);
+# 	LEVEL is an int:
+# 	0  - Critical
+# 	1  - Error
+# 	2  - Warning
+#   3  - Notification
+# 	4  - Debugging
+#   5  - Calltrace
+sub DaemonLog
+{
+	my $Level = shift;
+	return if not($Level <= $LogLevel);
+	my $Message = shift;
+	my $MsgPrefix;
+	if($Level == 0 or $Level == 1)
+	{
+		$MsgPrefix = 'Error: ';
+	}
+	elsif($Level == 2)
+	{
+		$MsgPrefix = 'Warning: ';
+	}
+	elsif($Level == 3)
+	{
+		$MsgPrefix = 'Notification: ';
+	}
+	elsif($Level == 4)
+	{
+		$MsgPrefix = 'Debug: ';
+	}
+	elsif($Level == 5)
+	{
+		$MsgPrefix = 'Calltrace: ';
+	}
+	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = GetDate(time);
+	$lhour = "0$lhour" unless $lhour >= 10;
+	$lmin = "0$lmin" unless $lmin >= 10;
+	$lsec = "0$lsec" unless $lsec >= 10;
+	print "[$lmday/$lmon/$lyear $lhour:$lmin:$lsec] ";
+	print($MsgPrefix.$Message);
+	print "\n";
 }
 
-# Purpose: Load the config file set in $ConfigFile
-# Usage: LoadConfig();
-sub LoadConfig {
-	%Config = ();
-	
-	# First, set some fallback defaults
-	$Config{Events_NotifyPre} = '45min';
-	$Config{Events_DayNotify} = '0';
-	
-	if(-e "$DayplannerDir/$ConfigFile" and open(my $ConfigFile, '<', "$DayplannerDir/$ConfigFile")) {
-		while(<$ConfigFile>) {
-			next if m/^\s*#/;
-			next unless m/=/;
-			chomp;
-			my $Option = $_;
-			my $Value = $_;
-			$Option =~ s/^\s*(.*)\s*=.*/$1/;
-			$Value =~ s/^.*=\s*(.*)\s*/$1/;
-			unless(defined($Value) and length($Value)) {
-				next;
-			}
-			if ($Option eq 'Events_NotifyPre') {
-				unless ($Value =~ /^(\d+(min|hrs?){1}|0){1}$/) {
-					$Config{Events_NotifyPre} = '30min';
-				} else {
-					$Config{Events_NotifyPre} = $Value;
-				}
-			} elsif ($Option eq 'Events_DayNotify') {
-				$Config{Events_DayNotify} = $Value;
-			}
-		}
-		close($ConfigFile);
-	} else {
-		IntVerbose("Unable to load configuration file: $DayplannerDir/$ConfigFile: $!\n");
-	}
-	($Config{N_Hours}, $Config{N_Minutes}) = ParseNotifyPre($Config{Events_NotifyPre});
+# Purpose: The same as localtime(TIME?); but returns proper years and months
+# Usage: my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(TIME);
+#  TIME is optional. If not present then the builtin time function is called.
+#  FIXME: MOVE TO GENERALHELPERS
+sub GetDate {
+	my $Time = $_[0] ? $_[0] : time;
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime($Time);
+	$curryear += 1900;						# Fix the year format
+	$currmonth++;							# Fix the month format
+	return($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst);
 }
-
-# Purpose: Append a "0" to a number if it is only one digit.
-# Usage: my $NewNumber = AppendZero(NUMBER);
-sub AppendZero {
-	if ($_[0] =~ /^\d$/) {
-		return("0$_[0]");
-	}
-	return($_[0]);
-}
-
-# Purpose: Set the program status
-# Usage: SetStatus(STATUS);
-sub SetStatus {
-	$0 = "dayplanner-daemon [$_[0]]";
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# CORE CALENDAR FUNCTIONS
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Load the calendar contents
-# Usage: LoadCalendar();
-sub LoadCalendar {
-	if($iCalendar) {
-		# Only reload if the file exists
-		if(-e "$DayplannerDir/$iCalFile") {
-			$iCalendar->reload();
-		}
-	} else {
-		# Use ->new if the file exists. ->newfile if it doesn't
-		if(-e "$DayplannerDir/$iCalFile" ) {
-			$iCalendar = DP::iCalendar->new("$DayplannerDir/$iCalFile");
-		} else {
-			$iCalendar = DP::iCalendar->newfile("$DayplannerDir/$iCalFile");
-		}
-	}
-	# Calculate the notification hash
-	CalculateNotificationHash();
-	return(1);
-}
-
-# Purpose: Test if a load can be successfully performed of the supplied file
-# Usage: DataLoadTest("/path/to/file");
-sub DataLoadTest {
-	# If the calendar savefile exists
-	if (-e $_[0]) {
-		# If it isn't readable then we warn and return
-		unless (-r $_[0]) {
-			IntWarn("Unable to read the calendar at $_[0]: It isn't readable by me");
-			return(0);
-		}
-		return(1);
-	} else {
-		# If the file doesn't exist then we just assume that it isn't created yet,
-		# so we return false, but do it silently.
-		return(0);
-	}
-}
-
-# Purpose: Find out how many seconds we should sleep before performing some action
-# Usage: $SleepTime = FindSleepDuartion();
-sub FindSleepDuration {
-	# Get the current time/date
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-	$curryear += 1900; $currmonth++;
-
-	my @Keys;	# An array containing all the keys in a random order
-	
-	# Push the keys onto the @Keys array
-	foreach(keys(%NotificationHash)) {
-		push(@Keys, $_);
-	}
-	my ($hours, $minutes);
-	# If keys is true then...
-	if (@Keys) {
-		@Keys = sort(@Keys);
-		foreach (@Keys) {
-			unless ($_ =~ /^\d+:\d+$/) {
-				IntWarn("Invalid event time: $_");
-				next;
-			}
-			my ($testhours, $testminutes) = split(/:/, $_);
-			# Remove leading zeros from the variables
-			$testhours =~ s/^0(.*)/$1/;
-			$testminutes =~ s/^0(.*)/$1/;
-			# TODO: This might need to become a bit more robust
-			if($testhours < $currhour) {
-				next;
-			}
-			if($testhours == $currhour and $testminutes < $currmin) {
-				next;
-			}
-			if(defined($LastAlarm) and $LastAlarm eq "$testhours:$testminutes") {
-				next;
-			}
-			$hours = $testhours;
-			$minutes = $testminutes;
-			last;
-		}
-	}
-	# If keys is NOT set then we return the amount of seconds until midnight instead
-	unless(defined($hours) and defined($minutes)) {
-		$hours = 24;
-		$minutes = 0;
-	}
-	# Convert hours to seconds
-	$hours = $hours * 60 * 60;
-	# Minutes to seconds
-	$minutes = $minutes * 60;
-	# Hours to seconds
-	$currhour = $currhour * 60 * 60;
-	# Minutes to seconds
-	$currmin = $currmin * 60;
-	# Only do it if $currsec is > 0
-#	if($currsec) {
-#		# Find the correct currsec value
-#		$currsec = 59 - $currsec;
-#	}
-	# Calculate the total
-	my $total = ($hours + $minutes) - ($currhour + ($currmin + $currsec));
-	# Return the total to caller
-	return($total);
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# CORE HELPER FUNCTIONS
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Detect the user config  directory
 # Usage: DetectConfDir();
+#  FIXME: MOVE TO GENERALHELPERS
 sub DetectConfDir {
 	# First detect the HOME directory, and set $ENV{HOME} if successfull,
 	# if not we just fall back to the value of $ENV{HOME}.
@@ -276,439 +182,175 @@ sub DetectConfDir {
 	return("$XDG_CONFIG_HOME/dayplanner");
 }
 
-# Purpose: Output a debugging message if needed
-# Usage: IntDebug(MESSAGE);
-sub IntDebug {
-	if ($DebuggingOutput) {
-		IntOutputMSG("DEBUG: $_[0]\n");
+sub WriteDaemonState
+{DaemonLog(3,'STUB: ' . (caller(0))[3])
+}
+
+sub LoadDaemonState
+{DaemonLog(3,'STUB: ' . (caller(0))[3])
+}
+
+
+# ----
+# CALENDAR/CALCULATION FUNCTIONS
+# ----
+
+# Purpose: Convert HH:MM to seconds, for use with unixtime
+# Usage: HumanTimeToSeconds(STRING);
+#  Returns a value of the seconds since midnight - just do time()+this value
+sub HumanTimeToSeconds
+{
+	my $time = shift;
+	my $hour = $time;
+	my $minute = $time;
+	# The value can be returned as zero if value is 00:00
+	my $timeInSeconds = 0;
+	$hour =~ s/^(\d+):.*$/$1/;
+	$minute =~ s/^\d+:(\d+)$/$1/;
+	if(not $hour == 0)
+	{
+		$timeInSeconds = $timeInSeconds + ($hour*60*60);
+	}
+	if(not $minute == 0)
+	{
+		$timeInSeconds = $timeInSeconds + ($minute*60);
+	}
+	print "RETURNING: $timeInSeconds\n";
+	return($timeInSeconds);
+}
+
+# Purpose: Load or reload the calendar data
+# Usage: LoadData();
+sub LoadData
+{
+	if($iCalendar)
+	{
+		DaemonLog(5,'Data reloaded');
+		$iCalendar->reload();
+		CalculateNotifications();
+	}
+	else
+	{
+		$iCalendar = new DP::iCalendar($DataDir.'/'.$CalendarFile);
+		DaemonLog(5,'Data loaded');
 	}
 }
 
-# Purpose: Output a message when in very verbose mode
-# IntVeryVerbose(MESSAGE);
-sub IntVeryVerbose {
-	if ($OutputVeryVerbose) {
-		IntOutputMSG("$_[0]\n");
-	}
-}
-
-# Purpose: Output a message when in verbose mode
-# Usage: IntVerbose(MESSAGE);
-sub IntVerbose {
-	if ($OutputVerbose) {
-		IntOutputMSG("$_[0]\n");
-	}
-}
-
-# Purpose: Output a properly formatted internal message
-# Usage: IntOutputMSG(MESSAGE);
-sub IntOutputMSG {
-	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
-	$lhour = "0$lhour" unless $lhour >= 10;
-	$lmin = "0$lmin" unless $lmin >= 10;
-	$lsec = "0$lsec" unless $lsec >= 10;
-	print "[$lhour:$lmin:$lsec] $_[0]";
-}
-
-# Purpose: Print a warning to STDERR with proper output
-# Usage: IntWarn("Warning");
-sub IntWarn {
-	warn "Warning: $_[0]\n";
-}
-
-# Purpose: Parse the configuration option set in Events_NotifyPre
-# Usage: my ($Hours, $Minutes) = ParseNotifyPre($Events_NotifyPre);
-sub ParseNotifyPre {
-	my $Events_NotifyPre = $_[0];
-
-	my $Number = $Events_NotifyPre;
-	my $Type = $Events_NotifyPre;
-	$Number =~ s/^(\d+).*$/$1/;
-	unless($Number =~ /\d/) {
-		IntWarn('The Events_NotifyPre configuration option is invalid, I was unable to parse it. Pre-event notifications won\'t work!');
-		return(0,0);
-	}
-	$Type =~ s/^\d+//;
-	$Type =~ s/s$//;
-	if($Type eq 'hr') {
-		return($Number,0);
-	} elsif($Type eq 'min') {
-		if ($Number > 59) {
-			return(0, 59);
-		} else {
-			return(0,$Number);
-		}
-	}
-	IntWarn('The Events_NotifyPre configuration option is invalid, I was unable to parse it. Pre-event notifications won\'t work!');
-	return(0,0);
-}
-
-# Purpose: Return the pre-notification time for an event
-# Usage: my $NewTime = GetPreNotTime("OLD:TIME", $PreNotificationHours, $PreNotificationMinutes, IS_TOMORROW);
-# 
-# OLD:TIME is the time we're working on
-# $PreNotificationHours is the hours returned by ParseNotifyPre();
-# $PreNotificationMinutes is the minutes returned by ParseNotificationPre();
-# IS_TOMORROW is true if the time we got is for tomorrow, not the current day,
-# 	we need to process the time more if IS_TOMORROW is true
-sub GetPreNotTime {
-	# The parsed prenotification hours/minutes
-	# We don't need to do any checks on them here, we just assume they are valid
-	# as ParseNotifyPre() has already validated them
-	my $PreNot_Hours = $_[1];
-	my $PreNot_Minutes = $_[2];
-
-	my $Is_Tomorrow = $_[3];
-	
-	# If they're both zero then we just return undef and don't think about it any more
-	if($PreNot_Hours <= 0 and $PreNot_Minutes <= 0) {
-		return(undef);
-	}
-	
-	# Get and parse the time
-	my $Hours = $_[0];
-	my $Minutes = $_[0];
-	$Hours =~ s/^(\d+):\d+$/$1/;
-	$Minutes =~ s/^\d+:(\d+)$/$1/;
-	
-	# If $Is_Tomorrow is true we need to do some special processing
-	if ($Is_Tomorrow) {
-		# If PreNot_Hours is true then we work on hours (easiest:)
-		if($PreNot_Hours) {
-			my $TestHours = $Hours - $PreNot_Hours;
-			if ($TestHours > 0) {
-				return(undef);
-			} else {
-				my $Today_Hours = $PreNot_Hours - $Hours;
-				my $New_Hours = 24 - $Today_Hours;
-				$New_Hours = AppendZero($New_Hours);
-				return("$New_Hours:$Minutes");
+# Purpose: Calculate or recalculate the list of notification events
+# Usage: CalculateNotifications();
+sub CalculateNotifications
+{
+	DaemonLog(5,'Calculating notifications');
+	# Find today
+	my ($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = localtime(time());
+	my $TodayNix = mktime(0,0,0,$Day,$Month,$Year,0,0,$isdst);
+	($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time());
+	# Empty the hash
+	%Notifications = ();
+	# Find events for today. Add to the hash.
+	# Main calendar contents
+	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
+		foreach my $Time (sort @{$TimeArray}) {
+			# If time is DAY then skip it - it's a fullday event
+			next if $Time eq 'DAY';
+			# Convert time to seconds
+			my $SecondsFromMidnight = HumanTimeToSeconds($Time);
+			# Get the real unix time
+			my $RealTime = $TodayNix + $SecondsFromMidnight;
+			# Main notification
+			if(not $Notifications{$RealTime})
+			{
+				$Notifications{$RealTime} = $iCalendar->get_timeinfo($Year,$Month,$Day,$Time);
 			}
-		} else {	# If it isn't then we work on minutes, this is harder
-			if ($Minutes > $PreNot_Minutes) {
-				# Nothing to do
-				return(undef);
-			} elsif ($Minutes == $PreNot_Minutes) {
-				# Nothing to do
-				return(undef);
-			} else {
-				unless($Hours =~ /^00?$/) {
-					return(undef);
+			else
+			{
+				push(@{$Notifications{$RealTime}},@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)});
+			}
+			# Pre-notification
+			if($PreNotValues{PreNotSeconds})
+			{
+				my $PreNotTime = $RealTime - $PreNotValues{PreNotSeconds};
+				# Main notification
+				if(not $Notifications{$PreNotTime})
+				{
+					$Notifications{$PreNotTime} = $iCalendar->get_timeinfo($Year,$Month,$Day,$Time);
 				}
-				$Hours = 23;
-				my $New_Minutes = $PreNot_Minutes - $Minutes;
-				$Minutes = 60 - $New_Minutes;
-				$Minutes = $Minutes + 60;
-				$Minutes = AppendZero($Minutes);
-				return("$Hours:$Minutes");
-			}
-		}
-	} else {
-		# Get the current time/date
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		$curryear += 1900; $currmonth++;
-
-		# Don't do the calculation if the event has already occurred
-		if($Hours <= $currhour and $Minutes <= $currmin) {
-			return(undef);
-		}
-		
-		# If PreNot_Hours is true then we work on hours (easiest:)
-		if($PreNot_Hours) {
-			$Hours = $Hours - $PreNot_Hours;
-			$Hours = AppendZero($Hours);
-			if ($Hours > 0) {
-				return("$Hours:$Minutes");
-			} else {
-				return(undef);
-			}
-		} else {	# If it isn't then we work on minutes, this is harder
-			if ($Minutes > $PreNot_Minutes) {
-				# Yay, okay, we can do it the easy way :D
-				$Minutes = $Minutes - $PreNot_Minutes;
-				$Minutes = AppendZero($Minutes);
-				return("$Hours:$Minutes");
-			} elsif ($Minutes == $PreNot_Minutes) {
-				# Even easier :)
-				return("$Hours:00");
-			} else {
-				if($Hours =~ /^00?$/) {
-					return(undef);
-				}
-				$Hours = $Hours - 1;
-				$Minutes = $Minutes + 60;
-				$Minutes = $Minutes - $PreNot_Minutes;
-				$Minutes = AppendZero($Minutes);
-				$Hours = AppendZero($Hours);
-				return("$Hours:$Minutes");
-			}
-		}
-	}
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# CORE DAEMON FUNCTIONS
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Purpose: Start the notifier and display the alarm
-# Usage: DayplannerAlarm();
-sub DayplannerAlarm {
-	IntDebug('Alarm triggered');
-	
-	my $NotifierStarted;
-	
-	# Get the current time/date
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-	$LastAlarm = "$currhour:$currmin";
-	# Fix the format
-	$currhour = "0$currhour" unless $currhour >= 10;
-	$currmin = "0$currmin" unless $currmin >= 10;
-	$currsec = "0$currsec" unless $currsec >= 10;
-	$curryear += 1900;
-	$currmonth++;
-	if(defined($NotificationHash{"$currhour:$currmin"})) {
-		foreach my $UID (@{$NotificationHash{"$currhour:$currmin"}}) {
-			RunNotifier($UID,$curryear,$currmonth,$currmday,"$currhour:$currmin");
-			$NotifierStarted = 1;
-		}
-	} 
-	if(not $NotifierStarted) {
-		IntWarn("(DayplannerAlarm) Error: Unable to find an event at $currhour:$currmin") if($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday");
-	}
-}
-
-# Purpose: Run the notifier itself with the correct parameters
-# Usage: RunNotifier(UID);
-sub RunNotifier {
-	# Notifier
-	my ($UID,$CurrYear,$CurrMonth,$CurrMday,$CurrTime) = @_;
-	$CurrMday = AppendZero($CurrMday);
-	my $UIDInfo = $iCalendar->get_info($UID);
-	my($Year,$Month,$Day,$Time) = iCal_ParseDateTime($UIDInfo->{DTSTART});
-	my $IsPreNot = 0;
-	my $Date = 'today';
-	# Detect pre-notifications
-	if(not $Time eq $CurrTime or not $Day eq $CurrMday) {
-		$IsPreNot = 1;
-		if(not $Day eq $CurrMday) {
-			$Date = 'tomorrow';
-		}
-	}
-	foreach(split(/:/, sprintf('%s:%s', $ENV{PATH}, dirname(Cwd::realpath($Self))))) {
-		if ( -x "$_/$NotifierName") {
-			$NotificationID++;
-			# TODO: Debugout this info?
-			$CurrentNotification{$NotificationID}{Summary} = $UIDInfo->{SUMMARY};
-			$CurrentNotification{$NotificationID}{Fulltext} = $UIDInfo->{DESCRIPTION};
-			$CurrentNotification{$NotificationID}{Time} = $Time;
-			$CurrentNotification{$NotificationID}{Date} = $Date;
-			$CurrentNotification{$NotificationID}{PreNot} = $IsPreNot;
-			# Yes this is a bit weird statement. But remember that commands return 0 on TRUE
-			# and 1-255 on FALSE, so it's the other way around from perl
-			unless(system("$_/$NotifierName", '--socket', "$DaemonSocket", '--id', $NotificationID)) {
-				return(1);
-			}
-		}
-	}
-	IntWarn("Unable to start the notifier! Task: $UIDInfo->{SUMMARY} at $Time, $Date");
-}
-
-# Purpose: Handle commands
-# Usage: CommandHandler(COMMAND, HANDLE);
-sub CommandHandler {
-	SetStatus('processing');
-	$_ = $_[0];
-	my $Handle = $_[1];
-	my $PID = $_[0];
-	$PID =~ s/^(\d+)\s+(.*)/$1/;
-	unless ($PID) {
-		IntDebug("Malformed request: $_");
-		return('ERR MALFORMED_REQUEST');
-	}
-	study();
-	s/^(\d+)\s+//;
-	# HI is the first command clients should run to identify themselves
-	if (/^HI\s+(\w+)/) {
-		my $TYPE = $1;
-		IntDebug("New connection ($TYPE), $PID says HI");
-		if ($TYPE =~ /client2/) {
-			$AccessStatus{Connected} = $PID;
-			IntDebug "New client2 ($PID)";
-		} elsif ($TYPE =~ /client/) {
-			# We already have a client, refuse
-			if ($AccessStatus{Connected}) {
-				if ($_ =~ /FORCE/ ) {
-					IntVeryVerbose("$PID is forcing a connection");
-				} elsif (defined($AccessStatus{Connected}) and $PID eq $AccessStatus{Connected}) {
-					IntDebug("$PID appears to have lost its connection to the daemon and wants to reconnect - allowing it to do so.");
-				} else {
-					IntVeryVerbose("Refusing connection from $PID");
-					delete($AccessStatus{ClientList}{$PID});
-					return('REFUSED');
+				else
+				{
+					push(@{$Notifications{$RealTime}},@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)});
 				}
 			}
-			$AccessStatus{Connected} = $PID;
-		} elsif ($TYPE =~ /commander/) {
-			IntDebug("New commander ($PID)");
-		} elsif ($TYPE =~ /servant/) {
-			IntDebug("New servant ($PID)");
-		} else {
-			IntDebug("Invalid type from $PID ($TYPE) - refusing");
-			return('REFUSED');
-		}
-		$AccessStatus{ClientList}{$PID} = $TYPE;
-		$AccessStatus{HandlePIDS}{$Handle} = $PID;
-		return('HI')
-	}
-	
-	# Okay it isn't HI, check if we allow connections from it
-	unless($AccessStatus{ClientList}{$PID}) {
-		IntDebug("Disallowed client $PID wanted to run command $_ but was refused");
-		return('REFUSED');
-	}
-	
-	if (/^BYE/) {	# BYE is the last command clients should run, 
-			# removes them from the internal access lists and unlocks if needed
-		IntDebug("Closed connection, $PID says BYE");
-		if($AccessStatus{ClientList}{$PID} eq 'client') {
-			$AccessStatus{Connected} = 0;
-		}
-		delete($AccessStatus{ClientList}{$PID});
-		return('BYE');
-	} elsif (/^RELOAD_DATA/) {	# Command to force the daemon to reload the data files
-		IntDebug("Data reload requested by $PID");
-		LoadCalendar();
-		IntDebug('Done reloading data');
-		return('done');
-	} elsif (/^RELOAD_CONFIG/) {	# Command to force the daemon to reload the config file
-		IntDebug("Config reload requested by $PID");
-		LoadConfig();
-		IntDebug('Done reloading config');
-		return('done');
-	} elsif (/^SHUTDOWN/) {		# Command to force daemon shutdown
-		IntDebug('Shutdown request');
-		if($AccessStatus{ClientList}{$PID} =~ /servant/) {
-			return('ERR PERMISSION_DENIED');
-		} else {
-			$Shutdown = "Daemon shut down by client ($PID) request";
-			return('okay');
-		}
-	} elsif (/^PING/) {		# Simple ping implementation
-		IntDebug("Ping request from $PID");
-		return('PONG');
-	} elsif (/^VERSION/) {
-		IntDebug("VERSION request from $PID");
-		return($Version);
-	} elsif (/^GET_PATH/) {
-		IntDebug("GET_PATH request from $PID");
-		return(Cwd::realpath($Self));
-	} elsif (s/^NOTIFICATION\s*//) {
-		if (s/^GET\s*//) {
-			my $ID = $_;
-			my $Variable = $_;
-			$ID =~ s/^(.+)\s+.*/$1/;
-			$Variable =~ s/^.+\s+(.+)/$1/;
-			
-			unless(defined($CurrentNotification{$ID})) {
-				return('NOT_SET');
-			}
-			unless(defined($CurrentNotification{$ID}{$Variable})) {
-				return("$ID UNDEF");
-			}
-			return(PackageMultiLine($CurrentNotification{$ID}{$Variable}));
-		} elsif (s/^VERIFY\s*//) {
-			unless(defined($CurrentNotification{$_})) {
-				return('NOT_SET');
-			}
-			return('SET');
-		} elsif (s/^CLEAN\s*//) {
-			unless(defined($CurrentNotification{$_})) {
-				return('NOT_SET');
-			}
-			delete($CurrentNotification{$_});
-			return('DONE');
-		} else {
-			return('ERR INVALID_COMMAND');
 		}
 	}
-	elsif (s/^DEBUG\s*//) {
-		if (/^DUMP_VARIOUS/) {
-			IntDebug("Recieved debugging info request from $PID");
-			return("Version $Version - RCSRev $RCSRev || Using dir $DayplannerDir (socket name $SocketName) || AccessStatus{Connected} = $AccessStatus{Connected} || Output: $DebuggingOutput/$OutputVeryVerbose/$OutputVerbose || Outputting to $Logfile");
-		} elsif (/^DUMP_CLIENTLIST/) {
-			IntDebug("Client list request from $PID");
-			my $ClientList;
-			foreach (sort keys(%{$AccessStatus{ClientList}})) {
-				$ClientList .= $_;
+	# Return if prenotday isn't active
+	return if not $PreNotValues{PreNotDay};
+	# Find tomorrow
+	($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time() + 86400);
+	# Find events for tom
+	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
+		foreach my $Time (sort @{$TimeArray}) {
+			# If time is DAY then skip it - it's a fullday event
+			next if $Time eq 'DAY';
+			# Convert time to seconds
+			my $SecondsFromMidnight = HumanTimeToSeconds($Time);
+			# Get the real unix time
+			# (this is the unix time for that time of day *today*. Ie. the time to run the prenot)
+			my $RealTime = $TodayNix + $SecondsFromMidnight;
+			# Main notification
+			if(not $Notifications{$RealTime})
+			{
+				$Notifications{$RealTime} = $iCalendar->get_timeinfo($Year,$Month,$Day,$Time);
 			}
-			return($ClientList);
-		} elsif (/^DUMP_SLEEPTIME/) {
-			IntDebug("Sleep time request from $PID");
-			return(FindSleepDuration());
-		} elsif (/^KICK\s+(\w+)/) {
-			my $CLIENT = $1;
-			IntDebug("Client KICK request from $PID");
-			if(defined($AccessStatus{ClientList}{$CLIENT})) {
-				delete($AccessStatus{ClientList}{$CLIENT});
-				return('CLIENT KICKED');
-			} else {
-				return('UNKNOWN CLIENT');
+			else
+			{
+				push(@{$Notifications{$RealTime}},@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)});
 			}
-		} elsif (/^ENABLE_DEBUGLOG/) {
-			$DebuggingOutput = 1;
-			$OutputVeryVerbose = 1;
-			$OutputVerbose = 1;
-			IntDebug("Enabled debugging logging as requested by $PID");
-			return('SUCCESS');
-		} elsif (/^RECALCULATE/) {
-			CalculateNotificationHash();
-			return('done');
-		} elsif (/^(DUMP_HASHES|DUMP_MAINHASH|DUMP_CONFIG)/) {
-			# We want the dumper to be pure (aka. make dumper output a proper syntax that is suitable for eval() or do())
-			$Data::Dumper::Purity = 1;
-			# Sort the keys
-			$Data::Dumper::Sortkeys = 1;
-			# Set the indentation
-			$Data::Dumper::Indent = 1;
-			my $Return = '';
-			if(/^(DUMP_HASHES|DUMP_MAINHASH)/) {
-				$Return = Data::Dumper->Dump([\%NotificationHash], ['*NotificationHash']);
-				if (/^DUMP_HASHES/) {
-					$Return = $Return . Data::Dumper->Dump([\%CurrentNotification], ['*CurrentNotification']);
-				}
-			} elsif (/^DUMP_CONFIG/) {
-				$Return = $Return . Data::Dumper->Dump([\%Config], ['*Config']);
-			}
-			return(PackageMultiLine($Return));
-		} else {
-			IntDebug("Invalid debug command: \"$_\" from $PID");
-			return('ERR INVALID_COMMAND');
 		}
-	}
-	else {				# Handler for invalid requests
-		IntDebug("Invalid command: $_ from $PID");
-		return('ERR INVALID_COMMAND');
 	}
 }
 
-# Purpose: Handle SIGPIPE gently
-# Usage: $SIG{PIPE} = \&SigpipeHandler;
-sub SigpipeHandler {
-	IntDebug('Sigpipe');
+# ----
+# DAEMON FUNCTIONS
+# ----
+
+# Purpose: Found out how many seconds we should sleep before we need to perform an action
+# Usage: $seconds = FindSleepDuration();
+sub FindSleepDuration
+{
+	# Find tomorrow
+	my ($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time() + 86400);
+	my $TomorrowNix = mktime(0,0,0,$Day,$Month -1,$Year - 1900,0,0,$isdst);
+	foreach my $time (sort keys(%Notifications))
+	{
+		# If it's tomorrow then break out of the loop and sleep until midnight
+		if($time >= $TomorrowNix)
+		{
+			DaemonLog(5,'Sleeptime - is tomorrow, going out of loop: '.$time);
+			last;
+		}
+		# If $time is more than current time then return that
+		if($time > time())
+		{
+			DaemonLog(5,'Found sleeptime - until: '.$time);
+			$NextEventIs = $time;
+			return($time - time());
+		}
+	}
+	DaemonLog(5,'Sleeping until day changes');
+	$NextEventIs = 'DAYCHANGE';
+	# We add 1 second here to take into account some irregularities
+	return($TomorrowNix-time() + 1);
 }
 
 # Purpose: Open our main communication socket
 # Usage: OpenSocket();
 sub OpenSocket {
-	if (-e $DaemonSocket) {
-		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $DaemonSocket,
+	if (-e $SocketPath) {
+		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $SocketPath,
 							Type	=> SOCK_STREAM
 							Timeout => 2);
 		if (defined($TestSocket)) {
 			# We could connect
-			#
-			# Now this isn't a nice way to do it, but we do it anyway
-			print $TestSocket "$$ HI commander\n";
-			my $CommanderReply = <$TestSocket>;
 			print $TestSocket "$$ PING\n";
 			my $REPLY = <$TestSocket>;
 			chomp($REPLY);
@@ -716,171 +358,228 @@ sub OpenSocket {
 				# It's still responding. If the user did this then perhaps he/she wanted
 				# to reload the data. Send the reload command
 				print $TestSocket "$$ RELOAD_DATA\n";
-				print $TestSocket "$$ BYE\n";
+				close($TestSocket);
 				die "Error: A dayplanner daemon is already running and still responding. I told it to reload its data files.\n";
 			}
+			close($TestSocket);
 		}
-		unlink($DaemonSocket);
+		unlink($SocketPath);
 				
 	}
-	$Server = IO::Socket::UNIX->new(
-					Local	=> $DaemonSocket,
+	$ServerSocket = IO::Socket::UNIX->new(
+					Local	=> $SocketPath,
 					Type	=> SOCK_STREAM,
 					Listen	=> 5,
 			) or die "Unable to create a new socket: $@\n";
+	# Enforce strict permissions
+	chmod(700,$SocketPath);
 	# Trap SIGPIPE
-	$SIG{PIPE} = \&SigpipeHandler;
+	$SIG{PIPE} = \&SigPipeHandler;
 	# Create a new select handle for reading
-	$ConnectionSelect = IO::Select->new();
+	$ConnectionSelector = IO::Select->new();
 	# Add the main server
-	$ConnectionSelect->add($Server);
+	$ConnectionSelector->add($ServerSocket);
+
+	DaemonLog(3,'Now listening on '.$SocketPath);
 }
 
-# Purpose: Start the main loop
+# Purpose: Handle incoming daemon commands
+# Usage: $Return = CommandHandler(LINE);
+sub CommandHandler 
+{
+	$_ = shift;
+	DaemonLog(5,$_);
+	my $PID = $_;
+	$PID =~ s/^(\d+)\s+(.*)/$1/;
+	unless ($PID) {
+		DaemonLog(3,"Malformed request: $_");
+		return('ERR MALFORMED_REQUEST');
+	}
+	study();
+	s/^(\d+)\s+//;
+	if(/^RELOAD_DATA/)
+	{
+		LoadData();
+	}
+	elsif(/^RELOAD_CONFIG/)
+	{
+		LoadConfig();
+	}
+	elsif(/^SHUTDOWN/)
+	{
+		die('FIXME: Should graciously shut down');
+	}
+	elsif (/^VERSION/)
+	{
+		return($Version);
+	}
+	elsif(/^PING/)
+	{
+		return('PONG');
+	}
+	# Old API
+	elsif(/^(HI|BYE|NOTIFICATION|DEBUG)/)
+	{
+		DaemonLog(3,'Legacy command attempted run: '.$_);
+		return('ERR LEGACY # Something went wrong, program attempted to use legacy command ('.$_.'). Please verify your Day Planner installation. Version 0.8 or later required.');
+	}
+	else
+	{
+		return('ERR INVALID_COMMAND');
+	}
+	
+}
+
+# Purpose: Run event notifications for the supplied time
+# Usage: EventNotification(UNIXTIME);
+sub EventNotification
+{
+	DaemonLog(3,'STUB: ' . (caller(0))[3]);
+	my $time = shift;
+	DaemonLog(4,'EventNotification processing');
+	foreach my $UID(@{$Notifications{$time}})
+	{
+		StartNotifier($UID);
+	}
+}
+
+# Purpose: Start the notifier
+# Usage: StartNotifier(UID);
+sub StartNotifier
+{
+	my $UID = shift;
+	DaemonLog(4,'Starting notifier for UID '.$UID);
+	foreach(split(/:/, sprintf('%s:%s', $ENV{PATH}, dirname(Cwd::realpath($Self)))))
+	{
+		if ( -x $_.'/'.$NotifierName)
+		{
+			if(system($_.'/'.$NotifierName, '--socket', $SocketPath, '--uid', $UID)  == 0)
+			{
+				return(true);
+			}
+			else
+			{
+				DaemonLog(2,'Tried running notifier at '.$_.'/'.$NotifierName.' but it exited with a nonzero return value. Continuing search');
+			}
+		}
+	}
+}
+
+# Purpose: Go into daemon mode
+# Usage: Daemonize();
+sub Daemonize
+{
+	# Fork
+	my $PID = fork;
+	exit if $PID;
+	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
+	# Create a new session
+	setsid() or DaemonLog(1,"Unable to start a new POSIX session (setsid()): $!");
+	# Change dir to / - this to avoid clogging up a mountpoint
+	chdir('/') or DaemonLog(1,"Unable to chdir to /: $!");
+	# (We finish the daemonizing after loading the config and calendar)
+	open(STDIN, '<', '/dev/null') or DaemonLog(1,"Couldn't reopen STDIN to /dev/null: $!");
+	open(STDOUT, '>>', $Logfile) or DaemonLog(1,"Couldn't reopen STDOUT to $Logfile: $!");
+	open(STDERR, '>>', $Logfile) or DaemonLog(1,"Couldn't reopen STDERR to $Logfile: $!");
+}
+
+sub SigPipeHandler
+{DaemonLog(3,'STUB: ' . (caller(0))[3])
+}
+
+# Purpose: This is the main loop of the daemon. It should never return.
 # Usage: MainLoop();
-# Requires: OpenSocket(); already performed
-sub MainLoop {
-	# Loop for eternity
-	while (1) {
+# 	The data should be loaded, notifications calculated and socket opened before running this
+#    - to put it simply. Never run directly. Run DaemonInit();
+sub MainLoop
+{
+	DaemonLog(5,'Entering main loop');
+	while(true)
+	{
 		my $SleepTime = FindSleepDuration();
-		SetStatus('sleeping');
+		DaemonLog(5,'Going to sleep for '.$SleepTime.' seconds');
 		# Block until one handle is available or it times out
-		my @Ready_Handles = $ConnectionSelect->can_read($SleepTime);
+		my @Ready_Handles = $ConnectionSelector->can_read($SleepTime);
 		# Timeout is true if no handle was processed
 		my $Timeout = 1;
-		# For each handle...
-		foreach my $Handle (@Ready_Handles) {
+		DaemonLog(5,'Main loop processing');
+		foreach my $Handle (@Ready_Handles)
+		{
 			# We didn't timeout
 			$Timeout = 0;
-			# If the handle is $server then it's a new connection
-			if ($Handle eq $Server) {
-				IntDebug('New connection');
-				my $NewClient = $Server->accept();
-				$ConnectionSelect->add($NewClient);
+			# If the handle is $ServerSocket then it's a new connection
+			if ($Handle eq $ServerSocket)
+			{
+				my $NewClient = $ServerSocket->accept();
+				$ConnectionSelector->add($NewClient);
+				DaemonLog(4,'New handle '.$NewClient);
 			} 
-			# Handle isn't $server, it's an existing connection trying to tell us something
-			else {
+			# Handle isn't $ServerSocket, it's an existing connection trying to tell us something
+			else
+			{
 				# What is it trying to tell us?
 				my $Command = <$Handle>;
 				# If it is defined then it's a command
-				if ($Command) {
+				if ($Command)
+				{
 					chomp($Command);
-					my ($Reply) = CommandHandler($Command, $Handle);
+					my ($Reply) = CommandHandler($Command);
+					DaemonLog(5,'Returning '.$Reply);
 					print $Handle "$Reply\n";
 				} 
 				# If it isn't, then it closed the connection
-				else {
-					IntDebug('Connection closed');
-					$ConnectionSelect->remove($Handle);
-					# Make sure that the handle is removed from our current users list.
-					# This so that connections that don't BYE is removed properly anyway.
-					# This usually happens when Day Planner is killed or maybe even crashes,
-					# and then when started again displays a false message about an already running
-					# Day Planner.
-					if($AccessStatus{HandlePIDS}{$Handle} eq $AccessStatus{Connected}) {
-						$AccessStatus{Connected} = 0;
-					}
-					# Delete the connection from the main hashes
-					delete($AccessStatus{ClientList}{$AccessStatus{HandlePIDS}{$Handle}});
-					delete($AccessStatus{HandlePIDS}{$Handle});
+				else
+				{
+					$ConnectionSelector->remove($Handle);
+					DaemonLog(4,'Handle removed ',$Handle);
 				}
 			}
 		}
-		# Get the current time/date
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-		$curryear += 1900; $currmonth++;
-		# Recalculate our notification hash if needed
-		unless($LastCalculate eq "$curryear-$currmonth-$curryday-$currmday") {
-			CalculateNotificationHash();
-		}
-		if ($Timeout) {
-			DayplannerAlarm();
-		}
-		if ($Shutdown) {
-			IntVerbose($Shutdown);
-			unlink($DaemonSocket);
-			exit(0);
-		}
-	}
-}
-
-# Purpose: Calculate todays %NotificationHash
-# Usage: CalculateNotificationHash();
-sub CalculateNotificationHash {
-	%NotificationHash = ();
-	
-	# Get the current time/date
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
-	$curryear += 1900; $currmonth++;
-	
-	# Set LastCalculate to the current time/date
-	$LastCalculate = "$curryear-$currmonth-$curryday-$currmday";
-	
-	# First, calculate todays part of the %CalendarContents hash
-	my $Today = $iCalendar->get_dateinfo($curryear,$currmonth,$currmday);
-	if($Today) {
-		foreach my $Time (@{$Today}) {
-			next if $Time eq 'DAY';	# TODO: This has to be changed once day planner is suppose to hav
-						#	alerts for full day events
-			foreach my $UID (@{$iCalendar->get_timeinfo($curryear,$currmonth,$currmday,$Time)}) {
-				push(@{$NotificationHash{$Time}}, $UID);
-				my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 0);
-				if(defined($PreNot_Time)) {
-					push(@{$NotificationHash{$PreNot_Time}}, $UID);
-				}
+		if($Timeout)
+		{
+			DaemonLog(5,'No handle had anything to say');
+			if($NextEventIs eq 'DAYCHANGE')
+			{
+				DaemonLog(5,'Day change event');
+				CalculateNotifications();
 			}
-		}
-	}
-	# Now, calculate tomorrows part of the %CalendarContents hash
-	#  this so that in case there's an event tomorrow that has a PerNotTime that would be
-	#  *today* it does pop up. This will probably be rare, but we need to handle it
-	#  none-the-less.
-	my ($tomorrowsec,$tomorrowmin,$tomorrowhour,$tomorrowmday,$tomorrowmonth,$tomorrowyear,$tomorrowwday,$tomorrowyday,$tomorrowisdst) = localtime(time+86_400);
-	$tomorrowyear += 1900; $tomorrowmonth++;
-	my $Tomorrow = $iCalendar->get_dateinfo($tomorrowyear,$tomorrowmonth,$tomorrowmday);
-	if ($Tomorrow) {
-		foreach my $Time (@{$Tomorrow}) {
-			next if $Time eq 'DAY';	# TODO: This has to be changed once day planner is suppose to hav
-						#	alerts for full day events
-			foreach my $UID (@{$iCalendar->get_timeinfo($tomorrowyear,$tomorrowmonth,$tomorrowmday,$Time)}) {
-				my $PreNot_Time = GetPreNotTime($Time, $Config{N_Hours}, $Config{N_Minutes}, 1);
-				if(defined($PreNot_Time)) {
-					push(@{$NotificationHash{$PreNot_Time}}, $UID);
-				}
-				if($Config{Events_DayNotify} eq '1') {
-					push(@{$NotificationHash{$Time}}, $UID);
-				}
+			else
+			{
+				DaemonLog(5,'Notifier event');
+				EventNotification($NextEventIs);
 			}
 		}
 	}
 }
 
-# Purpose: Wrap multiline packets correctly
-# Usage: PackageMultiLine(SCALAR);
-sub PackageMultiLine {
-	my $Message = $_[0];
-	my $NewMessage = "BEGIN MULTILINE\n";
-	my $Lines = 0;
-	foreach(split(/\n/,$Message)) {
-		$Lines++;
-		chomp;
-		$NewMessage .= "ML $_\n";
-	}
-	unless($Lines > 1) {
-		return($Message);
-	}
-	unless($Message =~ /\n$/) {
-		# The preceeding line doesn't end with \n so set a "last line didn't end with \n" option
-		$NewMessage .= "NNL\n";
-	}
-	$NewMessage .= "\nEND MULTILINE";
-
-	return($NewMessage);
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ----
 # INITIALIZATION
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ----
+
+# Purpose: Perform initialization, then rest in the main loop
+# Usage: InitDaemon();
+sub InitDaemon
+{
+	DaemonLog(5,'Initializing');
+	# First find the conf dir
+	$DataDir = DetectConfDir();
+	$SocketPath = $DataDir . '/' . $SocketName;
+	$Logfile = $DataDir . '/' . 'daemon.log';
+	# Now try to open our socket. If that fails OpenSocket() will die() for us.
+	OpenSocket();
+	# Then go into daemon mode (FIXME: should verify that we are suppose to go into daemon mode)
+	Daemonize();
+	# Load our data
+	LoadData();
+	# Calculate notifications
+	CalculateNotifications();
+	# Load the previous state information
+	LoadDaemonState();
+	# Okay, all initialiation has been done. Just rest in the main loop.
+	MainLoop();
+	# This should never happen
+	die('FATAL ERROR: MainLoop() returned');
+}
 
 GetOptions (
 	'help|h' => sub {
@@ -888,35 +587,25 @@ GetOptions (
 		PrintHelp('-d', '--dayplannerdir', 'Which directory to use as the dayplanner config dir');
 		PrintHelp('', '--version', 'Display version information and exit');
 		PrintHelp('-h,', '--help', 'Display this help screen');
-		PrintHelp('-n,', '--nofork', 'Don\'t go into the background (and log to STDOUT/STDERR instead of the logfile)');
-		PrintHelp('-v,', '--verbose', 'Be verbose');
-		PrintHelp('-V,', '--veryverbose', 'Be very verbose');
-		PrintHelp('-D,', '--debug', 'Output debugging information');
-		PrintHelp('-o,', '--output', "Output all messages to the file supplied instead of dayplannerdir/$LogfileName");
+#		PrintHelp('-n,', '--nofork', 'Don\'t go into the background (and log to STDOUT/STDERR instead of the logfile)');
+		PrintHelp('-v,', '--verbose', 'Be verbose. Supply several times to increase verbosity.');
+#		PrintHelp('-o,', '--output', "Output all messages to the file supplied instead of dayplannerdir/$LogfileName");
 		exit(0);
 	},
-	'debug|D' => sub {
-		$DebuggingOutput = 1;
-		$OutputVerbose = 1;
-		$OutputVeryVerbose = 1;
-	},
-	'verbose|v' => \$OutputVerbose,
-	'veryverbose|V' => sub {
-		$OutputVerbose = 1;
-		$OutputVeryVerbose = 1;
-	},
-	'n|nofork' => \$NoFork,
-	'f|force-fork' => \$ForceFork,
-	'o|output=s' => \$Logfile,
-	'dayplannerdir|d=s' => sub {
-		unless (-e $_[1]) {
-			die "$_[1] does not exist\n";
-		}
-		unless (-w $_[1]) {
-			die "I can't write to $_[1]\n";
-		}
-		$DayplannerDir = $_[1];
-	},
+#	'verbose|v' => \$OutputVerbose,
+	'v|verbose+' => \$LogLevel,
+#	'n|nofork' => \$NoFork,
+#	'f|force-fork' => \$ForceFork,
+	#'o|output=s' => \$Logfile,
+#	'dayplannerdir|d=s' => sub {
+#		unless (-e $_[1]) {
+#			die "$_[1] does not exist\n";
+#		}
+#		unless (-w $_[1]) {
+#			die "I can't write to $_[1]\n";
+#		}
+#		$DayplannerDir = $_[1];
+#	},
 	'socketname|s=s' => sub {
 		if ($_[1] =~ m#/#) {
 			die "The --socketname can't contain a /\n";
@@ -928,42 +617,10 @@ GetOptions (
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
+	# For backwards compatibility. Ignored parameters.
+	'D|V|debug|veryverbose' => sub {
+		print "$_[0] has been deprecated and is no longer supported - ignored. Try -vvvvv\n";
+	},
 ) or die "See $0 --help for more information\n";
 
-# Set some settings according to commandline arguments
-if(not defined($DayplannerDir)) {
-	$DayplannerDir = DetectConfDir();
-}
-$DaemonSocket = "$DayplannerDir/$SocketName";
-
-# Verify the dir
-die "$DayplannerDir doesn't exist!\n" unless -e $DayplannerDir;
-die "$DayplannerDir is not a directory\n" unless -d $DayplannerDir;
-
-$Logfile = "$DayplannerDir/$LogfileName" unless defined($Logfile) and length($Logfile);;
-
-# Main
-SetStatus('starting');
-OpenSocket();
-# Daemonize unless NoFork is true
-if (not $NoFork or $ForceFork) {
-	# Fork
-	my $PID = fork;
-	exit if $PID;
-	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
-	# Create a new session
-	setsid() or IntWarn "Unable to start a new POSIX session (setsid()): $!";
-	# Change dir to / - this to avoid clogging up a mountpoint
-	chdir('/') or IntWarn "Unable to chdir to /: $!";
-	# (We finish the daemonizing after loading the config and calendar)
-}
-LoadConfig();
-LoadCalendar();
-
-unless($NoFork) {
-	open(STDIN, '<', '/dev/null') or IntWarn("Couldn't reopen STDIN to /dev/null: $!");
-	open(STDOUT, '>>', $Logfile) or IntWarn("Couldn't reopen STDOUT to $Logfile: $!");
-	open(STDERR, '>>', $Logfile) or IntWarn("Couldn't reopen STDERR to $Logfile: $!");
-}
-
-MainLoop();
+InitDaemon();
