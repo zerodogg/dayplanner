@@ -215,7 +215,6 @@ sub HumanTimeToSeconds
 	{
 		$timeInSeconds = $timeInSeconds + ($minute*60);
 	}
-	print "RETURNING: $timeInSeconds\n";
 	return($timeInSeconds);
 }
 
@@ -453,7 +452,7 @@ sub StartNotifier
 	{
 		if ( -x $_.'/'.$NotifierName)
 		{
-			if(system($_.'/'.$NotifierName, '--socket', $SocketPath, '--uid', $UID)  == 0)
+			if(system($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
 			{
 				return(true);
 			}
