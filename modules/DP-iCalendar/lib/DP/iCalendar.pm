@@ -168,6 +168,42 @@ sub get_RRULE {
 	}
 }
 
+# Purpose: Find out if an UID exists at a given date
+# Usage: true/false = $object->UID_exists_at(UID, YEAR,MONTH,DAY,TIME);
+#   Time is optional.
+sub UID_exists_at
+{
+	my $this = shift;
+	my $CheckUID = shift;
+	my $year = shift;
+	my $month = shift;
+	my $day = shift;
+	my $time = shift;
+
+	my $TimeRef;
+
+	if($time)
+	{
+		$TimeRef = [$time];
+	}
+	else
+	{
+		$TimeRef = $this->get_dateinfo($year,$month,$day);
+	}
+	foreach my $time (@{$TimeRef})
+	{
+		my $UIDRef = $this->get_timeinfo($year,$month,$day,$time);
+		foreach my $UID (@{$UIDRef})
+		{
+			if($UID eq $CheckUID)
+			{
+				return(TRUE);
+			}
+		}
+	}
+	return(FALSE);
+}
+
 # Purpose: Get a list of dates which are excepted from recurrance for the supplied UID
 # Usage: my $List = $object->get_exceptions(UID);
 sub get_exceptions {
