@@ -56,7 +56,7 @@ my $ICSFile = 'calendar.ics';		# The ICS calendar
 my $ConfigFile = 'dayplanner.conf';	# The filename to save the configuration to
 my $DaemonName = 'dayplanner-daemon';# The name of the daemon
 my $DaemonInitialized = 0;			# Has the daemon been initialized?
-my $DaemonSocketName = 'dayplannerd';# The name of the daemon socket
+my $DaemonSocketName = 'Daemon_Socket';# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 my $i18n;
 my $DPS_APILevel = '06';			# The DPS API level used/supported
@@ -126,7 +126,6 @@ sub DaemonInit {
 		}
 		return(DaemonInit());
 	}
-	$DaemonSocket->client_send("$$ HI client2");
 	return(true);
 }
 
@@ -150,28 +149,15 @@ sub StartDaemon {
 # Usage: CloseIPC();
 sub CloseIPC {
 	if($ShutdownDaemon) {
-		$DaemonSocket->client_send('SHUTDOWN');
+		$DaemonSocket->client_send($$.' SHUTDOWN');
 	}
 	if($IPC_Socket) {
 		$IPC_Socket->destroy();
 	}
 	if($DaemonSocket) {
-		Daemon_SendData('BYE');
 		$DaemonSocket->destroy();
 	}
 	return(1);
-}
-
-# Purpose: Display an error message when an error is recieved from the daemon
-# Usage: Daemon_ErrorHandler(Daemon_GetData());
-sub Daemon_ErrorHandler {
-	if ($_[0] =~ /^ERR\s+/) {
-		DPIntWarn("Recieved error from daemon: \"$_[0]\"");
-	}
-	if(defined($_[1])) {
-		DPIntWarn("Weird multi-return response from caller: [1]=\"$_[1]\"");
-	}
-	return($_[0]);
 }
 
 # Purpose: Send a message to the daemon
