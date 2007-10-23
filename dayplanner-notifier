@@ -22,18 +22,21 @@ use warnings;			# Tell perl to display warnings
 use Gtk2;			# Use Gtk2
 use Getopt::Long;		# Commandline options
 use IO::Socket;			# Network layer to communicate with the daemon
-use Locale::gettext;		# Translation layer
 use POSIX;			# setlocale()
 use Cwd;
 use File::Basename;
 use FindBin;
+# These constants prettify things
+use constant { true => 1, false => 0 };
 # This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 # Day Planner-specific libs
-use DP::GeneralHelpers qw(DPIntWarn);
+use DP::GeneralHelpers qw(AppendZero DPIntWarn);
+use DP::GeneralHelpers::I18N;
+use DP::iCalendar qw(iCal_ParseDateTime);
 
 my $RealZero = $0;
 $0 = 'dayplanner-notifier';
@@ -42,7 +45,7 @@ my $Version = '0.8';
 my $RCSRev = '$Id$';
 my $SoftwareDir = dirname(Cwd::realpath($0));
 
-my $SocketName;			# The socket to connect to
+my $CalendarPath;			# The socket to connect to
 my $Socket;			# The IO::Socket object
 my $DP_I18N_Mode;
 my $Message;			# The message
@@ -54,148 +57,7 @@ my $i18n;			# The DP::GeneralHelpers::I18N object
 
 my $MessageID;			# The daemon message ID
 my $NoFork;
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# DAEMON COMMUNICATION
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Connect to the daemon
-# Usage: DaemonConnect();
-sub DaemonConnect {
-	$Socket = IO::Socket::UNIX->new(Peer => $SocketName,
-					Type => SOCK_STREAM,
-					Timeout => 10 )
-					or DPIntWarn("Unable to connect to $SocketName: $@!") and return(0);
-	if(Daemon_DataSegment('HI servant') eq 'HI') {
-		return(1);
-	} else {
-		DPIntWarn("Unable to connect to $SocketName: The daemon refused my connection\n");
-		close($Socket);
-		return('NOHI');
-	}
-
-}
-
-# Purpose: Send some data to the daemon
-# Usage: Daemon_SendData(DATA);
-sub Daemon_SendData {
-	print $Socket "$$ $_[0]","\n" or DPIntWarn("Problem sending data to the daemon: $!") and return(0);
-}
-
-# Purpose: Get some data from the daemon
-# Usage: $Data = Daemon_GetData();
-sub Daemon_GetData {
-	my $Data = <$Socket>;
-	unless(defined($Data)) {
-		return('ERR UNABLE_TO_GET_DATA');
-	}
-	if ($Data =~ /^BEGIN MULTILINE/) {
-		return(UnwrapMultiLinePacket());
-	} else {
-		chomp($Data);
-		return($Data);
-	}
-}
-
-# Purpose: Send something to the daemon and then return the daemons reply
-# Usage: $Reply = Daemon_DataSegment(DATA);
-sub Daemon_DataSegment {
-	Daemon_SendData($_[0]);
-	return(Daemon_GetData());
-}
-
-# Purpose: Disconnect from the daemon
-# Usage: DaemonDisconnect();
-sub DaemonDisconnect {
-	Daemon_DataSegment('BYE');
-	close($Socket);
-}
-
-# Purpose: Unwrap multiline packets correctly
-# Usage: my $Multiline = UnwrapMultiLinePacket();
-sub UnwrapMultiLinePacket {
-	my $MultiLineNotEnded = 1;
-	my $NewMessage;
-	my $UnhandledLimit;
-	my $DidSomething;
-	my $DidNotDoAnything;
-	while ($MultiLineNotEnded) {
-		$DidSomething = 0;
-		foreach(split(/\n/,<$Socket>)) {
-			$DidSomething = 1;
-			if (/^END MULTILINE/) {
-				$MultiLineNotEnded = 0;
-				last;
-			}elsif (s/^\s*ML //) {
-				chomp;
-				if(defined($NewMessage)) {
-					$NewMessage = $NewMessage . "$_\n";
-				} else {
-					$NewMessage = "$_\n";
-				}
-			} elsif (/^NNL$/) {
-				# This means the preceeding line doesn't end with \n
-				unless(defined($NewMessage)) {
-					DPIntWarn('Recieved NNL while unwrapping a multiline packet without any preceeding line. This is a bug in either the daemon or notifier. Ignoring request and proceeding');
-					next;
-				}	
-				$NewMessage =~ s/\n$//;
-			} else {
-				chomp($_);
-				DPIntWarn("Unhandled daemon command: $_\n");
-				$UnhandledLimit++;
-			}
-			if(defined($UnhandledLimit) and $UnhandledLimit >= 20) {
-				DPIntWarn('Limit of 20 unhandled daemon commands within UnwrapMultiLinePacket exceeded. Assuming END MULTILINE');
-				$MultiLineNotEnded = 0;
-				last;
-			}
-		}
-		if($DidSomething == 0) {
-			$DidNotDoAnything++;
-		} else {
-			$DidNotDoAnything = 0;
-		}
-		if(defined($DidNotDoAnything) and $DidNotDoAnything >= 20) {
-			DPIntWarn('Limit of 20 idle turns through the UnwrapMultiLinePacket loop exceeded. Assuming END MULTILINE');
-			$MultiLineNotEnded = 0;
-			last;
-		}
-	}
-	unless(defined($NewMessage)) {
-		DPIntWarn('$NewMessage was undefined while unwrapping a multiline packet. This is probably a bug. Returning "" scalar string value to caller');
-		return('');
-	}
-	unless($NewMessage =~ /\n.*\n/) {
-		chomp($NewMessage);
-	}
-	return($NewMessage);
-}
-
-# Purpose: Get the messages from the daemon
-# Usage: GetMessages(Message ID);
-sub GetMessages {
-	unless(Daemon_DataSegment("NOTIFICATION VERIFY $_[0]") eq 'SET') {
-		die("The MessageID $_[0] is invalid according to the daemon\n");
-	}
-	
-	$Message = Daemon_DataSegment("NOTIFICATION GET $_[0] Summary");
-	$Time = Daemon_DataSegment("NOTIFICATION GET $_[0] Time");
-	$Date = Daemon_DataSegment("NOTIFICATION GET $_[0] Date");
-	$Fulltext = Daemon_DataSegment("NOTIFICATION GET $_[0] Fulltext");
-	$IsWarning = Daemon_DataSegment("NOTIFICATION GET $_[0] PreNot");
-	if($IsWarning eq "$_[0] UNDEF") {
-		$IsWarning = 0;
-	}
-
-	# Fulltext is a multiline packet and can thus return "" on failure.
-	# We assume $_[0] UNDEF on ""/failure
-	if($Fulltext eq "$_[0] UNDEF" or $Fulltext eq '') {
-		$Fulltext = undef;
-	}
-
-	Daemon_DataSegment("NOTIFICATION CLEAN $_[0]");
-}
+my $LaunchTime = time();
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # HELPER FUNCTIONS
@@ -273,6 +135,47 @@ sub X_Available {
 # Usage: InPath(COMMAND);
 sub InPath {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+}
+
+# Purpose: The same as localtime(TIME?); but returns proper years and months
+# Usage: my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(TIME);
+#  TIME is optional. If not present then the builtin time function is called.
+#  FIXME: MOVE TO GENERALHELPERS
+sub GetDate {
+	my $Time = $_[0] ? $_[0] : time;
+	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime($Time);
+	$curryear += 1900;						# Fix the year format
+	$currmonth++;							# Fix the month format
+	return($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst);
+}
+
+# Purpose: Get information from the calendar
+# Usage: GetMessagesFromCalendar(Calendar, UID);
+sub GetMessagesFromCalendar
+{
+	my $calendar = shift;
+	my $UID = shift;
+	my $iCalendar = DP::iCalendar->new($calendar);
+	my $UIDInf = $iCalendar->get_info($UID);
+	$Message = $UIDInf->{'SUMMARY'};
+	$Fulltext = $UIDInf->{'DESCRIPTION'};
+	$IsWarning = true;	# Default to warning
+	$Date = 'tomorrow'; # Default to tomorrow
+	my ($eventYear, $eventMonth, $eventDay, $eventTime) = iCal_ParseDateTime($UIDInf->{DTSTART});
+	$Time = $eventTime;
+	# Find out if the UID is now or not
+	foreach my $possibleTime (@{[$LaunchTime, $LaunchTime - 60, $LaunchTime + 60]})
+	{
+		my ($sec,$min,$hour,$mday,$month,$year,$wday,$yday,$isdst) = GetDate($possibleTime);
+		if($iCalendar->UID_exists_at($UID,$year,$month,$mday,AppendZero($hour).':'.AppendZero($min)))
+		{
+			$IsWarning = false;
+		}
+		if($iCalendar->UID_exists_at($UID,$year,$month,$mday))
+		{
+			$Date = 'today';
+		}
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -453,26 +356,33 @@ GetOptions (
 		print "the daemon uses --id and --socket.\n\n";
 		PrintHelp('-h','--help','Display this help screen');
 		PrintHelp('-v', '--version', 'Display version information and exit');
-		PrintHelp('-s','--socket','Select the daemon socket');
 		PrintHelp('-m', '--message', 'Set the message');
 		PrintHelp('-f', '--fulltext', 'Set the "fulltext" entry (details)');
 		PrintHelp('-t', '--time', 'Set the time (HH:MM)');
 		PrintHelp('-d', '--date', 'Set the date (a date string, "today" or "tomorrow")');
-		PrintHelp('-i', '--id', 'Set the daemon message ID');
+		PrintHelp('-c', '--calendar', 'Set the iCalendar file');
+		PrintHelp('', '--uid', 'Set the iCalendar UID to display');
 		PrintHelp('-n', '--nofork', 'Don\'t go into the background');
 		exit(0);
 	},
-	'socket|s=s' => \$SocketName,
 	'message|m=s' => \$Message,
 	'time|t=s' => \$Time,
 	'fulltext|f=s' => \$Fulltext,
 	'date|d=s' => \$Date,
-	'id|i=s' => \$MessageID,
+	'uid=s' => \$MessageID,
 	'n|nofork' => \$NoFork,
+	'c|calendar=s' => \$CalendarPath,
 	'v|version' => sub {
 		print "Day Planner notifier version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
+	},
+	# For backwards compatibility
+	's|i|id|socket' => sub
+	{
+		print "$_[0]: deprecated.\n";
+		# Exit with a nonzero return value - the daemon will then continue to look for another notifier
+		exit(1);
 	},
 ) or die "See $0 --help for more information\n";
 
@@ -484,10 +394,9 @@ unless(defined($MessageID) and length($MessageID)) {
 }
 
 if(defined($MessageID)) {
-	die "I need a --socket to connect to\n" unless defined($SocketName) and length($SocketName);
-	die "$SocketName does not exist\n" unless -e $SocketName;
-	die "$SocketName is not a socket\n" unless -S $SocketName;
-	$0 = "dayplanner-notifier [$SocketName\{$MessageID}]";
+	die("Needs a --calendar\n") if not $CalendarPath;
+	die("$CalendarPath: does not exist\n") if not -e $CalendarPath;
+	die("$CalendarPath: is not readable\n") if not -r $CalendarPath;
 }
 
 unless($NoFork) {
@@ -498,11 +407,7 @@ unless($NoFork) {
 }
 
 if(defined($MessageID)) {
-	DaemonConnect();
-	GetMessages($MessageID);
+	GetMessagesFromCalendar($CalendarPath,$MessageID);
 }
 
 NotifyUser();
-if(defined($MessageID)) {
-	DaemonDisconnect();
-}
