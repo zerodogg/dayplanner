@@ -164,6 +164,9 @@ sub GetMessagesFromCalendar
 	my ($eventYear, $eventMonth, $eventDay, $eventTime) = iCal_ParseDateTime($UIDInf->{DTSTART});
 	$Time = $eventTime;
 	# Find out if the UID is now or not
+	#  We try both launch time and launch time plus/minus 60 seconds. This so that we
+	#  get reliable information even during high system loads and in the offchance that
+	#  something is not right.
 	foreach my $possibleTime (@{[$LaunchTime, $LaunchTime - 60, $LaunchTime + 60]})
 	{
 		my ($sec,$min,$hour,$mday,$month,$year,$wday,$yday,$isdst) = GetDate($possibleTime);
