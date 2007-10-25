@@ -60,6 +60,8 @@ my %PreNotValues = (
 
 # The path to us
 my $Self = $0;
+# Set the name
+$0 = 'dayplanner-daemon';
 # The name of the notifier
 my $NotifierName = 'dayplanner-notifier';
 # Our version number
@@ -567,6 +569,11 @@ sub InitDaemon
 	{
 		$DataDir = DetectConfDir();
 	}
+	# Set the name as shown in ps ux
+	my $DataName = $DataDir;
+	$DataName =~ s/^$ENV{HOME}/~/;
+	$0 .= ' ['.$DataName.']';
+	# Set the path to the socket and logfile
 	$SocketPath = $DataDir . '/' . $SocketName;
 	$Logfile = $DataDir . '/' . 'daemon.log';
 	# Now try to open our socket. If that fails OpenSocket() will die() for us.
