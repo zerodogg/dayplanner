@@ -84,6 +84,8 @@ my $ConnectionSelector;
 # It can be the string DAYCHANGE, if it isn't then it is assumed to be
 # an int containing the time of which the next event will occur on.
 my $NextEventIs;
+# Var that is true if we are to fork no matter what else we might be told
+my $ForceFork;
 
 # The current log level
 my $LogLevel = 5;
@@ -561,7 +563,10 @@ sub InitDaemon
 {
 	DaemonLog(5,'Initializing');
 	# First find the conf dir
-	$DataDir = DetectConfDir();
+	if(not $DataDir)
+	{
+		$DataDir = DetectConfDir();
+	}
 	$SocketPath = $DataDir . '/' . $SocketName;
 	$Logfile = $DataDir . '/' . 'daemon.log';
 	# Now try to open our socket. If that fails OpenSocket() will die() for us.
@@ -594,17 +599,17 @@ GetOptions (
 #	'verbose|v' => \$OutputVerbose,
 	'v|verbose+' => \$LogLevel,
 #	'n|nofork' => \$NoFork,
-#	'f|force-fork' => \$ForceFork,
+	'f|force-fork' => \$ForceFork,
 	#'o|output=s' => \$Logfile,
-#	'dayplannerdir|d=s' => sub {
-#		unless (-e $_[1]) {
-#			die "$_[1] does not exist\n";
-#		}
-#		unless (-w $_[1]) {
-#			die "I can't write to $_[1]\n";
-#		}
-#		$DayplannerDir = $_[1];
-#	},
+	'dayplannerdir|d=s' => sub {
+		unless (-e $_[1]) {
+			die "$_[1] does not exist\n";
+		}
+		unless (-w $_[1]) {
+			die "I can't write to $_[1]\n";
+		}
+		$DataDir = $_[1];
+	},
 	'socketname|s=s' => sub {
 		if ($_[1] =~ m#/#) {
 			die "The --socketname can't contain a /\n";
