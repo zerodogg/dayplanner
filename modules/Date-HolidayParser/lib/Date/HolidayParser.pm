@@ -722,27 +722,17 @@ sub exists {
 
 sub set_prodid { }
 
-# The following three functions are from DP::iCalendar
-#
-# Included here so that Date::HolidayParser can be used alone.
+# The following three functions are originally from DP::iCalendar
 
 # Purpose: Generate an iCalendar date-time from multiple values
 # Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
 sub iCal_GenDateTime {
+	# NOTE: This version ignores $Time because it isn't used in HolidayParser
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
 	my $iCalMonth = _AppendZero($Month);
 	my $iCalDay = _AppendZero($Day);
-	if($Time) {
-		# Get the time
-		my $Hour = $Time;
-		my $Minute = $Time;
-		$Hour =~ s/^(\d+):\d+$/$1/;
-		$Minute =~ s/^\d+:(\d+)$/$1/;
-		return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
-	} else {
-		return("$Year$iCalMonth$iCalDay");
-	}
+	return("$Year$iCalMonth$iCalDay");
 }
 
 # Purpose: Generate an iCalendar date-time string from a UNIX time string
