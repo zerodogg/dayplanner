@@ -1038,6 +1038,7 @@ sub UpgradeVersion {
 	if(-e $HolidayFile) {
 		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
 		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
+			runtime_use('Digest::MD5 qw(md5_base64 md5_hex)');
 			my %UpgradeInfo;
 			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
 			ProgressMade(2, $Total, $ProgressWin) if($Gtk2Init);
