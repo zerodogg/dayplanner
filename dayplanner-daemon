@@ -16,9 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # TODO:
-# - Make changes to notifier to use the calendar and not attempt to
-#   fetch things from the daemon.
-# - Change dayplanner to use the simplified API
 # - Simplify the comander
 
 use strict;
@@ -93,6 +90,9 @@ my $ConnectionSelector;
 my $NextEventIs;
 # Var that is true if we are to fork no matter what else we might be told
 my $ForceFork;
+# Var that is true if we are not to fork nor log anything (all to STDOUT).
+# ForceFork overrides it.
+my $NoFork;
 
 # The current log level
 my $LogLevel = 5;
@@ -214,6 +214,7 @@ sub DetectConfDir {
 # Usage: WriteDaemonState();
 sub WriteDaemonState
 {
+	DaemonLog(5,'Writing daemon state to '.$DataDir . '/daemon_state.conf');
 	my %Explenations = (
 		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually",
 		HasNotified => 'This is a list of UIDs that has already been notified',
@@ -221,9 +222,10 @@ sub WriteDaemonState
 	);
 	if(not OnSameDate(time()),$DaemonState{LastWritten})
 	{
+		DaemonLog(5,'HasNotified= was not from today. Replacing with an empty string');
 		$DaemonState{HasNotified} = '';
 	}
-	$DaemonState{LastWritten} = gmtime();
+	$DaemonState{LastWritten} = time();
 	WriteConfigFile($DataDir . '/daemon_state.conf',\%DaemonState, \%Explenations);
 }
 
@@ -233,6 +235,7 @@ sub LoadDaemonState
 {
 	if(-e $DataDir . '/daemon_state.conf')
 	{
+		DaemonLog(5,'Loading daemon state from '.$DataDir . '/daemon_state.conf');
 		LoadConfigFile($DataDir . '/daemon_state.conf', \%DaemonState, undef, 0);
 		WriteDaemonState();
 	} 
@@ -246,6 +249,14 @@ sub LoadDaemonState
 # Usage: PrintHelp("-shortoption","--longoption","Description");
 sub PrintHelp {
 	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+}
+
+# Purpose: system() replacement that logs the command run
+# Usage: loggingSystem(SAME_AS_system());
+sub loggingSystem
+{
+	DaemonLog(5,join(' ',@_));
+	return(system(@_));
 }
 
 # ----
@@ -288,7 +299,7 @@ sub LoadData
 	else
 	{
 		$iCalendar = new DP::iCalendar($DataDir.'/'.$CalendarFile);
-		DaemonLog(5,'Data loaded');
+		DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
 	}
 }
 
@@ -511,7 +522,7 @@ sub StartNotifier
 	{
 		if ( -x $_.'/'.$NotifierName)
 		{
-			if(system($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
+			if(loggingSystem($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
 			{
 				return(true);
 			}
@@ -635,7 +646,10 @@ sub InitDaemon
 	# Now try to open our socket. If that fails OpenSocket() will die() for us.
 	OpenSocket();
 	# Then go into daemon mode (FIXME: should verify that we are suppose to go into daemon mode)
-	Daemonize();
+	if ($ForceFork or not $NoFork)
+	{
+		Daemonize();
+	}
 	# Load our data
 	LoadData();
 	# Calculate notifications
@@ -659,6 +673,7 @@ GetOptions (
 	},
 	'v|verbose+' => \$LogLevel,
 	'f|force-fork' => \$ForceFork,
+	'n|nofork' => \$NoFork,
 	'dayplannerdir|d=s' => sub {
 		unless (-e $_[1]) {
 			die "$_[1] does not exist\n";
