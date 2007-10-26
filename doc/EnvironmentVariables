@@ -32,4 +32,8 @@ DP_HTTP_FORCEUSEOF
 			The LWP backend is recommended if available.
 			If not set then it will be autodetected.
 
+DP_NO_STRICT_PERMS
+			Forces Day Planner not to enforce 0600 mode on the
+			calendar file if set to 1.
+
 vim: set tw=70 autoindent :
