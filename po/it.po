@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Day Planner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-08-12 16:07+0200\n"
+"POT-Creation-Date: 2007-10-26 12:56+0200\n"
 "PO-Revision-Date: 2007-07-13 16:47+0100\n"
 "Last-Translator: Sandro Sigala <sandro@sigala.it>\n"
 "Language-Team: Sandro Sigala <sandro@sigala.it>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: dayplanner:258
+#: dayplanner:240
 msgid "An error ocurred while uploading the data"
 msgstr "C'è stato un errore durante l'upload dei dati"
 
-#: dayplanner:260
+#: dayplanner:242
 msgid ""
 "Your account has expired. If you are using a paid service this may be "
 "because you have not paid for the current period. If not, you should contact "
@@ -32,7 +32,7 @@ msgstr ""
 "essere che tu non abbia pagato per il periodo corrente. Altrimenti dovresti "
 "contattare il tuo service provider per avere maggiori informazioni."
 
-#: dayplanner:263
+#: dayplanner:245
 msgid ""
 "The server did not accept the uploaded data and replied with an unknown "
 "value: %(value)"
@@ -40,7 +40,7 @@ msgstr ""
 "Il server non ha accettato i dati forniti ed ha risposto con un valore "
 "sconosciuto: %(value)"
 
-#: dayplanner:296
+#: dayplanner:278
 msgid ""
 "The data became corrupted during download. You may want to attempt to "
 "synchronize again."
@@ -48,13 +48,13 @@ msgstr ""
 "I dati sono divenuti corrotti durante il download. Potresti tentare di nuovo "
 "la sincronizzazione."
 
-#: dayplanner:330 dayplanner:350 dayplanner:352 dayplanner:354 dayplanner:362
-#: dayplanner:364 dayplanner:366 dayplanner:375 dayplanner:377 dayplanner:379
-#: dayplanner:381
+#: dayplanner:312 dayplanner:332 dayplanner:334 dayplanner:336 dayplanner:344
+#: dayplanner:346 dayplanner:348 dayplanner:357 dayplanner:359 dayplanner:361
+#: dayplanner:363
 msgid "Synchronizing"
 msgstr "Sincronizzazione in corso"
 
-#: dayplanner:415
+#: dayplanner:398
 msgid ""
 "An error occurred with the Day Planner services:\n"
 "\n"
@@ -64,27 +64,27 @@ msgstr ""
 "\n"
 "%(error)"
 
-#: dayplanner:440
+#: dayplanner:423
 msgid "Services"
 msgstr "Servizi"
 
-#: dayplanner:440
+#: dayplanner:423
 msgid "Initializing"
 msgstr "Inizializzazione"
 
-#: dayplanner:448
+#: dayplanner:432
 msgid "Connecting"
 msgstr "Connessione"
 
-#: dayplanner:454
+#: dayplanner:438
 msgid "Connected"
 msgstr "Connesso"
 
-#: dayplanner:461
+#: dayplanner:445
 msgid "Complete"
 msgstr "Completato"
 
-#: dayplanner:475
+#: dayplanner:458
 msgid ""
 "You don't have the IO::Socket:SSL module. This module is required for the "
 "Day Planner services to function. The services will not function until this "
@@ -94,17 +94,17 @@ msgstr ""
 "il funzionamento dei servizi di Day Planner. Questi servizi non "
 "funzioneranno finché questo modulo non verrà installato."
 
-#: dayplanner:530 dayplanner:535 dayplanner:539
+#: dayplanner:497 dayplanner:502 dayplanner:506
 #, perl-format
 msgid "Unable to connect to the Day Planner services server (%s)."
 msgstr "Impossibile connettersi al server servizi Day Planner (%s)."
 
-#: dayplanner:530
+#: dayplanner:497
 #, perl-format
 msgid "You're probably not connected to the internet"
 msgstr "Non sei probabilmente connesso ad internet"
 
-#: dayplanner:535
+#: dayplanner:502
 #, perl-format
 msgid ""
 "The connection was refused by the server. Please verify your Day Planner "
@@ -113,12 +113,12 @@ msgstr ""
 "La connessione è stata rifiutata dal server. Per favore verificare i "
 "parametri dei servizi di Day Planner."
 
-#: dayplanner:535 dayplanner:539
+#: dayplanner:502 dayplanner:506
 #, perl-format
 msgid "If this problem persists, please contact your service provider"
 msgstr "Se questo problema persiste, contattare il proprio service provider"
 
-#: dayplanner:550
+#: dayplanner:517
 msgid ""
 "The Day Planner services server you are connecting to does not support this "
 "version of Day Planner (%(version))."
@@ -126,11 +126,11 @@ msgstr ""
 "Il server dei servizi di Day Panner a cui stai tentando di connetterti non "
 "supporta questa versione di Day Planner (%(version))."
 
-#: dayplanner:554
+#: dayplanner:521
 msgid "The username and/or password is incorrect."
 msgstr "Il nome utente e/o la password non sono corretti."
 
-#: dayplanner:733
+#: dayplanner:702
 msgid ""
 "Unable to create the directory %(directory): %(error)\n"
 "Manually create this directory before closing this dialog."
@@ -138,7 +138,18 @@ msgstr ""
 "Impossibile creare la directory %(directory): %(error)\n"
 "Creare manualmente questa directory prima di chiudere questa finestra."
 
-#: dayplanner:934
+#: dayplanner:912
+msgid ""
+"A fatal error has occurred. Your installation of Day Planner is missing some "
+"files. This makes certain functions in Day Planner unusable. Please re-"
+"install Day Planner. See %(website) for more information on how to download "
+"and re-install Day Planner.\n"
+"Day Planner will continue to run but it is likely to crash.\n"
+"\n"
+"(The missing file was: %(module))"
+msgstr ""
+
+#: dayplanner:927
 msgid ""
 "Another instance of Day Planner appears to be running. Please quit the "
 "currently running instance of Day Planner before continuing\n"
@@ -150,30 +161,37 @@ msgstr ""
 "\n"
 "E' possibile forzare la terminazione dell'altra istanza."
 
+#. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
+#. For instance "Dagsplanleggar" for Norwegian.
+#: dayplanner:928 dayplanner:1910 dayplanner:2646 dayplanner:2660
+#: dayplanner:2695 dayplanner:2711 dayplanner:4136 dayplanner:4591
+msgid "Day Planner"
+msgstr "Day Planner"
+
 #. TRANSLATORS: As in force another running Day Planner instance to quit
-#: dayplanner:938
+#: dayplanner:932
 msgid "_Force"
 msgstr "_Forza"
 
-#: dayplanner:1028
+#: dayplanner:1022
 msgid "%(name) was born"
 msgstr "Compleanno di %(name)"
 
-#: dayplanner:1032
+#: dayplanner:1026
 msgid "%(name)'s birthday (%(year) years old)"
 msgstr "Compleanno di %(name) (%(year) anni)"
 
-#: dayplanner:1036 dayplanner:1115 dayplanner:2107 dayplanner:4418
+#: dayplanner:1030 dayplanner:1111 dayplanner:1679 dayplanner:4021
 msgid "%(name)'s birthday"
 msgstr "Compleanno di %(name)"
 
 #. TRANSLATORS: This string is used when there is some issue getting the description
 #. of an event. It is rarely used but kept just in case.
-#: dayplanner:1046
+#: dayplanner:1040
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: dayplanner:1054
+#: dayplanner:1048
 msgid "Upgrading"
 msgstr "Aggiornamento"
 
@@ -182,7 +200,7 @@ msgstr "Aggiornamento"
 #. I am aware of the fact that it may not apply everywhere, but it's
 #. about as close as it gets, and users running GNOME 2.13 and later or
 #. not running GNOME at all will not see this.
-#: dayplanner:1474
+#: dayplanner:1473
 msgid ""
 "A problem occurred while setting up automatic startup of the Day Planner "
 "reminder.\n"
@@ -199,7 +217,7 @@ msgstr ""
 "Impostare \"dayplanner-daemon\" nel campo \"Comando di avvio\"  e premere il "
 "pulsante \"OK\"."
 
-#: dayplanner:1485
+#: dayplanner:1484
 msgid ""
 "Disabling automatic startup of the reminder will prevent notifications "
 "unless Day Planner has been manually started. Disable automatic startup?"
@@ -208,119 +226,51 @@ msgstr ""
 "notifiche a meno che Day Planner venga avviato manualmente. Disabilitare "
 "l'avvio automatico?"
 
-#: dayplanner:1648
-msgid "Day Planner for %(date)"
-msgstr "Day Planner per %(date)"
-
-#: dayplanner:1705
-msgid "Tools"
-msgstr "Strumenti"
-
-#: dayplanner:1705
-msgid "Change to another year"
-msgstr "Scegli un altro anno"
-
-#: dayplanner:1705
-msgid "current: %(year)"
-msgstr "corrente: %(year)"
-
-#: dayplanner:1706
-msgid "Months"
-msgstr "Mesi"
-
-#: dayplanner:1727
-msgid "Generated by"
-msgstr "Generato da"
-
-#. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
-#. For instance "Dagsplanleggar" for Norwegian.
-#: dayplanner:1727 dayplanner:2338 dayplanner:4533 dayplanner:4986
-msgid "Day Planner"
-msgstr "Day Planner"
-
-#: dayplanner:1727
-msgid "version"
-msgstr "versione"
-
-#: dayplanner:1739 dayplanner:1806 dayplanner:1875 dayplanner:1889
-#: dayplanner:1907
-msgid "Unable to open %(file) for writing: %(error)"
-msgstr "Impossibile aprire %(file) in scrittura: %(error)"
-
-#. TRANSLATORS: This is followed by the time of an event
-#: dayplanner:1745 dayplanner:4946
-msgid "Time"
-msgstr "Ora"
-
-#: dayplanner:1745
-msgid "Description"
-msgstr "Descrizione"
-
-#: dayplanner:1817
-msgid "There are no events this month"
-msgstr "Non ci sono altri eventi questo mese"
-
-#: dayplanner:1827
-msgid "Special days this month:"
-msgstr "Giorni speciali questo mese:"
-
-#: dayplanner:1879
-msgid "Select the month to view in the list above"
-msgstr "Selezionare il mese da visualizzare nella lista sopra"
-
-#: dayplanner:1893
-msgid "Select the year to view:"
-msgstr "Selezionare l'anno da visualizzare:"
-
-#: dayplanner:1942 dayplanner:2013
-msgid "Unable to create the directory %(dir): %(error)"
-msgstr "Impossibile creare la directory %(dir): %(error)"
-
-#: dayplanner:2196 dayplanner:2338 dayplanner:2345
+#: dayplanner:1768 dayplanner:1910 dayplanner:1917
 msgid "Import data"
 msgstr "Importa dati"
 
-#: dayplanner:2208
+#: dayplanner:1780
 msgid "Import data from:"
 msgstr "Importa dati da:"
 
-#: dayplanner:2214
+#: dayplanner:1786
 msgid "A file"
 msgstr "Un file"
 
-#: dayplanner:2215
+#: dayplanner:1787
 msgid "Other applications"
 msgstr "Altra applicazione"
 
-#: dayplanner:2253
+#: dayplanner:1825
 msgid "Import data from a file"
 msgstr "Importa dati da un file"
 
-#: dayplanner:2254
+#: dayplanner:1826
 msgid "Import data from various other applications"
 msgstr "Importa dati da altre varie applicazioni"
 
-#: dayplanner:2255
+#: dayplanner:1827
 msgid "Cancel importing and return to Day Planner"
 msgstr "Annulla importazione e ritorna a Day Planner"
 
-#: dayplanner:2256
+#: dayplanner:1828
 msgid "Continue"
 msgstr "Continua"
 
-#: dayplanner:2271 dayplanner:2454
+#: dayplanner:1843 dayplanner:2026
 msgid "Preparing"
 msgstr "Preparazione"
 
-#: dayplanner:2271
+#: dayplanner:1843
 msgid "Preparing to import"
 msgstr "Preparazione all'importazione"
 
-#: dayplanner:2322
+#: dayplanner:1894
 msgid "Could not detect data from any application to import."
 msgstr "Non è stato possibile identificare dei dati da importare."
 
-#: dayplanner:2355
+#: dayplanner:1927
 msgid ""
 "Welcome to Day Planner.\n"
 "\n"
@@ -336,40 +286,40 @@ msgstr ""
 "premi OK per continuare, premere Annulla non si vuole\n"
 "importare alcun dato."
 
-#: dayplanner:2355
+#: dayplanner:1927
 msgid "Which application(s) do you want to import data from?"
 msgstr "Da quali applicazioni si vuole importare i dati?"
 
-#: dayplanner:2454
+#: dayplanner:2026
 msgid "Importing..."
 msgstr "Importazione..."
 
-#: dayplanner:2525
+#: dayplanner:2097
 msgid "Done"
 msgstr "Fatto"
 
-#: dayplanner:2548
+#: dayplanner:2120
 msgid "All supported file formats"
 msgstr "Tutti i formati di file supportati"
 
-#: dayplanner:2567
+#: dayplanner:2139
 msgid "Export data"
 msgstr "Esporta dati"
 
-#: dayplanner:2570
+#: dayplanner:2142
 msgid "My_dayplanner"
 msgstr "Il_mio_dayplanner"
 
-#: dayplanner:2592
+#: dayplanner:2164
 msgid "Save as filetype:"
 msgstr "Salva come:"
 
 #. TRANSLATORS: Selects where to export to
-#: dayplanner:2600
+#: dayplanner:2172
 msgid "XHTML (exports to a directory)"
 msgstr "XHTML (esporta ad una directory)"
 
-#: dayplanner:2657
+#: dayplanner:2229
 msgid ""
 "There are already files in the directory \"%(dir)\". If you continue any "
 "existing exported Day Planner data in that directory will be overwritten. Do "
@@ -379,78 +329,78 @@ msgstr ""
 "qualsiasi dato Day Planner precedentemente esportato in quella directory "
 "verrà sovrascritto. Si intende continuare?"
 
-#: dayplanner:2666
+#: dayplanner:2238
 msgid "\"%(file)\" already exists and is not a directory"
 msgstr "\"%(file)\" esiste già e non è una directory"
 
-#: dayplanner:2675
+#: dayplanner:2248
 msgid "\"%(dir)\" is read only. Write permissions are required."
 msgstr "\"%(dir)\" è in sola lettura. Sono richiesti permessi di scrittura."
 
-#: dayplanner:2680
+#: dayplanner:2253
 msgid "\"%(dir)\" is a directory."
 msgstr "\"%(dir)\" è una directory."
 
-#: dayplanner:2682
+#: dayplanner:2255
 msgid "\"%(file)\" already exists. Overwrite?"
 msgstr "\"%(file)\" esiste già. Sovrascrivere?"
 
-#: dayplanner:2814
+#: dayplanner:2387
 msgid "Sunday"
 msgstr "Domenica"
 
-#: dayplanner:2815
+#: dayplanner:2388
 msgid "Monday"
 msgstr "Lunedì"
 
-#: dayplanner:2816
+#: dayplanner:2389
 msgid "Tuesday"
 msgstr "Martedì"
 
-#: dayplanner:2817
+#: dayplanner:2390
 msgid "Wednesday"
 msgstr "Mercoledì"
 
-#: dayplanner:2818
+#: dayplanner:2391
 msgid "Thursday"
 msgstr "Giovedì"
 
-#: dayplanner:2819
+#: dayplanner:2392
 msgid "Friday"
 msgstr "Venerdì"
 
-#: dayplanner:2820
+#: dayplanner:2393
 msgid "Saturday"
 msgstr "Sabato"
 
-#: dayplanner:2855
+#: dayplanner:2428
 msgid "Tomorrow"
 msgstr "Domani"
 
 #. TRANSLATORS: String used in the list of upcoming events in the
 #. lower right hand corner of the UI. You should
 #. probably keep this short.
-#: dayplanner:2879
+#: dayplanner:2452
 msgid "At %(time)"
 msgstr "Alle %(time)"
 
 #. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
 #. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
-#: dayplanner:2887 dayplanner:2958
+#: dayplanner:2460 dayplanner:2531
 msgid "(nothing)"
 msgstr "(nessun evento)"
 
-#: dayplanner:2895
+#: dayplanner:2468
 msgid "No upcoming events exist for the next seven days"
 msgstr "Non esiste nessun evento imminente per i prossimi sette giorni"
 
 #. TRANSLATORS: This is used to bind together a list. It is a list of days
 #. such as: Friday, Saturday *and* Sunday.
-#: dayplanner:2950 dayplanner:2953
+#: dayplanner:2523 dayplanner:2526
 msgid "and"
 msgstr "e"
 
-#: dayplanner:3019 dayplanner:4075
+#: dayplanner:2592 dayplanner:3678
 #, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -461,218 +411,218 @@ msgstr ""
 "modificato direttamente in Day Planner. Per modificare questi eventi "
 "utilizzare un editor di testo e modificare il file %s."
 
-#: dayplanner:3151
+#: dayplanner:2728
 msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr ""
 "Non è stato possibile salvare alcuni file correttamente. Terminare comunque?"
 
-#: dayplanner:3215 dayplanner:3224 dayplanner:3453 dayplanner:3462
+#: dayplanner:2808 dayplanner:2817 dayplanner:3056 dayplanner:3065
 msgid "Show advanced settings"
 msgstr "Mostra impostazioni avanzate"
 
-#: dayplanner:3222 dayplanner:3460
+#: dayplanner:2815 dayplanner:3063
 msgid "Hide advanced settings"
 msgstr "Nascondi impostazioni avanzate"
 
-#: dayplanner:3347
+#: dayplanner:2940
 msgid "Calendar"
 msgstr "Calendario"
 
-#: dayplanner:3475
+#: dayplanner:3078
 msgid "Repeat event every:"
 msgstr "Ripeti evento ogni:"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3482
+#: dayplanner:3085
 msgid "day"
 msgstr "giorno"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3484
+#: dayplanner:3087
 msgid "week"
 msgstr "settimana"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3486
+#: dayplanner:3089
 msgid "month"
 msgstr "mese"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3488
+#: dayplanner:3091
 msgid "year"
 msgstr "anno"
 
 #. TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
-#: dayplanner:3514
+#: dayplanner:3117
 msgid "Until:"
 msgstr "Fino a:"
 
 #. TRANSLATORS: Don't recur the event on the dates specified next to this string
-#: dayplanner:3549
+#: dayplanner:3152
 msgid "But not on:"
 msgstr "Ma non:"
 
-#: dayplanner:3619
+#: dayplanner:3222
 msgid "Detailed description"
 msgstr "Descrizione dettagliata"
 
-#: dayplanner:3929
+#: dayplanner:3532
 msgid "Add an Event"
 msgstr "Aggiungi un Evento"
 
-#: dayplanner:3935
+#: dayplanner:3538
 msgid "Event type:"
 msgstr "Tipo evento:"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3941
+#: dayplanner:3544
 msgid "Normal"
 msgstr "Normale"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3943
+#: dayplanner:3546
 msgid "All day"
 msgstr "Tutto il giorno"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3945
+#: dayplanner:3548
 msgid "Birthday"
 msgstr "Compleanno"
 
-#: dayplanner:3953
+#: dayplanner:3556
 msgid "Add this event"
 msgstr "Aggiungi questo evento"
 
-#: dayplanner:3954
+#: dayplanner:3557
 msgid "Discard this event"
 msgstr "Abbandona questo evento"
 
-#: dayplanner:4044
+#: dayplanner:3647
 msgid "Editing an event"
 msgstr "Modifica evento"
 
-#: dayplanner:4057
+#: dayplanner:3660
 msgid "Editing a birthday"
 msgstr "Modifica compleanno"
 
-#: dayplanner:4070
+#: dayplanner:3673
 msgid "Editing an all day event"
 msgstr "Modifica "
 
-#: dayplanner:4084
+#: dayplanner:3687
 msgid "Discard changes"
 msgstr "Abbandona modifiche"
 
-#: dayplanner:4085
+#: dayplanner:3688
 msgid "Accept changes"
 msgstr "Accetta modifiche"
 
-#: dayplanner:4145
+#: dayplanner:3748
 msgid "Time:"
 msgstr "Ora:"
 
-#: dayplanner:4155 dayplanner:4322
+#: dayplanner:3758 dayplanner:3925
 msgid "Date:"
 msgstr "Data:"
 
-#: dayplanner:4164 dayplanner:4331
+#: dayplanner:3767 dayplanner:3934
 msgid "Description:"
 msgstr "Descrizione:"
 
-#: dayplanner:4176 dayplanner:4343
+#: dayplanner:3779 dayplanner:3946
 msgid "Enter a description of the event here"
 msgstr "Inserire qui una descrizione dell'evento:"
 
-#: dayplanner:4235 dayplanner:4400
+#: dayplanner:3838 dayplanner:4003
 msgid "There is no description of this event. Please enter a description."
 msgstr "Non esiste una descrizione dell'evento. Per favore inserirla."
 
-#: dayplanner:4239 dayplanner:4404
+#: dayplanner:3842 dayplanner:4007
 msgid "The date you have entered is invalid."
 msgstr "La data specificata non è valida."
 
-#: dayplanner:4351
+#: dayplanner:3954
 msgid "Additional information"
 msgstr "Informazioni addizionali"
 
-#: dayplanner:4478
+#: dayplanner:4081
 msgid "Born:"
 msgstr "Nato:"
 
 #. TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
-#: dayplanner:4488
+#: dayplanner:4091
 msgid "Name:"
 msgstr "Nome:"
 
-#: dayplanner:4501
+#: dayplanner:4104
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Inserire il nome della persona della quale qui vi è il compleanno"
 
-#: dayplanner:4544 dayplanner:4545
+#: dayplanner:4147 dayplanner:4148
 msgid "THE NAMES OF THE TRANSLATORS"
 msgstr "I NOMI DEI TRADUTTORI"
 
-#: dayplanner:4590
+#: dayplanner:4193
 msgid "Reminders"
 msgstr "Promemoria"
 
-#: dayplanner:4623
+#: dayplanner:4226
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "Avvia il promemoria di Day Planner automaticamente quando mi connetto"
 
-#: dayplanner:4639
+#: dayplanner:4242
 msgid "When an event is coming up, remind me:"
 msgstr "Quando un evento è prossimo, ricordamelo:"
 
-#: dayplanner:4646
+#: dayplanner:4249
 msgid "One day in advance"
 msgstr "Un giorno in anticipo"
 
-#: dayplanner:4668 dayplanner:4669 dayplanner:4670 dayplanner:4671
+#: dayplanner:4271 dayplanner:4272 dayplanner:4273 dayplanner:4274
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minuti"
 
-#: dayplanner:4672
+#: dayplanner:4275
 #, perl-format
 msgid "%s hour"
 msgstr "%s ora"
 
-#: dayplanner:4673 dayplanner:4674 dayplanner:4675
+#: dayplanner:4276 dayplanner:4277 dayplanner:4278
 #, perl-format
 msgid "%s hours"
 msgstr "%s ore"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4691
+#: dayplanner:4294
 msgid "before the event time"
 msgstr "prima dell'evento"
 
-#: dayplanner:4731
+#: dayplanner:4334
 msgid "Synchronization"
 msgstr "Sincronizzazione"
 
-#: dayplanner:4738
+#: dayplanner:4341
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr "Sincronizza automaticamente una copia online di questo calendario"
 
-#: dayplanner:4769
+#: dayplanner:4372
 msgid "Server:"
 msgstr "Server:"
 
-#: dayplanner:4782
+#: dayplanner:4385
 msgid "Port:"
 msgstr "Porta:"
 
-#: dayplanner:4799
+#: dayplanner:4402
 msgid "Username:"
 msgstr "Nome utente:"
 
-#: dayplanner:4811
+#: dayplanner:4414
 msgid "Password:"
 msgstr "Password:"
 
-#: dayplanner:4848
+#: dayplanner:4451
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
@@ -680,48 +630,57 @@ msgstr ""
 "Non sono state inserite le informazioni richieste per l'abilitazione della "
 "sincronizzazione: è stata quindi disabilitata."
 
-#: dayplanner:4947
+#. TRANSLATORS: This is followed by the time of an event
+#: dayplanner:4551
+msgid "Time"
+msgstr "Ora"
+
+#: dayplanner:4552
 msgid "Event"
 msgstr "Evento"
 
-#: dayplanner:5030 dayplanner:5031 dayplanner:5032 dayplanner:5033
-#: dayplanner:5034
+#: dayplanner:4636 dayplanner:4637 dayplanner:4638 dayplanner:4639
+#: dayplanner:4640
 msgid "_Calendar"
 msgstr "_Calendario"
 
-#: dayplanner:5031
+#: dayplanner:4637
 msgid "_Import..."
 msgstr "_Importa..."
 
-#: dayplanner:5032
+#: dayplanner:4638
 msgid "_Export..."
 msgstr "_Esporta..."
 
-#: dayplanner:5037
+#: dayplanner:4643
 msgid "_Add an Event..."
 msgstr "_Aggiungi un evento..."
 
-#: dayplanner:5038 dayplanner:5059
+#: dayplanner:4644 dayplanner:4666
 msgid "_Edit This Event..."
 msgstr "_Modifica questo evento..."
 
-#: dayplanner:5039 dayplanner:5063
+#: dayplanner:4645 dayplanner:4670
 msgid "_Delete this event..."
 msgstr "_Elimina questo evento..."
 
-#: dayplanner:5159 dayplanner:5160
+#: dayplanner:4650
+msgid "_Report a bug"
+msgstr ""
+
+#: dayplanner:4766 dayplanner:4767
 msgid "Delete the selected event"
 msgstr "Elimina l'evento selezionato"
 
-#: dayplanner:5167 dayplanner:5168
+#: dayplanner:4774 dayplanner:4775
 msgid "Edit the selected event"
 msgstr "Modifica l'evento selezionato"
 
-#: dayplanner:5178 dayplanner:5179
+#: dayplanner:4785 dayplanner:4786
 msgid "Add a new event"
 msgstr "Aggiungi un nuovo evento"
 
-#: dayplanner:5306 dayplanner:5308
+#: dayplanner:4920 dayplanner:4922
 msgid ""
 "The home directory of the user %(user) doesn't exist at %(path)! Please "
 "verify that the environment variable %(VAR) is properly set. Unable to "
@@ -731,19 +690,19 @@ msgstr ""
 "la variabile d'ambiente %(VAR) sia settata correttamente. Impossibile "
 "continuare\n"
 
-#: dayplanner:5314 dayplanner:5315
+#: dayplanner:4928 dayplanner:4929
 msgid "The environment variable %(VAR) is not set! Unable to continue\n"
 msgstr "La variabile d'ambiente %(VAR) non è settata! Impossibile continuare\n"
 
-#: dayplanner-notifier:222 dayplanner-notifier:231
+#: dayplanner-notifier:84 dayplanner-notifier:93
 msgid "Show details"
 msgstr "Mostra dettagli"
 
-#: dayplanner-notifier:229
+#: dayplanner-notifier:91
 msgid "Hide details"
 msgstr "Nascondi dettagli"
 
-#: dayplanner-notifier:302 dayplanner-notifier:404
+#: dayplanner-notifier:208 dayplanner-notifier:310
 msgid ""
 "Today at %(time):\n"
 "%(event_description)"
@@ -751,7 +710,7 @@ msgstr ""
 "Oggi alle %(time):\n"
 "%(event_description)"
 
-#: dayplanner-notifier:304 dayplanner-notifier:406
+#: dayplanner-notifier:210 dayplanner-notifier:312
 msgid ""
 "Tomorrow at %(time):\n"
 "%(event_description)"
@@ -759,7 +718,7 @@ msgstr ""
 "Domani alle %(time):\n"
 "%(event_description)"
 
-#: dayplanner-notifier:306 dayplanner-notifier:408
+#: dayplanner-notifier:212 dayplanner-notifier:314
 msgid ""
 "At %(time) on %(date):\n"
 "%(event_description)"
@@ -767,17 +726,59 @@ msgstr ""
 "Alle %(time) il %(date):\n"
 "%(event_description)"
 
-#: dayplanner-notifier:325
+#: dayplanner-notifier:231
 msgid "Day Planner event"
 msgstr "Evento Day Planner"
 
-#: dayplanner-notifier:336
+#: dayplanner-notifier:242
 msgid "Remind me later"
 msgstr "Ricordamelo dopo"
 
-#: dayplanner-notifier:343
+#: dayplanner-notifier:249
 msgid "Postpone this notification for 10 minutes"
 msgstr "Differisce questa notifica di 10 minuti"
+
+#~ msgid "Day Planner for %(date)"
+#~ msgstr "Day Planner per %(date)"
+
+#~ msgid "Tools"
+#~ msgstr "Strumenti"
+
+#~ msgid "Change to another year"
+#~ msgstr "Scegli un altro anno"
+
+#~ msgid "current: %(year)"
+#~ msgstr "corrente: %(year)"
+
+#~ msgid "Months"
+#~ msgstr "Mesi"
+
+#~ msgid "Generated by"
+#~ msgstr "Generato da"
+
+#~ msgid "version"
+#~ msgstr "versione"
+
+#~ msgid "Unable to open %(file) for writing: %(error)"
+#~ msgstr "Impossibile aprire %(file) in scrittura: %(error)"
+
+#~ msgid "Description"
+#~ msgstr "Descrizione"
+
+#~ msgid "There are no events this month"
+#~ msgstr "Non ci sono altri eventi questo mese"
+
+#~ msgid "Special days this month:"
+#~ msgstr "Giorni speciali questo mese:"
+
+#~ msgid "Select the month to view in the list above"
+#~ msgstr "Selezionare il mese da visualizzare nella lista sopra"
+
+#~ msgid "Select the year to view:"
+#~ msgstr "Selezionare l'anno da visualizzare:"
+
+#~ msgid "Unable to create the directory %(dir): %(error)"
+#~ msgstr "Impossibile creare la directory %(dir): %(error)"
 
 #~ msgid "January"
 #~ msgstr "Gennaio"
