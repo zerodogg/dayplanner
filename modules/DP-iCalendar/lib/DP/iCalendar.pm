@@ -259,6 +259,7 @@ sub write {
 		};
 		print $TARGET $iCalendar;
 		close($TARGET);
+		chmod($self->{FILEPERMS},$file);
 		return(TRUE);
 	} else {
 		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
@@ -616,6 +617,14 @@ sub set_prodid {
 	return(TRUE);
 }
 
+# Purpose: Set the file permission
+# Usage: $object->set_file_perms(PERM);
+sub set_file_perms
+{
+	my $self = shift;
+	$self->{FILEPERMS} = shift;
+}
+
 # - Public methods for use by DP::iCalendar::Manager
 
 # Purpose: Return manager information
@@ -737,6 +746,9 @@ sub _NewObj {
 	$self->{OrderedCalendar} = {};
 	$self->{AlreadyCalculated} = {};
 	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
+	# Default file permissions set during ->write();
+	# Can be overridden by ->set_file_perms();
+	$self->{FILEPERMS} = oct(600);
 	if($File) {
 		$self->{FILETYPE} = 'file';
 		$self->{FILE} = $File;
