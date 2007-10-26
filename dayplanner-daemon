@@ -147,6 +147,43 @@ sub DaemonLog
 	print "\n";
 }
 
+# Purpose: Parse the configuration option set in Events_NotifyPre
+# Usage: $seconds = ParseNotifyPre($Events_NotifyPre);
+sub ParseNotifyPre {
+	my $Events_NotifyPre = shift;
+
+	my $Number = $Events_NotifyPre;
+	my $Type = $Events_NotifyPre;
+	my $Total = 0;
+	$Number =~ s/^(\d+).*$/$1/;
+	if ($Number =~ /\D/)
+	{
+		DaemonLog(0,'The Events_NotifyPre configuration option is invalid, I was unable to parse it. Pre-event notifications won\'t work!');
+		DaemonLog(4,'Unable to parse number: '.$Number);
+		return($Total);
+	}
+	$Type =~ s/^\d+//;
+	$Type =~ s/s$//;
+	if($Type eq 'hr')
+	{
+		$Total = $Number * 60 * 60;
+	} 
+	elsif($Type eq 'min')
+	{
+		if ($Number < 60)
+		{
+			$Total = $Number * 60;
+		}
+		else
+		{
+			DaemonLog(0,'The Events_NotifyPre configuration option is invalid, I was unable to parse it. Pre-event notifications won\'t work!');
+			DaemonLog(4,'Unable to parse number: '.$Number);
+		}
+	}
+	DaemonLog(4,'ParseNotifyPre: '.$Total);
+	return($Total);
+}
+
 # Purpose: The same as localtime(TIME?); but returns proper years and months
 # Usage: my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(TIME);
 #  TIME is optional. If not present then the builtin time function is called.
@@ -243,6 +280,17 @@ sub LoadDaemonState
 	{
 		WriteDaemonState();
 	}
+}
+
+# Purpose: Load the pre-notification values
+# Usage: LoadDPConfig();
+sub LoadDPConfig
+{
+	my %Config;
+	LoadConfigFile($DataDir . '/dayplanner.conf',\%Config,undef,false);
+	$PreNotValues{PreNotSeconds} = ParseNotifyPre($Config{Events_NotifyPre});
+	$PreNotValues{PreNotDay} = $Config{Events_DayNotify};
+	DaemonLog(4,"PreNotDay = $PreNotValues{PreNotDay} and PreNotSeconds = $PreNotValues{PreNotSeconds}");
 }
 
 # Purpose: Print nicely formatted help output
@@ -471,7 +519,7 @@ sub CommandHandler
 	}
 	elsif(/^RELOAD_CONFIG/)
 	{
-		LoadConfig();
+		LoadDPConfig();
 		return('done');
 	}
 	elsif(/^SHUTDOWN/)
@@ -652,6 +700,8 @@ sub InitDaemon
 	}
 	# Load our data
 	LoadData();
+	# Load the Day Planner config
+	LoadDPConfig();
 	# Calculate notifications
 	CalculateNotifications();
 	# Load the previous state information
