@@ -6,8 +6,10 @@ Version 0.8 (Unreleased)
 * Client (dayplanner)
 - Cleanups
 - Added DP::iCalendar::Manager - supports multiple iCalendar sources
+- Enforces much stricter file permissions on files
 
 * Notifier (dayplanner-notifier)
+- Major parts have been rewritten
 
 * Daemon (dayplanner-daemon)
 - Completely rewritten from the ground up
