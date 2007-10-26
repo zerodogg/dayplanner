@@ -57,6 +57,11 @@ my %PreNotValues = (
 	PreNotSeconds => undef,
 	PreNotDay => 1,
 );
+# Hash containing state information
+my %DaemonState = (
+	HasNotified => '',
+	LastWritten => '',
+);
 
 # The path to us
 my $Self = $0;
@@ -115,11 +120,11 @@ sub DaemonLog
 	my $MsgPrefix;
 	if($Level == 0 or $Level == 1)
 	{
-		$MsgPrefix = 'Error: ';
+		$MsgPrefix = 'Error:        ';
 	}
 	elsif($Level == 2)
 	{
-		$MsgPrefix = 'Warning: ';
+		$MsgPrefix = 'Warning:      ';
 	}
 	elsif($Level == 3)
 	{
@@ -127,13 +132,13 @@ sub DaemonLog
 	}
 	elsif($Level == 4)
 	{
-		$MsgPrefix = 'Debug: ';
+		$MsgPrefix = 'Debug:         ';
 	}
 	elsif($Level == 5)
 	{
-		$MsgPrefix = 'Calltrace: ';
+		$MsgPrefix = 'Calltrace:     ';
 	}
-	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = GetDate(time);
+	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = GetDate(time());
 	$lhour = "0$lhour" unless $lhour >= 10;
 	$lmin = "0$lmin" unless $lmin >= 10;
 	$lsec = "0$lsec" unless $lsec >= 10;
@@ -152,6 +157,25 @@ sub GetDate {
 	$curryear += 1900;						# Fix the year format
 	$currmonth++;							# Fix the month format
 	return($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst);
+}
+
+# Purpose: Check if two unixtimes are on the same date
+# Usage: OnSameDate(TIME,TIME);
+# 	Returns bool
+sub OnSameDate
+{
+	my $Time1 = shift;
+	my $Time2 = shift;
+	my ($first_sec,$first_min,$first_hour,$first_mday,$first_mon,$first_year,$first_wday,$first_yday,$first_isdst) = GetDate($Time1);
+	my ($second_sec,$second_min,$second_hour,$second_mday,$second_mon,$second_year,$second_wday,$second_yday,$second_isdst) = GetDate($Time2);
+	if ($first_year eq $second_year and $first_yday eq $second_yday)
+	{
+		return(true);
+	}
+	else
+	{
+		return(false);
+	}
 }
 
 # Purpose: Detect the user config  directory
@@ -186,14 +210,43 @@ sub DetectConfDir {
 	return("$XDG_CONFIG_HOME/dayplanner");
 }
 
+# Purpose: Write the daemon state
+# Usage: WriteDaemonState();
 sub WriteDaemonState
-{DaemonLog(3,'STUB: ' . (caller(0))[3])
+{
+	my %Explenations = (
+		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually",
+		HasNotified => 'This is a list of UIDs that has already been notified',
+		LastWritten => 'The unix time of when this file was last written',
+	);
+	$DaemonState{LastWritten} = mktime(gmtime());
+	if(not OnSameDate(mktime(gmtime(()),$DaemonState{LastWritten})))
+	{
+		$DaemonState{HasNotified} = '';
+	}
+	WriteConfigFile($DataDir . '/daemon_state.conf',\%DaemonState, \%Explenations);
 }
 
+# Purpose: Load the state file
+# Usage: LoadDaemonState();
 sub LoadDaemonState
-{DaemonLog(3,'STUB: ' . (caller(0))[3])
+{
+	if(-e $DataDir . '/daemon_state.conf')
+	{
+		LoadConfigFile($DataDir . '/daemon_state.conf', \%DaemonState, undef, 0);
+		WriteDaemonState();
+	} 
+	else
+	{
+		WriteDaemonState();
+	}
 }
 
+# Purpose: Print nicely formatted help output
+# Usage: PrintHelp("-shortoption","--longoption","Description");
+sub PrintHelp {
+	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+}
 
 # ----
 # CALENDAR/CALCULATION FUNCTIONS
@@ -403,10 +456,12 @@ sub CommandHandler
 	if(/^RELOAD_DATA/)
 	{
 		LoadData();
+		return('done');
 	}
 	elsif(/^RELOAD_CONFIG/)
 	{
 		LoadConfig();
+		return('done');
 	}
 	elsif(/^SHUTDOWN/)
 	{
@@ -421,7 +476,7 @@ sub CommandHandler
 		return('PONG');
 	}
 	# Old API
-	elsif(/^(HI|BYE|NOTIFICATION|DEBUG)/)
+	elsif(/^(HI|BYE|NOTIFICATION|DEBUG|GET_PATH)/)
 	{
 		DaemonLog(3,'Legacy command attempted run: '.$_);
 		return('ERR LEGACY # Something went wrong, program attempted to use legacy command ('.$_.'). Please verify your Day Planner installation. Version 0.8 or later required.');
@@ -486,6 +541,7 @@ sub Daemonize
 	open(STDERR, '>>', $Logfile) or DaemonLog(1,"Couldn't reopen STDERR to $Logfile: $!");
 }
 
+# Purpose: Handler of SIGPIPE
 sub SigPipeHandler
 {DaemonLog(3,'STUB: ' . (caller(0))[3])
 }
@@ -598,16 +654,11 @@ GetOptions (
 		PrintHelp('-d', '--dayplannerdir', 'Which directory to use as the dayplanner config dir');
 		PrintHelp('', '--version', 'Display version information and exit');
 		PrintHelp('-h,', '--help', 'Display this help screen');
-#		PrintHelp('-n,', '--nofork', 'Don\'t go into the background (and log to STDOUT/STDERR instead of the logfile)');
 		PrintHelp('-v,', '--verbose', 'Be verbose. Supply several times to increase verbosity.');
-#		PrintHelp('-o,', '--output', "Output all messages to the file supplied instead of dayplannerdir/$LogfileName");
 		exit(0);
 	},
-#	'verbose|v' => \$OutputVerbose,
 	'v|verbose+' => \$LogLevel,
-#	'n|nofork' => \$NoFork,
 	'f|force-fork' => \$ForceFork,
-	#'o|output=s' => \$Logfile,
 	'dayplannerdir|d=s' => sub {
 		unless (-e $_[1]) {
 			die "$_[1] does not exist\n";
@@ -629,7 +680,7 @@ GetOptions (
 		exit(0);
 	},
 	# For backwards compatibility. Ignored parameters.
-	'D|V|debug|veryverbose' => sub {
+	'D|V|o|output|debug|veryverbose' => sub {
 		print "$_[0] has been deprecated and is no longer supported - ignored. Try -vvvvv\n";
 	},
 ) or die "See $0 --help for more information\n";
