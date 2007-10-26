@@ -858,13 +858,18 @@ sub LaunchWebBrowser {
 	my $Browser;
 	# First check for the BROWSER env var
 	if(defined($ENV{BROWSER}) and length($ENV{BROWSER})) {
-		if(InPath($ENV{BROWSER}) or -x $ENV{BROWSER}) {
-			$Browser = $ENV{BROWSER};
+		# Allow it to be a :-seperated variable - this doesn't slow us down
+		# and is future-proof(tm)
+		foreach my $Part (split(/:/,$ENV{BROWSER}))
+		{
+			if(InPath($Part) or -x $Part) {
+				$Browser = $Part;
+			}
 		}
 	}
-	# Then check for various known browsers (and browser launchers)
+	# Then check for various known file launchers and web browsers
 	if(not $Browser) {
-		foreach(qw/xdg-open gnome-open exo-open www-browser mozffremote mozilla-firefox firefox iceweasel epiphany mozilla seamonkey konqueror opera/) {
+		foreach(qw/xdg-open gnome-open exo-open www-browser mozffremote mozilla-firefox firefox iceweasel epiphany galeon midori mozilla seamonkey konqueror dillo opera/) {
 			if(InPath($_)) {
 				$Browser = $_;
 				last;
@@ -878,6 +883,7 @@ sub LaunchWebBrowser {
 			exec($Browser,$URL);
 		}
 	} else {
+		# This should very rarely happen
 		DPIntWarn("Failed to detect any browser to launch for the URL $URL");
 	}
 }
@@ -886,20 +892,21 @@ sub LaunchWebBrowser {
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Check if we can load a module, and error out if not
+# Purpose: Load a module during runtime or display an error if we can't
 # Usage: runtime_use('MODULENAME',SILENT?);
 # 	If not in silent mode it will output an error about a missing core module
 # 	and explain that the installation is corrupt.
 sub runtime_use
 {
 	my $module = shift;
-	my $silent = shift;
-	return($RuntimeModules{$module}) if $RuntimeModules{$module};
+	# Return if it is present in the hash, regardless of true/false value.
+	return($RuntimeModules{$module}) if defined($RuntimeModules{$module});
 	if(eval("use $module; 1")) {
 		$RuntimeModules{$module} = true;
 		return(true);
 	} else {
 		$RuntimeModules{$module} = false;
+		my $silent = shift;
 		if(not $silent) {
 			DPIntWarn("FATAL: Module missing: $module");
 			DPError($i18n->get_advanced("A fatal error has occurred. Your installation of Day Planner is missing some files. This makes certain functions in Day Planner unusable. Please re-install Day Planner. See %(website) for more information on how to download and re-install Day Planner.\nDay Planner will continue to run but it is likely to crash.\n\n(The missing file was: %(module))", { website => 'http://www.day-planner.org/', module => $module }));
@@ -918,6 +925,7 @@ sub AlreadyRunningDP {
 						'error',
 						'none',
 						 $i18n->get("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nYou may force the other instance to quit if you wish."));
+		$ErrorDialog->set_title($i18n->get('Day Planner'));
 
 		$ErrorDialog->add_buttons(
 			# TRANSLATORS: As in force another running Day Planner instance to quit
@@ -2635,6 +2643,7 @@ sub EscapeKeyHandler {
 sub DPError {
 	if($Gtk2Init) {
 		my $Dialog = Gtk2::MessageDialog->new($MainWindow, 'modal', 'error', 'ok', $_[0]);
+		$Dialog->set_title($i18n->get('Day Planner'));
 		$Dialog->run();
 		$Dialog->destroy();
 	} else {
@@ -2648,6 +2657,7 @@ sub DPError {
 sub DPWarning {
 	if($Gtk2Init) {
 		my $Dialog = Gtk2::MessageDialog->new_with_markup($MainWindow, 'modal', 'warning', 'ok', $_[0]);
+		$Dialog->set_title($i18n->get('Day Planner'));
 		$Dialog->run();
 		$Dialog->destroy();
 	} else {
@@ -2682,6 +2692,7 @@ sub DPInfo {
 			# Add it to the expander
 			$FT_Expander->add($FulltextWindow);
 		}
+		$Dialog->set_title($i18n->get('Day Planner'));
 		$Dialog->run();
 		$Dialog->destroy();
 	} else {
@@ -2697,6 +2708,7 @@ sub DPInfo {
 #	Returns true on yes, false on anything else
 sub DPQuestion {
 	my $Dialog = Gtk2::MessageDialog->new(undef, 'modal', 'question', 'yes-no', $_[0]);
+	$Dialog->set_title($i18n->get('Day Planner'));
 	my $Reply = $Dialog->run();
 	$Dialog->destroy();
 	if ($Reply eq 'yes') {
@@ -2723,6 +2735,22 @@ sub QuitSub {
 	Gtk2->main_quit;
 	CloseIPC();
 	exit(0);
+}
+
+# Purpose: Report a bug
+# Usage: ReportBug();
+sub ReportBug
+{
+	my $BugUrl = 'http://www.day-planner.org/?type=development&page=bugs&b_version='.$Version;
+	if ($VersionName eq 'SVN')
+	{
+		$BugUrl .= '&b_issvn=1';
+	}
+	else
+	{
+		$BugUrl .= '&b_issvn=0';
+	}
+	LaunchWebBrowser($BugUrl);
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4599,6 +4627,7 @@ sub DrawMainWindow {
 	my $PrefsStock = Gtk2::Stock->lookup('gtk-preferences')->{label};
 	my $AboutStock = Gtk2::Stock->lookup('gtk-about')->{label};
 	my $HelpStock = Gtk2::Stock->lookup('gtk-help')->{label};
+
 	my $DeleteStock = Gtk2::Stock->lookup('gtk-delete')->{label};
 
 	# The menu items
@@ -4618,6 +4647,7 @@ sub DrawMainWindow {
 		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	'<Branch>' ],
+		[ "/$HelpStock/" . $i18n->get('_Report a bug'), undef, \&ReportBug, 0, '<StockItem>', 'gtk-dialog-warning'],
 		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
 	);
 	# The accelgroup to use for the menuitems
