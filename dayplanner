@@ -23,15 +23,14 @@ require 5.6.0;			# We need perl 5.6.0 at the very least
 						# and even this is mostly untested.
 use strict;				# Force strict coding
 use warnings;			# Tell perl to warn about things
-use POSIX;				# We need strftime
+use POSIX;				# Uses the various time/date functions from POSIX
 use Gtk2;				# Use Gtk2 :)
 use Gtk2::SimpleList;	# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;	# Easier keybindings
-use File::Basename;     # We meed dirname to help Cwd::Realpath finding the directory
-use MIME::Base64;		# Used for import/export
+use MIME::Base64;		# Used for DPS-related functions. Needed even when DPS is diasbled. 
 use Getopt::Long;		# Commandline options
-use Cwd;				# We need Cwd::Realpath to find out which directory we live in
 use FindBin;			# So that we can detect module dirs during runtime
+# Useful constants for prettier code
 use constant { true => 1, false => 0 };
 # This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
@@ -132,7 +131,7 @@ sub DaemonInit {
 # Purpose: Start the Day Planner daemon
 # Usage: StartDaemon();
 sub StartDaemon {
-	foreach(split(/:/, sprintf('%s:%s', dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
+	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
 		if (-x "$_/$DaemonName") {
 			# Yes this is a bit weird statement. But remember that commands return 0 on true
 			# and 1-255 on false, so it's the other way around from perl
@@ -1339,7 +1338,7 @@ sub AddAutostart {
 	my $TryGnome = $_[0];
 	my $DaemonExec;
 	my $RETURN = 'okay';
-	foreach(split(/:/, sprintf('%s:%s', dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
+	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
 		if (-x "$_/$DaemonName") {
 			$DaemonExec = "$_/$DaemonName";
 			last;
@@ -1428,7 +1427,7 @@ sub DP_AddAutostart {
 	$InternalConfig{AutostartOn} = 1;
 
 	# Try to get the gnome version from the gnome control center
-	foreach(split(/:/, sprintf('%s:%s', dirname(Cwd::realpath($0)), $ENV{PATH} ))) {
+	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
 		if (-x "$_/gnome-control-center") {
 			$GNOME_Version = qx#$_/gnome-control-center --version#;
 			chomp($GNOME_Version);
@@ -1548,6 +1547,7 @@ sub CLI_Export {
 	my($Type,$Target) = @_;
 	MainInit(1);
 	if($Type =~ /(ical|ics_dps)/) {
+		runtime_use('File::Basename');
 		unless(-w dirname($Target)) {
 			die("Unable to write to " . dirname($Target) . "\n");
 		}
@@ -2234,6 +2234,7 @@ sub PromptOverwrite {
 			return(1);
 		}
 	} else {
+		runtime_use('File::Basename');
 		my $FileDirname = dirname($File);
 		unless(-w $FileDirname) {
 			DPInfo($i18n->get_advanced("\"%(dir)\" is read only. Write permissions are required.", { dir => $FileDirname}));
@@ -2536,7 +2537,7 @@ sub PopulateUpcomingEvents {
 #		first one found or undef
 # Usage: $Image = DetectImage(image1, image2);
 sub DetectImage {
-	my $I_Am_At = dirname(Cwd::realpath($0));
+	my $I_Am_At = $FindBin::RealBin;
 	foreach my $Image (@_) {
 		foreach my $Dir ("$I_Am_At/art", $I_Am_At, '/usr/share/dayplanner', '/usr/local/dayplanner', '/usr/local/share/dayplanner', '/usr/share/dayplanner/art', '/usr/local/dayplanner/art', '/usr/local/share/dayplanner/art', '/usr/share/icons/large', '/usr/share/icons', '/usr/share/icons/mini') {
 			if (-e "$Dir/$Image") {
