@@ -95,7 +95,7 @@ my $ForceFork;
 my $NoFork;
 
 # The current log level
-my $LogLevel = 5;
+my $LogLevel = 2;
 # The log file
 my $Logfile;
 
