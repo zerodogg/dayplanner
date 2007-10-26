@@ -766,7 +766,7 @@ sub LoadCalendar {
 	} else {
 		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
-	if ($ENV{DP_NO_STRICT_PERMS} eq '1')
+	if (defined($ENV{DP_NO_STRICT_PERMS}) and $ENV{DP_NO_STRICT_PERMS} eq '1')
 	{
 		$MainCalendar->set_file_perms(oct(644));
 	}
