@@ -55,7 +55,7 @@ help:
 
 install: $(INSTALLRULES)
 
-localinstall: localdesktop
+localinstall: desktoplocal
 	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)/
 	ln -sf $(shell pwd)/dayplanner $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner
 	ln -sf $(shell pwd)/dayplanner-notifier $(DESTDIR)$(prefix)/$(BINDIR)/dayplanner-notifier
@@ -177,7 +177,7 @@ desktop:
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Local .desktop file installation
-localdesktop:
+desktoplocal:
 	./devel-tools/GenDesktop $(shell pwd) $(shell pwd)/art/
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
