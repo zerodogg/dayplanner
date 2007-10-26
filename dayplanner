@@ -427,6 +427,7 @@ sub DPS_Perform {
 	# entirety of the DPS session.
 	if(not defined($DPServices{Log_FH})) {
 		open($DPServices{Log_FH}, '>', "$SaveToDir/services.log");
+		chmod(oct(600),"$SaveToDir/services.log");
 		DPS_Log('DPS initialized');
 	}
 	DPS_Status($i18n->get('Connecting'),0);
@@ -584,8 +585,6 @@ sub WriteStateFile {
 		Holiday_Attempted => 'The last Day Planner version the holiday file was attempted set up (but failed)',
 		Holiday_Setup => 'If the holiday file has been properly set up or not (ie. not a dummy file)',
 		LastVersion => 'The last Day Planner version used',
-		# All except DPS_LastMD5 and DPS_ParanoidBackups actually belongs in dayplanner.conf
-		# and not in state.conf. Maybe we should add an dps.conf/services.conf ?
 		DPS_LastMD5 => 'The MD5 sum of the last data downloaded from the DPS server (base64 encoded)',
 		DPS_ParanoidBackups => "Writes a backup of the internal data to $Dir every time DPS is used.\n# This is useful when DPS is being debugged, in order to avoid data loss",
 		HEADER => "This file contains internal configuration used by Day Planner\n# In most cases you really don't want to edit this file manually",
@@ -662,6 +661,8 @@ sub WriteConfig {
 	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
 		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
 	}
+	# Enforce perms
+	chmod(oct(600),"$Dir/$File");
 }
 
 # Purpose: Load the configuration file
@@ -695,14 +696,16 @@ sub LoadConfig {
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
 # Usage: CreateSaveDir();
 sub CreateSaveDir {
-	unless (-e $SaveToDir) {
+	if(not -e $SaveToDir)
+	{
 		runtime_use('File::Path');
 		mkpath($SaveToDir) or do {
 				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
 				unless(-d $SaveToDir) {
 					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
 				}
-			}
+		};
+		chmod(oct(700),$SaveToDir);
 	}
 }
 
@@ -762,6 +765,10 @@ sub LoadCalendar {
 		$MainCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
 	} else {
 		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
+	}
+	if ($ENV{DP_NO_STRICT_PERMS} eq '1')
+	{
+		$MainCalendar->set_file_perms(oct(644));
 	}
 	$iCalendar->add_object($MainCalendar,true);
 	$HolidayParser = Date::HolidayParser->new("$SaveToDir/holidays");
