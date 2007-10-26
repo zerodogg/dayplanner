@@ -132,11 +132,11 @@ sub DaemonLog
 	}
 	elsif($Level == 4)
 	{
-		$MsgPrefix = 'Debug:         ';
+		$MsgPrefix = 'Debug:        ';
 	}
 	elsif($Level == 5)
 	{
-		$MsgPrefix = 'Calltrace:     ';
+		$MsgPrefix = 'Calltrace:    ';
 	}
 	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = GetDate(time());
 	$lhour = "0$lhour" unless $lhour >= 10;
@@ -219,11 +219,11 @@ sub WriteDaemonState
 		HasNotified => 'This is a list of UIDs that has already been notified',
 		LastWritten => 'The unix time of when this file was last written',
 	);
-	$DaemonState{LastWritten} = mktime(gmtime());
-	if(not OnSameDate(mktime(gmtime(()),$DaemonState{LastWritten})))
+	if(not OnSameDate(time()),$DaemonState{LastWritten})
 	{
 		$DaemonState{HasNotified} = '';
 	}
+	$DaemonState{LastWritten} = gmtime();
 	WriteConfigFile($DataDir . '/daemon_state.conf',\%DaemonState, \%Explenations);
 }
 
@@ -428,7 +428,7 @@ sub OpenSocket {
 					Listen	=> 5,
 			) or die "Unable to create a new socket: $@\n";
 	# Enforce strict permissions
-	chmod(700,$SocketPath);
+	chmod(oct(600),$SocketPath);
 	# Trap SIGPIPE
 	$SIG{PIPE} = \&SigPipeHandler;
 	# Create a new select handle for reading
