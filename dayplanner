@@ -269,14 +269,18 @@ sub DPS_Download {
 		my $MainData = $Data;
 		$Initial =~ s/^(\S+)\s+.*$/$1/;
 		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
-		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/) {
+		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/)
+		{
 			# FIXME: Rewrite this
 			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
 		}
-		elsif(not md5_base64($MainData) eq $MD5) {
+		elsif(not md5_base64($MainData) eq $MD5)
+		{
 			# FIXME: Rewrite this
 			DPS_Error($i18n->get('The data became corrupted during download. You may want to attempt to synchronize again.'),'MD5 mismatch during download: got ' . md5_base64($MainData) . ' expected ' . $MD5);
-		} else {
+		} 
+		else
+		{
 			# Decode the base64 encoded data
 			$MainData = decode_base64($MainData);
 			# Remove junk and populate @DataArray
@@ -287,11 +291,14 @@ sub DPS_Download {
 			# If we're in merge mode then enable SMART MERGE and then add
 			# the file, if not then clean and add the file
 			my $iCalendarMain = $iCalendar->get_primary();
-			if($Merge) {
+			if($Merge)
+			{
 				$iCalendarMain->enable('SMART_MERGE');
 				$iCalendarMain->addfile(\@DataArray);
 				$iCalendarMain->disable('SMART_MERGE');
-			} else {
+			} 
+			else 
+			{
 				$iCalendarMain->clean();
 				$iCalendarMain->addfile(\@DataArray);
 			}
