@@ -81,6 +81,12 @@ sub list_objects
 	return($this->{objects});
 }
 
+sub get_primary
+{
+	my $this = shift;
+	return($this->{'PRIMARY'});
+}
+
 # -- DP::iCalendar API wrapper --
 
 # Purpose: Get information for a supplied UID
