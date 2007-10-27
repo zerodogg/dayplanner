@@ -286,13 +286,14 @@ sub DPS_Download {
 			$MainData = undef;
 			# If we're in merge mode then enable SMART MERGE and then add
 			# the file, if not then clean and add the file
+			my $iCalendarMain = $iCalendar->get_primary();
 			if($Merge) {
-				$iCalendar->enable('SMART_MERGE');
-				$iCalendar->addfile(\@DataArray);
-				$iCalendar->disable('SMART_MERGE');
+				$iCalendarMain->enable('SMART_MERGE');
+				$iCalendarMain->addfile(\@DataArray);
+				$iCalendarMain->disable('SMART_MERGE');
 			} else {
-				$iCalendar->clean();
-				$iCalendar->addfile(\@DataArray);
+				$iCalendarMain->clean();
+				$iCalendarMain->addfile(\@DataArray);
 			}
 			# Download succesful. Set DPS_LastMD5
 			$InternalConfig{DPS_LastMD5} = $MD5;
