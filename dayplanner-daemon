@@ -400,7 +400,7 @@ sub CalculateNotifications
 	# Return if prenotday isn't active
 	return if not $PreNotValues{PreNotDay};
 	# Find tomorrow
-	($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time() + 86400);
+	($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time() + 86_400);
 	# Find events for tom
 	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
 		foreach my $Time (sort @{$TimeArray}) {
@@ -433,7 +433,7 @@ sub CalculateNotifications
 sub FindSleepDuration
 {
 	# Find tomorrow
-	my ($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time() + 86400);
+	my ($sec,$min,$hour,$Day,$Month,$Year,$wday,$yday,$isdst) = GetDate(time() + 86_400);
 	my $TomorrowNix = mktime(0,0,0,$Day,$Month -1,$Year - 1900,0,0,$isdst);
 	foreach my $time (sort keys(%Notifications))
 	{
@@ -589,7 +589,7 @@ sub Daemonize
 	# Fork
 	my $PID = fork;
 	exit if $PID;
-	die "Unable to fork: $!\nYou may want to try --nofork\n" unless defined($PID);
+	die "Unable to fork: $!\nYou may want to try --nofork\n" if not defined($PID);
 	# Create a new session
 	setsid() or DaemonLog(1,"Unable to start a new POSIX session (setsid()): $!");
 	# Change dir to / - this to avoid clogging up a mountpoint
@@ -725,10 +725,10 @@ GetOptions (
 	'f|force-fork' => \$ForceFork,
 	'n|nofork' => \$NoFork,
 	'dayplannerdir|d=s' => sub {
-		unless (-e $_[1]) {
+		if(not -e $_[1]) {
 			die "$_[1] does not exist\n";
 		}
-		unless (-w $_[1]) {
+		if(not -w $_[1]) {
 			die "I can't write to $_[1]\n";
 		}
 		$DataDir = $_[1];
