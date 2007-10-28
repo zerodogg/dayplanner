@@ -877,7 +877,7 @@ sub LaunchWebBrowser {
 	}
 	# Then check for various known file launchers and web browsers
 	if(not $Browser) {
-		foreach(qw/xdg-open gnome-open exo-open www-browser mozffremote mozilla-firefox firefox iceweasel epiphany galeon midori mozilla seamonkey konqueror dillo opera/) {
+		foreach(qw/xdg-open gnome-open exo-open mozffremote mozilla-firefox firefox iceweasel epiphany galeon midori mozilla seamonkey konqueror dillo opera www-browser/) {
 			if(InPath($_)) {
 				$Browser = $_;
 				last;
