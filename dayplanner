@@ -1223,8 +1223,26 @@ sub HolidaySetup {
 		$LocationDetect = $ENV{LC_ALL};
 	} elsif (defined($ENV{LANGUAGE})) {
 		$LocationDetect = $ENV{LANGUAGE};
+	} elsif (defined($NEV{LANG})) {
+		$LocationDetect = $ENV{LANGUAGE};
 	} else {
-		DPIntWarn('Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_IDENTIFICATION, LC_MESSAGES, LC_ALL nor LANGUAGE was set. Unable to autodetect .holiday file');
+		my $BaseWarning = 'Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_IDENTIFICATION, LC_MESSAGES, LC_ALL nor LANGUAGE was set. ';
+		# Fall back to automatic detection
+		foreach my $key (keys(%ENV))
+		{
+			if ($key =~ /^(LANG|LC_)/)
+			{
+				my $cont = $ENV{$key};
+				if ($cont =~ /^\w\w_\w\w(\..*)/)
+				{
+					DPIntWarn($BaseWarning . "Unable to reliably detect .holiday file. Fell back to alternate method, found $key in environment ($key=$cont) - using that for detection");
+				}
+				else
+				{
+					DPIntWarn($BaseWarning.'Unable to detect .holiday file');
+				}
+			}
+		}
 	}
 
 	my $CopyFile;
