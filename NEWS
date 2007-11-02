@@ -20,6 +20,9 @@ Version 0.8 (Unreleased)
 - Partly compatible older commandline options
   - Ignores deprecated commandline options
 
+* Commander
+- Retired from service
+
 Version 0.7.2 "NFS" (Released on the 17th of September 2007)
 ------------------------
 * Client (dayplanner)
