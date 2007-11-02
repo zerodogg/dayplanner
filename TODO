@@ -8,6 +8,7 @@ may be subject to change.
 
 * Version 0.8
 - - - - - - -
+- Fix bug. rm -f ~/.config/dayplanner/holidays then run day planner.
 - Left align labels
 - Add support for choosing how long an event lasts
 - Write a simple way of plugging in functionality into DP::iCalendar.
