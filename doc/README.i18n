@@ -86,7 +86,7 @@ that list.
 If Day Planner doesn't properly detect your countries holiday file you
 will need to provide the following information:
 The output of:
-perl -e 'foreach(keys(%ENV)) { print "$_=$ENV{$_} || " if $_ =~ /^LC_/;} print "\n"'
+perl -e 'foreach(keys(%ENV)) { print "$_=$ENV{$_} || " if $_ =~ /^(LC_|LANG)/;} print "\n"'
 And the name of the holiday file (ie. holiday_norway).
 Autodetection for that country will then be added and included in the
 next release of Day Planner.
