@@ -9,7 +9,7 @@ use constant {
 # -- PUBLIC IPC HANDLER FUNCTIONS --
 
 # Purpose: Create a new object
-# Usage: my $IPC = DP::GeneralHelpers::IPC->new_client();
+# Usage: my $IPC = DP::GeneralHelpers::IPC->new_client(path, handler = undef);
 sub new_client {
 	my $Package = shift;
 	my $Path = shift;
