@@ -707,7 +707,7 @@ sub CreateSaveDir {
 	if(not -e $SaveToDir)
 	{
 		runtime_use('File::Path');
-		mkpath($SaveToDir) or do {
+		File::Path::mkpath($SaveToDir) or do {
 				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
 				unless(-d $SaveToDir) {
 					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
@@ -789,13 +789,17 @@ sub LoadCalendar {
 	{
 		HolidaySetup();
 	}
-	# Load the holiday file
-	$HolidayParser = Date::HolidayParser->new("$SaveToDir/holidays");
-	# Enable Date::HolidayParsers DP::iCalendar-compatible interface, replacing
-	# the standard interface.
-	$HolidayParser->enable_ical_interface();
-	# Add the holiday parser to the manager
-	$iCalendar->add_object($HolidayParser,false);
+	# If we still don't have one then skip this step
+	if (-e "$SaveToDir/holidays")
+	{
+		# Load the holiday file
+		$HolidayParser = Date::HolidayParser->new("$SaveToDir/holidays");
+		# Enable Date::HolidayParsers DP::iCalendar-compatible interface, replacing
+		# the standard interface.
+		$HolidayParser->enable_ical_interface();
+		# Add the holiday parser to the manager
+		$iCalendar->add_object($HolidayParser,false);
+	}
 	# Set the ICS prodid
 	$iCalendar->set_prodid("-//day-planner.org//NONSGML Day Planner $Version//EN");
 	return(1);
@@ -1631,9 +1635,12 @@ sub CLI_Export {
 			}
 		}
 		if($Type =~ /html/) {
-			if(HTML_Export($Target)) {
-				print "HTML written to $Target\n";
-			}
+			# FIXME: This probably needs some fixing
+
+			runtime_use('DP::iCalendar::WebExp') or die();
+			my $html = DP::iCalendar::WebExp->new();
+			$html->set_dpi($iCalendar);
+			$html->writehtml($Target);
 		} elsif ($Type =~ /php/) {
 			if(PHP_Export($Target)) {
 				print "PHP written to $Target\n";
