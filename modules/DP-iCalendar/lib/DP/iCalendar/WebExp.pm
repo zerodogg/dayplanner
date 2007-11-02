@@ -113,20 +113,19 @@ sub _process_out
 	# Process each year, month and day
 	foreach my $Year (@{$this->{DPI}->get_years}) {
 		$this->_HTML_outputYear($Year);
-		_HTML_YearHtml($Year,$this->{out_dir});
-		foreach my $Month (@{$this->{DPI}->get_months($Year)}) {
-			foreach my $Day (@{$this->{DPI}->get_monthinfo($Year,$Month)}) {
-				_HTML_DayToHtml($Year, $Month, $Day, $this->{out_dir});
-			}
-		}
-		# Make sure we have every month
-		foreach(1..12) {
-			_HTML_MonthToHtml($Year,$_,$this->{out_dir});
-		}
+#		foreach my $Month (@{$this->{DPI}->get_months($Year)}) {
+#			foreach my $Day (@{$this->{DPI}->get_monthinfo($Year,$Month)}) {
+#				_HTML_DayToHtml($Year, $Month, $Day, $this->{out_dir});
+#			}
+#		}
+#		# Make sure we have every month
+#		foreach(1..12) {
+#			_HTML_MonthToHtml($Year,$_,$this->{out_dir});
+#		}
 	}
 	# TODO: FIXME
-	_HTML_YearList($this->{out_dir});
-	_HTML_PHPIndex($this->{out_dir});
+#	_HTML_YearList($this->{out_dir});
+#	_HTML_PHPIndex($this->{out_dir});
 }
 
 sub _HTML_outputYear
@@ -136,10 +135,10 @@ sub _HTML_outputYear
 	my $Year = shift;
 	# TODO: Error handling
 	open(my $FILE, '>', $this->{out_dir}.'/'.$Year.'.html');
-	print $FILE _HTML_Header($Year, $Year, 'Y');
+	print $FILE $this->_HTML_Header($Year, $Year, 'Y');
 	# FIXME: i18n shouldn't be used
-	print $FILE _HTML_Encode($i18n->get('Select the month to view in the list above')) . "<br />\n";
-	print $FILE _HTML_Footer();
+	print $FILE $this->_HTML_Encode($i18n->get('Select the month to view in the list above')) . "<br />\n";
+	print $FILE $this->_HTML_Footer();
 }
 sub _PHP_outputYear
 {
