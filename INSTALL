@@ -22,6 +22,6 @@ a .desktop file that doesn't use any absolute paths.
 You must install (or symlink) the icons in the art/ directory yourself if you want them to
 be available outside of Day Planners own art/ tree or the DATADIR/pixmaps/ tree.
 
-An example of a packaged Day Planner is in ./devel-tools/rpm/package.rpm
+An example of a packaged Day Planner is in ./devel-tools/rpm/package.spec
 
 $Id$
