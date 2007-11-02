@@ -10,14 +10,22 @@
 # NOTE: PHP is not implemented fully
 
 package DP::iCalendar::WebExp;
+use DP::GeneralHelpers::I18N;
+use File::Path qw(mkpath);
+my $i18n = DP::GeneralHelpers::I18N->new();
 use strict;
 use warnings;
 use constant { true => 1, false => undef };
 
 # TODO: Drop these, transitional variables used during porting
-my $i18n = sub { warn("WARNING: CALL TO i18n OBJECT IN DP::iCalendar::WebExp\n")};
 my $_HTML_PHP;
 my $Version;
+# TODO: Drop these transitional subs used during porting
+sub DPIntWarn
+{
+	warn(@_);
+	warn("DPIntWarn() called: deprecated");
+}
 
 # ---
 # Public methods
@@ -56,11 +64,12 @@ sub set_generator
 sub writehtml
 {
 	my $this = shift;
+	my $dir = shift;
 	warn('STUB');
 	die("DPI not set!") if not $this->{DPI};
-	# Write year list
-	# Write month list for each year
-	# Write day list for each month for each year
+	die("DIR not supplied!") if not $dir;
+	$this->{out_dir} = $dir;
+	$this->_process_out();
 }
 
 sub writephp
@@ -103,7 +112,7 @@ sub _process_out
 	}
 	# Process each year, month and day
 	foreach my $Year (@{$this->{DPI}->get_years}) {
-		$this->_outputYear($Year);
+		$this->_HTML_outputYear($Year);
 		_HTML_YearHtml($Year,$this->{out_dir});
 		foreach my $Month (@{$this->{DPI}->get_months($Year)}) {
 			foreach my $Day (@{$this->{DPI}->get_monthinfo($Year,$Month)}) {
@@ -131,6 +140,11 @@ sub _HTML_outputYear
 	# FIXME: i18n shouldn't be used
 	print $FILE _HTML_Encode($i18n->get('Select the month to view in the list above')) . "<br />\n";
 	print $FILE _HTML_Footer();
+}
+sub _PHP_outputYear
+{
+	my $this = shift;
+	my $Year = shift;
 }
 
 # Purpose: Output the header for all Day Planner HTML files
@@ -561,4 +575,4 @@ sub PHP_WriteFiles {
 	#	maybe this could just be done using a .htaccess file too
 	#	but if so, have both so that it'll work on non-apache httpds.
 }
-
+1;
