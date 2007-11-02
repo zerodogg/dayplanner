@@ -118,6 +118,7 @@ sub DaemonInit {
 	$DaemonInitialized = 1;
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		$DaemonSocket = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
+		# TODO: Implement a IPC->blocking_client_send() and use that to check daemon VERSION
 	}
 	if (not $DaemonSocket) {
 		if(not StartDaemon()) {
@@ -1055,7 +1056,7 @@ sub GetSummaryString {
 sub UpgradeVersion {
 	my $ProgressWin = DPCreateProgressWin($i18n->get('Upgrading'), '', 1);
 	$InternalConfig{LastVersion} = $Version;
-	my $Total = 7;
+	my $Total = 8;
 	# Upgrade the holiday file if needed
 	if(-e $HolidayFile) {
 		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
@@ -1130,7 +1131,19 @@ sub UpgradeVersion {
 	foreach(qw/special_events.dpd events.dpd birthdays.dpd/) {
 		unlink("$SaveToDir/$_") if -e "$SaveToDir/$_";
 	}
-	ProgressMade(7, $Total, $ProgressWin) if($Gtk2Init);
+	ProgressMade(7, $Total, $ProgressWin) if ($Gtk2Init);
+	# Upgrade old daemon (ie. kill it) if needed
+	if (-e "$SaveToDir/dayplannerd")
+	{
+		my $Old_Daemon = DP::GeneralHelpers::IPC->new_client("$SaveToDir/dayplannerd");
+		# Authenticate as a commander, this has no access control restrictions.
+		$Old_Daemon->client_send("$$ HI commander");
+		$Old_Daemon->client_send("$$ SHUTDOWN");
+		$Old_Daemon->destroy();
+		# Ensure that the socket is gone
+		unlink("$SaveToDir/dayplannerd") if -e "$SaveToDir/dayplannerd";
+	}
+	ProgressMade(8, $Total, $ProgressWin) if($Gtk2Init);
 	$ProgressWin->{Window}->destroy();
 }
 
