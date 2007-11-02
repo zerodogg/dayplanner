@@ -27,13 +27,20 @@ use Fatal qw/open close/;
 
 sub SetLocale {
 	foreach(keys(%ENV)) {
-		next unless /^(LC|LANG)/;
+		next unless /^(LC|.*LANG)/;
 		$ENV{$_} = $_[0];
 	}
-	$ENV{LC_ALL} = $_[0];
-	setlocale(LC_ALL, "" );
+	foreach(qw(LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL))
+	{
+		$ENV{$_} = $_[0];
+	}
+	foreach(&POSIX::LC_CTYPE, &POSIX::LC_NUMERIC, &POSIX::LC_TIME, &POSIX::LC_COLLATE, &POSIX::LC_MONETARY, &POSIX::LC_MESSAGES, &POSIX::LC_ALL)
+	{
+		setlocale($_,$_[0]);
+	}
 	textdomain("dayplanner");
 	bindtextdomain("dayplanner", "./");
+	#system('perl','-MLocale::gettext','-Mlocale','-e','$g = Locale::gettext->domain_raw("dayplanner");$g->codeset("UTF-8");print $g->get("Day Planner")."\n";');
 	my $GettextObj = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
 	$GettextObj->codeset('UTF-8');
 	return($GettextObj);
@@ -43,6 +50,7 @@ my %Languages;
 
 my($BinDir, $IconsDir) = @ARGV;
 my $Icon;
+my $NoErrorForce;
 
 unless(defined($BinDir)) {
 	die("Usage: $0 [DIRECTORY CONTAINING THE dayplanner BINARY] [ICONS DIR]\n The binary dir is mandatory, icons dir optional.");
@@ -57,6 +65,7 @@ if(defined($IconsDir)) {
 # Set dirs
 chdir($FindBin::RealBin);
 chdir("..");
+my %I18nCount;
 
 print "Running ./devel-tools/BuildLocale\n";
 system("./devel-tools/BuildLocale");
@@ -72,6 +81,23 @@ foreach(<*>) {
 			print "$_: No valid translation of \"Day Planner\" found\n";
 		} else {
 			print "$_: OK\n";
+			$I18nCount{$Languages{$_}} += 1;
+		}
+	}
+}
+# Verify count
+foreach(keys(%Languages))
+{
+	if ($I18nCount{$Languages{$_}} > 2)
+	{
+		if(defined($ENV{DP_FORCE_GENDESKTOP}) and $ENV{DP_FORCE_GENDESKTOP})
+		{
+			$NoErrorForce = 1;
+			last;
+		}
+		else
+		{
+			die("GenDesktop: Translation count for '$Languages{$_}' is more than two ($I18nCount{$Languages{$_}}). Something is very wrong.\nYou are probably missing a few locales. Refusing to continue\nIf you wish to suppress this error and continue anyway, set the env var DP_FORCE_GENDESKTOP to any true value.\n");
 		}
 	}
 }
@@ -79,8 +105,20 @@ foreach(<*>) {
 chdir("..");
 print "Writing...";
 open(my $Desktop, ">", "./doc/dayplanner.desktop");
-print ".";
 binmode($Desktop, ':utf8');
+if ($NoErrorForce)
+{
+	use Sys::Hostname;
+	print $Desktop "# File forced to be generated even though language counts were invalid\n";
+	print $Desktop "# Force on ". scalar(localtime()) . " by $</$> on " .hostname()."\n";
+	print $Desktop "# Counts:";
+	foreach(keys(%I18nCount))
+	{
+		print $Desktop " $_ = $I18nCount{$_}";
+	}
+	print $Desktop "\n";
+}
+print ".";
 print $Desktop "[Desktop Entry]\n";
 print $Desktop "Version=1.0\n";
 print $Desktop "Encoding=UTF-8\n";
@@ -97,7 +135,10 @@ print $Desktop "StartupNotify=false\n";
 print $Desktop "Terminal=false\n";
 print $Desktop "Type=Application\n";
 print ".";
-print $Desktop "Name[$_]=$Languages{$_}\n" foreach(keys(%Languages));
+foreach(keys(%Languages))
+{
+	print $Desktop "Name[$_]=$Languages{$_}\n";
+}
 print ".";
 close($Desktop);
 print "done\n";
