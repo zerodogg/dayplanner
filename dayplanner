@@ -767,22 +767,37 @@ sub UpdatedData {
 # Usage: LoadCalendar();
 sub LoadCalendar {
 	my $IsFirstStartup = shift;
+	# Create the manager
 	$iCalendar = DP::iCalendar::Manager->new();
 	my $MainCalendar;
 	if(-e "$SaveToDir/$ICSFile") {
+		# Load an already existing calendar
 		$MainCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
 	} else {
+		# Create a new calendar
 		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
 	}
+	# Relax the file permissions if we're told to
 	if (defined($ENV{DP_NO_STRICT_PERMS}) and $ENV{DP_NO_STRICT_PERMS} eq '1')
 	{
 		$MainCalendar->set_file_perms(oct(644));
 	}
+	# Manage it
 	$iCalendar->add_object($MainCalendar,true);
+	# Make sure we have a holidays file before trying to load one
+	if (not -e "$SaveToDir/holidays") 
+	{
+		HolidaySetup();
+	}
+	# Load the holiday file
 	$HolidayParser = Date::HolidayParser->new("$SaveToDir/holidays");
+	# Enable Date::HolidayParsers DP::iCalendar-compatible interface, replacing
+	# the standard interface.
 	$HolidayParser->enable_ical_interface();
+	# Add the holiday parser to the manager
 	$iCalendar->add_object($HolidayParser,false);
-	$iCalendar->set_prodid("-//EskildHustvedt//NONSGML Day Planner $Version//EN");
+	# Set the ICS prodid
+	$iCalendar->set_prodid("-//day-planner.org//NONSGML Day Planner $Version//EN");
 	return(1);
 }
 
