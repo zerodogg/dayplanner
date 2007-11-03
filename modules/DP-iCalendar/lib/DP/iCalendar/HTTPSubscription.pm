@@ -47,6 +47,7 @@ sub update {
 	# Check for errors
 	if($ErrorInformation{$self->{HTTP_data}}) {
 			print " DP::iCalendar::HTTPSubscription: Unable to download icalendar file: $ErrorInformation{$self->{HTTP_data}}\n";
+			return();
 	}
 
 	my @Array;
