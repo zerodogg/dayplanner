@@ -8,18 +8,13 @@ may be subject to change.
 
 * Version 0.8
 - - - - - - -
-- Fix bug. rm -f ~/.config/dayplanner/holidays then run day planner.
-- Left align labels
-- Add support for choosing how long an event lasts
-- Write a simple way of plugging in functionality into DP::iCalendar.
-	So that one might for instance plug Date::HolidayParser into
-	DP::iCalendar, thus having Date::HolidayParser add UIDs to
-	DP::iCalendar and making the holidays available there.
-	Then when changed DP::iCalendar simply tells Date::HolidayParser
-	about the change instead. Date::HolidayParser can then either
-	make the change to the holiday file itself (unlikely for
-	 advanced holidays), or add the event to the iCalendar file
-	itself, dropping it from its local file.
+- Make available packages for Debian, Ubuntu and Mandriva. Make available
+	a Ubuntu/Debian (apt-get) and Mandriva (urpmi) package repositories.
+- Have a third party look over all strings (in the pot-file) and try to
+	simplify those too technical
+
+* Version 0.9
+- - - - - - -
 - Use Conduit for synchronization of Calendars (except when using
 	DPServices). Offer:
 	- Sync with online server
@@ -27,8 +22,8 @@ may be subject to change.
 			interface
 	- Sync with device
 		- Calendar -> Synchronize with device ?
-- Have a third party look over all strings (in the pot-file) and try to
-	simplify those too technical
+- Add support for choosing how long an event lasts
+- Left align labels
 
 * Longer term
 - - - - - - -
