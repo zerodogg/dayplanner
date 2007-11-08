@@ -76,6 +76,7 @@ clean:
 	rm -f `find|egrep '(~|\.swp)$$'`
 	rm -f po/*.mo
 	rm -f po/*.pot
+	rm -rf po/locale
 	rm -f doc/dayplanner.desktop
 	rm -rf packages/
 	rm -rf locale/
@@ -121,7 +122,7 @@ nice_i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale || true
-	cp -r locale $(DESTDIR)$(prefix)
+	cp -r locale $(DESTDIR)$(DATADIR)
 
 # This is the normal one, it will die if it fails and it won't create additional
 # symlinks
@@ -129,7 +130,7 @@ i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale ./locale
-	cp -r locale $(DESTDIR)$(prefix)
+	cp -r locale $(DESTDIR)$(DATADIR)
 
 # Installation of DP
 maininstall:
@@ -185,12 +186,14 @@ desktoplocal:
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Distrib .desktop file installation
 distribdesktop:
-	./devel-tools/GenDesktop .
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
+# Gen distrib desktop file
+gendistribdesktop:
+	./devel-tools/GenDesktop .
 # --- DISTRIB TARGETS ---
 distrib: prepdistrib tarball rpm installer
-prepdistrib: test clean
+prepdistrib: gendistribdesktop test clean
 	mkdir -p packages
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
