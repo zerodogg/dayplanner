@@ -63,6 +63,16 @@ my $Self = dirname(Cwd::realpath($0));
 die "Unable to detect the po directory\n" unless (-e "$Self/../po/");
 my $PoDir = "$Self/../po/";
 
+my $LocaleDir;
+
+if(defined($ARGV[0]) and length($ARGV[0])) {
+	$LocaleDir = Cwd::realpath($ARGV[0]);
+	$NoAlias = 1;
+} else {
+	$LocaleDir = Cwd::realpath("$Self/../");
+	$LocaleDir = "$LocaleDir/locale";
+}
+
 chdir($PoDir) or die;
 
 print "Building mo-files:";
@@ -73,16 +83,6 @@ foreach(<*.po>) {
 	system("msgfmt -o $MoName $_");
 }
 print "\n";
-
-my $LocaleDir;
-
-if(defined($ARGV[0]) and length($ARGV[0])) {
-	$LocaleDir = $ARGV[0];
-	$NoAlias = 1;
-} else {
-	$LocaleDir = Cwd::realpath("$Self/../");
-	$LocaleDir = "$LocaleDir/locale";
-}
 
 print "Creating the $LocaleDir directory tree...\n";
 unless (-d $LocaleDir) {
