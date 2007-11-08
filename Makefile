@@ -77,7 +77,6 @@ clean:
 	rm -f po/*.mo
 	rm -f po/*.pot
 	rm -rf po/locale
-	rm -f doc/dayplanner.desktop
 	rm -rf packages/
 	rm -rf locale/
 	rm -rf dayplanner-$(VERSION)
@@ -86,6 +85,7 @@ clean:
 	rm -rf installer
 distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
+	rm -f doc/dayplanner.desktop
 
 # Verify sanity
 test:
