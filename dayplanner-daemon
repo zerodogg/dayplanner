@@ -454,6 +454,21 @@ sub CalculateNotifications
 # DAEMON FUNCTIONS
 # ----
 
+# Purpose: Shut down the daemon
+# Usage: Shutdown();
+sub Shutdown
+{
+	DaemonLog(4,'Shutting down');
+	# Close filehandles and clean up
+	close($ServerSocket);
+	# TODO: Do some connection magic here to ensure that we actually were the one listening on it
+	unlink($SocketPath);
+	# Write the state one last time to ensure it is up to date
+	WriteDaemonState();
+	# Okay, we're all done
+	exit(0);
+}
+
 # Purpose: Found out how many seconds we should sleep before we need to perform an action
 # Usage: $seconds = FindSleepDuration();
 sub FindSleepDuration
@@ -560,7 +575,7 @@ sub CommandHandler
 	}
 	elsif(/^SHUTDOWN/)
 	{
-		die('FIXME: Should graciously shut down');
+		Shutdown();
 	}
 	elsif (/^VERSION/)
 	{
