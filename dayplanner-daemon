@@ -499,8 +499,18 @@ sub OpenSocket {
 				# It's still responding. If the user did this then perhaps he/she wanted
 				# to reload the data. Send the reload command
 				print $TestSocket "$$ RELOAD_DATA\n";
+				if ($LogLevel > 2) {
+					print $TestSocket "$$ SET_LOGLEVEL $LogLevel\n";
+				}
 				close($TestSocket);
-				die "Error: A dayplanner daemon is already running and still responding. I told it to reload its data files.\n";
+				if ($LogLevel > 2)
+				{
+					die "Error: A dayplanner daemon is already running and still responding. I told it to reload its data files and set its LogLevel (verbosity) to $LogLevel.\n";
+				}
+				else
+				{
+					die "Error: A dayplanner daemon is already running and still responding. I told it to reload its data files.\n";
+				}
 			}
 			close($TestSocket);
 		}
@@ -559,6 +569,16 @@ sub CommandHandler
 	elsif(/^PING/)
 	{
 		return('PONG');
+	}
+	elsif(s/^SET_LOGLEVEL\s+(\d+)/$1/)
+	{
+		s/\s//g;
+		if (/\D/) {
+			return('ERR # SYNTAX ERROR');
+		}
+		$LogLevel = $_;
+		DaemonLog(4,"$$ told me to set LogLevel to $_, so I did");
+		return('done');
 	}
 	# Old API
 	elsif(/^(HI|BYE|NOTIFICATION|DEBUG|GET_PATH)/)
