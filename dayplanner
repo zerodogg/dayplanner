@@ -819,11 +819,11 @@ sub PrintHelp {
 # Usage: print "OS: ",GetDistVer(),"\n";
 sub GetDistVer {
 	# Try LSB first
+	my %LSB;
 	if (-e '/etc/lsb-release')
 	{
-		my %LSB;
 		LoadConfigFile('/etc/lsb-release',\%LSB);
-		if(defined($LSB{DISTRIB_ID}) and defined($LSB{DISTRIB_RELEASE}))
+		if(defined($LSB{DISTRIB_ID}) and $LSB{DISTRIB_ID} =~ /\S/ and defined($LSB{DISTRIB_RELEASE}) and $LSB{DISTRIB_RELEASE} =~ /\S/)
 		{
 			my $ret = '/etc/lsb-release: '.$LSB{DISTRIB_ID}.' '.$LSB{DISTRIB_RELEASE};
 			if(defined($LSB{DISTRIB_CODENAME}))
@@ -884,6 +884,12 @@ sub GetDistVer {
 		if(defined($DarwinOSVer) and defined($DarwinName)) {
 			return("$DarwinName $DarwinOSVer ($machine)");
 		}
+	}
+	# Some distros set a LSB DISTRIB_ID but no version, try DISTRIB_ID
+	# along with the kernel info.
+	if ($LSB{DISTRIB_ID})
+	{
+		return($LSB{DISTRIB_ID}."/Unknown ($sysname $release $version $machine)");
 	}
 	return("Unknown ($sysname $release $version $machine)");
 }
