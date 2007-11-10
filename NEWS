@@ -19,6 +19,9 @@ Version 0.8 (Unreleased)
   - Ignores deprecated API functions
 - Partly compatible older commandline options
   - Ignores deprecated commandline options
+- Will now notify about events that has already occurred but that
+  the user hasn't been notfied about (ie. because it occurred before
+  the user logged in)
 
 * Commander
 - Retired from service
