@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO:
-# - Simplify the comander
-
 use strict;
 use warnings;
 
@@ -280,7 +277,7 @@ sub WriteDaemonState
 	DaemonLog(5,'Writing daemon state to '.$DataDir . '/daemon_state.conf');
 	my %Explenations = (
 		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually",
-		HasNotified => 'This is a list of UIDs that has already been notified',
+		HasNotified => 'This is a list of UIDs that has already been notified (UIDs have had their time prepended)',
 		LastWritten => 'The unix time of when this file was last written',
 	);
 	if(not OnSameDate(time()),$DaemonState{LastWritten})
@@ -612,13 +609,14 @@ sub CommandHandler
 # Usage: EventNotification(UNIXTIME);
 sub EventNotification
 {
-	DaemonLog(3,'STUB: ' . (caller(0))[3]);
 	my $time = shift;
 	DaemonLog(4,'EventNotification processing');
 	foreach my $UID(@{$Notifications{$time}})
 	{
 		StartNotifier($UID);
+		$DaemonState{HasNotified} .= ' '.time().$UID;
 	}
+	WriteDaemonState();
 }
 
 # Purpose: Start the notifier
@@ -663,7 +661,8 @@ sub Daemonize
 
 # Purpose: Handler of SIGPIPE
 sub SigPipeHandler
-{DaemonLog(3,'STUB: ' . (caller(0))[3])
+{
+	DaemonLog(5,'Recieved SIGPIPE');
 }
 
 # Purpose: This is the main loop of the daemon. It should never return.
@@ -762,7 +761,6 @@ sub InitDaemon
 	InitDataPaths();
 	# Now try to open our socket. If that fails OpenSocket() will die() for us.
 	OpenSocket();
-	# Then go into daemon mode (FIXME: should verify that we are suppose to go into daemon mode)
 	if ($ForceFork or not $NoFork)
 	{
 		Daemonize();
