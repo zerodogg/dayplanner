@@ -1256,24 +1256,39 @@ sub HolidaySetup {
 		LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_detection", \%HolidayFiles, undef, 0)
 			or DPIntWarn('Unable to load holiday detection definitions!');
 	}
-
+	
 	my $LocationDetect;
 
-	if(defined($ENV{LC_ADDRESS})) {
-		$LocationDetect = $ENV{LC_ADDRESS};
-	} elsif (defined($ENV{LC_TELEPHONE})) {
-		$LocationDetect = $ENV{LC_TELEPHONE};
-	} elsif (defined($ENV{LC_IDENTIFICATION})) {
-		$LocationDetect = $ENV{LC_IDENTIFICATION};
-	} elsif (defined($ENV{LC_MESSAGES})) {
-		$LocationDetect = $ENV{LC_MESSAGES};
-	} elsif (defined($ENV{LC_ALL})) {
-		$LocationDetect = $ENV{LC_ALL};
-	} elsif (defined($ENV{LANGUAGE})) {
-		$LocationDetect = $ENV{LANGUAGE};
-	} elsif (defined($ENV{LANG})) {
-		$LocationDetect = $ENV{LANG};
-	} else {
+	# First try to fetch from the environment
+	foreach my $var(qw(LC_ADDRESS LC_TELEPHONE LC_IDENTIFICATION LC_MESSAGES LC_ALL LANGUAGE LANG LC_MONETARY LC_NUMERIC LC_TIME LC_COLLATE LC_CTYPE))
+	{
+		if(defined($ENV{$var}))
+		{
+			$LocationDetect = $ENV{$var};
+			last;
+		}
+	}
+	# If that didn't work, try to get it from setlocale()
+	if(not $LocationDetect)
+	{
+		foreach my $var([LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, LC_TIME])
+		{
+			$LocationDetect = setlocale($var);
+			# If it is defined, not of zero length and not set to C then we can use it, if not
+			# then discard this value and continue
+			if(defined($LocationDetect) and length($LocationDetect) and not $LocationDetect eq 'C')
+			{
+				last;
+			}
+			else
+			{
+				$LocationDetect = undef;
+			}
+		}
+	}
+	# If THAT didn't work either, fall back to guessing environment variables
+	if(not $LocationDetect)
+	{
 		my $BaseWarning = 'Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_IDENTIFICATION, LC_MESSAGES, LC_ALL nor LANGUAGE was set. ';
 		# Fall back to automatic detection
 		foreach my $key (keys(%ENV))
@@ -1296,12 +1311,12 @@ sub HolidaySetup {
 	my $CopyFile;
 	
 	if(defined($LocationDetect)) {
-		# Let's try to find the users LC_ADDRESS in the %HolidayFiles hash
+		# Let's try to find the LocationDetect value in the %HolidayFiles hash
 		# We sort it so that we test the longest entries before testing the short ones
 		foreach my $Key (sort {length($b) <=> length($a)} keys(%HolidayFiles)) {
 			if($LocationDetect =~ /^$Key/) {
-			$CopyFile = $HolidayFiles{$Key};
-					last;
+				$CopyFile = $HolidayFiles{$Key};
+				last;
 			}
 		}
 		if(defined($CopyFile)) {
@@ -1327,9 +1342,10 @@ sub HolidaySetup {
 	} else {
 		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. You didn't have any\n";
 		print $DUMMY_FILE ": environment variables set so Day Planner couldn't autodetect one.\n";
-		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file and re-run Day Planner.\n";
+		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file. Remove the entry Holiday_Attempted\n: in state.conf and re-run Day Planner.\n";
 		print $DUMMY_FILE ": Make sure one of the LC_* or LANG* environment variables are set when running Day Planner";
 	}
+	print $DUMMY_FILE "\n\n: Day Planner will automatically re-try to detect a holiday file after it has been updated.";
 	close($DUMMY_FILE);
 	$InternalConfig{Holiday_Setup} = 0;
 	$InternalConfig{Holiday_Attempted} = $Version;
