@@ -1096,7 +1096,7 @@ sub GetSummaryString {
 sub UpgradeVersion {
 	my $ProgressWin = DPCreateProgressWin($i18n->get('Upgrading'), '', 1);
 	$InternalConfig{LastVersion} = $Version;
-	my $Total = 8;
+	my $Total = 9;
 	# Upgrade the holiday file if needed
 	if(-e $HolidayFile) {
 		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
@@ -1184,6 +1184,14 @@ sub UpgradeVersion {
 		unlink("$SaveToDir/dayplannerd") if -e "$SaveToDir/dayplannerd";
 	}
 	ProgressMade(8, $Total, $ProgressWin) if($Gtk2Init);
+	# Remove and re-add autostart if it is enabled, so that
+	# the autostart is correct (daemon path might have changed)
+	if ($InternalConfig{AutostartOn} eq '1')
+	{
+		RemoveAutostart();
+		DP_AddAutostart();
+	}
+	ProgressMade(9, $Total, $ProgressWin) if($Gtk2Init);
 	$ProgressWin->{Window}->destroy();
 }
 
