@@ -1272,7 +1272,7 @@ sub HolidaySetup {
 	} elsif (defined($ENV{LANGUAGE})) {
 		$LocationDetect = $ENV{LANGUAGE};
 	} elsif (defined($ENV{LANG})) {
-		$LocationDetect = $ENV{LANGUAGE};
+		$LocationDetect = $ENV{LANG};
 	} else {
 		my $BaseWarning = 'Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_IDENTIFICATION, LC_MESSAGES, LC_ALL nor LANGUAGE was set. ';
 		# Fall back to automatic detection
