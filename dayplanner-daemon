@@ -96,6 +96,10 @@ my $LogLevel = 2;
 # The log file
 my $Logfile;
 
+# Signal handlers
+$SIG{INT} = \&Shutdown;
+$SIG{TERM} = \&Shutdown;
+
 # ----
 # HELPER FUNCTIONS
 # ----
@@ -277,7 +281,7 @@ sub WriteDaemonState
 	DaemonLog(5,'Writing daemon state to '.$DataDir . '/daemon_state.conf');
 	my %Explenations = (
 		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually",
-		HasNotified => 'This is a list of UIDs that has already been notified (UIDs have had their time prepended)',
+		HasNotified => 'This is a list of UIDs that has already been notified',
 		LastWritten => 'The unix time of when this file was last written',
 	);
 	if(not OnSameDate(time()),$DaemonState{LastWritten})
@@ -614,7 +618,6 @@ sub EventNotification
 	foreach my $UID(@{$Notifications{$time}})
 	{
 		StartNotifier($UID);
-		$DaemonState{HasNotified} .= ' '.time().$UID;
 	}
 	WriteDaemonState();
 }
@@ -631,6 +634,7 @@ sub StartNotifier
 		{
 			if(loggingSystem($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
 			{
+				$DaemonState{HasNotified} .= ' '.$UID;
 				return(true);
 			}
 			else
@@ -734,6 +738,58 @@ sub MainLoop
 # INITIALIZATION
 # ----
 
+# Purpose: Launch the notifier for events that has already occurred
+# Usage: LaunchPrevNotifications();
+sub LaunchPrevNotifications
+{
+	# First we create a list of UIDs
+	my %LaunchUids;
+	DaemonLog(5,'Preparing list of events that has occurred to notify the user about');
+	foreach my $time (sort keys(%Notifications))
+	{
+		if(time() >= $time)
+		{
+			foreach my $UID (@{$Notifications{$time}})
+			{
+				$LaunchUids{$UID} = $time;
+			}
+		}
+	}
+	# And then we launch a notifier for each of them,
+	# as long as the UID has not been set as "has notified"
+	foreach my $UID(keys(%LaunchUids))
+	{
+		my $NoLaunch;
+		foreach my $NotUID (split(/\s+/,$DaemonState{HasNotified}))
+		{
+			if($UID eq $NotUID)
+			{
+				DaemonLog(5,'Setting NoLaunch flag for '.$NotUID);
+				$NoLaunch = true;
+				last;
+			}
+		}
+		if ($NoLaunch)
+		{
+			# Break out of the loop if, and ONLY IF, the event occurred more than one
+			# hour ago.
+			my $info = $iCalendar->get_info($UID);
+			if (iCal_ConvertToUnixTime($info->{DTSTART}) < time() - 3600)
+			{
+				DaemonLog(5,'Keeping NoLaunch flag for '.$UID);
+				next;
+			}
+			else
+			{
+				DaemonLog(5,'Ignoring NoLaunch flag for '.$UID.' due to it being less than one hour since it occurred');
+			}
+		}
+		StartNotifier($UID);
+	}
+	# Update the state
+	WriteDaemonState();
+}
+
 # Purpose: Initialize data paths
 # Usage: InitDataPaths();
 sub InitDataPaths
@@ -773,6 +829,9 @@ sub InitDaemon
 	CalculateNotifications();
 	# Load the previous state information
 	LoadDaemonState();
+	# Launch notifiers for events that has already occurred but that the user has
+	# not been notified about.
+	LaunchPrevNotifications();
 	# Okay, all initialiation has been done. Just rest in the main loop.
 	MainLoop();
 	# This should never happen
