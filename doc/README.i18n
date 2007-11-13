@@ -16,6 +16,12 @@ the SVN then your translations might be outdated before they're done.
 Secondly, it's recommended that you join the
 dayplanner-i18n mailing list at https://mail.gna.org/listinfo/dayplanner-i18n/
 
+Last you should know something about the syntax of the Day Planner po-files.
+You will meet strings in the form %(something) - do NOT translate the contents
+within these strings. These are the same as the usual %s placeholders,
+but with the added benefit of being named, which means that you can
+re-order them at will without breaking anything.
+
 	Creating a new translation
 	- - - - - - - - - - - - - -
 Run ./devel-tools/buildpot - this will create a pot-file in ./po/dayplanner.pot.
