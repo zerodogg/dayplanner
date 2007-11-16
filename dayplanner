@@ -1479,6 +1479,8 @@ sub AddAutostart {
 		print $XDGSTART "Exec=$DaemonExec\n";
 		print $XDGSTART "StartupNotify=false\n";
 		print $XDGSTART "StartupWMClass=false\n";
+		# Some distros need this for autostart to be enabled in GNOME
+		print $XDGSTART "X-GNOME-Autostart-enabled=true\n";
 		close($XDGSTART);
 	}
 	# GNOME - this is harder. No real common spec or easy way to do it. 2.14 or so
