@@ -38,7 +38,7 @@ unless(-d "./po" and -e "./devel-tools/buildpot") {
 
 die("Pease install msgmerge before running me (usually included in the \"gettext\" package)\n") unless InPath("msgmerge");
 
-system("sh ./devel-tools/buildpot");
+system("bash ./devel-tools/buildpot");
 chdir("./po");
 foreach(<*.po>) {
 	print "Updating po/$_";
