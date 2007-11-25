@@ -734,7 +734,6 @@ sub FirstStartup {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
-	my $Return = 'OKAY';
 	$iCalendar->write();	# TODO: Check return value
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	Daemon_SendData('RELOAD_DATA');
