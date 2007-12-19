@@ -74,7 +74,8 @@ my $DataDir;
 # The calendar filename
 my $CalendarFile = 'calendar.ics';
 # The socket filename
-my $SocketName = 'Daemon_Socket';
+my $OrigSocketName = 'Daemon_Socket';
+my $SocketName = $OrigSocketName;
 # The socket path
 my $SocketPath;
 # The socket FH
@@ -842,7 +843,12 @@ GetOptions (
 	'help|h' => sub {
 		print "Day Planner daemon version $Version\n\n";
 		PrintHelp('-d', '--dayplannerdir', 'Which directory to use as the dayplanner config dir');
+		PrintHelp('','',' (autdetected if not present)');
+		PrintHelp('','--socketname','Sets the name of the socket in --dayplannerdir to');
+		PrintHelp('','',' listen on. Default: '.$OrigSocketName);
 		PrintHelp('-k','--kill','Shut down a currently running daemon');
+		PrintHelp('-n','--nofork',"Don't fork, stay in the foreground");
+		PrintHelp('-f','--force-fork','Force forking, overrides --nofork');
 		PrintHelp('', '--version', 'Display version information and exit');
 		PrintHelp('-h,', '--help', 'Display this help screen');
 		PrintHelp('-v,', '--verbose', 'Be verbose. Supply several times to increase verbosity.');
