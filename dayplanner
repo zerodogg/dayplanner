@@ -5136,6 +5136,20 @@ GetOptions (
 		print " $_" foreach(@UnavailModules);
 		print ' (none)' unless(@UnavailModules);
 		print "\n";
+		print '@INC:';
+		$Prev = false;
+		foreach my $i (@INC) {
+			if ($Prev)
+			{
+				print ',';
+			}
+			else
+			{
+				$Prev = true;
+			}
+			print " '".$i."'";
+		}
+		print "\n";
 		exit(0);
 	},
 	'test|t:i' => sub {
