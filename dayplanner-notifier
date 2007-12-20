@@ -21,10 +21,8 @@ use strict;			# Force strict coding
 use warnings;			# Tell perl to display warnings
 use Gtk2;			# Use Gtk2
 use Getopt::Long;		# Commandline options
-use IO::Socket;			# Network layer to communicate with the daemon
 use POSIX;			# setlocale()
 use Cwd;
-use File::Basename;
 use FindBin;
 # These constants prettify things
 use constant { true => 1, false => 0 };
@@ -43,10 +41,8 @@ $0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
 my $Version = '0.8';
 my $RCSRev = '$Id$';
-my $SoftwareDir = dirname(Cwd::realpath($0));
 
-my $CalendarPath;			# The socket to connect to
-my $Socket;			# The IO::Socket object
+my $CalendarPath;		# The source iCalendar file
 my $DP_I18N_Mode;
 my $Message;			# The message
 my $Fulltext;			# The fulltext (details)
