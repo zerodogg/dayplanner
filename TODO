@@ -8,8 +8,6 @@ may be subject to change.
 
 * Version 0.8
 - - - - - - -
-- Make available packages for Debian, Ubuntu and Mandriva. Make available
-	a Ubuntu/Debian (apt-get) and Mandriva (urpmi) package repositories.
 - Have a third party look over all strings (in the pot-file) and try to
 	simplify those too technical
 
