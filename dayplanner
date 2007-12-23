@@ -61,6 +61,7 @@ my $i18n;
 my $DPS_APILevel = '06';			# The DPS API level used/supported
 my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
+my $HTML_PHP;
 
 # FIXME: Unused
 # Arrays
@@ -1872,7 +1873,7 @@ sub HTML_DayToHtml {
 	print $FILE '<tbody><tr><td>' . HTML_Encode($i18n->get('Time')) . '</td><td>' . HTML_Encode($i18n->get('Description')) . "</td></tr>\n";
 	# Write allday and birthdays
 	foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,'DAY')})) {
-		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
+		print $FILE '<tr><td></td><td>' . HTML_Encode(GetSummaryString($Event,false,$Year,$Month));
 		my $EventInfo = $iCalendar->get_info($Event);
 		if(defined($EventInfo->{DESCRIPTION})) {
 			my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
@@ -1884,7 +1885,7 @@ sub HTML_DayToHtml {
 	foreach my $Time (sort(@{$iCalendar->get_dateinfo($Year,$Month,$Day)})) {
 		next if $Time eq 'DAY';
 		foreach my $Event (sort (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})) {
-			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event,FALSE,$Year,$Month));
+			print $FILE "<tr><td>$Time</td><td>" . HTML_Encode(GetSummaryString($Event,false,$Year,$Month));
 			my $EventInfo = $iCalendar->get_info($Event);
 			if(defined($EventInfo->{DESCRIPTION})) {
 				my $HTML_Fulltext = HTML_Encode($EventInfo->{DESCRIPTION});
