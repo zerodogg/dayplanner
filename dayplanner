@@ -2064,7 +2064,8 @@ sub HTML_Export {
 	);
 	my $Dir = $_[0];
 	unless(-d $Dir) {
-		eval("mkpath('$Dir')");
+		runtime_use('File::Path');
+		eval("File::Path::mkpath('$Dir')");
 		if($@) {
 			DPIntWarn("Unable to mkpath($Dir): $@");
 			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $Dir, error => $@}));
