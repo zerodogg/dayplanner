@@ -1,6 +1,14 @@
 Day Planner version history
 **************************
 
+Version 0.9 (Unreleased)
+------------------------
+* Client (dayplanner)
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
 Version 0.8 (Unreleased)
 ------------------------
 * Client (dayplanner)
