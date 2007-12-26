@@ -27,9 +27,9 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use constant {
-	TRUE => 1,
-	FALSE => undef,
-	};
+	true => 1,
+	false => undef,
+};
 
 # Exported functions
 our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
@@ -44,6 +44,28 @@ sub DPIntWarn {
 # Usage: DPIntInfo("Info");
 sub DPIntInfo {
 	print "*** (Day Planner $main::Version): $_[0]\n";
+}
+
+# Purpose: Open a file
+# Usage: DP_sopen(PARAMS);
+# 	PARAMS are identical to those of open(), skipping the first one;
+#
+# 	Returns false on error, the FH if not.
+sub DP_sopen
+{
+	my $type = shift;
+	my $sourcetype = shift;
+	my $err;
+	open(my $FH, $type, $sourcetype) or do
+	{
+		$err = $!;
+	};
+	if ($err)
+	{
+		DPIntWarn("Failed to open $sourcetype: $err");
+		return(false);
+	}
+	return($FH);
 }
 
 # Purpose: Write a configuration file
