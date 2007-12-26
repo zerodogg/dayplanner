@@ -1176,10 +1176,13 @@ sub UpgradeVersion {
 	if (-e "$SaveToDir/dayplannerd")
 	{
 		my $Old_Daemon = DP::GeneralHelpers::IPC->new_client("$SaveToDir/dayplannerd");
-		# Authenticate as a commander, this has no access control restrictions.
-		$Old_Daemon->client_send("$$ HI commander");
-		$Old_Daemon->client_send("$$ SHUTDOWN");
-		$Old_Daemon->destroy();
+		if ($Old_Daemon)
+		{
+			# Authenticate as a commander, this has no access control restrictions.
+			$Old_Daemon->client_send("$$ HI commander");
+			$Old_Daemon->client_send("$$ SHUTDOWN");
+			$Old_Daemon->destroy();
+		}
 		# Ensure that the socket is gone
 		unlink("$SaveToDir/dayplannerd") if -e "$SaveToDir/dayplannerd";
 	}
