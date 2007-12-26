@@ -3,9 +3,9 @@ day planner. They are bundled here for convinience, Day Planner automagically
 detects them and makes use of them.
 
 Modules:
-Date::HolidayParser	A parser for .holiday files. Day planner uses it to
-			parse the included holiday files and put them into
-			the calendar.
-DP::iCalendar		The iCalendar format parser used by Day Planner.
-DP::GeneralHelpers	The library providing useful general helper functions
-			to Day Planner
+Date::HolidayParser    A parser for .holiday files. Day planner uses it to
+                       parse the included holiday files and put them into
+                       the calendar.
+DP::iCalendar          The iCalendar format parser used by Day Planner.
+DP::GeneralHelpers     The library providing useful general helper functions
+                       to Day Planner
