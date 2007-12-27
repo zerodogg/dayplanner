@@ -286,7 +286,7 @@ sub exists {
 # Usage: $object->addfile(FILE);
 sub addfile {
 	my ($this,$File) = @_;
-	warn('addfile: STUB'); return(undef);
+	return($this->{PRIMARY}->addfile($File));
 }
 
 # Purpose: Remove all loaded data
