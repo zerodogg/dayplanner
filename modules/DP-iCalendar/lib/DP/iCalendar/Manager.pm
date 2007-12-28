@@ -404,7 +404,8 @@ sub _merge_arrays_unique
 				}
 			}
 		}
-		else
+		# Don't bother printing an error if the value is undef, undef is fine.
+		elsif (defined($_))
 		{
 			warn("_merge_arrays_unique: Array of arrays included nonarray value: ".ref($_).'='.$_);
 		}
