@@ -801,6 +801,12 @@ sub LoadCalendar {
 	}
 	# Set the ICS prodid
 	$iCalendar->set_prodid("-//day-planner.org//NONSGML Day Planner $Version//EN");
+	# Apply bypassing if requested
+	if (defined($ENV{DP_BYPASS_MANAGER}) and $ENV{DP_BYPASS_MANAGER} eq '1')
+	{
+		DPIntWarn("Bypassing DP::iCalendar::Manager - this is unsupported and should only be used for debugging.");
+		$iCalendar = $MainCalendar;
+	}
 	return(1);
 }
 

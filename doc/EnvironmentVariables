@@ -36,4 +36,9 @@ DP_NO_STRICT_PERMS
 			Forces Day Planner not to enforce 0600 mode on the
 			calendar file if set to 1.
 
+DP_BYPASS_MANAGER
+			Bypasses the use of DP::iCalendar::Manager if set to 1 - this can
+			assist in identifying where an issue lies (in
+			DP::iCalendar, the data or the Manager).
+
 vim: set tw=70 autoindent :
