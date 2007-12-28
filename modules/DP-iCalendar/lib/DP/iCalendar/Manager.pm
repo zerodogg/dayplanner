@@ -1,7 +1,7 @@
 # DP::iCalendar::Manager
 # $Id$
-# An wrapper around DP::iCalendar that allows subscriptions to iCalendar calendars
-# via the internet.
+# A wrapper around DP::iCalendar that allows multiple DP::iCalendar-compatible objects to be seen
+# and manipulated as one.
 # Copyright (C) Eskild Hustvedt 2007
 #
 # This program is free software; you can redistribute it and/or modify it
