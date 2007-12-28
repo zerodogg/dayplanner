@@ -22,7 +22,6 @@ use warnings;			# Tell perl to display warnings
 use Gtk2;			# Use Gtk2
 use Getopt::Long;		# Commandline options
 use POSIX;			# setlocale()
-use Cwd;
 use FindBin;
 # These constants prettify things
 use constant { true => 1, false => 0 };
@@ -63,7 +62,7 @@ my $LaunchTime = time();
 #		first one found or undef
 # Usage: $Image = DetectImage(image1, image2);
 sub DetectImage {
-	my $I_Am_At = dirname(Cwd::realpath($RealZero));
+	my $I_Am_At = $FindBin::RealBin;
 	foreach my $Image (@_) {
 		foreach my $Dir ("$I_Am_At/art", $I_Am_At, '/usr/share/dayplanner', '/usr/local/dayplanner', '/usr/local/share/dayplanner', '/usr/share/dayplanner/art', '/usr/local/dayplanner/art', '/usr/local/share/dayplanner/art', '/usr/share/icons/large', '/usr/share/icons', '/usr/share/icons/mini') {
 			if (-e "$Dir/$Image") {
