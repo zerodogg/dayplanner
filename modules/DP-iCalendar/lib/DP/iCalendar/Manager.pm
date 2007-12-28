@@ -5,7 +5,7 @@
 # Copyright (C) Eskild Hustvedt 2007
 #
 # This program is free software; you can redistribute it and/or modify it
-# under the same terms as Perl itthis. There is NO warranty;
+# under the same terms as Perl itself. There is NO warranty;
 # not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 package DP::iCalendar::Manager;
@@ -391,12 +391,25 @@ sub _merge_arrays_unique
 		warn("_merge_arrays_unique: Didn't get an arrayref :'( - got: ". ref($array));
 		return(undef);
 	}
+	my %Aindex;
 	my @NewArray;
 	foreach(@{$array}) {
 		if(ref($_) eq 'ARRAY') {
-			push(@NewArray,@{$_});
+			foreach my $val (@{$_})
+			{
+				if(not $Aindex{$val})
+				{
+					$Aindex{$val} = true;
+					push(@NewArray,$val);
+				}
+			}
+		}
+		else
+		{
+			warn("_merge_arrays_unique: Array of arrays included nonarray value: ".ref($_).'='.$_);
 		}
 	}
+	undef %Aindex;
 	return(\@NewArray);
 }
 
