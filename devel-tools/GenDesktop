@@ -23,27 +23,40 @@ use Locale::gettext;		# Allow the program to be translated
 use FindBin;			# So that we can detect stuff at runtime
 use POSIX;
 use utf8;
-use Fatal qw/open close/;
+use Fatal qw/open close chdir/;
+# Useful constants for prettier code
+use constant { true => 1, false => 0 };
+# We use LoadConfigFile to load the config info from the po dir
+use FindBin;			# So that we can detect module dirs during runtime
+use lib "$FindBin::RealBin/../modules/";
+use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use DP::GeneralHelpers qw(LoadConfigFile);
 
-sub SetLocale {
-	foreach(keys(%ENV)) {
-		next unless /^(LC|.*LANG)/;
-		$ENV{$_} = $_[0];
-	}
-	foreach(qw(LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL))
+# Purpose: Get "Day Planner" translated to one language
+# Usage: GetForLocale(pofile);
+# 	This is rather hacky, but works
+sub GetForLocale
+{
+	my $locale = shift;
+	open(my $LocFile, '<',$locale) or die();
+	my $NextIs = false;
+	my $LocalizedName;
+	while($_ = <$LocFile>)
 	{
-		$ENV{$_} = $_[0];
+		if ($NextIs and /^msgstr/)
+		{
+			$LocalizedName = $_;
+			$LocalizedName =~ s/^msgstr\s+"//;
+			$LocalizedName =~ s/"\s*$//;
+			last;
+		}			
+		elsif (/^msgid "Day Planner"/)
+		{
+			$NextIs = true;
+		}
 	}
-	foreach(&POSIX::LC_CTYPE, &POSIX::LC_NUMERIC, &POSIX::LC_TIME, &POSIX::LC_COLLATE, &POSIX::LC_MONETARY, &POSIX::LC_MESSAGES, &POSIX::LC_ALL)
-	{
-		setlocale($_,$_[0]);
-	}
-	textdomain("dayplanner");
-	bindtextdomain("dayplanner", "./");
-	#system('perl','-MLocale::gettext','-Mlocale','-e','$g = Locale::gettext->domain_raw("dayplanner");$g->codeset("UTF-8");print $g->get("Day Planner")."\n";');
-	my $GettextObj = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
-	$GettextObj->codeset('UTF-8');
-	return($GettextObj);
+	close($LocFile);
+	return($LocalizedName);
 }
 
 my %Languages;
@@ -67,22 +80,25 @@ chdir($FindBin::RealBin);
 chdir("..");
 my %I18nCount;
 
-print "Running ./devel-tools/BuildLocale\n";
-system("./devel-tools/BuildLocale");
-
 print "Generating .desktop...:\n";
-chdir("locale");
-foreach(<*>) {
-	if(-d $_ and not -l $_) {
-		my $Gettext = SetLocale($_);
-		$Languages{$_} = $Gettext->get("Day Planner");
-		if($Languages{$_} eq "Day Planner") {
-			delete($Languages{$_});
-			print "$_: No valid translation of \"Day Planner\" found\n";
-		} else {
-			print "$_: OK\n";
-			$I18nCount{$Languages{$_}} += 1;
-		}
+chdir('po');
+foreach(glob('*.po'))
+{
+	my $locale = $_;
+	$locale =~ s/\.po//;
+	$Languages{$locale} = GetForLocale($_);
+	if(not defined($Languages{$locale}))
+	{
+		print "$locale: Fatal: Unable to detect string, got undef!\n";
+	}
+	elsif($Languages{$locale} eq '' or $Languages{$locale} eq "Day Planner")
+	{
+		delete($Languages{$locale});
+		print "$locale: No valid translation of \"Day Planner\" found\n";
+	} else
+	{
+		print "$locale: OK\n";
+		$I18nCount{$Languages{$locale}} += 1;
 	}
 }
 # Verify count
