@@ -23,34 +23,46 @@ use Locale::gettext;		# Allow the program to be translated
 use FindBin;			# So that we can detect stuff at runtime
 use POSIX;
 use utf8;
-use Fatal qw/open close/;
+use Fatal qw/open close chdir/;
+# Useful constants for prettier code
+use constant { true => 1, false => 0 };
+# We use LoadConfigFile to load the config info from the po dir
+use FindBin;			# So that we can detect module dirs during runtime
+use lib "$FindBin::RealBin/../modules/";
+use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use DP::GeneralHelpers qw(LoadConfigFile);
 
-sub SetLocale {
-	foreach(keys(%ENV)) {
-		next unless /^(LC|.*LANG)/;
-		$ENV{$_} = $_[0];
-	}
-	foreach(qw(LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL))
+# Purpose: Get "Day Planner" translated to one language
+# Usage: GetForLocale(pofile);
+# 	This is rather hacky, but works
+sub GetForLocale
+{
+	my $locale = shift;
+	open(my $LocFile, '<',$locale) or die();
+	my $NextIs = false;
+	my $LocalizedName;
+	while($_ = <$LocFile>)
 	{
-		$ENV{$_} = $_[0];
+		if ($NextIs and /^msgstr/)
+		{
+			$LocalizedName = $_;
+			$LocalizedName =~ s/^msgstr\s+"//;
+			$LocalizedName =~ s/"\s*$//;
+			last;
+		}			
+		elsif (/^msgid "Day Planner"/)
+		{
+			$NextIs = true;
+		}
 	}
-	foreach(&POSIX::LC_CTYPE, &POSIX::LC_NUMERIC, &POSIX::LC_TIME, &POSIX::LC_COLLATE, &POSIX::LC_MONETARY, &POSIX::LC_MESSAGES, &POSIX::LC_ALL)
-	{
-		setlocale($_,$_[0]);
-	}
-	textdomain("dayplanner");
-	bindtextdomain("dayplanner", "./");
-	#system('perl','-MLocale::gettext','-Mlocale','-e','$g = Locale::gettext->domain_raw("dayplanner");$g->codeset("UTF-8");print $g->get("Day Planner")."\n";');
-	my $GettextObj = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
-	$GettextObj->codeset('UTF-8');
-	return($GettextObj);
+	close($LocFile);
+	return($LocalizedName);
 }
 
 my %Languages;
 
 my($BinDir, $IconsDir) = @ARGV;
 my $Icon;
-my $NoErrorForce;
 
 unless(defined($BinDir)) {
 	die("Usage: $0 [DIRECTORY CONTAINING THE dayplanner BINARY] [ICONS DIR]\n The binary dir is mandatory, icons dir optional.");
@@ -65,60 +77,36 @@ if(defined($IconsDir)) {
 # Set dirs
 chdir($FindBin::RealBin);
 chdir("..");
-my %I18nCount;
-
-print "Running ./devel-tools/BuildLocale\n";
-system("./devel-tools/BuildLocale");
 
 print "Generating .desktop...:\n";
-chdir("locale");
-foreach(<*>) {
-	if(-d $_ and not -l $_) {
-		my $Gettext = SetLocale($_);
-		$Languages{$_} = $Gettext->get("Day Planner");
-		if($Languages{$_} eq "Day Planner") {
-			delete($Languages{$_});
-			print "$_: No valid translation of \"Day Planner\" found\n";
-		} else {
-			print "$_: OK\n";
-			$I18nCount{$Languages{$_}} += 1;
-		}
-	}
-}
-# Verify count
-foreach(keys(%Languages))
+chdir('po');
+foreach(sort glob('*.po'))
 {
-	if ($I18nCount{$Languages{$_}} > 2)
+	my $locale = $_;
+	$locale =~ s/\.po//;
+	$Languages{$locale} = GetForLocale($_);
+	if(not defined($Languages{$locale}))
 	{
-		if(defined($ENV{DP_FORCE_GENDESKTOP}) and $ENV{DP_FORCE_GENDESKTOP})
-		{
-			$NoErrorForce = 1;
-			last;
-		}
-		else
-		{
-			die("GenDesktop: Translation count for '$Languages{$_}' is more than two ($I18nCount{$Languages{$_}}). Something is very wrong.\nYou are probably missing a few locales. Refusing to continue\nIf you wish to suppress this error and continue anyway, set the env var DP_FORCE_GENDESKTOP to any true value.\n");
-		}
+		print "$locale: Fatal: Unable to detect string, got undef!\n";
+	}
+	elsif($Languages{$locale} eq '' or $Languages{$locale} eq "Day Planner")
+	{
+		delete($Languages{$locale});
+		print "$locale: No valid translation of \"Day Planner\" found\n";
+	} else
+	{
+		print "$locale: OK\n";
 	}
 }
-# Create the file
+# Fetch aliases
 chdir("..");
+my %LangAliases;
+LoadConfigFile('./po/aliases.conf',\%LangAliases);
+# Create the file
 print "Writing...";
-open(my $Desktop, ">", "./doc/dayplanner.desktop");
+open(my $Desktop, '>', './doc/dayplanner.desktop');
 binmode($Desktop, ':utf8');
-if ($NoErrorForce)
-{
-	use Sys::Hostname;
-	print $Desktop "# File forced to be generated even though language counts were invalid\n";
-	print $Desktop "# Force on ". scalar(localtime()) . " by $</$> on " .hostname()."\n";
-	print $Desktop "# Counts:";
-	foreach(keys(%I18nCount))
-	{
-		print $Desktop " $_ = $I18nCount{$_}";
-	}
-	print $Desktop "\n";
-}
-print ".";
+print '.';
 print $Desktop "[Desktop Entry]\n";
 print $Desktop "Version=1.0\n";
 print $Desktop "Encoding=UTF-8\n";
@@ -134,10 +122,26 @@ print $Desktop "Name=Day Planner\n";
 print $Desktop "StartupNotify=false\n";
 print $Desktop "Terminal=false\n";
 print $Desktop "Type=Application\n";
-print ".";
+print '.';
+# We use this hash to esnure that we don't write the same value more than once
+my %LangWrittenList;
 foreach(keys(%Languages))
 {
-	print $Desktop "Name[$_]=$Languages{$_}\n";
+	if (defined($Languages{$_}))
+	{
+		print $Desktop "Name[$_]=$Languages{$_}\n";
+		$LangWrittenList{$_} = true;
+		if(defined($LangAliases{$_}))
+		{
+			foreach my $alias (split(/\s+/,$LangAliases{$_}))
+			{
+				next if $alias =~ /\./;
+				next if $LangWrittenList{$alias};
+				print $Desktop "Name[$alias]=$Languages{$_}\n";
+				$LangWrittenList{$alias} = true;
+			}
+		}
+	}
 }
 print ".";
 close($Desktop);
