@@ -112,7 +112,7 @@ sub LoadConfigFile {
 		my $Option = $_;
 		my $Value = $_;
 		$Option =~ s/^\s*(\w+)\s*=.*/$1/;
-		$Value =~ s/^\w+=\s*(.*)\s*/$1/;
+		$Value =~ s/^\s*\w+\s*=\s*(.*)\s*/$1/;
 		if($OnlyValidOptions) {
 			unless(defined($OptionRegex->{$Option})) {
 				DPIntWarn("Unknown configuration option \"$Option\" (=$Value) in $File: Ignored.");
