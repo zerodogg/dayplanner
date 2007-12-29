@@ -30,10 +30,8 @@ this would be: mv ./po/dayplanner.pot ./po/nb.po
 Now start translating ./po/LANG_CODE.po with your favourite po-editor
 (for instance poedit, gtranslator or kbabel).
 
-When you're done with that you'll need to edit ./devel-tools/BuildLocale.
-Add your language to the %LocaleDirHash and %MoToDirHash - how to do it
-is documented inside the ./devel-tools/BuildLocale file. If you have any
-questions, don't hesitate to e-mail me.
+When you're done with that you'll need to edit ./po/aliases.conf - add
+your language.
 
 When you've done that follow the instructions in the sections "building the
 translations" and "sending in the translations".
