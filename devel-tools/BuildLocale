@@ -20,6 +20,11 @@ use strict;
 use warnings;
 use Cwd;
 use File::Basename;
+# We use LoadConfigFile to load the config info from the po dir
+use FindBin;			# So that we can detect module dirs during runtime
+use lib "$FindBin::RealBin/../modules/";
+use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use DP::GeneralHelpers qw(LoadConfigFile);
 
 $| = 1;
 
@@ -29,27 +34,7 @@ my $NoAlias;
 # Main directory => any links to that directory
 # 
 # The links part can be ''. If not it should be a space seperated list
-my %LocaleDirHash = (
-	# Norwegian
-	'nb' => 'nb_NO nb_NO.UTF-8 nb_NO.ISO-8859-15 no_NO no_NO.ISO-8859-1 no_NO.ISO-8859-15 no_NO.UTF-8',
-	'nn' => 'nn nn_NO nn_NO.ISO-8859-15 nn_NO.UTF-8',
-
-	'cs' => 'cs_CZ czech cs_CZ.ISO-8859-2',
-	'sk' => 'sk_SK slovak sk_SK.UTF-8 sk_SK.ISO-8859-2',
-	'sv' => 'sv_SE sv_SE.ISO-8859-1 sv_SE.ISO-8859-15 sv_SE.UTF-8 sv_FI sv_FI.ISO-8859-1 sv_FI.ISO-8859-15 sv_FI.UTF-8',
-	'it' => 'it_IT it_IT.UTF-8 it_IT.ISO-8859-1',
-);
-
-# Usage:
-# *.mo name => LocaleDirHash main directory it should live in
-my %MoToDirHash = (
-	'nb.mo' => 'nb',
-	'nn.mo' => 'nn',
-	'cs.mo' => 'cs',
-	'sk.mo' => 'sk',
-	'sv.mo' => 'sv',
-	'it.mo' => 'it',
-);
+my %LocaleDirHash;
 
 # Usage: InPath(command)
 sub InPath ($) {
@@ -62,6 +47,7 @@ die("I need msgfmt to be installed to work\n") unless InPath("msgfmt");
 my $Self = dirname(Cwd::realpath($0));
 die "Unable to detect the po directory\n" unless (-e "$Self/../po/");
 my $PoDir = "$Self/../po/";
+LoadConfigFile($PoDir.'/aliases.conf',\%LocaleDirHash);
 
 my $LocaleDir;
 
@@ -126,17 +112,14 @@ foreach my $CurrentLocale (keys(%LocaleDirHash)) {
 
 print "Putting mo-files into place:";
 foreach my $MO (<*.mo>) {
-	unless(defined($MoToDirHash{$MO}) and length($MoToDirHash{$MO})) {
-		warn("\nThe file $MO has no entry in \%MoToDirHash - ignoring\n");
-		unlink($MO);
+	my $orig = $MO;
+	$orig =~ s/\.(po|mo)$//;
+	if(not -d "$LocaleDir/$orig/")
+	{
+		print "\n$MO: No directory created\n";
 		next;
 	}
-	unless(-d "$LocaleDir/$MoToDirHash{$MO}/LC_MESSAGES/") {
-		warn("\nThe file $MO has an invalid directory entry in the \%MoToDirHash (or the dir might be missing from the \%LocaleDirHash). Ignoring\n");
-		unlink($MO);
-		next;
-	}
-	system("mv $MO $LocaleDir/$MoToDirHash{$MO}/LC_MESSAGES/dayplanner.mo");
+	system("mv $MO $LocaleDir/$orig/LC_MESSAGES/dayplanner.mo");
 	print " $MO";
 }
 
