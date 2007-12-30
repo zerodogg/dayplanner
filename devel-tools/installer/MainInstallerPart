@@ -24,6 +24,15 @@ use File::Copy;
 use File::Path;
 use POSIX ":sys_wait_h";
 
+my $HOME = getpwuid($>);
+if(-d $HOME) {
+	$ENV{HOME} = $HOME;
+}
+elsif(not defined($ENV{HOME}))
+{
+	die("Home detection failed. Please set the environment variable HOME to the path to your home directory.\n");
+}
+
 my $ProgressWin;
 my $InstallDirectory = "$ENV{HOME}/.local/share/dayplanner";
 my $AutoInstaller;
