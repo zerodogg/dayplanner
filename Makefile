@@ -20,7 +20,7 @@ ifdef prefix
 INSTALLRULES=maininstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall tools desktop essentialdocs
+INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
@@ -164,10 +164,6 @@ holidayinstall:
 	mkdir -p $(DP_MAINTARGET)/holidays
 	install -m644 $(shell ls ./holiday/holiday*) $(DP_MAINTARGET)/holidays
 
-# Tool installation
-tools:
-	mkdir -p $(DP_MAINTARGET)/tools
-	install -m755 $(shell ls ./tools/) $(DP_MAINTARGET)/tools
 # Essential documentation
 essentialdocs:
 	install -m644 NEWS $(DP_MAINTARGET)
