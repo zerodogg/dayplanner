@@ -33,10 +33,10 @@ use FindBin;			# So that we can detect module dirs during runtime
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 # This here is done so that we can use local versions of our libs
-use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/modules/";
 # Day Planner-specific libs
 use Date::HolidayParser 0.4;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
