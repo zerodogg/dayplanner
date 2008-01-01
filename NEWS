@@ -7,6 +7,8 @@ Version 0.8 "2008" (Released on the 1st of January 2008)
 - Cleanups
 - Added DP::iCalendar::Manager - supports multiple iCalendar sources
 - Enforces much stricter file permissions on files
+- Added report bug to menu
+- Fixed some issues with weekly recurrances
 
 * Notifier (dayplanner-notifier)
 - Major parts have been rewritten
