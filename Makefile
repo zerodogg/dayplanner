@@ -188,12 +188,13 @@ gendistribdesktop:
 	./devel-tools/GenDesktop .
 # --- DISTRIB TARGETS ---
 distrib: prepdistrib tarball rpm installer
-prepdistrib: gendistribdesktop test clean
+prepdistrib: test clean gendistribdesktop
 	mkdir -p packages
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
 	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.svn ./dayplanner-$(VERSION)
 	make -C ./dayplanner-$(VERSION) distclean
+	make -C ./dayplanner-$(VERSION) gendistribdesktop
 	rm -rf `find dayplanner-$(VERSION) -name \\.svn`
 	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
 	rm -rf dayplanner-$(VERSION)
