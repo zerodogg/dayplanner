@@ -17,7 +17,7 @@ use Exporter qw(import);
 use POSIX;
 use Data::Dumper;
 use Sys::Hostname;
-use constant { TRUE => 1, FALSE => 0 };
+use constant { true => 1, false => 0 };
 
 # Exported functions
 our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime iCal_ConvertToUnixTime);
@@ -197,11 +197,11 @@ sub UID_exists_at
 		{
 			if($UID eq $CheckUID)
 			{
-				return(TRUE);
+				return(true);
 			}
 		}
 	}
-	return(FALSE);
+	return(false);
 }
 
 # Purpose: Get a list of dates which are excepted from recurrance for the supplied UID
@@ -229,7 +229,7 @@ sub set_exceptions {
 	# First, clean the current one.
 	delete($self->{RawCalendar}{$UID}{EXDATE});
 	# If Exceptions is undef then just return.
-	return(TRUE) if not defined($Exceptions);
+	return(true) if not defined($Exceptions);
 	# Create the array
 	$self->{RawCalendar}{$UID}{EXDATE} = [];
 	foreach(@{$Exceptions}) {
@@ -237,7 +237,7 @@ sub set_exceptions {
 		# did the proper thing(tm)
 		push(@{$self->{RawCalendar}{$UID}{EXDATE}},$_);
 	}
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Write the data to a file.
@@ -260,7 +260,7 @@ sub write {
 		print $TARGET $iCalendar;
 		close($TARGET);
 		chmod($self->{FILEPERMS},$file);
-		return(TRUE);
+		return(true);
 	} else {
 		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
 		return(undef);
@@ -311,7 +311,7 @@ sub delete {
 	if(defined($self->{RawCalendar}{$UID})) {
 		delete($self->{RawCalendar}{$UID});
 		$self->_ClearCalculated();
-		return(TRUE);
+		return(true);
 	} else {
 		carp('delete called without a valid UID');
 		return(undef);
@@ -339,7 +339,7 @@ sub add {
 		$curryear += 1900;
 		$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
 	}
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Change an iCalendar entry
@@ -355,7 +355,7 @@ sub change {
 		return(undef);
 	}
 	$self->_ChangeEntry($UID,%Hash);
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Check if an UID exists
@@ -363,10 +363,10 @@ sub change {
 sub exists {
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
-		return(TRUE);
+		return(true);
 	}
 	delete($self->{RawCalendar}{$UID});
-	return(FALSE);
+	return(false);
 }
 
 # Purpose: Add another file
@@ -398,7 +398,7 @@ sub clean {
 	my $self = shift;
 	$self->{RawCalendar} = {};
 	$self->_ClearCalculated();
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Enable a feature
@@ -408,7 +408,7 @@ sub enable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$self->{FEATURE}{$_} = 1;
-		return(TRUE);
+		return(true);
 	}
 	carp("Attempted to enable unknown feature: $feature");
 	return(undef);
@@ -421,7 +421,7 @@ sub disable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$self->{FEATURE}{$_} = 0;
-		return(TRUE);
+		return(true);
 	}
 	carp("Attempted to disable unknown feature: $feature");
 	return(undef);
@@ -462,7 +462,7 @@ sub locateDupes
 		# Get the keys from the current array
 		my $thiskeys = join(' ',sort keys %{$this->{RawCalendar}{$keyList[$i]}});
 		# Mark this one as processed for future use
-		$Processed{$keyList[$i]} = TRUE;
+		$Processed{$keyList[$i]} = true;
 		# Now go through every other event
 		foreach my $key (@keyList)
 		{
@@ -518,7 +518,7 @@ sub locateDupes
 				# Go through each key in the array and add it to $ArrayContents
 				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$arrayKey}})
 				{
-					$ArrayContents{$arrayElement} = TRUE;
+					$ArrayContents{$arrayElement} = true;
 				}
 				# Go through each key in THIS array and make sure it is in $ArrayContents
 				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$keyList[$i]}})
@@ -590,7 +590,7 @@ sub locateDupes
 			# Mark key as processed too. It has found its dupe. More dupes will be
 			# found by the current loop and running it again for this key won't find anything
 			# new - it will just waste processing time and add the key to the list more than once.
-			$Processed{$key} = TRUE;
+			$Processed{$key} = true;
 		}
 	}
 	# Return the hash of duplicate events
@@ -614,7 +614,7 @@ sub set_prodid {
 	}
 	# Set the prodid
 	$self->{PRODID} = $ProdId;
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Set the file permission
@@ -777,7 +777,7 @@ sub _ChangeEntry {
 	$curryear += 1900;
 	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
 	$self->_ClearCalculated();
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Output warning
@@ -875,7 +875,7 @@ sub _LoadFile {
 		}
 	}
 	$Data = undef;
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Parses a single iCalendar line into the data hash supplied
@@ -1059,7 +1059,7 @@ sub _GenerateCalendar {
 		}
 	}
 	$self->{AlreadyCalculated}{$EventYear} = 1;
-	return(TRUE);
+	return(true);
 }
 
 # Purpose: Clear any calculated event data
@@ -1070,7 +1070,7 @@ sub _ClearCalculated {
 	my $self = shift;
 	$self->{OrderedCalendar} = {};
 	$self->{AlreadyCalculated} = {};
-	return(TRUE);
+	return(true);
 }
 
 # --- Internal RRULE calculation functions ---
@@ -1432,8 +1432,34 @@ sub _RRULE_WEEKLY {
 		$StartDate{Day} = $Day;
 		$StartDate{Month}--;
 	} else {
-		$StartDate{Month} = 0;
-		$StartDate{Day} = 1;
+		# Okay, now we need to figure out which day we're suppose to start on
+		# This is a lot slower
+
+		# The original unix time (start time)
+		my $UnixOrigStart = iCal_ConvertToUnixTime($StartsAt);
+		# Human-readable-ish versions of the above
+		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($UnixOrigStart);
+		# The wday we want it to occur on
+		my $trueWday = $wday;
+		# The unix year
+		my $nixYear = $YEAR - 1900;
+		# The date to begin processing on (1/1/year)
+		my $mktYearFirst = mktime(5,0,0,1,0,$nixYear);
+		# Start looping
+		while(true)
+		{
+			# Get the time
+			my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mktYearFirst);
+			# If wday is trueWday then this is the one
+			if ($wday == $trueWday)
+			{
+				$StartDate{Month} = 0;
+				$StartDate{Day} = $mday;
+				last;
+			}
+			# If not, + one day
+			$mktYearFirst += 86400;
+		}
 	}
 	my $UnixYear = $YEAR - 1900;
 	# Good, let's process.
@@ -1595,7 +1621,7 @@ sub _RRULE_YEARLY {
 # Usage: _RRULE_BYDAY_Parsed(RRULE,UID);
 # 	It returns a hashref. The hashref has one key per wday as of localtime().
 # 	Those matching the rule is true, those not, false.
-# 	If a BYDAY rule is not present then it returns FALSE.
+# 	If a BYDAY rule is not present then it returns false.
 sub _Get_BYDAY_Parsed {
 	my $self = shift;
 	my $RRULE = shift;
@@ -1606,7 +1632,7 @@ sub _Get_BYDAY_Parsed {
 
 	# If there is no BYDAY rule, return undef
 	if(not $RRULE->{BYDAY}) {
-		return(FALSE);
+		return(false);
 	}
 
 	# BYDAY value -> localtime() mapping
@@ -1622,7 +1648,7 @@ sub _Get_BYDAY_Parsed {
 
 	foreach my $WD (split(/,/, $RRULE->{BYDAY})) {
 		if(defined($BydayMap{$WD})) {
-			$ReturnMap{$BydayMap{$WD}} = TRUE;
+			$ReturnMap{$BydayMap{$WD}} = true;
 		} else {
 			_WarnOut("RRULE for UID $UID has an invalid day specified in BYDAY: $WD");
 		}
@@ -1644,9 +1670,9 @@ sub _BYDAY_Test {
 	my $UnixTime = iCal_ConvertToUnixTime($DateTime);
 	my ($testsec,$testmin,$testhour,$testmday,$testmonth,$testyear,$testwday,$testyday,$testisdst) = localtime($UnixTime);
 	if($BYDAY->{$testwday}) {
-		return(TRUE);
+		return(true);
 	} else {
-		return(FALSE);
+		return(false);
 	}
 }
 
