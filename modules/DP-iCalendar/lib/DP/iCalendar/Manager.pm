@@ -59,7 +59,13 @@ sub add_object
 		}
 	}
 	if($primary) {
-		# TODO: Ensure that PRIMARY has *ALL* capabilities
+		# This here checks that the primary has all capabilities, but won't refuse if it deosn't.
+		foreach(@Capabilities)
+		{
+			if(not $this->_verify_capab($object,$_,true)) {
+				carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities.");
+			}
+		}
 		$this->{'PRIMARY'} = $object;
 	}
 	if($this->{ProdId}) {
@@ -303,7 +309,7 @@ sub clean {
 sub enable {
 	my($this, $feature) = @_;
 	foreach my $obj (@{$this->{objects}}) {
-		if($this->_verify_capab($obj,'EXT_FUNCS')) {
+		if($this->_verify_capab($obj,'EXT_FUNCS',true)) {
 			$obj->enable($feature);
 		}
 	}
@@ -314,7 +320,7 @@ sub enable {
 sub disable {
 	my($this, $feature) = @_;
 	foreach my $obj (@{$this->{objects}}) {
-		if($this->_verify_capab($obj,'EXT_FUNCS')) {
+		if($this->_verify_capab($obj,'EXT_FUNCS',true)) {
 			$obj->disable($feature);
 		}
 	}
