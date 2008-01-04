@@ -357,8 +357,8 @@ sub _locate_UID
 	# First try PRIMARY
 	if ($this->{PRIMARY}->exists($UID))
 	{
-		$this->{UID_Cache}{$UID} = $obj;
-		return($obj);
+		$this->{UID_Cache}{$UID} = $this->{PRIMARY};
+		return($this->{PRIMARY});
 	}
 	# Then try others
 	foreach my $obj (@{$this->{objects}}) {
