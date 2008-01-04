@@ -38,7 +38,7 @@ use DP::iCalendar qw(iCal_ParseDateTime iCal_ConvertToUnixTime);
 my $RealZero = $0;
 $0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
-my $Version = '0.8';
+my $Version = '0.8.1';
 my $RCSRev = '$Id$';
 
 my $CalendarPath;		# The source iCalendar file

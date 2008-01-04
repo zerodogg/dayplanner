@@ -46,7 +46,7 @@ use DP::GeneralHelpers::IPC;
 use DP::GeneralHelpers::I18N;
 
 # Scalars
-our $Version = '0.8';
+our $Version = '0.8.1';
 my $VersionName = '2008';
 my $RCSRev = '$Id$';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
