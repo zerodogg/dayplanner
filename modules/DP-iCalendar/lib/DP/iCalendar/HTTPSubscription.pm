@@ -9,7 +9,7 @@
 # not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 package DP::iCalendar::HTTPSubscription;
-use constant { TRUE => 1, FALSE => 0 };
+use constant { true => 1, false => 0 };
 use strict;
 use warnings;
 use DP::iCalendar;
@@ -55,6 +55,6 @@ sub update {
 	push(@Array, $_) foreach(split(/\n/,$self->{HTTP_data}));
 	$self->addfile(\@Array);
 
-	return(TRUE);
+	return(true);
 }
 1;
