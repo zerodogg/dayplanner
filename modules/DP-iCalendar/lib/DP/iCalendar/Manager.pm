@@ -303,7 +303,9 @@ sub clean {
 sub enable {
 	my($this, $feature) = @_;
 	foreach my $obj (@{$this->{objects}}) {
-		$obj->enable($feature);
+		if($this->_verify_capab($obj,'EXT_FUNCS')) {
+			$obj->enable($feature);
+		}
 	}
 }
 
@@ -312,7 +314,9 @@ sub enable {
 sub disable {
 	my($this, $feature) = @_;
 	foreach my $obj (@{$this->{objects}}) {
-		$obj->disable($feature);
+		if($this->_verify_capab($obj,'EXT_FUNCS')) {
+			$obj->disable($feature);
+		}
 	}
 }
 
@@ -344,6 +348,13 @@ sub _locate_UID
 	if($this->{UID_Cache}{$UID}) {
 		return($this->{UID_Cache}{$UID});
 	}
+	# First try PRIMARY
+	if ($this->{PRIMARY}->exists($UID))
+	{
+		$this->{UID_Cache}{$UID} = $obj;
+		return($obj);
+	}
+	# Then try others
 	foreach my $obj (@{$this->{objects}}) {
 		if($obj->exists($UID)) {
 			$this->{UID_Cache}{$UID} = $obj;
