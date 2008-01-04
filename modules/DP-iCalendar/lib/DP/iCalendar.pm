@@ -1539,9 +1539,8 @@ sub _RRULE_MONTHLY {
 	# at the 1st of january.
 	if($Year eq $YEAR) {
 		$StartDate{Month} = $Month;
-		$StartDate{Month}--;
 	} else {
-		$StartDate{Month} = 0;
+		$StartDate{Month} = 1;
 	}
 	$StartDate{Day} = $Day;
 	
@@ -1558,14 +1557,13 @@ sub _RRULE_MONTHLY {
 		
 		# Bump month
 		$StartDate{Month}++;
-		if($StartDate{Month} > 11) {
+		if($StartDate{Month} > 12) {
 			last;
 		}
-		# One day is 86400, thus one week is 86400 * 7 = 604800.
-		my $NextiCalTime = iCal_GenDateTime($YEAR, $StartDate{Month}, $StartDate{Day});
-		$NextiCalTime = iCal_ConvertToUnixTime($NextiCalTime);
 		# Handle UNTIL.
 		if($UNTIL) {
+			my $NextiCalTime = iCal_GenDateTime($YEAR, $StartDate{Month}, $StartDate{Day});
+			$NextiCalTime = iCal_ConvertToUnixTime($NextiCalTime);
 			if($NextiCalTime > $UNTIL) {
 				last;
 			}
