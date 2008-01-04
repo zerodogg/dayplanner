@@ -2122,7 +2122,9 @@ sub ImportDataFromProgram {
 	$ImportVBox->pack_end($ButtonHBox,0,0,0);
 	
 	# Ok button
-	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
+	my $OKButton = Gtk2::Button->new($i18n->get('Import'));
+	my $OKImg = Gtk2::Image->new_from_stock('gtk-open','button');
+	$OKButton->set_image($OKImg);
 	$OKButton->show();
 	$OKButton->can_default(1);
 	$ImportWindow->set_default($OKButton);
@@ -2137,7 +2139,9 @@ sub ImportDataFromProgram {
 	$ButtonHBox->pack_end($OKButton,0,0,0);
 
 	# Cancel button
-	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
+	my $CancelImg = Gtk2::Image->new_from_stock('gtk-cancel','button');
+	my $CancelButton = Gtk2::Button->new($i18n->get("Don't import"));
+	$CancelButton->set_image($CancelImg);
 	$CancelButton->show();
 	$ButtonHBox->pack_end($CancelButton,0,0,0);
 	# Signal callback (destroys the window)
