@@ -337,7 +337,7 @@ sub add {
 	if(not $Hash{CREATED}) {
 		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 		$curryear += 1900;
-		$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
+		$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _PrependZero($currhour) . ':' . _PrependZero($currmin));
 	}
 	return(true);
 }
@@ -649,8 +649,8 @@ sub get_manager_capabilities
 sub iCal_GenDateTime {
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
-	my $iCalMonth = _AppendZero($Month);
-	my $iCalDay = _AppendZero($Day);
+	my $iCalMonth = _PrependZero($Month);
+	my $iCalDay = _PrependZero($Day);
 	if($Time) {
 		# Get the time
 		my $Hour = $Time;
@@ -722,7 +722,7 @@ sub iCal_ParseDateTime {
 	if($Value =~ s/^.+T//) {
 		$Hour = substr($Value,0,2);
 		$Minutes = substr($Value,2,2);
-		$Time = _AppendZero($Hour) . ':' . _AppendZero($Minutes);
+		$Time = _PrependZero($Hour) . ':' . _PrependZero($Minutes);
 	}
 	return($Year,$Month,$Day,$Time);
 }
@@ -775,7 +775,7 @@ sub _ChangeEntry {
 	}
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
 	$curryear += 1900;
-	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _AppendZero($currhour) . ':' . _AppendZero($currmin));
+	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _PrependZero($currhour) . ':' . _PrependZero($currmin));
 	$self->_ClearCalculated();
 	return(true);
 }
@@ -863,10 +863,6 @@ sub _LoadFile {
 			if(defined($Current->{$_})) {
 				$Current->{$_} = _UnSafe($Current->{$_});
 			}
-		}
-		unless(defined($Current->{SUMMARY})) {
-			_WarnOut('Dangerous: SUMMARY missing from iCalendar import. Dumping data:');
-			print Dumper(\$Current);
 		}
 		foreach(keys(%{$Current})) {
 				if(not /^X-PARSER/) {
@@ -1023,9 +1019,9 @@ sub _UID {
 	}
 }
 
-# Purpose: Append a "0" to a number if it is only one digit.
-# Usage: my $NewNumber = AppendZero(NUMBER);
-sub _AppendZero {
+# Purpose: Prepend a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = PrependZero(NUMBER);
+sub _PrependZero {
 	if ($_[0] =~ /^\d$/) {
 		return("0$_[0]");
 	}
@@ -1187,7 +1183,7 @@ sub _RRULE_Handler {
 	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
 		$AddDates = $self->_RRULE_YEARLY($RRULE,$UID,$YEAR);
 	} else {
-		_WarnOut("STUB: _RRULE_Handler is unable to handle $self->{RawCalendar}{$UID}{RRULE} at this time.");
+		_WarnOut("Unknown RRULE type: ".$self->{RawCalendar}{$UID}{RRULE}." for UID $UID. This might be a bug, report it to the developers");
 	}
 	if($AddDates) {
 		$self->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
@@ -1275,7 +1271,7 @@ sub _RRULE_DAILY {
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
@@ -1358,7 +1354,7 @@ sub _RRULE_WEEKLY {
 	foreach(keys(%{$RRULE})) {
 		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
@@ -1504,7 +1500,7 @@ sub _RRULE_MONTHLY {
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
@@ -1589,7 +1585,7 @@ sub _RRULE_YEARLY {
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|INTERVAL|BYDAY|UNTIL)/) {
 			if(/^X-/) {
-				_WarnOut("Unkown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
