@@ -15,10 +15,9 @@ use warnings;
 use DP::iCalendar;
 use DP::GeneralHelpers::HTTPFetch;
 
-my $DPI_API_Version = '1Alpha';
-
 our @ISA = ('DP::iCalendar');
 
+# Purpose: Create a new HTTPSubscription object. Downloads and prepares for you.
 # Usage: DP::iCalendar::HTTPSubscription->new(ADDRESS, CALLBACK);
 sub new {
 	my $name = shift;
@@ -29,12 +28,15 @@ sub new {
 	$self->{HTTP_address} = shift;
 	$self->{HTTP_callback} = shift;
 	$self->{HTTP_data} = '';
+	$self->{HTTP_UPD_RET} = false;
 	
 	# Do the actual adding
 	$self->update();
 	return($self);
 }
 
+# Purpose: Update the calendar
+# Usage: object->update();
 sub update {
 	my $self = shift;
 	$self->{HTTP_data} = DP::GeneralHelpers::HTTPFetch->get($self->{HTTP_address},$self->{HTTP_callback});
@@ -47,14 +49,24 @@ sub update {
 	# Check for errors
 	if($ErrorInformation{$self->{HTTP_data}}) {
 			print " DP::iCalendar::HTTPSubscription: Unable to download icalendar file: $ErrorInformation{$self->{HTTP_data}}\n";
-			return();
+			$self->{HTTP_UPD_RET} = $ErrorInformation{$self->{HTTP_data}};
+			return(false);
 	}
 
 	my @Array;
 	$self->{HTTP_data} =~ s/\r//g;
 	push(@Array, $_) foreach(split(/\n/,$self->{HTTP_data}));
 	$self->addfile(\@Array);
+	$self->{HTTP_UPD_RET} = false;
 
 	return(true);
+}
+
+# Purpose: Check if the update succeeded or not. This will be FALSE when no error occurred, true
+# 			with the DP::GeneralHelpers::HTTPFetch error value if not.
+# Usage: object->update_error();
+sub update_error
+{
+	return($self->{HTTP_UPD_RET});
 }
 1;
