@@ -35,6 +35,23 @@ sub new {
 	return($self);
 }
 
+# Purpose: Return manager capability information - we need to override the one from DP::iCalendar
+# 			because we don't support all capabilities with this one
+# Usage: get_manager_capabilities
+sub get_manager_capabilities
+{
+	# All capabilites as of 01_capable
+	return(['LIST_DPI','RRULE','EXT_FUNCS','RAWDATA','EXCEPTIONS','RELOAD'])
+}
+
+# Purpose: Reload the calendar (overrides DP::iCalendar reload)
+# Usage: object->reload();
+sub reload
+{
+	my $self = shift;
+	return $self->update();
+}
+
 # Purpose: Update the calendar
 # Usage: object->update();
 sub update {
@@ -67,6 +84,7 @@ sub update {
 # Usage: object->update_error();
 sub update_error
 {
+	my $self = shift;
 	return($self->{HTTP_UPD_RET});
 }
 1;
