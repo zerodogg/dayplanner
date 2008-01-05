@@ -104,11 +104,26 @@ sub _LWPFetch {
 
 	my $UserAgent = LWP::UserAgent->new;
 	$UserAgent->agent('DP::GeneralHelpers::HTTPFetch//LWP');
+	my $content;
+	my $content_cb = sub
+	{
+		$content .= shift;
+		if ($progress)
+		{
+			$progress->('UNKNOWN');
+		}
+	};
 
-	my $Request = HTTP::Request->new(GET => $file);
-	my $Reply = $UserAgent->request($Request);
+	my $Reply = $UserAgent->get($file,':content_cb' => $content_cb);
 	if($Reply->is_success) {
-		return($Reply->content);
+		if ($content)
+		{
+			return($content)
+		}
+		else
+		{
+			return($Reply->content);
+		}
 	} else {
 		debugOut("Failure using LWP - not is_success");
 		return('FAILED');
