@@ -65,7 +65,7 @@ sub get {
 	}
 
 	# First try LWP
-	if(eval("use LWP;")) {
+	if(eval('use LWP;1')) {
 		debugOut("Using LWP");
 		return($self->_LWPFetch($file,$progress));
 	}
