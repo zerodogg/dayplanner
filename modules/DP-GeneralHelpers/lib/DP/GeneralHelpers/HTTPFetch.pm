@@ -33,6 +33,7 @@ sub get {
 	$addy =~ s#^([^/]+)/.*#$1#;
 	my $resolved = inet_ntoa(inet_aton($addy));
 	if(not $resolved) {
+		debugOut("$addy: did not resolve");
 		return('NORESOLVE');
 	}
 
@@ -65,19 +66,33 @@ sub get {
 
 	# First try LWP
 	if(eval("use LWP;")) {
-		return($self->_LWPFetch($file));
+		debugOut("Using LWP");
+		return($self->_LWPFetch($file,$progress));
 	}
 	# Okay, LWP isn't available. Check for others
 	if(DP::GeneralHelpers::InPath('wget')) {
-		return($self->_WgetFetch($file));
+		debugOut("Using wget");
+		return($self->_WgetFetch($file,$progress));
 	}
 	if(DP::GeneralHelpers::InPath('curl')) {
-		return($self->_CurlFetch($file));
+		debugOut("Using curl");
+		return($self->_CurlFetch($file,$progress));
 	}
 	if(DP::GeneralHelpers::InPath('lynx')) {
-		return($self->_LynxFetch($file));
+		debugOut("Using lynx");
+		return($self->_LynxFetch($file,$progress));
 	}
 	return('NOPROGRAM');
+}
+
+# Purpose: Output a debugging message, only displayed when HTTPFETCH_DEBUG=1
+# Usage: debgOut(blah);
+sub debugOut
+{
+	if ($ENV{HTTPFETCH_DEBUG} eq '1')
+	{
+		print " DP::GeneralHelpers::HTTPFetch: Debug: ".$_[0]."\n";
+	}
 }
 
 # Purpose: Download a file from HTTP using LWP
@@ -95,6 +110,7 @@ sub _LWPFetch {
 	if($Reply->is_success) {
 		return($Reply->content);
 	} else {
+		debugOut("Failure using LWP - not is_success");
 		return('FAILED');
 	}
 }
@@ -124,6 +140,7 @@ sub _LynxFetch {
 	if($ret == 0) {
 		return($output);
 	} else {
+		debugOut("Failure using Lynx, ret == $ret");
 		return('FAIL');
 	}
 }
@@ -153,6 +170,7 @@ sub _CurlFetch {
 	if($ret == 0) {
 		return($output);
 	} else {
+		debugOut("Failure using Curl, ret == $ret");
 		return('FAIL');
 	}
 }
@@ -170,7 +188,7 @@ sub _WgetFetch {
 	my $ChildPID = open3($in,$out,$err,'wget','--user-agent','DP::GeneralHelpers::HTTPFetch//wget','--quiet','-O','-',$file);
 	my $output;
 	while($output .= <$out> and not eof($out)) {
-		if($progress) {
+		if(defined($progress)) {
 			$progress->('UNKNOWN');
 		}
 	}
@@ -182,6 +200,7 @@ sub _WgetFetch {
 	if($ret == 0) {
 		return($output);
 	} else {
+		debugOut("Failure using Wget, ret == $ret");
 		return('FAIL');
 	}
 }
