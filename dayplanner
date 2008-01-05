@@ -41,8 +41,6 @@ use lib "$FindBin::RealBin/modules/";
 use Date::HolidayParser 0.4;	# Parsing of .holiday files
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::iCalendar::Manager;		# Support for multiple iCalendars using a single object
-# FIXME: This should be loaded during runtime, rather than here
-use DP::iCalendar::HTTPSubscription;	# Support for webcal://
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 use DP::GeneralHelpers::IPC;
 use DP::GeneralHelpers::I18N;
@@ -767,6 +765,35 @@ sub UpdatedData {
 	if(not $DontSave) {
 		# Save the data
 		SaveMainData();
+	}
+}
+
+# Purpose: Load HTTP subscriptions
+# Usage: LoadHTTPSubscriptions;
+sub LoadHTTPSubscriptions
+{
+	if(not defined($UserConfig{HTTP_Calendars}) or not length($UserConfig{HTTP_Calendars}) > 7)
+	{
+		return;
+	}
+	my $added = false;
+	runtime_use('DP::iCalendar::HTTPSubscription') or return();
+	foreach my $subscription(split(/\s+/,$UserConfig{HTTP_Calendars}))
+	{
+		if(not $subscription =~ /^(http|webcal)/)
+		{
+			my $scheme = $subscription;
+			$scheme =~ s/^(.+):.*$/$1/;
+			DPIntWarn("Unknown URI-scheme: $scheme (in $subscription): should be either http:// or webcal://");
+			next;
+		}
+		my $obj = DP::iCalendar::HTTPSubscription->new($subscription);
+		$iCalendar->add_object($obj,false);
+		$added = true;
+	}
+	if ($added)
+	{
+		UpdatedData(true,false);
 	}
 }
 
@@ -5050,6 +5077,8 @@ sub InitDPCore {
 	DPS_Perform('SYNC');
 	# Initialize the daemon
 	DaemonInit() or die();
+	# Finally, initialize HTTP subscriptions if needed
+	LoadHTTPSubscriptions();
 	# Add autostart if needed
 	unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
 		DP_AddAutostart();
