@@ -29,6 +29,8 @@ sub new {
 	$self->{HTTP_callback} = shift;
 	$self->{HTTP_data} = '';
 	$self->{HTTP_UPD_RET} = false;
+	# Convert webcal:// to http://
+	$self->{HTTP_address} =~ s/^webcal/http/;
 	
 	# Do the actual adding
 	$self->update();
