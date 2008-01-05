@@ -25,10 +25,16 @@ sub new {
 	bless($tempbless,'DP::iCalendar::HTTPSubscription');
 	my $self = $tempbless->_NewObj();
 	bless($self,'DP::iCalendar::HTTPSubscription');
+	# The address
 	$self->{HTTP_address} = shift;
+	# Callback to call during update
 	$self->{HTTP_callback} = shift;
+	# The current data
 	$self->{HTTP_data} = '';
+	# The current return value
 	$self->{HTTP_UPD_RET} = false;
+	# The real address
+	$self->{HTTP_real_address} = $self->{HTTP_address};
 	# Convert webcal:// to http://
 	$self->{HTTP_address} =~ s/^webcal/http/;
 	
