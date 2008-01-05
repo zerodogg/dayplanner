@@ -778,8 +778,11 @@ sub LoadHTTPSubscriptions
 	}
 	my $added = false;
 	runtime_use('DP::iCalendar::HTTPSubscription') or return();
+	# Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
+	my $ProgressWin = DPCreateProgressWin($i18n->get('Calendar subscriptions'),$i18n->get('Downloading'),true);
 	foreach my $subscription(split(/\s+/,$UserConfig{HTTP_Calendars}))
 	{
+		PulsateProgressbar($ProgressWin);
 		if(not $subscription =~ /^(http|webcal)/)
 		{
 			my $scheme = $subscription;
@@ -787,14 +790,44 @@ sub LoadHTTPSubscriptions
 			DPIntWarn("Unknown URI-scheme: $scheme (in $subscription): should be either http:// or webcal://");
 			next;
 		}
-		my $obj = DP::iCalendar::HTTPSubscription->new($subscription);
+		my $lastupdate = 0;
+		my $updates = 0;
+		my $loopturn = 1;
+		my $maxturns = 8;
+		my $obj = DP::iCalendar::HTTPSubscription->new($subscription,
+			sub {
+				my $lt = time();
+				if ($lastupdate != $lt)
+				{
+						$updates = 0;
+						$loopturn = 1;
+				}
+				if($updates != 2)
+				{
+					if ($loopturn == 1 or $loopturn == $maxturns)
+					{
+						$updates++;
+						$lastupdate = $lt;
+						PulsateProgressbar($ProgressWin);
+					}
+				}
+				if ($loopturn == $maxturns)
+				{
+					$loopturn = 0;
+				}
+				$loopturn++;
+			}
+		);
 		$iCalendar->add_object($obj,false);
 		$added = true;
 	}
 	if ($added)
 	{
+		PulsateProgressbar($ProgressWin);
 		UpdatedData(true,false);
+		PulsateProgressbar($ProgressWin);
 	}
+	$ProgressWin->{Window}->destroy();
 }
 
 # Purpose: Load the calendar contents
@@ -2510,10 +2543,11 @@ sub DPCreateProgressWin {
 # Purpose: Pulsate a progressbar
 # Usage: PulsateProgressbar($Progressbar);
 sub PulsateProgressbar {
-	my $Progressbar = $_[0];
-	if(defined($Progressbar)) {		# So that the calling function can just *assume* it has a progressbar
+	my $ProgressHash = shift;
+	if(defined($ProgressHash)) {		# So that the calling function can just *assume* it has a progressbar
 						# even when it doesn't
-		$Progressbar->pulse();
+		my $Bar = $ProgressHash->{ProgressBar};
+		$Bar->pulse();
 		Gtk2->main_iteration while Gtk2->events_pending;
 	}
 	return(1);
