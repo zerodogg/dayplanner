@@ -10,10 +10,10 @@
 
 package DP::iCalendar::Manager;
 
-use Carp;
-use constant { true => 1, false => 0 };
 use strict;
 use warnings;
+use Carp;
+use constant { true => 1, false => 0 };
 
 our $VERSION;
 $VERSION = 0.1;
@@ -430,6 +430,8 @@ sub _merge_arrays_unique
 	undef %Aindex;
 	return(\@NewArray);
 }
+
+1;
 
 __END__
 

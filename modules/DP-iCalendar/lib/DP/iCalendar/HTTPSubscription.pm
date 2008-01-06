@@ -9,9 +9,9 @@
 # not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 package DP::iCalendar::HTTPSubscription;
-use constant { true => 1, false => 0 };
 use strict;
 use warnings;
+use constant { true => 1, false => 0 };
 use DP::iCalendar;
 use DP::GeneralHelpers::HTTPFetch;
 
