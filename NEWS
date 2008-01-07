@@ -13,6 +13,7 @@ Version 0.8.1 (Unreleased)
 * Makefile
 - Now installs the dayplanner_detection and dayplanner_upgrade files for
   holidays
+- Fixed the target directory for holiday files
 
 Version 0.8 "2008" (Released on the 1st of January 2008)
 ------------------------
