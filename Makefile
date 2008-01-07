@@ -160,10 +160,10 @@ moduleinstall:
 
 # Holiday installation
 holidayinstall:
-	mkdir -p $(DP_MAINTARGET)/holidays
-	install -m644 $(shell ls ./holiday/holiday*) $(DP_MAINTARGET)/holidays
-	install -m644 ./holidays/dayplanner_detection $(DP_MAINTARGET)/holidays
-	install -m644 ./holidays/dayplanner_upgrade $(DP_MAINTARGET)/holidays
+	mkdir -p $(DP_MAINTARGET)/holiday
+	install -m644 $(shell ls ./holiday/holiday*) $(DP_MAINTARGET)/holiday
+	install -m644 ./holiday/dayplanner_detection $(DP_MAINTARGET)/holiday
+	install -m644 ./holiday/dayplanner_upgrade $(DP_MAINTARGET)/holiday
 
 # Essential documentation
 essentialdocs:
