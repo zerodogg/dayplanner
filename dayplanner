@@ -656,6 +656,7 @@ sub WriteConfig {
 		DPS_port => 'The port to connect to on the DPS server',
 		DPS_user => 'The username',
 		DPS_enable => 'If DPS (Day Planner services) is enabled or not (1/0)',
+		HTTP_Calendars => 'HTTP Calendar subscriptions for Day Planner 0.9 and later',
 		HEADER => "Day Planner $Version configuration file",
 	);
 	
@@ -693,6 +694,7 @@ sub LoadConfig {
 			DPS_user => '^.+$',
 			DPS_host => '^.+$',
 			DPS_pass => '^.+$',
+			HTTP_Calendars => '^.*$',
 		);
 
 	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash,1);
