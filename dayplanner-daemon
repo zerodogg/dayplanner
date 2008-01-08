@@ -104,8 +104,8 @@ if ($VersionName eq 'SVN')
 my $Logfile;
 
 # Signal handlers
-$SIG{INT} = \&Shutdown;
-$SIG{TERM} = \&Shutdown;
+$SIG{INT} = sub { Shutdown('SIGINT');};
+$SIG{TERM} = sub { Shutdown('SIGTERM');};
 
 # ----
 # HELPER FUNCTIONS
@@ -463,10 +463,18 @@ sub CalculateNotifications
 # ----
 
 # Purpose: Shut down the daemon
-# Usage: Shutdown();
+# Usage: Shutdown(REASON?);
 sub Shutdown
 {
-	DaemonLog(4,'Shutting down');
+	my $reason = shift;
+	if ($reason)
+	{
+		DaemonLog(4,'Shutting down: '.$reason);
+	}
+	else
+	{
+		DaemonLog(4,'Shutting down');
+	}
 	# Close filehandles and clean up
 	close($ServerSocket);
 	# TODO: Do some connection magic here to ensure that we actually were the one listening on it
@@ -583,7 +591,7 @@ sub CommandHandler
 	}
 	elsif(/^SHUTDOWN/)
 	{
-		Shutdown();
+		Shutdown("Requested by $PID");
 	}
 	elsif (/^VERSION/)
 	{
