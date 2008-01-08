@@ -293,7 +293,7 @@ sub WriteDaemonState
 	);
 	if(not OnSameDate(time()),$DaemonState{LastWritten})
 	{
-		DaemonLog(5,'HasNotified= was not from today. Replacing with an empty string');
+		DaemonLog(4,'HasNotified= was not from today. Replacing with an empty string');
 		$DaemonState{HasNotified} = '';
 	}
 	$DaemonState{LastWritten} = time();
