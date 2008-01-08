@@ -64,7 +64,7 @@ $0 = 'dayplanner-daemon';
 # The name of the notifier
 my $NotifierName = 'dayplanner-notifier';
 # Our version number
-my $Version = 0.8;
+my $Version = 0.8.1;
 # Our RCS revision
 my $RCSRev = '$Id$';
 # The iCalendar object
