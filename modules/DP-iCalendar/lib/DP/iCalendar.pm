@@ -816,7 +816,7 @@ sub _LoadFile {
 				}
 			}
 			unless(defined($Current->{'DTSTART'})) {
-				_ErrOout('DTSTART missing from iCalendar file. Dumping data:');
+				_ErrOut('DTSTART missing from iCalendar file. Dumping data:');
 				print Dumper(\$Current);
 				next
 			}
@@ -989,11 +989,16 @@ sub _GetSafe {
 # Purpose: Removes escaping of iCalendar entries
 # Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
 sub _UnSafe {
-	$_[0] =~ s/\\n/\n/g;
-	$_[0] =~ s/\\,/,/g;
-	$_[0] =~ s/\\;/;/g;
-	$_[0] =~ s/\\\\/\\/g;
-	return($_[0]);
+	my $data = shift;
+	if(not defined($data))
+	{
+		_WarnOut("_UnSafe called on undef");
+	}
+	$data =~ s/\\n/\n/g;
+	$data =~ s/\\,/,/g;
+	$data =~ s/\\;/;/g;
+	$data =~ s/\\\\/\\/g;
+	return($data);
 }
 
 # Purpose: Get a unique ID for an event
