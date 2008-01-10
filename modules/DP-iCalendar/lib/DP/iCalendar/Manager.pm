@@ -17,6 +17,9 @@ use constant { true => 1, false => 0 };
 
 our $VERSION;
 $VERSION = 0.1;
+my %API_VERSIONS = (
+	'01_capable' => true,
+);
 my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD');
 
 # -- Manager stuff --
@@ -29,6 +32,7 @@ sub new
 	$this->{objects} = [];
 	$this->{ProdId} = undef;
 	$this->{capab} = {};
+	$this->{API_Vers} = {};
 	foreach(@Capabilities) {
 		$this->{$_} = [];
 		$this->{capab}{$_} = {};
@@ -42,20 +46,30 @@ sub add_object
 	my $object = shift;
 	my $primary = shift;
 	my $version = $object->get_manager_version();
-	if(not $version eq '01_capable') {
-		carp("DP::iCalendar::Manager: added_object: does not support this version. Supported: $version, this version: 01_capable");
+	if(not $API_VERSIONS{$version})
+	{
+		my $SUPP;
+		foreach(sort keys(%API_VERSIONS))
+		{
+			if ($API_VERSIONS{$_})
+			{
+				$SUPP .= $_.' ';
+			}
+		}
+		DPIM_carp("add_object(): the object does not support this version. It reported version $version of the API. This manager supports: $SUPP");
+		return(false);
 	}
-	push(@{$this->{objects}},$object);
 	my $capabilities = $object->get_manager_capabilities();
 	if(not defined($capabilities)) {
-		carp('added_object: undef returned from get_manager_capabilities()')
+		DPIM_carp("add_object(): the object returned undef as reply to get_manager_capabilities() - unable to add.");
 	}
+	push(@{$this->{objects}},$object);
 	foreach(@{$capabilities}) {
 		if(defined($this->{$_})) {
 			push(@{$this->{$_}},$object);
 			$this->{capab}{$_}{$object} = true;
 		} else {
-			carp('Unknown capability: '.$_);
+			DPIM_carp('Unknown capability: '.$_);
 		}
 	}
 	if($primary) {
@@ -63,7 +77,7 @@ sub add_object
 		foreach(@Capabilities)
 		{
 			if(not $this->_verify_capab($object,$_,true)) {
-				carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities.");
+				DPIM_carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities.");
 			}
 		}
 		$this->{'PRIMARY'} = $object;
@@ -72,13 +86,13 @@ sub add_object
 		$object->set_prodid($this->{ProdId});
 	}
 	if(not $this->{'PRIMARY'}) {
-		carp('First object not PRIMARY. This might mean trouble');
+		DPIM_carp('First object not PRIMARY. This might mean trouble');
 	}
 }
 
 sub remove_object
 {
-	warn('remove_object: STUB');
+	DPIM_warn('remove_object: STUB');
 }
 
 sub list_objects
@@ -172,7 +186,7 @@ sub get_RRULE {
 	my ($this, $UID) = @_;
 	my $obj = $this->_locate_UID($UID);
 	if(not $obj) {
-		return;
+		return false;
 	}
 	if(not $this->_verify_capab($obj,'RRULE',true)) {
 		return false;
@@ -219,7 +233,7 @@ sub write {
 	}
 	if($file) {
 		if(not $this->{'PRIMARY'}) {
-			carp('No primary set - unable to '."write($file)");
+			DPIM_carp('No primary set - unable to '."write($file)");
 			return(undef);
 		}
 		return $this->{'PRIMARY'}->write($file);
@@ -367,7 +381,7 @@ sub _locate_UID
 			return($obj);
 		}
 	}
-	carp("DP::iCalendar::Manager: Unable to locate owner of $UID: invalid UID") if not $silent;
+	DPIM_carp("DP::iCalendar::Manager: Unable to locate owner of $UID: invalid UID") if not $silent;
 	return(undef);
 }
 
@@ -380,12 +394,10 @@ sub _verify_capab
 	if($this->{capab}{$capab}{$object}) {
 		return true;
 	} else {
-		carp("DP::iCalendar::Manager: Can't perform requested action: owner (".ref($object).") doesn't support capability $capab") if not $silent;
+		DPIM_carp("DP::iCalendar::Manager: Can't perform requested action: owner (".ref($object).") doesn't support capability $capab") if not $silent;
 		return false;
 	}
 }
-
-# -- Internal functions --
 
 sub _move_UID_to_PRIMARY
 {
@@ -401,11 +413,13 @@ sub _move_UID_to_PRIMARY
 	return($this->add(%Hash));
 }
 
+# -- Internal functions --
+
 sub _merge_arrays_unique
 {
 	my $array = shift;
 	if(not ref($array) or not ref($array) eq 'ARRAY') {
-		warn("_merge_arrays_unique: Didn't get an arrayref :'( - got: ". ref($array));
+		DPIM_warn("_merge_arrays_unique: Didn't get an arrayref :'( - got: ". ref($array));
 		return(undef);
 	}
 	my %Aindex;
@@ -424,11 +438,23 @@ sub _merge_arrays_unique
 		# Don't bother printing an error if the value is undef, undef is fine.
 		elsif (defined($_))
 		{
-			warn("_merge_arrays_unique: Array of arrays included nonarray value: ".ref($_).'='.$_);
+			DPIM_warn("_merge_arrays_unique: Array of arrays included nonarray value: ".ref($_).'='.$_);
 		}
 	}
 	undef %Aindex;
 	return(\@NewArray);
+}
+
+sub _DPIM_carp
+{
+	my $message = shift;
+	carp('DP::iCalendar::Manager: '.$message);
+}
+
+sub _DPIM_warn
+{
+	my $message = shift;
+	warn('DP::iCalendar::Manager: '.$message);
 }
 
 1;
