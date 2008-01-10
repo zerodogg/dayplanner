@@ -943,7 +943,7 @@ sub _ParseData {
 			@FileContents = @{$File};
 		} else {
 			# Nothing is well, bug!
-			_WarnOut('iCal_ParseData: supplied reference is not an ARRAYREF!');
+			_ErrOut('iCal_ParseData: supplied reference is not an ARRAYREF!');
 			# Return an empty anonymous array
 			return([]);
 		}
@@ -956,7 +956,7 @@ sub _ParseData {
 	else {
 		$Type = "file ($File)";
 		open(my $ICALENDAR, '<', $File) or do {
-			_WarnOut("iCal_ParseData: Unable to open $File for reading: $!");
+			_ErrOut("iCal_ParseData: Unable to open $File for reading: $!");
 			# Return an empty anonymous array
 			return([]);
 		};
@@ -971,7 +971,7 @@ sub _ParseData {
 	}
 
 	unless($DataHash{FileBegun}) {
-		_WarnOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
+		_ErrOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
 	}
 	return($DataHash{iCalendarStructures});
 }
