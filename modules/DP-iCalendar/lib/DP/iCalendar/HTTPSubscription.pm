@@ -12,13 +12,14 @@ package DP::iCalendar::HTTPSubscription;
 use strict;
 use warnings;
 use constant { true => 1, false => 0 };
+use Digest::MD5;
 use DP::iCalendar;
 use DP::GeneralHelpers::HTTPFetch;
 
 our @ISA = ('DP::iCalendar');
 
 # Purpose: Create a new HTTPSubscription object. Downloads and prepares for you.
-# Usage: DP::iCalendar::HTTPSubscription->new(ADDRESS, CALLBACK);
+# Usage: DP::iCalendar::HTTPSubscription->new(ADDRESS, CALLBACK, CACHEDIR);
 sub new {
 	my $name = shift;
 	my $tempbless = {};
@@ -29,6 +30,8 @@ sub new {
 	$self->{HTTP_address} = shift;
 	# Callback to call during update
 	$self->{HTTP_callback} = shift;
+	# The cache dir
+	$self->{HTTP_cachedir} = shift;
 	# The current data
 	$self->{HTTP_data} = '';
 	# The current return value
@@ -37,6 +40,8 @@ sub new {
 	$self->{HTTP_real_address} = $self->{HTTP_address};
 	# Convert webcal:// to http://
 	$self->{HTTP_address} =~ s/^webcal/http/;
+	# Generate MD5 filename for the HTTP address
+	$self->{FilenameMD5} = md5_base64($self->{HTTP_address});
 	
 	# Do the actual adding
 	$self->update();
@@ -94,5 +99,11 @@ sub update_error
 {
 	my $self = shift;
 	return($self->{HTTP_UPD_RET});
+}
+
+# Purpose: Read the calendar from cache
+# Usage: object->_ReadFromCache();
+sub _ReadFromCache
+{
 }
 1;
