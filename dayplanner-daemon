@@ -176,7 +176,7 @@ sub DaemonLog
 	$lhour = "0$lhour" unless $lhour >= 10;
 	$lmin = "0$lmin" unless $lmin >= 10;
 	$lsec = "0$lsec" unless $lsec >= 10;
-	print "[$lmday/$lmon/$lyear $lhour:$lmin:$lsec] ";
+	print "[$lmday/$lmon/$lyear $lhour:$lmin:$lsec ($$)] ";
 	print($MsgPrefix.$Message);
 	print "\n";
 }
