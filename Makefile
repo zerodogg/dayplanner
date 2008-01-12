@@ -74,15 +74,9 @@ uninstall:
 
 clean:
 	rm -f `find|egrep '(~|\.swp)$$'`
-	rm -f po/*.mo
-	rm -f po/*.pot
-	rm -rf po/locale
-	rm -rf packages/
-	rm -rf locale/
-	rm -rf dayplanner-$(VERSION)
-	rm -f dayplanner.spec
-	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
-	rm -rf installer
+	rm -f po/*.mo po/*.pot
+	rm -rf po/locale packages locale dayplanner-$(VERSION) installer
+	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
 distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 	rm -f doc/dayplanner.desktop
