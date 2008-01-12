@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Day Planner 0.6\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2007-10-26 12:56+0200\n"
+"POT-Creation-Date: 2008-01-12 13:59+0100\n"
 "PO-Revision-Date: 2007-06-04 01:07+0100\n"
 "Last-Translator: Reinout van Schouwen <reinout@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -21,11 +21,11 @@ msgstr ""
 "X-Poedit-Country: NETHERLANDS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: dayplanner:240
+#: dayplanner:241
 msgid "An error ocurred while uploading the data"
 msgstr "Er is een fout opgetreden bij het verzenden van gegevens."
 
-#: dayplanner:242
+#: dayplanner:243
 msgid ""
 "Your account has expired. If you are using a paid service this may be "
 "because you have not paid for the current period. If not, you should contact "
@@ -36,7 +36,7 @@ msgstr ""
 "dan kunt u het beste uw dienstenprovider vragen waarom uw account verlopen "
 "is."
 
-#: dayplanner:245
+#: dayplanner:246
 msgid ""
 "The server did not accept the uploaded data and replied with an unknown "
 "value: %(value)"
@@ -44,7 +44,7 @@ msgstr ""
 "De server heeft de verstuurde gegevens niet geaccepteerd en antwoordde met "
 "een onbekende waarde: %(value)"
 
-#: dayplanner:278
+#: dayplanner:281
 msgid ""
 "The data became corrupted during download. You may want to attempt to "
 "synchronize again."
@@ -52,13 +52,13 @@ msgstr ""
 "De gegevens zijn beschadigd tijdens de download. U zou kunnen proberen "
 "opnieuw te synchroniseren."
 
-#: dayplanner:312 dayplanner:332 dayplanner:334 dayplanner:336 dayplanner:344
-#: dayplanner:346 dayplanner:348 dayplanner:357 dayplanner:359 dayplanner:361
-#: dayplanner:363
+#: dayplanner:321 dayplanner:341 dayplanner:343 dayplanner:345 dayplanner:353
+#: dayplanner:355 dayplanner:357 dayplanner:366 dayplanner:368 dayplanner:370
+#: dayplanner:372
 msgid "Synchronizing"
 msgstr "Synchroniseren"
 
-#: dayplanner:398
+#: dayplanner:407
 msgid ""
 "An error occurred with the Day Planner services:\n"
 "\n"
@@ -68,46 +68,46 @@ msgstr ""
 "\n"
 "%(error)"
 
-#: dayplanner:423
+#: dayplanner:432
 msgid "Services"
 msgstr "Diensten"
 
-#: dayplanner:423
+#: dayplanner:432
 msgid "Initializing"
 msgstr "Initialiseren"
 
-#: dayplanner:432
+#: dayplanner:441
 msgid "Connecting"
 msgstr "Verbinden"
 
-#: dayplanner:438
+#: dayplanner:447
 msgid "Connected"
 msgstr "Verbonden"
 
-#: dayplanner:445
+#: dayplanner:454
 msgid "Complete"
 msgstr "Compleet"
 
-#: dayplanner:458
+#: dayplanner:467
 msgid ""
 "You don't have the IO::Socket:SSL module. This module is required for the "
 "Day Planner services to function. The services will not function until this "
 "module is installed."
 msgstr ""
 
-#: dayplanner:497 dayplanner:502 dayplanner:506
+#: dayplanner:506 dayplanner:511 dayplanner:515
 #, perl-format
 msgid "Unable to connect to the Day Planner services server (%s)."
 msgstr ""
 "Niet in staat te verbinden met de server (%s) die de Day Planner-dienst "
 "verzorgt."
 
-#: dayplanner:497
+#: dayplanner:506
 #, perl-format
 msgid "You're probably not connected to the internet"
 msgstr "U heeft waarschijnlijk geen verbinding met het internet"
 
-#: dayplanner:502
+#: dayplanner:511
 #, perl-format
 msgid ""
 "The connection was refused by the server. Please verify your Day Planner "
@@ -116,14 +116,14 @@ msgstr ""
 "De verbinding is geweigerd door de server. Ga uw Day Planner "
 "diensteninstellingenna."
 
-#: dayplanner:502 dayplanner:506
+#: dayplanner:511 dayplanner:515
 #, perl-format
 msgid "If this problem persists, please contact your service provider"
 msgstr ""
 "Als dit probleem zich blijft voordoen, neem dan contact op met de provider "
 "van uw dienst"
 
-#: dayplanner:517
+#: dayplanner:526
 msgid ""
 "The Day Planner services server you are connecting to does not support this "
 "version of Day Planner (%(version))."
@@ -131,11 +131,11 @@ msgstr ""
 "De Day Planner dienstenserver waar u verbinding mee legt ondersteunt deze "
 "versie van Day Planner niet (%(version))."
 
-#: dayplanner:521
+#: dayplanner:530
 msgid "The username and/or password is incorrect."
 msgstr "De gebruikersnaam en/of het wachtwoord zijn onjuist."
 
-#: dayplanner:702
+#: dayplanner:717
 msgid ""
 "Unable to create the directory %(directory): %(error)\n"
 "Manually create this directory before closing this dialog."
@@ -143,7 +143,16 @@ msgstr ""
 "Niet in staat de map %(directory) aan te maken: %(error)\n"
 "Maak deze map handmatig aan voordat u dit dialoogvenster sluit."
 
-#: dayplanner:912
+#: dayplanner:782
+#, fuzzy
+msgid "Calendar subscriptions"
+msgstr "Gedetailleerde beschrijving"
+
+#: dayplanner:782
+msgid "Downloading"
+msgstr ""
+
+#: dayplanner:1034
 msgid ""
 "A fatal error has occurred. Your installation of Day Planner is missing some "
 "files. This makes certain functions in Day Planner unusable. Please re-"
@@ -154,7 +163,7 @@ msgid ""
 "(The missing file was: %(module))"
 msgstr ""
 
-#: dayplanner:927
+#: dayplanner:1049
 msgid ""
 "Another instance of Day Planner appears to be running. Please quit the "
 "currently running instance of Day Planner before continuing\n"
@@ -169,46 +178,56 @@ msgstr ""
 
 #. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 #. For instance "Dagsplanleggar" for Norwegian.
-#: dayplanner:928 dayplanner:1910 dayplanner:2646 dayplanner:2660
-#: dayplanner:2695 dayplanner:2711 dayplanner:4136 dayplanner:4591
+#: dayplanner:1050 dayplanner:2114 dayplanner:2855 dayplanner:2869
+#: dayplanner:2904 dayplanner:2920 dayplanner:4347 dayplanner:4821
 msgid "Day Planner"
 msgstr "Dagplanner"
 
 #. TRANSLATORS: As in force another running Day Planner instance to quit
-#: dayplanner:932
+#: dayplanner:1054
 msgid "_Force"
 msgstr "Af_dwingen"
 
-#: dayplanner:1022
+#: dayplanner:1144
 #, fuzzy
 msgid "%(name) was born"
 msgstr "Verjaardag van %(name)"
 
-#: dayplanner:1026
+#: dayplanner:1148
 #, fuzzy
 msgid "%(name)'s birthday (%(year) years old)"
 msgstr "Verjaardag van %(name)"
 
-#: dayplanner:1030 dayplanner:1111 dayplanner:1679 dayplanner:4021
+#: dayplanner:1152 dayplanner:1233 dayplanner:1883 dayplanner:4230
 msgid "%(name)'s birthday"
 msgstr "Verjaardag van %(name)"
 
 #. TRANSLATORS: This string is used when there is some issue getting the description
 #. of an event. It is rarely used but kept just in case.
-#: dayplanner:1040
+#: dayplanner:1162
 msgid "Unknown"
 msgstr "Onbekend"
 
-#: dayplanner:1048
+#: dayplanner:1170
 msgid "Upgrading"
 msgstr "Bijwerken"
+
+#: dayplanner:1566
+#, fuzzy
+msgid "Day Planner Reminder"
+msgstr "Dagplanner-gebeurtenis"
+
+#. TRANSLATORS: This is the comment used in the autostart .desktop file about the Day Planner Reminder
+#: dayplanner:1570
+msgid "Ensures you get notified about events"
+msgstr ""
 
 #. TRANSLATORS: This string appears when Day Planner fails to add dayplanner-daemon
 #. to autostart in old GNOME releases (version 2.12 and older).
 #. I am aware of the fact that it may not apply everywhere, but it's
 #. about as close as it gets, and users running GNOME 2.13 and later or
 #. not running GNOME at all will not see this.
-#: dayplanner:1473
+#: dayplanner:1674
 msgid ""
 "A problem occurred while setting up automatic startup of the Day Planner "
 "reminder.\n"
@@ -218,7 +237,7 @@ msgid ""
 "daemon\" in the \"Startup Command\" field and press the \"OK\" button."
 msgstr ""
 
-#: dayplanner:1484
+#: dayplanner:1685
 msgid ""
 "Disabling automatic startup of the reminder will prevent notifications "
 "unless Day Planner has been manually started. Disable automatic startup?"
@@ -227,51 +246,51 @@ msgstr ""
 "zorgen dat herinneringen niet getoond worden tenzij Day Planner handmatig "
 "gestart is. Automatisch opstarten uitschakelen?"
 
-#: dayplanner:1768 dayplanner:1910 dayplanner:1917
+#: dayplanner:1972 dayplanner:2114 dayplanner:2121
 msgid "Import data"
 msgstr "Gegevens importeren"
 
-#: dayplanner:1780
+#: dayplanner:1984
 msgid "Import data from:"
 msgstr "Gegevens importeren van:"
 
-#: dayplanner:1786
+#: dayplanner:1990
 msgid "A file"
 msgstr "Een bestand"
 
-#: dayplanner:1787
+#: dayplanner:1991
 msgid "Other applications"
 msgstr "Overige toepassingen"
 
-#: dayplanner:1825
+#: dayplanner:2029
 msgid "Import data from a file"
 msgstr "De gegevens vanuit een bestand importeren"
 
-#: dayplanner:1826
+#: dayplanner:2030
 msgid "Import data from various other applications"
 msgstr "Gegevens importeren uit diverse andere toepassingen"
 
-#: dayplanner:1827
+#: dayplanner:2031
 msgid "Cancel importing and return to Day Planner"
 msgstr "Import annuleren en terugkeren naar Day Planner"
 
-#: dayplanner:1828
+#: dayplanner:2032
 msgid "Continue"
 msgstr "Doorgaan"
 
-#: dayplanner:1843 dayplanner:2026
+#: dayplanner:2047 dayplanner:2234
 msgid "Preparing"
 msgstr "Voorbereiden"
 
-#: dayplanner:1843
+#: dayplanner:2047
 msgid "Preparing to import"
 msgstr "Importeren voorbereiden"
 
-#: dayplanner:1894
+#: dayplanner:2098
 msgid "Could not detect data from any application to import."
 msgstr "Kan geen gegevens van andere toepassingen vinden om te importeren."
 
-#: dayplanner:1927
+#: dayplanner:2131
 msgid ""
 "Welcome to Day Planner.\n"
 "\n"
@@ -281,118 +300,127 @@ msgid ""
 "to import anything."
 msgstr ""
 
-#: dayplanner:1927
+#: dayplanner:2131
 msgid "Which application(s) do you want to import data from?"
 msgstr "Van welke toepassing(en) wilt u gegevens importeren?"
 
-#: dayplanner:2026
+#: dayplanner:2193
+#, fuzzy
+msgid "Import"
+msgstr "_Importeren…"
+
+#: dayplanner:2211
+msgid "Don't import"
+msgstr ""
+
+#: dayplanner:2234
 msgid "Importing..."
 msgstr "Importeren..."
 
-#: dayplanner:2097
+#: dayplanner:2305
 msgid "Done"
 msgstr "Klaar"
 
-#: dayplanner:2120
+#: dayplanner:2328
 msgid "All supported file formats"
 msgstr "Alle ondersteunde bestandsformaten"
 
-#: dayplanner:2139
+#: dayplanner:2347
 msgid "Export data"
 msgstr "Gegevens exporteren"
 
-#: dayplanner:2142
+#: dayplanner:2350
 msgid "My_dayplanner"
 msgstr "Mijn _dagplanner"
 
-#: dayplanner:2164
+#: dayplanner:2372
 msgid "Save as filetype:"
 msgstr "Opslaan als bestandstype:"
 
 #. TRANSLATORS: Selects where to export to
-#: dayplanner:2172
+#: dayplanner:2380
 msgid "XHTML (exports to a directory)"
 msgstr "XHTML (exporteert naar een map)"
 
-#: dayplanner:2229
+#: dayplanner:2437
 msgid ""
 "There are already files in the directory \"%(dir)\". If you continue any "
 "existing exported Day Planner data in that directory will be overwritten. Do "
 "you want to continue?"
 msgstr ""
 
-#: dayplanner:2238
+#: dayplanner:2446
 msgid "\"%(file)\" already exists and is not a directory"
 msgstr "\"%(file)\" bestaat al en is geen map"
 
-#: dayplanner:2248
+#: dayplanner:2456
 msgid "\"%(dir)\" is read only. Write permissions are required."
 msgstr "\"%(dir)\" is alleen-lezen. Schrijfrechten zijn vereist."
 
-#: dayplanner:2253
+#: dayplanner:2461
 msgid "\"%(dir)\" is a directory."
 msgstr "\"%(dir)\" is een map."
 
-#: dayplanner:2255
+#: dayplanner:2463
 msgid "\"%(file)\" already exists. Overwrite?"
 msgstr "\"%(file)\" bestaat al, overschrijven?"
 
-#: dayplanner:2387
+#: dayplanner:2596
 msgid "Sunday"
 msgstr "Zondag"
 
-#: dayplanner:2388
+#: dayplanner:2597
 msgid "Monday"
 msgstr "Maandag"
 
-#: dayplanner:2389
+#: dayplanner:2598
 msgid "Tuesday"
 msgstr "Dinsdag"
 
-#: dayplanner:2390
+#: dayplanner:2599
 msgid "Wednesday"
 msgstr "Woensdag"
 
-#: dayplanner:2391
+#: dayplanner:2600
 msgid "Thursday"
 msgstr "Donderdag"
 
-#: dayplanner:2392
+#: dayplanner:2601
 msgid "Friday"
 msgstr "Vrijdag"
 
-#: dayplanner:2393
+#: dayplanner:2602
 msgid "Saturday"
 msgstr "Zaterdag"
 
-#: dayplanner:2428
+#: dayplanner:2637
 msgid "Tomorrow"
 msgstr "Morgen"
 
 #. TRANSLATORS: String used in the list of upcoming events in the
 #. lower right hand corner of the UI. You should
 #. probably keep this short.
-#: dayplanner:2452
+#: dayplanner:2661
 msgid "At %(time)"
 msgstr "Op %(time)"
 
 #. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
 #. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
-#: dayplanner:2460 dayplanner:2531
+#: dayplanner:2669 dayplanner:2740
 msgid "(nothing)"
 msgstr "(niets)"
 
-#: dayplanner:2468
+#: dayplanner:2677
 msgid "No upcoming events exist for the next seven days"
 msgstr "Er zijn geen gebeurtenissen de eerstkomende zeven dagen"
 
 #. TRANSLATORS: This is used to bind together a list. It is a list of days
 #. such as: Friday, Saturday *and* Sunday.
-#: dayplanner:2523 dayplanner:2526
+#: dayplanner:2732 dayplanner:2735
 msgid "and"
 msgstr "en"
 
-#: dayplanner:2592 dayplanner:3678
+#: dayplanner:2801 dayplanner:3887
 #, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -400,219 +428,222 @@ msgid ""
 "editor and edit the file %s."
 msgstr ""
 
-#: dayplanner:2728
+#: dayplanner:2937
 msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr ""
 "Sommige bestanden konden niet correct worden opgeslagen. Toch afsluiten?"
 
-#: dayplanner:2808 dayplanner:2817 dayplanner:3056 dayplanner:3065
+#: dayplanner:3017 dayplanner:3026 dayplanner:3265 dayplanner:3274
 msgid "Show advanced settings"
 msgstr "Geavanceerde instellingen tonen"
 
-#: dayplanner:2815 dayplanner:3063
+#: dayplanner:3024 dayplanner:3272
 msgid "Hide advanced settings"
 msgstr "Geavanceerde instellingen verbergen"
 
-#: dayplanner:2940
+#: dayplanner:3149
 msgid "Calendar"
 msgstr "Agenda"
 
-#: dayplanner:3078
+#: dayplanner:3287
 msgid "Repeat event every:"
 msgstr "Herhalingsfrequentie van de gebeurtenis: elk(e) "
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3085
+#: dayplanner:3294
 msgid "day"
 msgstr "dag"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3087
+#: dayplanner:3296
 msgid "week"
 msgstr "week"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3089
+#: dayplanner:3298
 msgid "month"
 msgstr "maand"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3091
+#: dayplanner:3300
 msgid "year"
 msgstr "jaar"
 
 #. TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
-#: dayplanner:3117
+#: dayplanner:3326
 msgid "Until:"
 msgstr "Tot:"
 
 #. TRANSLATORS: Don't recur the event on the dates specified next to this string
-#: dayplanner:3152
+#: dayplanner:3361
 msgid "But not on:"
 msgstr "Maar niet op:"
 
-#: dayplanner:3222
+#: dayplanner:3431
 msgid "Detailed description"
 msgstr "Gedetailleerde beschrijving"
 
-#: dayplanner:3532
+#: dayplanner:3741
 msgid "Add an Event"
 msgstr "Gebeurtenis toevoegen"
 
-#: dayplanner:3538
+#: dayplanner:3747
 msgid "Event type:"
 msgstr "Gebeurtenistype:"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3544
+#: dayplanner:3753
 msgid "Normal"
 msgstr "Normaal"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3546
+#: dayplanner:3755
 msgid "All day"
 msgstr "De hele dag"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3548
+#: dayplanner:3757
 msgid "Birthday"
 msgstr "Geboortedatum"
 
-#: dayplanner:3556
+#: dayplanner:3765
 msgid "Add this event"
 msgstr "Deze gebeurtenis toevoegen"
 
-#: dayplanner:3557
+#: dayplanner:3766
 msgid "Discard this event"
 msgstr "Deze gebeurtenis weggooien"
 
-#: dayplanner:3647
+#: dayplanner:3856
 msgid "Editing an event"
 msgstr "Bewerken van een gebeurtenis"
 
-#: dayplanner:3660
+#: dayplanner:3869
 msgid "Editing a birthday"
 msgstr "Bewerken van een verjaardag"
 
-#: dayplanner:3673
+#: dayplanner:3882
 msgid "Editing an all day event"
 msgstr "Gebeurtenis voor de hele dag bewerken"
 
-#: dayplanner:3687
+#: dayplanner:3896
 msgid "Discard changes"
 msgstr "Wijzigingen verwerpen"
 
-#: dayplanner:3688
+#: dayplanner:3897
 msgid "Accept changes"
 msgstr "Wijzigingen bevestigen"
 
-#: dayplanner:3748
+#: dayplanner:3957
 msgid "Time:"
 msgstr "Tijd:"
 
-#: dayplanner:3758 dayplanner:3925
+#: dayplanner:3967 dayplanner:4134
 msgid "Date:"
 msgstr "Datum:"
 
-#: dayplanner:3767 dayplanner:3934
+#: dayplanner:3976 dayplanner:4143
 msgid "Description:"
 msgstr "Omschrijving:"
 
-#: dayplanner:3779 dayplanner:3946
+#: dayplanner:3988 dayplanner:4155
 msgid "Enter a description of the event here"
 msgstr "Voer hier een omschrijving van de gebeurtenis in"
 
-#: dayplanner:3838 dayplanner:4003
+#: dayplanner:4047 dayplanner:4212
 msgid "There is no description of this event. Please enter a description."
 msgstr ""
 "Er is geen beschrijving van deze gebeurtenis. Voer er één in alstublieft."
 
-#: dayplanner:3842 dayplanner:4007
+#: dayplanner:4051 dayplanner:4216
 msgid "The date you have entered is invalid."
 msgstr "De datum die u heeft ingevoerd is ongeldig."
 
-#: dayplanner:3954
+#: dayplanner:4163
 msgid "Additional information"
 msgstr "Extra Informatie"
 
-#: dayplanner:4081
+#: dayplanner:4290
 msgid "Born:"
 msgstr "Geboortedatum:"
 
 #. TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
-#: dayplanner:4091
+#: dayplanner:4300
 msgid "Name:"
 msgstr "Naam:"
 
-#: dayplanner:4104
+#: dayplanner:4313
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Voer hier de naam van de persoon in die jarig is"
 
-#: dayplanner:4147 dayplanner:4148
-msgid "THE NAMES OF THE TRANSLATORS"
+#. TRANSLATORS: Please write translator credits here, in the form:
+#. name <email>.
+#. Separate names with \n.
+#: dayplanner:4376 dayplanner:4378
+msgid "translator-credits"
 msgstr "Reinout van Schouwen"
 
-#: dayplanner:4193
+#: dayplanner:4423
 msgid "Reminders"
 msgstr "Herinneringen"
 
-#: dayplanner:4226
+#: dayplanner:4456
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "De Day Planner-herinnerfunctie automatisch starten bij aanmelden"
 
-#: dayplanner:4242
+#: dayplanner:4472
 msgid "When an event is coming up, remind me:"
 msgstr "Wanneer een gebeurtenis eraan komt, herinner me:"
 
-#: dayplanner:4249
+#: dayplanner:4479
 msgid "One day in advance"
 msgstr "Eén dag van tevoren"
 
-#: dayplanner:4271 dayplanner:4272 dayplanner:4273 dayplanner:4274
+#: dayplanner:4501 dayplanner:4502 dayplanner:4503 dayplanner:4504
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minuten"
 
-#: dayplanner:4275
+#: dayplanner:4505
 #, perl-format
 msgid "%s hour"
 msgstr "%s uur"
 
-#: dayplanner:4276 dayplanner:4277 dayplanner:4278
+#: dayplanner:4506 dayplanner:4507 dayplanner:4508
 #, perl-format
 msgid "%s hours"
 msgstr "%s uren"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4294
+#: dayplanner:4524
 msgid "before the event time"
 msgstr "voor de gebeurtenis"
 
-#: dayplanner:4334
+#: dayplanner:4564
 msgid "Synchronization"
 msgstr "Synchronisatie"
 
-#: dayplanner:4341
+#: dayplanner:4571
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr "Automatisch synchroniseren met on-line versie van deze agenda"
 
-#: dayplanner:4372
+#: dayplanner:4602
 msgid "Server:"
 msgstr "Server:"
 
-#: dayplanner:4385
+#: dayplanner:4615
 msgid "Port:"
 msgstr "Poort:"
 
-#: dayplanner:4402
+#: dayplanner:4632
 msgid "Username:"
 msgstr "Gebruikersnaam:"
 
-#: dayplanner:4414
+#: dayplanner:4644
 msgid "Password:"
 msgstr "Wachtwoord:"
 
-#: dayplanner:4451
+#: dayplanner:4681
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
@@ -621,76 +652,76 @@ msgstr ""
 "daarom is het uitgezet."
 
 #. TRANSLATORS: This is followed by the time of an event
-#: dayplanner:4551
+#: dayplanner:4781
 msgid "Time"
 msgstr "Tijd"
 
-#: dayplanner:4552
+#: dayplanner:4782
 msgid "Event"
 msgstr "Gebeurtenis"
 
-#: dayplanner:4636 dayplanner:4637 dayplanner:4638 dayplanner:4639
-#: dayplanner:4640
+#: dayplanner:4866 dayplanner:4867 dayplanner:4868 dayplanner:4869
+#: dayplanner:4870
 msgid "_Calendar"
 msgstr "_Agenda"
 
-#: dayplanner:4637
+#: dayplanner:4867
 msgid "_Import..."
 msgstr "_Importeren…"
 
-#: dayplanner:4638
+#: dayplanner:4868
 msgid "_Export..."
 msgstr "_Exporteren…"
 
-#: dayplanner:4643
+#: dayplanner:4873
 msgid "_Add an Event..."
 msgstr "Gebeurtenis _toevoegen…"
 
-#: dayplanner:4644 dayplanner:4666
+#: dayplanner:4874 dayplanner:4896
 msgid "_Edit This Event..."
 msgstr "Deze gebeurtenis be_werken…"
 
-#: dayplanner:4645 dayplanner:4670
+#: dayplanner:4875 dayplanner:4900
 msgid "_Delete this event..."
 msgstr "De_ze gebeurtenis verwijderen…"
 
-#: dayplanner:4650
+#: dayplanner:4880
 msgid "_Report a bug"
 msgstr ""
 
-#: dayplanner:4766 dayplanner:4767
+#: dayplanner:4996 dayplanner:4997
 msgid "Delete the selected event"
 msgstr "De geselecteerde gebeurtenis verwijderen"
 
-#: dayplanner:4774 dayplanner:4775
+#: dayplanner:5004 dayplanner:5005
 msgid "Edit the selected event"
 msgstr "De geselecteerde gebeurtenis bewerken"
 
-#: dayplanner:4785 dayplanner:4786
+#: dayplanner:5015 dayplanner:5016
 msgid "Add a new event"
 msgstr "Een nieuwe gebeurtenis toevoegen"
 
-#: dayplanner:4920 dayplanner:4922
+#: dayplanner:5152 dayplanner:5154
 msgid ""
 "The home directory of the user %(user) doesn't exist at %(path)! Please "
 "verify that the environment variable %(VAR) is properly set. Unable to "
 "continue\n"
 msgstr ""
 
-#: dayplanner:4928 dayplanner:4929
+#: dayplanner:5160 dayplanner:5161
 msgid "The environment variable %(VAR) is not set! Unable to continue\n"
 msgstr ""
 "De omgevingsvariabele %(VAR) is niet ingesteld! Niet in staat door te gaan\n"
 
-#: dayplanner-notifier:84 dayplanner-notifier:93
+#: dayplanner-notifier:79 dayplanner-notifier:88
 msgid "Show details"
 msgstr "Details weergeven"
 
-#: dayplanner-notifier:91
+#: dayplanner-notifier:86
 msgid "Hide details"
 msgstr "Details verbergen"
 
-#: dayplanner-notifier:208 dayplanner-notifier:310
+#: dayplanner-notifier:207 dayplanner-notifier:309
 msgid ""
 "Today at %(time):\n"
 "%(event_description)"
@@ -698,7 +729,7 @@ msgstr ""
 "Vandaag om %(time):\n"
 "%(event_description)"
 
-#: dayplanner-notifier:210 dayplanner-notifier:312
+#: dayplanner-notifier:209 dayplanner-notifier:311
 msgid ""
 "Tomorrow at %(time):\n"
 "%(event_description)"
@@ -706,7 +737,7 @@ msgstr ""
 "Morgen om %(time):\n"
 "%(event_description)"
 
-#: dayplanner-notifier:212 dayplanner-notifier:314
+#: dayplanner-notifier:211 dayplanner-notifier:313
 msgid ""
 "At %(time) on %(date):\n"
 "%(event_description)"
@@ -714,15 +745,15 @@ msgstr ""
 "Om %(time) op %(date):\n"
 "%(event_description)"
 
-#: dayplanner-notifier:231
+#: dayplanner-notifier:230
 msgid "Day Planner event"
 msgstr "Dagplanner-gebeurtenis"
 
-#: dayplanner-notifier:242
+#: dayplanner-notifier:241
 msgid "Remind me later"
 msgstr "Herinner me later"
 
-#: dayplanner-notifier:249
+#: dayplanner-notifier:248
 msgid "Postpone this notification for 10 minutes"
 msgstr "Deze mededeling voor 10 minuten uitstellen"
 

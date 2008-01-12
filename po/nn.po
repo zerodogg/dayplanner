@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2008-01-08 09:43+0100\n"
+"POT-Creation-Date: 2008-01-12 13:59+0100\n"
 "PO-Revision-Date: 2008-01-08 09:44+0100\n"
 "Last-Translator: Gaute Hvoslef Kvalnes <gaute@verdsveven.com>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -183,7 +183,7 @@ msgstr ""
 #. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 #. For instance "Dagsplanleggar" for Norwegian.
 #: dayplanner:1050 dayplanner:2114 dayplanner:2855 dayplanner:2869
-#: dayplanner:2904 dayplanner:2920 dayplanner:4347 dayplanner:4817
+#: dayplanner:2904 dayplanner:2920 dayplanner:4347 dayplanner:4821
 msgid "Day Planner"
 msgstr "Dagsplanleggar"
 
@@ -594,73 +594,76 @@ msgstr "Namn:"
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Skriv inn namnet til personen som har bursdag her"
 
-#: dayplanner:4373 dayplanner:4374
-msgid "THE NAMES OF THE TRANSLATORS"
+#. TRANSLATORS: Please write translator credits here, in the form:
+#. name <email>.
+#. Separate names with \n.
+#: dayplanner:4376 dayplanner:4378
+msgid "translator-credits"
 msgstr ""
 "Eskild Hustvedt <zerodogg at skolelinux dot no>\n"
 "Gaute Hvoslef Kvalnes <gaute at verdsveven dot com>"
 
-#: dayplanner:4419
+#: dayplanner:4423
 msgid "Reminders"
 msgstr "Påminningar"
 
-#: dayplanner:4452
+#: dayplanner:4456
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "Start påminnaren automatisk under innlogging"
 
-#: dayplanner:4468
+#: dayplanner:4472
 msgid "When an event is coming up, remind me:"
 msgstr "Når ein hending nermar seg, påminn meg:"
 
-#: dayplanner:4475
+#: dayplanner:4479
 msgid "One day in advance"
 msgstr "Ein dag på førehand"
 
-#: dayplanner:4497 dayplanner:4498 dayplanner:4499 dayplanner:4500
+#: dayplanner:4501 dayplanner:4502 dayplanner:4503 dayplanner:4504
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minutt"
 
-#: dayplanner:4501
+#: dayplanner:4505
 #, perl-format
 msgid "%s hour"
 msgstr "%s time"
 
-#: dayplanner:4502 dayplanner:4503 dayplanner:4504
+#: dayplanner:4506 dayplanner:4507 dayplanner:4508
 #, perl-format
 msgid "%s hours"
 msgstr "%s timar"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4520
+#: dayplanner:4524
 msgid "before the event time"
 msgstr "før hendingstida"
 
-#: dayplanner:4560
+#: dayplanner:4564
 msgid "Synchronization"
 msgstr "Synkronisering"
 
-#: dayplanner:4567
+#: dayplanner:4571
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr "Synkroniser denne kalenderen via internett"
 
-#: dayplanner:4598
+#: dayplanner:4602
 msgid "Server:"
 msgstr "Tenar:"
 
-#: dayplanner:4611
+#: dayplanner:4615
 msgid "Port:"
 msgstr "Port:"
 
-#: dayplanner:4628
+#: dayplanner:4632
 msgid "Username:"
 msgstr "Brukarnamn:"
 
-#: dayplanner:4640
+#: dayplanner:4644
 msgid "Password:"
 msgstr "Passord:"
 
-#: dayplanner:4677
+#: dayplanner:4681
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
@@ -669,56 +672,56 @@ msgstr ""
 "synkronisering kan brukast, synkronisering har blitt slått av."
 
 #. TRANSLATORS: This is followed by the time of an event
-#: dayplanner:4777
+#: dayplanner:4781
 msgid "Time"
 msgstr "Klokka"
 
-#: dayplanner:4778
+#: dayplanner:4782
 msgid "Event"
 msgstr "Hending"
 
-#: dayplanner:4862 dayplanner:4863 dayplanner:4864 dayplanner:4865
-#: dayplanner:4866
+#: dayplanner:4866 dayplanner:4867 dayplanner:4868 dayplanner:4869
+#: dayplanner:4870
 msgid "_Calendar"
 msgstr "_Kalender"
 
-#: dayplanner:4863
+#: dayplanner:4867
 msgid "_Import..."
 msgstr "_Importer ..."
 
-#: dayplanner:4864
+#: dayplanner:4868
 msgid "_Export..."
 msgstr "_Eksporter ..."
 
-#: dayplanner:4869
+#: dayplanner:4873
 msgid "_Add an Event..."
 msgstr "_Legg til ei hending ..."
 
-#: dayplanner:4870 dayplanner:4892
+#: dayplanner:4874 dayplanner:4896
 msgid "_Edit This Event..."
 msgstr "_Rediger denne hendinga ..."
 
-#: dayplanner:4871 dayplanner:4896
+#: dayplanner:4875 dayplanner:4900
 msgid "_Delete this event..."
 msgstr "_Slett denne hendinga ..."
 
-#: dayplanner:4876
+#: dayplanner:4880
 msgid "_Report a bug"
 msgstr "_Rapporter feil"
 
-#: dayplanner:4992 dayplanner:4993
+#: dayplanner:4996 dayplanner:4997
 msgid "Delete the selected event"
 msgstr "Slett den valgte hendinga"
 
-#: dayplanner:5000 dayplanner:5001
+#: dayplanner:5004 dayplanner:5005
 msgid "Edit the selected event"
 msgstr "Rediger den valgte hendinga"
 
-#: dayplanner:5011 dayplanner:5012
+#: dayplanner:5015 dayplanner:5016
 msgid "Add a new event"
 msgstr "Legg til ei hending"
 
-#: dayplanner:5148 dayplanner:5150
+#: dayplanner:5152 dayplanner:5154
 msgid ""
 "The home directory of the user %(user) doesn't exist at %(path)! Please "
 "verify that the environment variable %(VAR) is properly set. Unable to "
@@ -727,7 +730,7 @@ msgstr ""
 "Heimemappa til brukaren %(user) finst ikkje (%(path)). Sjekk at "
 "miljøvariabelen %(VAR) er sett. Kan ikkje halda fram.\n"
 
-#: dayplanner:5156 dayplanner:5157
+#: dayplanner:5160 dayplanner:5161
 msgid "The environment variable %(VAR) is not set! Unable to continue\n"
 msgstr "Miljøvariabelen %(VAR) er ikkje sett! Kan ikkje halda fram.\n"
 
