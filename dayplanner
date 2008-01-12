@@ -4370,8 +4370,12 @@ sub AboutBox {
 		$AboutDialog->set_logo($PixBuf);
 	}
 	# Translator credits
-	unless ($i18n->get('THE NAMES OF THE TRANSLATORS') eq 'THE NAMES OF THE TRANSLATORS') {
-		$AboutDialog->set_translator_credits($i18n->get('THE NAMES OF THE TRANSLATORS'));
+	# TRANSLATORS: Please write translator credits here, in the form:
+	# 				name <email>.
+	# 				Separate names with \n.
+	if (not $i18n->get('translator-credits') eq 'translator-credits')
+	{
+		$AboutDialog->set_translator_credits($i18n->get('translator-credits'));
 	}
 	$AboutDialog->run;
 	$AboutDialog->destroy();
