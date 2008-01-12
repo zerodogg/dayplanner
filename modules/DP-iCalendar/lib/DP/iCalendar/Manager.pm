@@ -19,8 +19,10 @@ our $VERSION;
 $VERSION = 0.1;
 my %API_VERSIONS = (
 	'01_capable' => true,
+	'02_capable' => true,
 );
-my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD');
+my $CurrentAPIVer = '02_capable';
+my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD','PRODID');
 
 # -- Manager stuff --
 sub new
@@ -65,15 +67,10 @@ sub add_object
 	}
 	push(@{$this->{objects}},$object);
 	foreach(@{$capabilities}) {
-		if(defined($this->{$_})) {
-			push(@{$this->{$_}},$object);
-			$this->{capab}{$_}{$object} = true;
-		} else {
-			DPIM_carp('Unknown capability: '.$_);
-		}
+		$this->_add_capability($object,$_);
 	}
 	if($primary) {
-		# This here checks that the primary has all capabilities, but won't refuse if it deosn't.
+		# This here checks that the primary has all capabilities, but won't refuse if it doesn't.
 		foreach(@Capabilities)
 		{
 			if(not $this->_verify_capab($object,$_,true)) {
@@ -355,7 +352,9 @@ sub set_prodid {
 	my($this, $ProdId) = @_;
 	$this->{ProdId} = $ProdId;
 	foreach my $obj (@{$this->{objects}}) {
-		$obj->set_prodid($ProdId);
+		if($this->_verify_capab($obj,'PRODID',true)) {
+			$obj->set_prodid($ProdId);
+		}
 	}
 }
 
@@ -411,6 +410,31 @@ sub _move_UID_to_PRIMARY
 	$Hash{UID} = $UID;
 	$this->{UID_Cache}{$UID} = $this->{PRIMARY};
 	return($this->add(%Hash));
+}
+
+# Copmatibility 
+sub _01_capable_compat
+{
+	my $this = shift;
+	my $object = shift;
+	# 01_capable didn't have PRODID, so add the object with capability PRODID
+	$this->add_capability($object,'PRODID');
+	return(true);
+}
+
+sub _add_capability
+{
+	my $this = shift;
+	my $object = shift;
+	my $capab = shift;
+	if(defined($this->{$capab})) {
+		push(@{$this->{$capab}},$object);
+		$this->{capab}{$capab}{$object} = true;
+		return(true);
+	} else {
+		DPIM_carp('Unknown capability: '.$capab);
+		return(false);
+	}
 }
 
 # -- Internal functions --
