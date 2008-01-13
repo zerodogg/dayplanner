@@ -2,7 +2,7 @@
 # $Id: iCalendar.pm 1615 2007-08-10 17:58:24Z zero_dogg $
 # An wrapper around DP::iCalendar that allows subscriptions to iCalendar calendars
 # via the internet.
-# Copyright (C) Eskild Hustvedt 2007
+# Copyright (C) Eskild Hustvedt 2007, 2008
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself. There is NO warranty;

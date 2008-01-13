@@ -2,7 +2,7 @@
 # DP::iCalendar
 # $Id$
 # An iCalendar parser/loader.
-# Copyright (C) Eskild Hustvedt 2007
+# Copyright (C) Eskild Hustvedt 2007, 2008
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself. There is NO warranty;
