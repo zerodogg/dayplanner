@@ -2876,33 +2876,23 @@ sub PopulateUpcomingEvents {
 	);
 
 	# Today is
-	my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime(time);
-	my $Year = $getyear;
+	my $TheTime = time();
 
 	# Prepare
-	my $TheYday = $getyday;
 	my $FirstDay = 1;
 	my $AddDays = 7;
-	$TheYday++; # Yearday currently starts at 0, we need it to start at 1
 
 	# Loop used to populate the %InformationHash
 	while($AddDays) {
-		$TheYday++;	# This is a new day
 		$AddDays--;	# One less day to add
+		$TheTime += 86400;
 
-		# Append a zero to ensure proper sorting if the
-		# year day is below 100
-		if($TheYday < 100) {
-			$TheYday = "0$TheYday";
-		}
+		$InformationHash{$TheTime} = {};
+		my $h = $InformationHash{$TheTime};
 		
-		$InformationHash{$TheYday} = {};
-		my $h = $InformationHash{$TheYday};
-		
-		my $Mktime = POSIX::mktime(0, 0, 0, $TheYday, 0, $Year);	# Get the POSIX time of this day
-
-		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($Mktime);	# Get the real time of this day
+		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($TheTime);	# Get the real time of this day
 		$getmonth++;	# Month should be 1-12 not 0-11
+		my $Year = $getyear;
 
 		my $HumanYear = $getyear+1900;	# Human readable year
 
@@ -2958,7 +2948,7 @@ sub PopulateUpcomingEvents {
 			next unless(defined($InformationHash{$key}{noevents}));
 			# Find out which key is next
 			my $Next = $key;
-			$Next++;
+			$Next += 86400;
 			# Skip if the next key doesn't have noevents set
 			next unless(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents}));
 
@@ -2975,7 +2965,7 @@ sub PopulateUpcomingEvents {
 					push(@OtherNoevents, $LastDay);
 				}
 				$LastDay = $Next;
-				$Next++;
+				$Next += 86400;
 			}
 			# Reset the current text 
 			if($LoopNum > 1) {
@@ -3018,7 +3008,7 @@ sub PopulateUpcomingEvents {
 		}
 	}
 	# Don't update the widget if the text hasn't changed
-	unless($UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
+	if(not $UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
 	}
 }
