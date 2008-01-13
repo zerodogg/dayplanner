@@ -27,6 +27,10 @@ unless (defined($ARGV[0]) and length($ARGV[0])) {
 
 my $NewVersion = $ARGV[0];
 my $Name = $ARGV[1];
+if(not defined($Name))
+{
+	$Name = 'SVN';
+}
 
 my $OrigDir = dirname(realpath($0));
 unless(-e "$OrigDir/dayplanner") {
