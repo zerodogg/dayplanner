@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2008-01-12 13:59+0100\n"
+"POT-Creation-Date: 2008-01-13 22:33+0100\n"
 "PO-Revision-Date: 2007-01-07 02:40+0100\n"
 "Last-Translator: Michal Spáda <michal.spada@linuxexpres.cz>\n"
 "Language-Team: Slovak <sk-i18n@linux.sk>\n"
@@ -181,8 +181,8 @@ msgstr ""
 
 #. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 #. For instance "Dagsplanleggar" for Norwegian.
-#: dayplanner:1050 dayplanner:2114 dayplanner:2855 dayplanner:2869
-#: dayplanner:2904 dayplanner:2920 dayplanner:4347 dayplanner:4821
+#: dayplanner:1050 dayplanner:2114 dayplanner:2845 dayplanner:2859
+#: dayplanner:2894 dayplanner:2910 dayplanner:4337 dayplanner:4811
 msgid "Day Planner"
 msgstr "Plánovaè"
 
@@ -201,7 +201,7 @@ msgstr "%s má narodeniny"
 msgid "%(name)'s birthday (%(year) years old)"
 msgstr "%s má narodeniny"
 
-#: dayplanner:1152 dayplanner:1233 dayplanner:1883 dayplanner:4230
+#: dayplanner:1152 dayplanner:1233 dayplanner:1883 dayplanner:4220
 #, fuzzy
 msgid "%(name)'s birthday"
 msgstr "%s má narodeniny"
@@ -421,34 +421,34 @@ msgstr "piatok"
 msgid "Saturday"
 msgstr "sobota"
 
-#: dayplanner:2637
+#: dayplanner:2627
 msgid "Tomorrow"
 msgstr "Zajtra"
 
 #. TRANSLATORS: String used in the list of upcoming events in the
 #. lower right hand corner of the UI. You should
 #. probably keep this short.
-#: dayplanner:2661
+#: dayplanner:2651
 msgid "At %(time)"
 msgstr ""
 
 #. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
 #. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
-#: dayplanner:2669 dayplanner:2740
+#: dayplanner:2659 dayplanner:2730
 msgid "(nothing)"
 msgstr "(niè)"
 
-#: dayplanner:2677
+#: dayplanner:2667
 msgid "No upcoming events exist for the next seven days"
 msgstr "Na nasledujúcich sedem dní nemáte naplánované nijaké udalosti"
 
 #. TRANSLATORS: This is used to bind together a list. It is a list of days
 #. such as: Friday, Saturday *and* Sunday.
-#: dayplanner:2732 dayplanner:2735
+#: dayplanner:2722 dayplanner:2725
 msgid "and"
 msgstr "a"
 
-#: dayplanner:2801 dayplanner:3887
+#: dayplanner:2791 dayplanner:3877
 #, fuzzy, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -459,298 +459,298 @@ msgstr ""
 "Plánovaèi. Ak chcete tento sviatok napriek tomu upravi», pou¾ite textový "
 "editor na súbor %s."
 
-#: dayplanner:2937
+#: dayplanner:2927
 msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr ""
 "Niektoré súbory nebolo mo¾né korektne ulo¾i». Chcete naozaj ukonèi» prácu a "
 "zavrie» Plánovaè?"
 
-#: dayplanner:3017 dayplanner:3026 dayplanner:3265 dayplanner:3274
+#: dayplanner:3007 dayplanner:3016 dayplanner:3255 dayplanner:3264
 msgid "Show advanced settings"
 msgstr ""
 
-#: dayplanner:3024 dayplanner:3272
+#: dayplanner:3014 dayplanner:3262
 msgid "Hide advanced settings"
 msgstr ""
 
-#: dayplanner:3149
+#: dayplanner:3139
 #, fuzzy
 msgid "Calendar"
 msgstr "_Kalendár"
 
-#: dayplanner:3287
+#: dayplanner:3277
 msgid "Repeat event every:"
 msgstr ""
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3294
+#: dayplanner:3284
 #, fuzzy
 msgid "day"
 msgstr "máj"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3296
+#: dayplanner:3286
 msgid "week"
 msgstr ""
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3298
+#: dayplanner:3288
 #, fuzzy
 msgid "month"
 msgstr "Mesiace"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3300
+#: dayplanner:3290
 msgid "year"
 msgstr ""
 
 #. TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
-#: dayplanner:3326
+#: dayplanner:3316
 msgid "Until:"
 msgstr ""
 
 #. TRANSLATORS: Don't recur the event on the dates specified next to this string
-#: dayplanner:3361
+#: dayplanner:3351
 msgid "But not on:"
 msgstr ""
 
-#: dayplanner:3431
+#: dayplanner:3421
 #, fuzzy
 msgid "Detailed description"
 msgstr "Popis"
 
-#: dayplanner:3741
+#: dayplanner:3731
 #, fuzzy
 msgid "Add an Event"
 msgstr "Prida» udalos»"
 
-#: dayplanner:3747
+#: dayplanner:3737
 msgid "Event type:"
 msgstr "Typ udalosti:"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3753
+#: dayplanner:3743
 msgid "Normal"
 msgstr "Normálna"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3755
+#: dayplanner:3745
 msgid "All day"
 msgstr ""
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3757
+#: dayplanner:3747
 msgid "Birthday"
 msgstr "Narodeniny"
 
-#: dayplanner:3765
+#: dayplanner:3755
 msgid "Add this event"
 msgstr "_Prida» udalos»"
 
-#: dayplanner:3766
+#: dayplanner:3756
 msgid "Discard this event"
 msgstr "_Odstráni» túto udalos»"
 
-#: dayplanner:3856
+#: dayplanner:3846
 msgid "Editing an event"
 msgstr "Upravujem udalos»"
 
-#: dayplanner:3869
+#: dayplanner:3859
 msgid "Editing a birthday"
 msgstr "Upravujem narodeniny"
 
-#: dayplanner:3882
+#: dayplanner:3872
 #, fuzzy
 msgid "Editing an all day event"
 msgstr "Upravujem udalos»"
 
-#: dayplanner:3896
+#: dayplanner:3886
 msgid "Discard changes"
 msgstr "Zahodi» zmeny"
 
-#: dayplanner:3897
+#: dayplanner:3887
 msgid "Accept changes"
 msgstr "Prija» a ulo¾i» zmeny"
 
-#: dayplanner:3957
+#: dayplanner:3947
 msgid "Time:"
 msgstr "Èas:"
 
-#: dayplanner:3967 dayplanner:4134
+#: dayplanner:3957 dayplanner:4124
 #, fuzzy
 msgid "Date:"
 msgstr "DÃ¡tum"
 
-#: dayplanner:3976 dayplanner:4143
+#: dayplanner:3966 dayplanner:4133
 msgid "Description:"
 msgstr "Popis:"
 
-#: dayplanner:3988 dayplanner:4155
+#: dayplanner:3978 dayplanner:4145
 msgid "Enter a description of the event here"
 msgstr "Sem zadajte struèné zhrnutie toho, o akú udalos» ide"
 
-#: dayplanner:4047 dayplanner:4212
+#: dayplanner:4037 dayplanner:4202
 #, fuzzy
 msgid "There is no description of this event. Please enter a description."
 msgstr "Táto udalos» nemá nijaké zhrnutie, zadajte ho, prosím."
 
-#: dayplanner:4051 dayplanner:4216
+#: dayplanner:4041 dayplanner:4206
 msgid "The date you have entered is invalid."
 msgstr ""
 
-#: dayplanner:4163
+#: dayplanner:4153
 msgid "Additional information"
 msgstr "Dodatoèné informácie"
 
-#: dayplanner:4290
+#: dayplanner:4280
 msgid "Born:"
 msgstr ""
 
 #. TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
-#: dayplanner:4300
+#: dayplanner:4290
 msgid "Name:"
 msgstr "Meno:"
 
-#: dayplanner:4313
+#: dayplanner:4303
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Sem zadajte meno osoby, ktorá oslavuje narodeniny"
 
 #. TRANSLATORS: Please write translator credits here, in the form:
 #. name <email>.
 #. Separate names with \n.
-#: dayplanner:4376 dayplanner:4378
+#: dayplanner:4366 dayplanner:4368
 msgid "translator-credits"
 msgstr "Michal Spáda"
 
-#: dayplanner:4423
+#: dayplanner:4413
 msgid "Reminders"
 msgstr ""
 
-#: dayplanner:4456
+#: dayplanner:4446
 #, fuzzy
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "Pri prihlasovaní u¾ívateµa automaticky spusti» pripomienky plánovaèa"
 
-#: dayplanner:4472
+#: dayplanner:4462
 msgid "When an event is coming up, remind me:"
 msgstr ""
 
-#: dayplanner:4479
+#: dayplanner:4469
 #, fuzzy
 msgid "One day in advance"
 msgstr "Upozorni ma deò vopred"
 
-#: dayplanner:4501 dayplanner:4502 dayplanner:4503 dayplanner:4504
+#: dayplanner:4491 dayplanner:4492 dayplanner:4493 dayplanner:4494
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minút"
 
-#: dayplanner:4505
+#: dayplanner:4495
 #, perl-format
 msgid "%s hour"
 msgstr "%s hodinu"
 
-#: dayplanner:4506 dayplanner:4507 dayplanner:4508
+#: dayplanner:4496 dayplanner:4497 dayplanner:4498
 #, perl-format
 msgid "%s hours"
 msgstr "%s hodín"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4524
+#: dayplanner:4514
 msgid "before the event time"
 msgstr ""
 
-#: dayplanner:4564
+#: dayplanner:4554
 msgid "Synchronization"
 msgstr ""
 
-#: dayplanner:4571
+#: dayplanner:4561
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr ""
 
-#: dayplanner:4602
+#: dayplanner:4592
 #, fuzzy
 msgid "Server:"
 msgstr "Slu¾by"
 
-#: dayplanner:4615
+#: dayplanner:4605
 msgid "Port:"
 msgstr ""
 
-#: dayplanner:4632
+#: dayplanner:4622
 msgid "Username:"
 msgstr ""
 
-#: dayplanner:4644
+#: dayplanner:4634
 #, fuzzy
 msgid "Password:"
 msgstr "Heslo"
 
-#: dayplanner:4681
+#: dayplanner:4671
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
 msgstr ""
 
 #. TRANSLATORS: This is followed by the time of an event
-#: dayplanner:4781
+#: dayplanner:4771
 msgid "Time"
 msgstr "Èas"
 
-#: dayplanner:4782
+#: dayplanner:4772
 msgid "Event"
 msgstr "Udalos»"
 
-#: dayplanner:4866 dayplanner:4867 dayplanner:4868 dayplanner:4869
-#: dayplanner:4870
+#: dayplanner:4856 dayplanner:4857 dayplanner:4858 dayplanner:4859
+#: dayplanner:4860
 msgid "_Calendar"
 msgstr "_Kalendár"
 
-#: dayplanner:4867
+#: dayplanner:4857
 #, fuzzy
 msgid "_Import..."
 msgstr "_Import"
 
-#: dayplanner:4868
+#: dayplanner:4858
 #, fuzzy
 msgid "_Export..."
 msgstr "_Export"
 
-#: dayplanner:4873
+#: dayplanner:4863
 #, fuzzy
 msgid "_Add an Event..."
 msgstr "_Prida» udalos»"
 
-#: dayplanner:4874 dayplanner:4896
+#: dayplanner:4864 dayplanner:4886
 #, fuzzy
 msgid "_Edit This Event..."
 msgstr "_Upravi» udalos»"
 
-#: dayplanner:4875 dayplanner:4900
+#: dayplanner:4865 dayplanner:4890
 #, fuzzy
 msgid "_Delete this event..."
 msgstr "_Zmaza» udalos»"
 
-#: dayplanner:4880
+#: dayplanner:4870
 msgid "_Report a bug"
 msgstr ""
 
-#: dayplanner:4996 dayplanner:4997
+#: dayplanner:4986 dayplanner:4987
 #, fuzzy
 msgid "Delete the selected event"
 msgstr "_Zmaza» udalos»"
 
-#: dayplanner:5004 dayplanner:5005
+#: dayplanner:4994 dayplanner:4995
 #, fuzzy
 msgid "Edit the selected event"
 msgstr "ImportovaÅ¥ zvolenÃ© Ãºdaje"
 
-#: dayplanner:5015 dayplanner:5016
+#: dayplanner:5005 dayplanner:5006
 #, fuzzy
 msgid "Add a new event"
 msgstr "Prida» udalos»"
 
-#: dayplanner:5152 dayplanner:5154
+#: dayplanner:5142 dayplanner:5144
 #, fuzzy
 msgid ""
 "The home directory of the user %(user) doesn't exist at %(path)! Please "
@@ -760,7 +760,7 @@ msgstr ""
 "Domovský adresár u¾ívateµa %s neexistuje v %s! Ubezpeète sa prosím, ¾e máte "
 "správne nastavenú premennú prostredia %s. Nemô¾em pokraèova»\n"
 
-#: dayplanner:5160 dayplanner:5161
+#: dayplanner:5150 dayplanner:5151
 #, fuzzy
 msgid "The environment variable %(VAR) is not set! Unable to continue\n"
 msgstr "Premenná prostredia %s nie je nastavená! Nemô¾em pokraèova»\n"
