@@ -63,7 +63,7 @@ sub add_object
 	}
 	my $capabilities = $object->get_manager_capabilities();
 	if(not defined($capabilities)) {
-		_DPIM_carp("add_object(): the object returned undef as reply to get_manager_capabilities() - unable to add.");
+		_DPIM_carp("add_object(): the object returned undef as reply to get_manager_capabilities() - unable to add");
 	}
 	push(@{$this->{objects}},$object);
 	foreach(@{$capabilities}) {
@@ -74,7 +74,7 @@ sub add_object
 		foreach(@Capabilities)
 		{
 			if(not $this->_verify_capab($object,$_,true)) {
-				_DPIM_carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities.");
+				_DPIM_carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities");
 			}
 		}
 		$this->{'PRIMARY'} = $object;
