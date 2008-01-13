@@ -4329,7 +4329,7 @@ sub AboutBox {
 					'Andreas Nilsson (small calendar icon)' . "\n" .
 					'The Tango Project - http://tango.freedesktop.org/'
 				);
-	$AboutDialog->set_copyright('Copyright (C) Eskild Hustvedt 2006, 2007');
+	$AboutDialog->set_copyright('Copyright (C) Eskild Hustvedt 2006, 2007, 2008');
 	$AboutDialog->set_url_hook(\&LaunchWebBrowser);
 	$AboutDialog->set_website('http://www.day-planner.org/');
 	# TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
