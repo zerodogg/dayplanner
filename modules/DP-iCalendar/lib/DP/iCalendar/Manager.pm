@@ -58,12 +58,12 @@ sub add_object
 				$SUPP .= $_.' ';
 			}
 		}
-		DPIM_carp("add_object(): the object does not support this version. It reported version $version of the API. This manager supports: $SUPP");
+		_DPIM_carp("add_object(): the object does not support this version. It reported version $version of the API. This manager supports: $SUPP");
 		return(false);
 	}
 	my $capabilities = $object->get_manager_capabilities();
 	if(not defined($capabilities)) {
-		DPIM_carp("add_object(): the object returned undef as reply to get_manager_capabilities() - unable to add.");
+		_DPIM_carp("add_object(): the object returned undef as reply to get_manager_capabilities() - unable to add.");
 	}
 	push(@{$this->{objects}},$object);
 	foreach(@{$capabilities}) {
@@ -74,7 +74,7 @@ sub add_object
 		foreach(@Capabilities)
 		{
 			if(not $this->_verify_capab($object,$_,true)) {
-				DPIM_carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities.");
+				_DPIM_carp("PRIMARY doesn't support capability '$_'. This is bad. PRIMARY should support all capabilities.");
 			}
 		}
 		$this->{'PRIMARY'} = $object;
@@ -83,7 +83,7 @@ sub add_object
 		$object->set_prodid($this->{ProdId});
 	}
 	if(not $this->{'PRIMARY'}) {
-		DPIM_carp('First object not PRIMARY. This might mean trouble');
+		_DPIM_carp('First object not PRIMARY. This might mean trouble');
 	}
 }
 
@@ -230,7 +230,7 @@ sub write {
 	}
 	if($file) {
 		if(not $this->{'PRIMARY'}) {
-			DPIM_carp('No primary set - unable to '."write($file)");
+			_DPIM_carp('No primary set - unable to '."write($file)");
 			return(undef);
 		}
 		return $this->{'PRIMARY'}->write($file);
@@ -380,7 +380,7 @@ sub _locate_UID
 			return($obj);
 		}
 	}
-	DPIM_carp("DP::iCalendar::Manager: Unable to locate owner of $UID: invalid UID") if not $silent;
+	_DPIM_carp("DP::iCalendar::Manager: Unable to locate owner of $UID: invalid UID") if not $silent;
 	return(undef);
 }
 
@@ -393,7 +393,7 @@ sub _verify_capab
 	if($this->{capab}{$capab}{$object}) {
 		return true;
 	} else {
-		DPIM_carp("DP::iCalendar::Manager: Can't perform requested action: owner (".ref($object).") doesn't support capability $capab") if not $silent;
+		_DPIM_carp("DP::iCalendar::Manager: Can't perform requested action: owner (".ref($object).") doesn't support capability $capab") if not $silent;
 		return false;
 	}
 }
@@ -432,7 +432,7 @@ sub _add_capability
 		$this->{capab}{$capab}{$object} = true;
 		return(true);
 	} else {
-		DPIM_carp('Unknown capability: '.$capab);
+		_DPIM_carp('Unknown capability: '.$capab);
 		return(false);
 	}
 }
