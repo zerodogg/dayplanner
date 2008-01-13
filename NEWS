@@ -5,6 +5,10 @@ Version 0.8.1 (Unreleased)
 ------------------------
 * Client (dayplanner)
 - Fixed a bug that caused some monthly recurring events never to recur in December
+- Fixed a bug that caused the sorting in the upcoming events list to go completely
+	sometimes
+- Added German translation
+- Updated the Italian translation
 
 * Notifier (dayplanner-notifier)
 
