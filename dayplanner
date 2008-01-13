@@ -2605,6 +2605,7 @@ sub PopulateUpcomingEvents {
 	# Today is
 	my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime(time);
 	my $Year = $getyear;
+	my $TheTime = time();
 
 	# Prepare
 	my $TheYday = $getyday;
@@ -2616,6 +2617,7 @@ sub PopulateUpcomingEvents {
 	while($AddDays) {
 		$TheYday++;	# This is a new day
 		$AddDays--;	# One less day to add
+		$TheTime += 86400;
 
 		# Append a zero to ensure proper sorting if the
 		# year day is below 100
@@ -2623,8 +2625,8 @@ sub PopulateUpcomingEvents {
 			$TheYday = "0$TheYday";
 		}
 		
-		$InformationHash{$TheYday} = {};
-		my $h = $InformationHash{$TheYday};
+		$InformationHash{$TheTime} = {};
+		my $h = $InformationHash{$TheTime};
 		
 		my $Mktime = POSIX::mktime(0, 0, 0, $TheYday, 0, $Year);	# Get the POSIX time of this day
 
