@@ -1,7 +1,7 @@
 Day Planner version history
 **************************
 
-Version 0.8.1 (Unreleased)
+Version 0.8.1 (Released on the 16th of January 2008)
 ------------------------
 * Client (dayplanner)
 - Fixed a bug that caused some monthly recurring events never to recur in December
