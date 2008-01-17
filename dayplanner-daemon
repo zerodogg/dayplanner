@@ -380,8 +380,23 @@ sub LoadData
 	}
 	else
 	{
-		$iCalendar = new DP::iCalendar($DataDir.'/'.$CalendarFile);
-		DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
+		$iCalendar = DP::iCalendar->new($DataDir.'/'.$CalendarFile);
+		if ($iCalendar)
+		{
+			DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
+		}
+		else
+		{
+			$iCalendar = DP::iCalendar->newfile($DataDir.'/'.$CalendarFile);
+			if ($iCalendar)
+			{
+				DaemonLog(3, 'Data file did not exist. Called ->newfile('.$DataDir.'/'.$CalendarFile.');');
+			}
+			else
+			{
+				die("FATAL: Unable to create a ->new() or a ->newfile() DP::iCalendar object!\n");
+			}
+		}
 	}
 }
 
