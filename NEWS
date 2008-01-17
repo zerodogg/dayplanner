@@ -9,6 +9,7 @@ Version 0.9 (Unreleased)
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
+- More robust handling of data loading
 
 Version 0.8.1 "Dark Dictionary" (Released on the 16th of January 2008)
 ------------------------
