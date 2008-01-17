@@ -116,17 +116,31 @@ sub DP_InitI18n {
 # Usage: DaemonInit();
 sub DaemonInit {
 	$DaemonInitialized = 1;
-	if (-e "$SaveToDir/$DaemonSocketName") {
-		$DaemonSocket = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
-		# TODO: Implement a IPC->blocking_client_send() and use that to check daemon VERSION
-	}
+	DaemonConnect();
 	if (not $DaemonSocket) {
 		if(not StartDaemon()) {
 			return(undef);
 		}
-		return(DaemonInit());
+		if(not DaemonConnect())
+		{
+			DPIntWarn("DaemonInit(): Failed, even after attempted daemon startup. Will attempt to restart DaemonInit()");
+			return(DaemonInit());
+		}
 	}
 	return(true);
+}
+
+# Purpose: Connect to the daemon, returning the IPC object
+# Usage: DaemonConnect();
+sub DaemonConnect
+{
+	if (-e "$SaveToDir/$DaemonSocketName") {
+		my $daemonConnErr;
+		($DaemonSocket,$daemonConnErr) = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
+		return($DaemonSocket);
+		# TODO: Implement a IPC->blocking_client_send() and use that to check daemon VERSION
+	}
+	return(false);
 }
 
 # Purpose: Start the Day Planner daemon
@@ -137,7 +151,11 @@ sub StartDaemon {
 			# Yes this is a bit weird statement. But remember that commands return 0 on true
 			# and 1-255 on false, so it's the other way around from perl
 			unless(system("$_/$DaemonName", '--force-fork', '--dayplannerdir', $SaveToDir)) {
-				return(1);
+				return(true);
+			}
+			else
+			{
+				DPIntWarn("StartDaemon(): Tried to start '$_/$DaemonName' but it failed, will attempt to locate another daemon");
 			}
 		}
 	}
@@ -843,6 +861,8 @@ sub LoadCalendar {
 	} else {
 		# Create a new calendar
 		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
+		# Save it
+		$MainCalendar->write();
 	}
 	# Relax the file permissions if we're told to
 	if (defined($ENV{DP_NO_STRICT_PERMS}) and $ENV{DP_NO_STRICT_PERMS} eq '1')
