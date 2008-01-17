@@ -4,10 +4,29 @@ Day Planner version history
 Version 0.9 (Unreleased)
 ------------------------
 * Client (dayplanner)
+- Some cleanups in daemon initialization
 
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
+
+Version 0.8.1 "Dark Dictionary" (Released on the 16th of January 2008)
+------------------------
+* Client (dayplanner)
+- Fixed a bug that caused some monthly recurring events never to recur in December
+- Fixed a bug that caused the sorting in the upcoming events list to go completely
+	random sometimes
+- Added German translation
+- Updated the Italian translation
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
+* Makefile
+- Now installs the dayplanner_detection and dayplanner_upgrade files for
+  holidays
+- Fixed the target directory for holiday files
 
 Version 0.8 "2008" (Released on the 1st of January 2008)
 ------------------------
