@@ -5204,11 +5204,30 @@ GetOptions (
 		printf "Perl version %vd\n", $^V;
 		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
 		print 'OS: ', GetDistVer(), "\n";
+		my $Prev;
+		print 'I18n: ';
+		foreach (sort keys(%ENV))
+		{
+			if (/^(LC_|LANG)/)
+			{
+				print " || " if $Prev;
+				$Prev = true;
+				print "$_=$ENV{$_}";
+			}
+		}
+		if ($Prev)
+		{
+			print "\n";
+		}
+		else
+		{
+			print "(none detected)\n";
+		}
+		$Prev = undef;
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
 		print "Available modules:";
-		my $Prev;
 		foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus/) {
 			if(eval("use $Module; 1")) {
 				if($Prev) {
