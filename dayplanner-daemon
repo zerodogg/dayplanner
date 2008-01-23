@@ -901,6 +901,7 @@ GetOptions (
 		PrintHelp('','',' (autdetected if not present)');
 		PrintHelp('','--socketname','Sets the name of the socket in --dayplannerdir to');
 		PrintHelp('','',' listen on. Default: '.$OrigSocketName);
+		PrintHelp('','--replace','Replace the running daemon (if any) with this one');
 		PrintHelp('-k','--kill','Shut down a currently running daemon');
 		PrintHelp('-n','--nofork',"Don't fork, stay in the foreground");
 		PrintHelp('-f','--force-fork','Force forking, overrides --nofork');
