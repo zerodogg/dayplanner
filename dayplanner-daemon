@@ -57,6 +57,8 @@ my %DaemonState = (
 	LastWritten => '',
 );
 
+my %NotifierLaunchLock;
+
 # The path to us
 my $Self = $0;
 # Set the name
@@ -657,11 +659,31 @@ sub EventNotification
 sub StartNotifier
 {
 	my $UID = shift;
+	# The current time, used for launch locking
+	my $time = time();
+	# Check for a launch lock
+	if ($NotifierLaunchLock{$UID})
+	{
+		# Within a 4 minute timeframe we shouldn't re-launch the notifier for the same event.
+		# If that happens, scream in agony and refuse to cooperate.
+		my $lowtime = $NotifierLaunchLock{$UID} - 120;
+		my $hightime = $NotifierLaunchLock{$UID} + 120;
+		if (not $lowtime > $time and not $hightime < $time)
+		{
+			DaemonLog(1,'Attempted to run notifier for '.$UID.' more than once. This is a bug, refusing to launch it.');
+			return true;
+		}
+	}
 	DaemonLog(4,'Starting notifier for UID '.$UID);
+	# Set a launch lock
+	$NotifierLaunchLock{$UID} = time();
+	# Go through the path and locate a notifier
 	foreach(split(/:/, sprintf('%s:%s', $ENV{PATH}, dirname(Cwd::realpath($Self)))))
 	{
+		# If it is executeable try to run it
 		if ( -x $_.'/'.$NotifierName)
 		{
+			# Try to launch it, whine if it doesn't work
 			if(loggingSystem($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
 			{
 				$DaemonState{HasNotified} .= ' '.$UID;
@@ -671,6 +693,10 @@ sub StartNotifier
 			{
 				DaemonLog(2,'Tried running notifier at '.$_.'/'.$NotifierName.' but it exited with a nonzero return value. Continuing search');
 			}
+		}
+		else
+		{
+			DaemonLog(5,'Found nonexecuteable notifier at '.$_.'/'.$NotifierName.'.');
 		}
 	}
 }
@@ -900,6 +926,10 @@ GetOptions (
 		}
 		print "\n";
 		exit(0);
+	},
+	'replace' => sub {
+		InitDataPaths();
+		ShutdownRunning();
 	},
 	'dayplannerdir|d=s' => sub {
 		if(not -e $_[1]) {
