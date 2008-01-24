@@ -5,6 +5,10 @@ Version 0.9 (Unreleased)
 ------------------------
 * Client (dayplanner)
 - Some cleanups in daemon initialization
+- Fixed some issues with the synchronization system and certain locale
+  configurations
+- Somewhat improved distro detection, better fallbacks for unknown distros
+- Fixed a bug that caused DP to crash on some distributions using Gtk+ 2.14
 
 * Notifier (dayplanner-notifier)
 
