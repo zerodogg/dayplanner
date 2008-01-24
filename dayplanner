@@ -934,7 +934,8 @@ sub GetDistVer {
 		}
 	}
 	# GNU/Linux and BSD
-	foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu debian gentoo suse distro dist slackware freebsd openbsd netbsd dragonflybsd NULL/) {
+	foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu debian gentoo suse distro dist slackware freebsd openbsd netbsd dragonflybsd NULL/)
+	{
 		if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
 			my ($DistVer, $File, $VERSION_FILE);
 			if(-e "/etc/$_-release") {
@@ -985,13 +986,36 @@ sub GetDistVer {
 			return("$DarwinName $DarwinOSVer ($machine)");
 		}
 	}
+	# Detect additional release/version files
+	my $RelFile;
+	foreach(glob('/etc/*'))
+	{
+		next if not /(release|version)/i;
+		next if m/\/(subversion|lsb-release)$/;
+		if ($RelFile)
+		{
+			$RelFile .= ', '.$_;
+		}
+		else
+		{
+			$RelFile = ' ('.$_;
+		}
+	}
+	if ($RelFile)
+	{
+		$RelFile .= ')';
+	}
+	else
+	{
+		$RelFile = '';
+	}
 	# Some distros set a LSB DISTRIB_ID but no version, try DISTRIB_ID
 	# along with the kernel info.
 	if ($LSB{DISTRIB_ID})
 	{
-		return($LSB{DISTRIB_ID}."/Unknown ($sysname $release $version $machine)");
+		return($LSB{DISTRIB_ID}."/Unknown$RelFile ($sysname $release $version $machine)");
 	}
-	return("Unknown ($sysname $release $version $machine)");
+	return("Unknown$RelFile ($sysname $release $version $machine)");
 }
 
 # Purpose: Launch a web browser with the supplied URL
