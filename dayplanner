@@ -507,14 +507,12 @@ sub DPS_Connect {
 	my $Password = $DPServices{pass};
 	my $Error;
 	# Connect
-	setlocale(LC_ALL, 'C');		# Need errors that are not localized for IO_Socket_INET_Errors();
 	$DPServices{socket} = IO::Socket::SSL->new(
 					PeerAddr => $Host,
 					PeerPort => $Port,
 					Timeout => 10,
-			) or do { $Error = $@; };
+			) or do { $Error = IO::Socket::SSL::errstr(); };
 			
-	setlocale(LC_ALL, '');		# Reset the locale
 	# Process errors if any occurred
 	if($Error) {
 		# If we have already displayed an error to the user this session, don't do it again
