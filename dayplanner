@@ -217,6 +217,7 @@ sub IO_Socket_INET_Errors {
 	} elsif ($Error =~ /timeout/i) {
 		return('TIMEOUT');
 	} else {
+		DPIntWarn("Unknown IO::Socket::SSL error: $Error");
 		return($Error);
 	}
 }
