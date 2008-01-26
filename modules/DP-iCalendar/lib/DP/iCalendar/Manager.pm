@@ -21,6 +21,10 @@ my %API_VERSIONS = (
 	'01_capable' => true,
 	'02_capable' => true,
 );
+# Defines functions to be called to enable 'compat' mode
+my %API_COMPAT = (
+	'01_capable' => \&_01_capable_compat,
+);
 my $CurrentAPIVer = '02_capable';
 my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD','PRODID');
 
@@ -68,6 +72,11 @@ sub add_object
 	push(@{$this->{objects}},$object);
 	foreach(@{$capabilities}) {
 		$this->_add_capability($object,$_);
+	}
+	# Do compat stuff
+	if(defined($API_COMPAT{$version}))
+	{
+		$API_COMPAT{$version}->($this,$object);
 	}
 	if($primary) {
 		# This here checks that the primary has all capabilities, but won't refuse if it doesn't.
@@ -418,7 +427,7 @@ sub _01_capable_compat
 	my $this = shift;
 	my $object = shift;
 	# 01_capable didn't have PRODID, so add the object with capability PRODID
-	$this->add_capability($object,'PRODID');
+	$this->_add_capability($object,'PRODID');
 	return(true);
 }
 
