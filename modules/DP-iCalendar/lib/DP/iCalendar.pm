@@ -17,6 +17,7 @@ use Exporter qw(import);
 use POSIX;
 use Data::Dumper;
 use Sys::Hostname;
+use DP::iCalendar::StructHandler;
 use constant { true => 1, false => 0 };
 
 # Exported functions
@@ -763,6 +764,7 @@ sub _NewObj {
 	my $this = {};
 	bless($this);
 	$this->{RawCalendar} = {};
+	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->{OrderedCalendar} = {};
 	$this->{AlreadyCalculated} = {};
 	$this->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
