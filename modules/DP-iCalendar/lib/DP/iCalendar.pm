@@ -262,6 +262,7 @@ sub set_exceptions {
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
 sub write {
+	print "FIXME: write(): Should leave the writing to the StructHandler, only do sanity checks\n";
 	my ($this, $file) = @_;
 	if(not defined($file)) {
 		if($this->{FILETYPE} eq 'ref') {
