@@ -408,6 +408,8 @@ sub addfile {
 			return(undef);
 		}
 	}
+	print "addfile: STUB\n";
+	return;
 	return($this->_LoadFile($File));
 }
 
@@ -815,6 +817,7 @@ sub _ErrOut {
 # Purpose: Loads iCalendar data
 # Usage: $this->_LoadFile(FILE OR ARRAYREF);
 sub _LoadFile {
+	print "_LoadFile: deprecated\n";
 	# TODO: Create a iCalendar error logfile with dumps of data and errors.
 	my $this = shift;
 	my $Data = _ParseData($_[0]);
@@ -952,6 +955,7 @@ sub _iCal_GenDateTimeFromLocaltime
 # 	undef on failure.
 # Usage: my $iCalendar = _ParseData(FILE);
 sub _ParseData {
+	print "_ParseData: deprecated\n";
 	my $File = shift;
 	my %DataHash = (
 		iCalendarStructures => [],
