@@ -427,9 +427,8 @@ sub addfile {
 			return(undef);
 		}
 	}
-	print "addfile: STUB\n";
+	print "DP::iCalendar->addfile(): Currently unsupported.\n";
 	return;
-	return($this->_LoadFile($File));
 }
 
 # Purpose: Remove all loaded data
