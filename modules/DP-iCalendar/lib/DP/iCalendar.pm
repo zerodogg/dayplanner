@@ -820,6 +820,8 @@ sub _LoadICSFile
 {
 	my $this = shift;
 	my $file = shift;
+	# Make it never die() on assertion failures, we don't use it yet so that's harmless
+	$this->{dataSource}->{assertNeverFatal} = true;
 	$this->{dataSource}->loadFile($file);
 	$this->_LoadFile($file);
 }
