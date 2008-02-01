@@ -36,6 +36,7 @@ sub new
 
 	# WARNING: NEVER SET THIS TO true UNLESS YOU KNOW FOR CERTAIN YOUR PROGRAM WON'T GENERATE INVALID ARRAYS/HASHES
 	$this->{ignoreAssertions} = false;
+	$this->{assertNeverFatal} = false;
 	return $this;
 }
 
@@ -332,6 +333,11 @@ sub _assertMustBeRef
 		}
 		my ($caller_package, $caller_filename, $caller_line) = caller;
 		$errMsg .= " on line $caller_line in $caller_filename";
+		if($fatal && $this->{assertNeverFatal})
+		{
+			$errMsg .= " - SHOULD HAVE BEEN FATAL";
+			$fatal = false;
+		}
 		if ($fatal)
 		{
 			$errMsg = "FATAL: ".$errMsg;
