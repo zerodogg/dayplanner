@@ -839,8 +839,8 @@ sub _LoadICSFile
 {
 	my $this = shift;
 	my $file = shift;
-	# Make it never die() on assertion failures
-	$this->{dataSource}->{assertNeverFatal} = true;
+	# We really shouldn't do this, if it dies we're at least safe.
+	#$this->{dataSource}->{assertNeverFatal} = true;
 	$this->{dataSource}->loadFile($file);
 	# Convert dataSource data to RawCalendar
 	foreach my $VEVENT (@{$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}})
