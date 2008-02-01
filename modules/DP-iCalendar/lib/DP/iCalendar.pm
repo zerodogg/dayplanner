@@ -958,10 +958,25 @@ sub _GetUIDEntry
 {
 	my $this = shift;
 	my $UID = shift;
+	if (not $this->exists($UID))
+	{
+		carp "ERROR: Supplied invalid UID: $UID. Something went wrong somewhere. Trouble ahead!";
+	}
+	elsif (ref($UID))
+	{
+		carp "ERROR: Supplied UID is a ref, that's weird! ($UID). Trouble ahead!";
+	}
 	my %Hash;
 	foreach my $val (keys(%{$this->{RawCalendar}{$UID}}))
 	{
-		$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+		if (not $val =~ /^EXDATE/)
+		{
+			$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+		}
+		else
+		{
+			$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
+		}
 	}
 	return(\%Hash);
 }
@@ -1063,7 +1078,6 @@ sub _RRULE_Parser {
 # Purpose: Parse an RRULE and add to the hash
 # Usage: _RRULE_Handler(UID,YEAR);
 sub _RRULE_Handler {
-	print "FIXME: _RRULE_Handler: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $UID = shift;
 	my $YEAR = shift;
@@ -1074,11 +1088,12 @@ sub _RRULE_Handler {
 		}
 		return(undef);
 	}
+	my $contents = $this->_GetUIDEntry($UID);
 	# Don't bother doing anything if DTSTART is older than YEAR
-	my ($CalcYear,$CalcMonth,$CalcDay) = iCal_ParseDateTime($this->{RawCalendar}{$UID}{DTSTART});
+	my ($CalcYear,$CalcMonth,$CalcDay) = iCal_ParseDateTime($contents->{DTSTART});
 	return(undef) if $CalcYear > $YEAR;
 
-	my $RRULE = _RRULE_Parser($this->{RawCalendar}{$UID}{RRULE});
+	my $RRULE = _RRULE_Parser($contents->{RRULE});
 	my $AddDates;
 	if	($RRULE->{FREQ} eq 'DAILY') {
 		$AddDates = $this->_RRULE_DAILY($RRULE,$UID,$YEAR);
@@ -1089,7 +1104,7 @@ sub _RRULE_Handler {
 	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
 		$AddDates = $this->_RRULE_YEARLY($RRULE,$UID,$YEAR);
 	} else {
-		_WarnOut("Unknown RRULE type: ".$this->{RawCalendar}{$UID}{RRULE}." for UID $UID. This might be a bug, report it to the developers");
+		_WarnOut("Unknown RRULE type: ".$contents->{RRULE}." for UID $UID. This might be a bug, report it to the developers");
 	}
 	if($AddDates) {
 		$this->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
@@ -1122,7 +1137,6 @@ sub _Get_EXDATES_Parsed {
 # 	and entries not matched by BYDAY
 # Usage: $this->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
 sub _RRULE_AddDates {
-	print "FIXME: _RRULE_AddDates: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $AddDates = shift;
 	my $UID = shift;
@@ -1131,14 +1145,15 @@ sub _RRULE_AddDates {
 	my $Exceptions = $this->_Get_EXDATES_Parsed($UID);
 	my $BYDAY = $this->_Get_BYDAY_Parsed($RRULE,$UID);
 
-	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($this->{RawCalendar}{$UID}{DTSTART});
+	my $contents = $this->_GetUIDEntry($UID);
+	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($contents->{DTSTART});
 	if (not defined($UID_Time) or not length($UID_Time)) {
 		$UID_Time = 'DAY';
 	} elsif($UID_Time eq '00:00') {
 		# NOTE: This is for the deprecated and old X-DP-BIRTHDAY syntax
 		# in some iCalendar files. It should probably be removed soon and replaced by some
 		# upgrade function.
-		if(defined($this->{RawCalendar}{$UID}{'X-DP-BIRTHDAY'})) {
+		if(defined($contents->{'X-DP-BIRTHDAY'})) {
 			$UID_Time = 'DAY';
 		}
 	}
@@ -1166,29 +1181,29 @@ sub _RRULE_AddDates {
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_DAILY {
-	print "FIXME: _RRULE_DAILY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	my $UNTIL;
-	my $StartsAt = $this->{RawCalendar}{$UID}{DTSTART};
+	my $contents = $this->_GetUIDEntry($UID);
+	my $StartsAt = $contents->{DTSTART};
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	
@@ -1250,29 +1265,29 @@ sub _RRULE_DAILY {
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_WEEKLY {
-	print "FIXME: _RRULE_WEEKLY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	my $UNTIL;
-	my $StartsAt = $this->{RawCalendar}{$UID}{DTSTART};
+	my $contents = $this->_GetUIDEntry($UID);
+	my $StartsAt = $contents->{DTSTART};
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	
@@ -1397,29 +1412,29 @@ sub _RRULE_WEEKLY {
 # Purpose: Evalute an MONTHLY RRULE
 # Usage: _RRULE_MONTHLY(RRULE,UID,YEAR);
 sub _RRULE_MONTHLY {
-	print "FIXME: _RRULE_MONTHLY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	my $UNTIL;
-	my $StartsAt = $this->{RawCalendar}{$UID}{DTSTART};
+	my $contents = $this->_GetUIDEntry($UID);
+	my $StartsAt = $contents->{DTSTART};
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	
@@ -1483,29 +1498,29 @@ sub _RRULE_MONTHLY {
 # Purpose: Evaluate an YEARLY RRULE
 # Usage: RRULE_YEARLY(RRULE,UID,YEAR);
 sub _RRULE_YEARLY {
-	print "FIXME: _RRULE_YEARLY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
-	my $Date = $this->{RawCalendar}{$UID}{DTSTART};
-	my $TheRRULE= $this->{RawCalendar}{$UID}{RRULE};
+	my $contents = $this->_GetUIDEntry($UID);
+	my $Date = $contents->{DTSTART};
+	my $TheRRULE= $contents->{RRULE};
 	my $UNTIL;
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|INTERVAL|BYDAY|UNTIL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	# Fetch UNTIL first if it is set
