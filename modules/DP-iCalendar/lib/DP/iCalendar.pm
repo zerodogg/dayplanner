@@ -218,7 +218,15 @@ sub get_exceptions {
 		my $contents = $this->_GetUIDEntry($UID);
 		if(defined($contents->{EXDATE}))
 		{
-			return($contents->{EXDATE});
+			if(not ref($contents->{EXDATE}))
+			{
+				carp('get_exceptions: EXDATE is not a reference, returning empty array');
+				return([]);
+			}
+			else
+			{
+				return($contents->{EXDATE});
+			}
 		} else {
 			return([]);
 		}
@@ -262,10 +270,11 @@ sub set_exceptions {
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
 sub write {
+	my ($this, $file) = @_;
+	#$this->{dataSource}->writeFile($this->{FILE});
 	print "writing disabled!\n";
 	return;
 	print "FIXME: write(): Should leave the writing to the StructHandler, only do sanity checks\n";
-	my ($this, $file) = @_;
 	if(not defined($file)) {
 		if($this->{FILETYPE} eq 'ref') {
 			carp('write called on object created from array ref');
@@ -969,13 +978,22 @@ sub _GetUIDEntry
 	my %Hash;
 	foreach my $val (keys(%{$this->{RawCalendar}{$UID}}))
 	{
-		if (not $val =~ /^EXDATE/)
+		# FIXME: The ref() check makes sure it doesn't crash, but really it shouldn't be needed.
+		if ($val =~ /^EXDATE/)
 		{
-			$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+			if(not ref($this->{Rawcalendar}{$UID}{$val}) or ref($this->{Rawcalendar}{$UID}{$val}) eq 'ARRAY')
+			{
+				carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was: ". ref($this->{Rawcalendar}{$UID});
+				$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+			}
+			else
+			{
+				$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
+			}
 		}
 		else
 		{
-			$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
+				$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
 		}
 	}
 	return(\%Hash);
