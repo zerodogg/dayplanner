@@ -9,6 +9,8 @@ Version 0.9 (Unreleased)
   configurations
 - Somewhat improved distro detection, better fallbacks for unknown distros
 - Fixed a bug that caused DP to crash on some distributions using Gtk+ 2.14
+- Fixed a bug that caused LAST-MODIFIED and CREATED entries to be wrong
+	(zero-indexed month instead of one-indexed)
 
 * Notifier (dayplanner-notifier)
 
