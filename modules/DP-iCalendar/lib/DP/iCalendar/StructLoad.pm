@@ -15,7 +15,6 @@
 # A line beginning with a space (or any whitespace char) denotes a continuation of the previous KEY:VALUE pair
 
 # TODO: Add writing
-# TODO: Make it properly object-oriented
 # TODO: Replace iCalendar.pm's current loading routine with this
 
 use strict;
@@ -26,6 +25,8 @@ use constant { true => 1, false => 0 };
 our $VERSION;
 $VERSION = 0.1;
 
+# Purpose: Initialize a new object
+# Usage: object = DP::iCalendar::StructLoad->new();
 sub new
 {
 	my $class = shift;
@@ -36,6 +37,9 @@ sub new
 	$this->{ignoreAssertions} = false;
 	return $this;
 }
+
+# Purpose: Load a new file
+# Usage: $object->loadFile(path_to_file);
 sub loadFile
 {
 	my $this = shift;
@@ -108,10 +112,21 @@ sub loadFile
 		}
 	}
 }
+
+# Purpose: Write the file
+# Usage: $object->writeFile();
+sub writeFile
+{
+	my $this = shift;
+}
+
+# Purpose: Output a parser warning
+# Usage: _parseWarn(message);
 sub _parseWarn
 {
 	warn($_[0]);
 }
+
 # Purpose: Assert if a variable is what we want it to be and display useful errors if it isn't
 # Usage: $this->_assertMustBeRef(refName,ref,varname,fatal);
 # 	refName = the reference type expected, ie. HASH or ARRAY
@@ -154,6 +169,8 @@ sub _assertMustBeRef
 		{
 			$errMsg = "\$$varname turned out to NOT be a reference of type $refName, was a: ".ref($ref);
 		}
+		my ($caller_package, $caller_filename, $caller_line) = caller;
+		$errMsg .= " on line $caller_line in $caller_filename";
 		if ($fatal)
 		{
 			$errMsg = "FATAL: ".$errMsg;
@@ -166,6 +183,3 @@ sub _assertMustBeRef
 		}
 	}
 }
-#use Data::Dumper;
-#$Data::Dumper::Sortkeys=1;
-load($ARGV[0]);
