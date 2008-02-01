@@ -262,6 +262,8 @@ sub set_exceptions {
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
 sub write {
+	print "writing disabled!\n";
+	return;
 	print "FIXME: write(): Should leave the writing to the StructHandler, only do sanity checks\n";
 	my ($this, $file) = @_;
 	if(not defined($file)) {
@@ -823,137 +825,21 @@ sub _LoadICSFile
 {
 	my $this = shift;
 	my $file = shift;
-	# Make it never die() on assertion failures, we don't use it yet so that's harmless
+	# Make it never die() on assertion failures
 	$this->{dataSource}->{assertNeverFatal} = true;
 	$this->{dataSource}->loadFile($file);
-	$this->_LoadFile($file);
+	# Convert dataSource data to RawCalendar
+	foreach my $VEVENT (@{$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}})
+	{
+		$this->{RawCalendar}{$VEVENT->{UID}} = $VEVENT;
+	}
 }
 
 # Purpose: Loads iCalendar data
 # Usage: $this->_LoadFile(FILE OR ARRAYREF);
 sub _LoadFile {
-	print "_LoadFile: deprecated\n";
-	# TODO: Create a iCalendar error logfile with dumps of data and errors.
-	my $this = shift;
-	my $Data = _ParseData($_[0]);
-	return(undef) unless(defined($Data));
-	$this->_ClearCalculated();
-	foreach(0..scalar(@{$Data})) {
-		my $Current = $Data->[$_];
-		my ($Summary, $Fulltext, $UID);
-		# First make sure we've got everything we need. Skip entries
-		# missing some things.
-		next unless(defined($Current->{'X-PARSER_ENTRYTYPE'}));
-		next unless($Current->{'X-PARSER_ENTRYTYPE'} eq 'VEVENT');
-		unless(defined($Current->{'DTSTART'})) {
-			# Detect an alternate dstart
-			foreach(keys(%{$Current})) {
-				if(/^DTSTART/) {
-					$Current->{'DTSTART'} = $Current->{$_};
-					last;
-				}
-			}
-			unless(defined($Current->{'DTSTART'})) {
-				_ErrOut('DTSTART missing from iCalendar file. Dumping data:');
-				print Dumper(\$Current);
-				next
-			}
-		}
-		# FIXME: Don't blindly assume $Time is set.
-		# Assign an UID if it is missing
-		unless($Current->{UID}) {
-			my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
-			$Year =~ s/^0*//;
-			$Month =~ s/^0*//;
-			$Day =~ s/^0*//;
-			$UID = $this->_UID($Year.$Month.$Day);
-		} else {
-			$UID = $Current->{UID};
-		}
-		delete($Current->{UID});
-		if(defined($this->{RawCalendar}{$UID})) {
-			# If SMART_MERGE is enabled run a set of tests
-			if($this->{FEATURE}{SMART_MERGE}) {
-				my $Reassign = 0;
-				# Verify that DTSTART and DTEND are set and identical.
-				# If not then assign a new UID.
-				foreach my $check(qw(DTSTART DTEND)) {
-					if($this->{RawCalendar}{$UID}{$check} or $Current->{$check}) {
-						if($this->{RawCalendar}{$UID}{$check} and $Current->{$check}) {
-							if(not $this->{RawCalendar}{$UID}{$check} eq $Current->{$check}) {
-								$Reassign = 1;
-								last;
-							}
-						} else {
-							$Reassign = 1;
-							last;
-						}
-					}
-				}
-				$UID = $this->_UID($Current->{DTSTART}) if($Reassign);
-			} else {
-				# Just overwrite it with this one
-				$this->{RawCalendar}{$UID} = {};
-			}
-		}
-		# Unsafe various values if needed
-		foreach(qw(X-DP-BIRTHDAYNAME SUMMARY DESCRIPTION)) {
-			if(defined($Current->{$_})) {
-				$Current->{$_} = _UnSafe($Current->{$_});
-			}
-		}
-		foreach(keys(%{$Current})) {
-				if(not /^X-PARSER/) {
-					$this->{RawCalendar}{$UID}{$_} = _UnSafe($Current->{$_});
-			}
-		}
-	}
-	$Data = undef;
-	return(true);
-}
-
-# Purpose: Parses a single iCalendar line into the data hash supplied
-# Usage: _ParseiCalLine(DATA_HASHREF);
-# 
-# 	DATA_HASHREF is a ref of the hash declared at the beginning of _ParseData();
-sub _ParseiCalLine {
-	print "_ParseiCalLine: deprecated\n";
-	my $DataHash = shift;
-	chomp($DataHash->{Line});
-	if ($DataHash->{Line} =~ s/^\s//) {
-		if($DataHash->{ArrayFields}->{$DataHash->{LastName}}) {
-			my $LastArrayField = scalar(@{$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}}});
-			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}}->[$LastArrayField] .= _UnSafe($DataHash->{Line});
-		} else {
-			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$DataHash->{LastName}} .= _UnSafe($DataHash->{Line});
-		}
-	} elsif($DataHash->{Line} =~ /^END/) {
-		return;
-	} else {
-		my($Name,$Value) = split(/:/,$DataHash->{Line}, 2);
-		if($Name =~ /^BEGIN/) {
-			if($Value eq 'VCALENDAR') {
-				$DataHash->{FileBegun} = 1;
-				$DataHash->{iCalendarStructures} = [];
-				return();
-			}
-			$DataHash->{CurrentStructure}++;
-			$Name = 'X-PARSER_ENTRYTYPE';
-		}
-		$DataHash->{LastName} = $Name;
-		if($DataHash->{ArrayFields}->{$Name}) {
-			if(not $DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}) {
-				$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name} = [];
-			}
-			push(@{$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}}, _UnSafe($Value));
-		} else {
-			if($DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name}) {
-				_WarnOut("Multiple entries of $Name found, but field isn't classified as an array field. Expect trouble");
-			}
-			$DataHash->{iCalendarStructures}[$DataHash->{CurrentStructure}]{$Name} = _UnSafe($Value);
-		}
-	}
-	return();
+	print "_LoadFile: gone, caller should be fixed.\n";
+	return false;
 }
 
 # Purpose: Convenience wrapper around iCal_GenDateTime() that takes a localtime() or gmtime() arg
@@ -965,66 +851,6 @@ sub _iCal_GenDateTimeFromLocaltime
 	$themonth++;
 	$theyear += 1900;
 	return(iCal_GenDateTime($theyear, $themonth, $themday, _PrependZero($thehour) . ':' . _PrependZero($themin)));
-}
-
-# Purpose: Loads an iCalendar file and returns a simple data structure. Returns
-# 	undef on failure.
-# Usage: my $iCalendar = _ParseData(FILE);
-sub _ParseData {
-	print "_ParseData: deprecated\n";
-	my $File = shift;
-	my %DataHash = (
-		iCalendarStructures => [],
-		LastStructure => '',
-		LastName => '',
-		CurrentStructure => 0,
-		FileBegun => '',
-		ArrayFields => {
-			EXDATE => 1,
-		},
-		Line => '',
-	);
-	my @FileContents;
-	my $Type;
-	# If $File is a ref...
-	if(ref($File)) {
-		$Type = 'ref';
-		if(ref($File) eq 'ARRAY') {
-			# All is well.
-			@FileContents = @{$File};
-		} else {
-			# Nothing is well, bug!
-			_ErrOut('iCal_ParseData: supplied reference is not an ARRAYREF!');
-			# Return an empty anonymous array
-			return([]);
-		}
-		foreach (@FileContents) {
-			$DataHash{Line} = $_;
-			_ParseiCalLine(\%DataHash);
-		}
-	}
-	# It isn't
-	else {
-		$Type = "file ($File)";
-		open(my $ICALENDAR, '<', $File) or do {
-			_ErrOut("iCal_ParseData: Unable to open $File for reading: $!");
-			# Return an empty anonymous array
-			return([]);
-		};
-		# Seperator is \r\n
-		$/ = "\r\n";
-		while($DataHash{Line} = <$ICALENDAR>) {
-			_ParseiCalLine(\%DataHash);
-		}
-		close($ICALENDAR);
-		# Reset seperator
-		$/ = "\n";
-	}
-
-	unless($DataHash{FileBegun}) {
-		_ErrOut("FATAL: The supplied iCalendar data never had BEGIN:VCALENDAR ($Type). Failed to load the data.");
-	}
-	return($DataHash{iCalendarStructures});
 }
 
 # Purpose: Escape certain characters that are special in iCalendar
@@ -1094,8 +920,8 @@ sub _GenerateCalendar {
 	my $EventYear = shift;
 	return if defined($this->{AlreadyCalculated}{$EventYear});
 	$this->{OrderedCalendar}{$EventYear} = {};
-	foreach my $UID (keys(%{$this->{RawCalendar}})) {
-		my $Current = $this->{RawCalendar}{$UID};
+	foreach my $UID ($this->_GetAllUIDS()) {
+		my $Current = $this->_GetUIDEntry($UID);
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
@@ -1132,7 +958,20 @@ sub _GetUIDEntry
 {
 	my $this = shift;
 	my $UID = shift;
-	return($this->{RawCalendar}{$UID});
+	my %Hash;
+	foreach my $val (keys(%{$this->{RawCalendar}{$UID}}))
+	{
+		$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+	}
+	return(\%Hash);
+}
+
+# Purpose: Get all UIDs
+# Usage: @UIDS = $this->_GetAllUIDS();
+sub _GetAllUIDS
+{
+	my $this = shift;
+	return keys(%{$this->{RawCalendar}});
 }
 
 # --- Internal RRULE calculation functions ---
