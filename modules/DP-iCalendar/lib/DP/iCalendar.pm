@@ -289,6 +289,7 @@ sub write {
 # Purpose: Get raw iCalendar data
 # Usage: my $Data = $object->get_rawdata();
 sub get_rawdata {
+	print "FIXME: get_rawdata(): should be calling the StructHandler method, not do it itself\n";
 	my ($this) = @_;
 	my $iCalendar;
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
@@ -785,6 +786,7 @@ sub _NewObj {
 # Purpose: Make changes to the raw calendar (append or change)
 # Usage: $this->_ChangeEntry(UID,%Hash);
 sub _ChangeEntry {
+	print "FIXME: _ChangeEntry: Still using RawCalendar\n";
 	my($this,$UID,%Hash) = @_;
 	foreach my $key (keys(%Hash)) {
 		# If the key isn't defined that means we should remove the key if it
@@ -914,6 +916,7 @@ sub _LoadFile {
 # 
 # 	DATA_HASHREF is a ref of the hash declared at the beginning of _ParseData();
 sub _ParseiCalLine {
+	print "_ParseiCalLine: deprecated\n";
 	my $DataHash = shift;
 	chomp($DataHash->{Line});
 	if ($DataHash->{Line} =~ s/^\s//) {
@@ -1085,6 +1088,7 @@ sub _PrependZero {
 #  Note: This will generate the calendar including recurring stuff for YEAR.
 #  It will create the normal calendar for all events.
 sub _GenerateCalendar {
+	print "FIXME: _GenerateCalendar: still using RawCalendar\n";
 	my $this = shift;
 	my $EventYear = shift;
 	return if defined($this->{AlreadyCalculated}{$EventYear});
@@ -1219,6 +1223,7 @@ sub _RRULE_Parser {
 # Purpose: Parse an RRULE and add to the hash
 # Usage: _RRULE_Handler(UID,YEAR);
 sub _RRULE_Handler {
+	print "FIXME: _RRULE_Handler: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $UID = shift;
 	my $YEAR = shift;
@@ -1277,6 +1282,7 @@ sub _Get_EXDATES_Parsed {
 # 	and entries not matched by BYDAY
 # Usage: $this->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
 sub _RRULE_AddDates {
+	print "FIXME: _RRULE_AddDates: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $AddDates = shift;
 	my $UID = shift;
@@ -1320,6 +1326,7 @@ sub _RRULE_AddDates {
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_DAILY {
+	print "FIXME: _RRULE_DAILY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1403,6 +1410,7 @@ sub _RRULE_DAILY {
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_WEEKLY {
+	print "FIXME: _RRULE_WEEKLY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1549,6 +1557,7 @@ sub _RRULE_WEEKLY {
 # Purpose: Evalute an MONTHLY RRULE
 # Usage: _RRULE_MONTHLY(RRULE,UID,YEAR);
 sub _RRULE_MONTHLY {
+	print "FIXME: _RRULE_MONTHLY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1634,6 +1643,7 @@ sub _RRULE_MONTHLY {
 # Purpose: Evaluate an YEARLY RRULE
 # Usage: RRULE_YEARLY(RRULE,UID,YEAR);
 sub _RRULE_YEARLY {
+	print "FIXME: _RRULE_YEARLY: Uses RawCalendar, shouldn't\n";
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
