@@ -394,6 +394,11 @@ sub change {
 sub exists {
 	print "FIXME: exists() still using RawCalendar\n";
 	my($this,$UID) = @_;
+	if(not defined($UID) or not length($UID) or ref($UID))
+	{
+		carp "exists: $UID: invalid UID, returning false!";
+		return false;
+	}
 	if(defined($this->{RawCalendar}{$UID})) {
 		return(true);
 	}
@@ -840,7 +845,7 @@ sub _LoadICSFile
 	# Convert dataSource data to RawCalendar
 	foreach my $VEVENT (@{$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}})
 	{
-		$this->{RawCalendar}{$VEVENT->{UID}} = $VEVENT;
+		$this->{RawCalendar}{$VEVENT->{UID}[0]} = $VEVENT;
 	}
 }
 
@@ -975,25 +980,48 @@ sub _GetUIDEntry
 	{
 		carp "ERROR: Supplied UID is a ref, that's weird! ($UID). Trouble ahead!";
 	}
+	elsif(not defined($UID))
+	{
+		carp "ERROR: _GetUIDEntry: GOT UNDEF!!!\n";
+	}
+	elsif(not length($UID))
+	{
+		carp "ERROR: _GetUIDEntry: Empty length\n";
+	}
 	my %Hash;
 	foreach my $val (keys(%{$this->{RawCalendar}{$UID}}))
 	{
 		# FIXME: The ref() check makes sure it doesn't crash, but really it shouldn't be needed.
 		if ($val =~ /^EXDATE/)
 		{
-			if(not ref($this->{Rawcalendar}{$UID}{$val}) or ref($this->{Rawcalendar}{$UID}{$val}) eq 'ARRAY')
+			if(not ref($this->{RawCalendar}{$UID}{$val}) or ref($this->{RawCalendar}{$UID}{$val}) eq 'ARRAY')
 			{
-				carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was: ". ref($this->{Rawcalendar}{$UID});
-				$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+				carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was: ". ref($this->{RawCalendar}{$UID});
 			}
-			else
-			{
-				$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
-			}
+			$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
 		}
 		else
 		{
+			if(not ref($this->{RawCalendar}{$UID}{$val}) or not (ref($this->{RawCalendar}{$UID}{$val}) eq 'ARRAY'))
+			{
+				if(ref($this->{RawCalendar}{$UID}{$val}))
+				{
+					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was: ". ref($this->{RawCalendar}{$UID}{$val});
+				}
+				elsif(length(($this->{RawCalendar}{$UID}{$val})))
+				{
+					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was variable with the value: ".$this->{RawCalendar}{$UID}{$val};
+				}
+				else
+				{
+					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was an empty variable\n";
+				}
+				$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
+			}
+			else
+			{
 				$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
+			}
 		}
 	}
 	return(\%Hash);
