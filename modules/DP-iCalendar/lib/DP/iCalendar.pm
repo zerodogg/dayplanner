@@ -32,14 +32,14 @@ $VERSION = 0.3.1;
 # Usage: my $object = DP::iCalendar->new(/FILE/);
 sub new {
 	my $File = $_[1];
-	my $self;
+	my $this;
 	if(ref($File)) {	# If we got a reference
 		if(ref($File) eq 'ARRAY') {
 			# Do stuff
 		} else {
 			carp('Supplied a reference, but the reference is not a ARRAYREF.');
 		}
-		$self = _NewObj();
+		$this = _NewObj();
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
 		unless(defined($File)) {
@@ -50,10 +50,10 @@ sub new {
 			carp("\"$File\": does not exist");
 			return(undef);
 		}
-		$self = _NewObj($File);
+		$this = _NewObj($File);
 	}
-	$self->_LoadFile($File);
-	return($self);
+	$this->_LoadFile($File);
+	return($this);
 }
 
 # Purpose: Create a new object using file
@@ -74,11 +74,11 @@ sub newfile {
 # Purpose: Get information for the supplied month (list of days there are events)
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
 sub get_monthinfo {
-	my($self, $Year, $Month) = @_;	# TODO: verify that they are set
-	$self->_GenerateCalendar($Year);
+	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
+	$this->_GenerateCalendar($Year);
 	my @DAYS;
-	if(defined($self->{OrderedCalendar}{$Year}{$Month})) {
-		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}})) {
+	if(defined($this->{OrderedCalendar}{$Year}{$Month})) {
+		foreach(keys(%{$this->{OrderedCalendar}{$Year}{$Month}})) {
 				push(@DAYS, $_);
 		}
 	}
@@ -88,13 +88,13 @@ sub get_monthinfo {
 # Purpose: Get information for the supplied date (list of times in the day there are events)
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
 sub get_dateinfo {
-	my($self, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
+	my($this, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
 	
-	$self->_GenerateCalendar($Year);
+	$this->_GenerateCalendar($Year);
 	
 	my @TIME;
-	if(defined($self->{OrderedCalendar}{$Year}{$Month}) and defined($self->{OrderedCalendar}{$Year}{$Month}{$Day})) {
-		foreach(keys(%{$self->{OrderedCalendar}{$Year}{$Month}{$Day}})) {
+	if(defined($this->{OrderedCalendar}{$Year}{$Month}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day})) {
+		foreach(keys(%{$this->{OrderedCalendar}{$Year}{$Month}{$Day}})) {
 				push(@TIME, $_);
 		}
 	}
@@ -104,11 +104,11 @@ sub get_dateinfo {
 # Purpose: Get the list of UIDs for the supplied time
 # Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
 sub get_timeinfo {
-	my($self, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
-	$self->_GenerateCalendar($Year);
+	my($this, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
+	$this->_GenerateCalendar($Year);
 	my @UIDs;
-	if(defined($self->{OrderedCalendar}{$Year}{$Month}) and defined($self->{OrderedCalendar}{$Year}{$Month}{$Day}) and defined($self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time})) {
-		foreach(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}) {
+	if(defined($this->{OrderedCalendar}{$Year}{$Month}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time})) {
+		foreach(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}) {
 				push(@UIDs, $_);
 		}
 	}
@@ -118,16 +118,16 @@ sub get_timeinfo {
 # Purpose: Get a list of years which have events (those with *only* recurring not counted)
 # Usage: my $ArrayRef = $object->get_years();
 sub get_years {
-	my $self = shift;
-	my @Years = sort keys(%{$self->{OrderedCalendar}});
+	my $this = shift;
+	my @Years = sort keys(%{$this->{OrderedCalendar}});
 	# Yes this will call _GenerateCalendar when it is not needed (that is,
 	# when there are NO events) - but still, that will be very rare.
 	if(not @Years) {
 		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 		$curryear += 1900;
 		# Generate the calendar for the current year so that we return something useable.
-		$self->_GenerateCalendar($curryear);
-		@Years = sort keys(%{$self->{OrderedCalendar}});
+		$this->_GenerateCalendar($curryear);
+		@Years = sort keys(%{$this->{OrderedCalendar}});
 	}
 	return(\@Years);
 }
@@ -135,19 +135,19 @@ sub get_years {
 # Purpose: Get a list of months which have events (those with *only* recurring not counted)
 # Usage: my $ArrayRef = $object->get_months();
 sub get_months {
-	my ($self, $Year) = @_;
-	$self->_GenerateCalendar($Year);
-	my @Months = sort keys(%{$self->{OrderedCalendar}{$Year}});
+	my ($this, $Year) = @_;
+	$this->_GenerateCalendar($Year);
+	my @Months = sort keys(%{$this->{OrderedCalendar}{$Year}});
 	return(\@Months);
 }
 
 # Purpose: Get information for a supplied UID
 # Usage: my $Info = $object->get_info(UID);
 sub get_info {
-	my($self,$UID) = @_;
-	if ($self->exists($UID))
+	my($this,$UID) = @_;
+	if ($this->exists($UID))
 	{
-		return $self->_GetUIDEntry($UID);
+		return $this->_GetUIDEntry($UID);
 	}
 	carp('get_info got invalid UID');
 	return(undef);
@@ -156,10 +156,10 @@ sub get_info {
 # Purpose: Get a parsed RRULE for the supplied UID
 # Usage: my $Info = $object->get_RRULE(UID);
 sub get_RRULE {
-	my ($self, $UID) = @_;
-	if ($self->exists($UID))
+	my ($this, $UID) = @_;
+	if ($this->exists($UID))
 	{
-		my $contents = $self->_GetUIDEntry($UID);
+		my $contents = $this->_GetUIDEntry($UID);
 		if(defined($contents->{RRULE}))
 		{
 			return(_RRULE_Parser($contents->{RRULE}));
@@ -177,7 +177,7 @@ sub get_RRULE {
 #   Time is optional.
 sub UID_exists_at
 {
-	my $self = shift;
+	my $this = shift;
 	my $CheckUID = shift;
 	my $year = shift;
 	my $month = shift;
@@ -192,11 +192,11 @@ sub UID_exists_at
 	}
 	else
 	{
-		$TimeRef = $self->get_dateinfo($year,$month,$day);
+		$TimeRef = $this->get_dateinfo($year,$month,$day);
 	}
 	foreach my $time (@{$TimeRef})
 	{
-		my $UIDRef = $self->get_timeinfo($year,$month,$day,$time);
+		my $UIDRef = $this->get_timeinfo($year,$month,$day,$time);
 		foreach my $UID (@{$UIDRef})
 		{
 			if($UID eq $CheckUID)
@@ -211,10 +211,10 @@ sub UID_exists_at
 # Purpose: Get a list of dates which are excepted from recurrance for the supplied UID
 # Usage: my $List = $object->get_exceptions(UID);
 sub get_exceptions {
-	my ($self, $UID) = @_;
-	if ($self->exists($UID))
+	my ($this, $UID) = @_;
+	if ($this->exists($UID))
 	{
-		my $contents = $self->_GetUIDEntry($UID);
+		my $contents = $this->_GetUIDEntry($UID);
 		if(defined($contents->{EXDATE}))
 		{
 			return($contents->{EXDATE});
@@ -230,12 +230,12 @@ sub get_exceptions {
 # Purpose: Set the EXDATEs for the supplied UID
 # Usage: $object->set_exceptions(UID, EXCEPTIONS_ARRAY);
 sub set_exceptions {
-	my $self = shift;
+	my $this = shift;
 	my $UID = shift;
 	my $Exceptions = shift;
-	if ($self->exists($UID))
+	if ($this->exists($UID))
 	{
-		my $contents = $self->_GetUIDEntry($UID);
+		my $contents = $this->_GetUIDEntry($UID);
 		# First, clean the current one.
 		delete($contents->{EXDATE});
 		if(defined($Exceptions))
@@ -249,7 +249,7 @@ sub set_exceptions {
 			}
 		}
 		print "FIXME: set_exceptions: does this actually work?\n";
-		$self->_ChangeEntry($UID,$contents);
+		$this->_ChangeEntry($UID,$contents);
 		return(true);
 	}
 	else
@@ -261,15 +261,15 @@ sub set_exceptions {
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
 sub write {
-	my ($self, $file) = @_;
+	my ($this, $file) = @_;
 	if(not defined($file)) {
-		if($self->{FILETYPE} eq 'ref') {
+		if($this->{FILETYPE} eq 'ref') {
 			carp('write called on object created from array ref');
 			return(undef);
 		}
-		$file = $self->{FILE};
+		$file = $this->{FILE};
 	}
-	my $iCalendar = $self->get_rawdata($self->{FILE},0,0);
+	my $iCalendar = $this->get_rawdata($this->{FILE},0,0);
 	if($iCalendar) {
 		open(my $TARGET, '>', $file) or do {
 			_OutWarn("Unable to open $file for writing: $!");
@@ -277,7 +277,7 @@ sub write {
 		};
 		print $TARGET $iCalendar;
 		close($TARGET);
-		chmod($self->{FILEPERMS},$file);
+		chmod($this->{FILEPERMS},$file);
 		return(true);
 	} else {
 		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
@@ -288,16 +288,16 @@ sub write {
 # Purpose: Get raw iCalendar data
 # Usage: my $Data = $object->get_rawdata();
 sub get_rawdata {
-	my ($self) = @_;
+	my ($this) = @_;
 	my $iCalendar;
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
-	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$self->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
+	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$this->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
 
-	foreach my $UID (sort keys(%{$self->{RawCalendar}})) {
+	foreach my $UID (sort keys(%{$this->{RawCalendar}})) {
 		$iCalendar .= "BEGIN:VEVENT\r\n";
 		$iCalendar .= "UID:$UID\r\n";
-		foreach my $setting (sort keys(%{$self->{RawCalendar}{$UID}})) {
-			my $value = ${$self->{RawCalendar}}{$UID}{$setting};
+		foreach my $setting (sort keys(%{$this->{RawCalendar}{$UID}})) {
+			my $value = ${$this->{RawCalendar}}{$UID}{$setting};
 			if(ref($value)) {
 				foreach my $TrueValue (@{$value}) {
 					$TrueValue = _GetSafe($TrueValue);
@@ -326,10 +326,10 @@ sub get_rawdata {
 # Usage: $object->delete(UID);
 sub delete {
 	print "delete(): FIXME: Still using RawCalendar\n";
-	my ($self, $UID) = @_;	# TODO verify UID
-	if(defined($self->{RawCalendar}{$UID})) {
-		delete($self->{RawCalendar}{$UID});
-		$self->_ClearCalculated();
+	my ($this, $UID) = @_;	# TODO verify UID
+	if(defined($this->{RawCalendar}{$UID})) {
+		delete($this->{RawCalendar}{$UID});
+		$this->_ClearCalculated();
 		return(true);
 	} else {
 		carp('delete called without a valid UID');
@@ -340,29 +340,29 @@ sub delete {
 # Purpose: Add an iCalendar entry
 # Usage: $object->add(%EntryHash);
 sub add {
-	my ($self, %Hash) = @_;
+	my ($this, %Hash) = @_;
 	unless(defined($Hash{DTSTART})) {
 		carp('Refusing to add a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
 	my $UID;
 	if(not ($Hash{UID}) or not length($Hash{UID})) {
-		$UID = $self->_UID($Hash{DTSTART});
+		$UID = $this->_UID($Hash{DTSTART});
 	} else {
 		$UID = $Hash{UID};
 	}
 	if(not $Hash{CREATED}) {
 		$Hash{CREATED} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
 	}
-	$self->_ClearCalculated();
-	$self->_ChangeEntry($UID,%Hash);
+	$this->_ClearCalculated();
+	$this->_ChangeEntry($UID,%Hash);
 	return(true);
 }
 
 # Purpose: Change an iCalendar entry
 # Usage: $object->change(%EntryHash);
 sub change {
-	my ($self, $UID, %Hash) = @_;
+	my ($this, $UID, %Hash) = @_;
 	unless(defined($UID)) {
 		carp('Refusing to change a iCalendar entry without a UID to change.');
 		return(undef);
@@ -371,7 +371,7 @@ sub change {
 		carp('Refusing to change a iCalendar entry without a DTSTART.');
 		return(undef);
 	}
-	$self->_ChangeEntry($UID,%Hash);
+	$this->_ChangeEntry($UID,%Hash);
 	return(true);
 }
 
@@ -379,18 +379,18 @@ sub change {
 # Usage: $object->exists($UID);
 sub exists {
 	print "FIXME: exists() still using RawCalendar\n";
-	my($self,$UID) = @_;
-	if(defined($self->{RawCalendar}{$UID})) {
+	my($this,$UID) = @_;
+	if(defined($this->{RawCalendar}{$UID})) {
 		return(true);
 	}
-	delete($self->{RawCalendar}{$UID});
+	delete($this->{RawCalendar}{$UID});
 	return(false);
 }
 
 # Purpose: Add another file
 # Usage: $object->addfile(FILE);
 sub addfile {
-	my ($self,$File) = @_;
+	my ($this,$File) = @_;
 	if(ref($File)) {	# If we got a reference
 		if(not ref($File) eq 'ARRAY') {
 			carp('Supplied a reference, but the reference is not a ARRAYREF.');
@@ -407,26 +407,26 @@ sub addfile {
 			return(undef);
 		}
 	}
-	return($self->_LoadFile($File));
+	return($this->_LoadFile($File));
 }
 
 # Purpose: Remove all loaded data
 # Usage: $object->clean()
 sub clean {
-	my $self = shift;
+	my $this = shift;
 	print "FIXME: clean() still using RawCalendar\n";
-	$self->{RawCalendar} = {};
-	$self->_ClearCalculated();
+	$this->{RawCalendar} = {};
+	$this->_ClearCalculated();
 	return(true);
 }
 
 # Purpose: Enable a feature
 # Usage: $object->enable(FEATURE);
 sub enable {
-	my($self, $feature) = @_;
+	my($this, $feature) = @_;
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
-		$self->{FEATURE}{$_} = 1;
+		$this->{FEATURE}{$_} = 1;
 		return(true);
 	}
 	carp("Attempted to enable unknown feature: $feature");
@@ -436,10 +436,10 @@ sub enable {
 # Purpose: Disable a feature
 # Usage: $object->disable(FEATURE);
 sub disable {
-	my($self, $feature) = @_;
+	my($this, $feature) = @_;
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
-		$self->{FEATURE}{$_} = 0;
+		$this->{FEATURE}{$_} = 0;
 		return(true);
 	}
 	carp("Attempted to disable unknown feature: $feature");
@@ -449,13 +449,13 @@ sub disable {
 # Purpose: Reload the data
 # Usage: $object->reload();
 sub reload {
-	my $self = shift;
-	if($self->{FILETYPE} eq 'ref') {
+	my $this = shift;
+	if($this->{FILETYPE} eq 'ref') {
 		carp('reload called on object created from array ref');
 		return(undef);
 	}
-	$self->clean();
-	return($self->addfile($self->{FILE}));
+	$this->clean();
+	return($this->addfile($this->{FILE}));
 }
 
 # Purpose: Find duplicate events
@@ -464,9 +464,9 @@ sub locateDupes
 {
 	print "FIXME: locateDupes(): still using RawCalendar\n";
 	# The object
-	my $self = shift;
+	my $this = shift;
 	# List of all UIDs
-	my @keyList = keys %{$self->{RawCalendar}};
+	my @keyList = keys %{$this->{RawCalendar}};
 	# The total number of UIDs - cached so we don't have to evaluate the array every turn through the loop
 	my $total = @keyList;
 	# List of processed files - so that no events gets tested twice
@@ -480,7 +480,7 @@ sub locateDupes
 	for(my $i=0; $i < $total; $i++)
 	{
 		# Get the keys from the current array
-		my $selfkeys = join(' ',sort keys %{$self->{RawCalendar}{$keyList[$i]}});
+		my $thiskeys = join(' ',sort keys %{$this->{RawCalendar}{$keyList[$i]}});
 		# Mark this one as processed for future use
 		$Processed{$keyList[$i]} = true;
 		# Now go through every other event
@@ -492,26 +492,26 @@ sub locateDupes
 			my @ArrayChecks;
 			# A sorted list of all of the events keys - events which doesn't have all
 			# the same keys can't be identical.
-			my $uidkeys = join(' ',sort keys %{$self->{RawCalendar}{$key}});
+			my $uidkeys = join(' ',sort keys %{$this->{RawCalendar}{$key}});
 			# If they don't have the same keys skip forwards
-			next if not $uidkeys eq $selfkeys;
+			next if not $uidkeys eq $thiskeys;
 
 			my $notEq;
 			my $equals;
 			# Now go through every iCalendar entry
-			foreach my $mkey (sort keys %{$self->{RawCalendar}{$keyList[$i]}})
+			foreach my $mkey (sort keys %{$this->{RawCalendar}{$keyList[$i]}})
 			{
 				# Skip tags that doesn't define anything useful and that often changes.
 				# Events are considered dupes even if these are not identical
 				next if($mkey =~ /^(UID|CREATED|LAST-MODIFIED)$/);
 				# Make sure it isn't an array
-				if(ref($self->{RawCalendar}{$key}{$mkey}) eq 'ARRAY') {
+				if(ref($this->{RawCalendar}{$key}{$mkey}) eq 'ARRAY') {
 					# The array check is slower than the simple string check we otherwise use.
 					# Therefore we only do array checks if everything else is identical
 					push(@ArrayChecks,$mkey);
 				}
 				# If the two strings aren't equal then the events can't be dupes
-				elsif(not $self->{RawCalendar}{$key}{$mkey} eq $self->{RawCalendar}{$keyList[$i]}{$mkey})
+				elsif(not $this->{RawCalendar}{$key}{$mkey} eq $this->{RawCalendar}{$keyList[$i]}{$mkey})
 				{
 					$notEq = 1;
 					last;
@@ -536,12 +536,12 @@ sub locateDupes
 				# This hash will contain everything in the array being processed
 				my %ArrayContents;
 				# Go through each key in the array and add it to $ArrayContents
-				foreach my $arrayElement (@{$self->{RawCalendar}{$key}{$arrayKey}})
+				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$arrayKey}})
 				{
 					$ArrayContents{$arrayElement} = true;
 				}
 				# Go through each key in THIS array and make sure it is in $ArrayContents
-				foreach my $arrayElement (@{$self->{RawCalendar}{$key}{$keyList[$i]}})
+				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$keyList[$i]}})
 				{
 					# If it isn't then they can't be equal
 					if(not $ArrayContents{$arrayElement})
@@ -620,7 +620,7 @@ sub locateDupes
 # Purpose: Set the prodid
 # Usage: $object->set_prodid(PRODID);
 sub set_prodid {
-	my($self, $ProdId) = @_;
+	my($this, $ProdId) = @_;
 	if(not defined($ProdId) or not length($ProdId)) {
 		croak('Emtpy/undef ProdId used in ->set_prodid');
 	}
@@ -633,7 +633,7 @@ sub set_prodid {
 		croak('ProdId is not nicely formatted, see the DP::iCalendar documentation.');
 	}
 	# Set the prodid
-	$self->{PRODID} = $ProdId;
+	$this->{PRODID} = $ProdId;
 	return(true);
 }
 
@@ -641,8 +641,8 @@ sub set_prodid {
 # Usage: $object->set_file_perms(PERM);
 sub set_file_perms
 {
-	my $self = shift;
-	$self->{FILEPERMS} = shift;
+	my $this = shift;
+	$this->{FILEPERMS} = shift;
 }
 
 # - Public methods for use by DP::iCalendar::Manager
@@ -760,41 +760,41 @@ sub iCal_ParseDateTime {
 #  FILE is the path to a file or undef. undef if working in ref mode.
 sub _NewObj {
 	my $File = shift;
-	my $self = {};
-	bless($self);
-	$self->{RawCalendar} = {};
-	$self->{OrderedCalendar} = {};
-	$self->{AlreadyCalculated} = {};
-	$self->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
+	my $this = {};
+	bless($this);
+	$this->{RawCalendar} = {};
+	$this->{OrderedCalendar} = {};
+	$this->{AlreadyCalculated} = {};
+	$this->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
 	# Default file permissions set during ->write();
 	# Can be overridden by ->set_file_perms();
-	$self->{FILEPERMS} = oct(600);
+	$this->{FILEPERMS} = oct(600);
 	if($File) {
-		$self->{FILETYPE} = 'file';
-		$self->{FILE} = $File;
+		$this->{FILETYPE} = 'file';
+		$this->{FILE} = $File;
 	} else {
-		$self->{FILETYPE} = 'ref';
+		$this->{FILETYPE} = 'ref';
 	}
-	return($self);
+	return($this);
 }
 
 # Purpose: Make changes to the raw calendar (append or change)
-# Usage: $self->_ChangeEntry(UID,%Hash);
+# Usage: $this->_ChangeEntry(UID,%Hash);
 sub _ChangeEntry {
-	my($self,$UID,%Hash) = @_;
+	my($this,$UID,%Hash) = @_;
 	foreach my $key (keys(%Hash)) {
 		# If the key isn't defined that means we should remove the key if it
 		# exists.
 		if(defined($Hash{$key})) {
-			$self->{RawCalendar}{$UID}{$key} = $Hash{$key};
+			$this->{RawCalendar}{$UID}{$key} = $Hash{$key};
 		} else {
-			if(defined($self->{RawCalendar}{$UID}{$key})) {
-				delete($self->{RawCalendar}{$UID}{$key});
+			if(defined($this->{RawCalendar}{$UID}{$key})) {
+				delete($this->{RawCalendar}{$UID}{$key});
 			}
 		}
 	}
-	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
-	$self->_ClearCalculated();
+	$this->{RawCalendar}{$UID}{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
+	$this->_ClearCalculated();
 	return(true);
 }
 
@@ -811,13 +811,13 @@ sub _ErrOut {
 }
 
 # Purpose: Loads iCalendar data
-# Usage: $self->_LoadFile(FILE OR ARRAYREF);
+# Usage: $this->_LoadFile(FILE OR ARRAYREF);
 sub _LoadFile {
 	# TODO: Create a iCalendar error logfile with dumps of data and errors.
-	my $self = shift;
+	my $this = shift;
 	my $Data = _ParseData($_[0]);
 	return(undef) unless(defined($Data));
-	$self->_ClearCalculated();
+	$this->_ClearCalculated();
 	foreach(0..scalar(@{$Data})) {
 		my $Current = $Data->[$_];
 		my ($Summary, $Fulltext, $UID);
@@ -846,21 +846,21 @@ sub _LoadFile {
 			$Year =~ s/^0*//;
 			$Month =~ s/^0*//;
 			$Day =~ s/^0*//;
-			$UID = $self->_UID($Year.$Month.$Day);
+			$UID = $this->_UID($Year.$Month.$Day);
 		} else {
 			$UID = $Current->{UID};
 		}
 		delete($Current->{UID});
-		if(defined($self->{RawCalendar}{$UID})) {
+		if(defined($this->{RawCalendar}{$UID})) {
 			# If SMART_MERGE is enabled run a set of tests
-			if($self->{FEATURE}{SMART_MERGE}) {
+			if($this->{FEATURE}{SMART_MERGE}) {
 				my $Reassign = 0;
 				# Verify that DTSTART and DTEND are set and identical.
 				# If not then assign a new UID.
 				foreach my $check(qw(DTSTART DTEND)) {
-					if($self->{RawCalendar}{$UID}{$check} or $Current->{$check}) {
-						if($self->{RawCalendar}{$UID}{$check} and $Current->{$check}) {
-							if(not $self->{RawCalendar}{$UID}{$check} eq $Current->{$check}) {
+					if($this->{RawCalendar}{$UID}{$check} or $Current->{$check}) {
+						if($this->{RawCalendar}{$UID}{$check} and $Current->{$check}) {
+							if(not $this->{RawCalendar}{$UID}{$check} eq $Current->{$check}) {
 								$Reassign = 1;
 								last;
 							}
@@ -870,10 +870,10 @@ sub _LoadFile {
 						}
 					}
 				}
-				$UID = $self->_UID($Current->{DTSTART}) if($Reassign);
+				$UID = $this->_UID($Current->{DTSTART}) if($Reassign);
 			} else {
 				# Just overwrite it with this one
-				$self->{RawCalendar}{$UID} = {};
+				$this->{RawCalendar}{$UID} = {};
 			}
 		}
 		# Unsafe various values if needed
@@ -884,7 +884,7 @@ sub _LoadFile {
 		}
 		foreach(keys(%{$Current})) {
 				if(not /^X-PARSER/) {
-					$self->{RawCalendar}{$UID}{$_} = _UnSafe($Current->{$_});
+					$this->{RawCalendar}{$UID}{$_} = _UnSafe($Current->{$_});
 			}
 		}
 	}
@@ -1031,13 +1031,13 @@ sub _UnSafe {
 }
 
 # Purpose: Get a unique ID for an event
-# Usage: $iCalendar .= $self->_UID(NONRANDOM?);
+# Usage: $iCalendar .= $this->_UID(NONRANDOM?);
 # 	NONRANDOM is a non random string to be included into
 # 	the UID. It should usually be something like $Year$Month$Day$Hour$Minute
 # 	or similar. NONRANDOM *can* be omitted, if it is then it will be replaced
 # 	by a random numerical string.
 sub _UID {
-	my $self = shift;
+	my $this = shift;
 	my $NonRandom = shift;
 	chomp($NonRandom);
 	if($NonRandom) {
@@ -1047,7 +1047,7 @@ sub _UID {
 	}
 	while(1) {
 		my $UID = 'dp-' . time() . $NonRandom . int(rand(10000)) . '-' . scalar(getpwuid($<)) . '@' . hostname();
-		if(not defined($self->{RawCalendar}{$UID})) {
+		if(not defined($this->{RawCalendar}{$UID})) {
 			return($UID);
 		}
 	}
@@ -1063,43 +1063,43 @@ sub _PrependZero {
 }
 
 # Purpose: Generate the formatted calendar from the raw calendar
-# Usage: $self->_GenerateCalendar(YEAR);
+# Usage: $this->_GenerateCalendar(YEAR);
 #  Note: This will generate the calendar including recurring stuff for YEAR.
 #  It will create the normal calendar for all events.
 sub _GenerateCalendar {
-	my $self = shift;
+	my $this = shift;
 	my $EventYear = shift;
-	return if defined($self->{AlreadyCalculated}{$EventYear});
-	$self->{OrderedCalendar}{$EventYear} = {};
-	foreach my $UID (keys(%{$self->{RawCalendar}})) {
-		my $Current = $self->{RawCalendar}{$UID};
+	return if defined($this->{AlreadyCalculated}{$EventYear});
+	$this->{OrderedCalendar}{$EventYear} = {};
+	foreach my $UID (keys(%{$this->{RawCalendar}})) {
+		my $Current = $this->{RawCalendar}{$UID};
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
 		# Recurring?
 		if($Current->{RRULE}) {
-			$self->_RRULE_Handler($UID,$EventYear);
+			$this->_RRULE_Handler($UID,$EventYear);
 		} else {
 			# Not recurring
 			if(not $Time) {
 				$Time = 'DAY';
 			}
-			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
+			push(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
 		}
 	}
-	$self->{AlreadyCalculated}{$EventYear} = 1;
+	$this->{AlreadyCalculated}{$EventYear} = 1;
 	return(true);
 }
 
 # Purpose: Clear any calculated event data
-# Usage: $self->_ClearCalculated();
+# Usage: $this->_ClearCalculated();
 sub _ClearCalculated {
 	# TODO: At one point we might want to do additional processing depending on the UID supplied (if any)
 	
-	my $self = shift;
-	$self->{OrderedCalendar} = {};
-	$self->{AlreadyCalculated} = {};
+	my $this = shift;
+	$this->{OrderedCalendar} = {};
+	$this->{AlreadyCalculated} = {};
 	return(true);
 }
 
@@ -1107,9 +1107,9 @@ sub _ClearCalculated {
 # Usage: my $href = self->_GetUIDEntry(UID);
 sub _GetUIDEntry
 {
-	my $self = shift;
+	my $this = shift;
 	my $UID = shift;
-	return($self->{RawCalendar}{$UID});
+	return($this->{RawCalendar}{$UID});
 }
 
 # --- Internal RRULE calculation functions ---
@@ -1201,46 +1201,46 @@ sub _RRULE_Parser {
 # Purpose: Parse an RRULE and add to the hash
 # Usage: _RRULE_Handler(UID,YEAR);
 sub _RRULE_Handler {
-	my $self = shift;
+	my $this = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	if($YEAR > 2037 or $YEAR < 1970) {
-		if(not $self->{Settings}{UnixTimeLimitWarned}) {
-			$self->{Settings}{UnixTimeLimitWarned} = 1;
+		if(not $this->{Settings}{UnixTimeLimitWarned}) {
+			$this->{Settings}{UnixTimeLimitWarned} = 1;
 			_WarnOut('Can\'t handle RRULEs for years below 1970 or above 2037');
 		}
 		return(undef);
 	}
 	# Don't bother doing anything if DTSTART is older than YEAR
-	my ($CalcYear,$CalcMonth,$CalcDay) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
+	my ($CalcYear,$CalcMonth,$CalcDay) = iCal_ParseDateTime($this->{RawCalendar}{$UID}{DTSTART});
 	return(undef) if $CalcYear > $YEAR;
 
-	my $RRULE = _RRULE_Parser($self->{RawCalendar}{$UID}{RRULE});
+	my $RRULE = _RRULE_Parser($this->{RawCalendar}{$UID}{RRULE});
 	my $AddDates;
 	if	($RRULE->{FREQ} eq 'DAILY') {
-		$AddDates = $self->_RRULE_DAILY($RRULE,$UID,$YEAR);
+		$AddDates = $this->_RRULE_DAILY($RRULE,$UID,$YEAR);
 	} elsif ($RRULE->{FREQ} eq 'WEEKLY') {
-		$AddDates = $self->_RRULE_WEEKLY($RRULE,$UID,$YEAR);
+		$AddDates = $this->_RRULE_WEEKLY($RRULE,$UID,$YEAR);
 	} elsif ($RRULE->{FREQ} eq 'MONTHLY') {
-		$AddDates = $self->_RRULE_MONTHLY($RRULE,$UID,$YEAR);
+		$AddDates = $this->_RRULE_MONTHLY($RRULE,$UID,$YEAR);
 	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
-		$AddDates = $self->_RRULE_YEARLY($RRULE,$UID,$YEAR);
+		$AddDates = $this->_RRULE_YEARLY($RRULE,$UID,$YEAR);
 	} else {
-		_WarnOut("Unknown RRULE type: ".$self->{RawCalendar}{$UID}{RRULE}." for UID $UID. This might be a bug, report it to the developers");
+		_WarnOut("Unknown RRULE type: ".$this->{RawCalendar}{$UID}{RRULE}." for UID $UID. This might be a bug, report it to the developers");
 	}
 	if($AddDates) {
-		$self->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
+		$this->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
 	}
 }
 
 # Purpose: Get a parsed list of EXDATES
-# Usage: $self->_Get_EXDATES_Parsed(UID);
+# Usage: $this->_Get_EXDATES_Parsed(UID);
 sub _Get_EXDATES_Parsed {
-	my $self = shift;
+	my $this = shift;
 	my $UID = shift;
 
 	my %ExDates;
-	foreach my $ExDate (@{$self->get_exceptions($UID)}) {
+	foreach my $ExDate (@{$this->get_exceptions($UID)}) {
 		# We merely discard Time
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($ExDate);
 		$Year =~ s/^0*//;
@@ -1257,24 +1257,24 @@ sub _Get_EXDATES_Parsed {
 # 	calculated from the RRULE to the internal sorted hash.
 # 	This function also takes care of killing off entries matched by EXDATE entries,
 # 	and entries not matched by BYDAY
-# Usage: $self->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
+# Usage: $this->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
 sub _RRULE_AddDates {
-	my $self = shift;
+	my $this = shift;
 	my $AddDates = shift;
 	my $UID = shift;
 	my $GenYear = shift;
 	my $RRULE = shift;
-	my $Exceptions = $self->_Get_EXDATES_Parsed($UID);
-	my $BYDAY = $self->_Get_BYDAY_Parsed($RRULE,$UID);
+	my $Exceptions = $this->_Get_EXDATES_Parsed($UID);
+	my $BYDAY = $this->_Get_BYDAY_Parsed($RRULE,$UID);
 
-	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($self->{RawCalendar}{$UID}{DTSTART});
+	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($this->{RawCalendar}{$UID}{DTSTART});
 	if (not defined($UID_Time) or not length($UID_Time)) {
 		$UID_Time = 'DAY';
 	} elsif($UID_Time eq '00:00') {
 		# NOTE: This is for the deprecated and old X-DP-BIRTHDAY syntax
 		# in some iCalendar files. It should probably be removed soon and replaced by some
 		# upgrade function.
-		if(defined($self->{RawCalendar}{$UID}{'X-DP-BIRTHDAY'})) {
+		if(defined($this->{RawCalendar}{$UID}{'X-DP-BIRTHDAY'})) {
 			$UID_Time = 'DAY';
 		}
 	}
@@ -1286,7 +1286,7 @@ sub _RRULE_AddDates {
 			next;
 		}
 		# Test for BYDAY
-		if($BYDAY and not $self->_BYDAY_Test($RRULE,$BYDAY,$UID,$DateTimeString)) {
+		if($BYDAY and not $this->_BYDAY_Test($RRULE,$BYDAY,$UID,$DateTimeString)) {
 			next;
 		}
 
@@ -1294,7 +1294,7 @@ sub _RRULE_AddDates {
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
 		if(not $Exceptions->{$Year}{$Month}{$Day}) {
-			push(@{$self->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
+			push(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
 		}
 	}
 }
@@ -1302,28 +1302,28 @@ sub _RRULE_AddDates {
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_DAILY {
-	my $self = shift;
+	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	my $UNTIL;
-	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
+	my $StartsAt = $this->{RawCalendar}{$UID}{DTSTART};
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	
@@ -1385,28 +1385,28 @@ sub _RRULE_DAILY {
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
 sub _RRULE_WEEKLY {
-	my $self = shift;
+	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	my $UNTIL;
-	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
+	my $StartsAt = $this->{RawCalendar}{$UID}{DTSTART};
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	
@@ -1531,28 +1531,28 @@ sub _RRULE_WEEKLY {
 # Purpose: Evalute an MONTHLY RRULE
 # Usage: _RRULE_MONTHLY(RRULE,UID,YEAR);
 sub _RRULE_MONTHLY {
-	my $self = shift;
+	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
 	my $UNTIL;
-	my $StartsAt = $self->{RawCalendar}{$UID}{DTSTART};
+	my $StartsAt = $this->{RawCalendar}{$UID}{DTSTART};
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	
@@ -1616,28 +1616,28 @@ sub _RRULE_MONTHLY {
 # Purpose: Evaluate an YEARLY RRULE
 # Usage: RRULE_YEARLY(RRULE,UID,YEAR);
 sub _RRULE_YEARLY {
-	my $self = shift;
+	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 	my $YEAR = shift;
-	my $Date = $self->{RawCalendar}{$UID}{DTSTART};
-	my $TheRRULE= $self->{RawCalendar}{$UID}{RRULE};
+	my $Date = $this->{RawCalendar}{$UID}{DTSTART};
+	my $TheRRULE= $this->{RawCalendar}{$UID}{RRULE};
 	my $UNTIL;
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
 	foreach(keys(%{$RRULE})) {
 		if(not /^(FREQ|WKST|INTERVAL|BYDAY|UNTIL)/) {
 			if(/^X-/) {
-				_WarnOut("Unknown X- setting in RRULE ($_): $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
+				_WarnOut("Unknown X- setting in RRULE ($_): $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID.");
 			} else {
-				_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+				_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 				return(undef);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $self->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
+			_ErrOut("RRULE too advanced for current parser: $this->{RawCalendar}{$UID}{RRULE}. Found in event $UID. Report this to the developers.");
 			return(undef);
 	}
 	# Fetch UNTIL first if it is set
@@ -1660,7 +1660,7 @@ sub _RRULE_YEARLY {
 # 	Those matching the rule is true, those not, false.
 # 	If a BYDAY rule is not present then it returns false.
 sub _Get_BYDAY_Parsed {
-	my $self = shift;
+	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
 
@@ -1695,9 +1695,9 @@ sub _Get_BYDAY_Parsed {
 }
 
 # Purpose: Test if a date matches a preparsed BYDAY rule
-# Usage: $self->_BYDAY_Test(RRULE, BYDAY, UID, DATETIME);
+# Usage: $this->_BYDAY_Test(RRULE, BYDAY, UID, DATETIME);
 sub _BYDAY_Test {
-	my $self = shift;
+	my $this = shift;
 	my $RRULE = shift;
 	my $BYDAY = shift;
 	my $UID = shift;
