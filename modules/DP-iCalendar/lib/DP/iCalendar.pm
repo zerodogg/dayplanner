@@ -271,8 +271,8 @@ sub set_exceptions {
 # Usage: $object->write(FILE?);
 sub write {
 	my ($this, $file) = @_;
-	#$this->{dataSource}->writeFile($this->{FILE});
-	print "writing disabled!\n";
+	$this->{dataSource}->writeFile($this->{FILE});
+	#print "writing disabled!\n";
 	return;
 	print "FIXME: write(): Should leave the writing to the StructHandler, only do sanity checks\n";
 	if(not defined($file)) {
@@ -301,8 +301,9 @@ sub write {
 # Purpose: Get raw iCalendar data
 # Usage: my $Data = $object->get_rawdata();
 sub get_rawdata {
-	print "FIXME: get_rawdata(): should be calling the StructHandler method, not do it itself\n";
 	my ($this) = @_;
+	return $this->{dataSource}->getRaw($this->{FILE});
+	# --- ----
 	my $iCalendar;
 	# Print initial info. The prodid could probably be changed to something mroe suitable.
 	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$this->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
