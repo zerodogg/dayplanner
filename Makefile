@@ -85,7 +85,8 @@ distclean: clean
 test:
 	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/HTTPSubscription.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
