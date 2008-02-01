@@ -34,6 +34,8 @@ sub new
 	bless($this,$class);
 	# The data structure will be saved here
 	$this->{data} = {};
+
+	# WARNING: NEVER SET THIS TO true UNLESS YOU KNOW FOR CERTAIN YOUR PROGRAM WON'T GENERATE INVALID ARRAYS/HASHES
 	$this->{ignoreAssertions} = false;
 	return $this;
 }
@@ -44,6 +46,11 @@ sub loadFile
 {
 	my $this = shift;
 	my $file = shift;
+	if (not -r $file)
+	{
+		warn("DP::iCalendar::StructLoad: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
+		return false;
+	}
 	my $sLevel = 0;
 	my %Struct;
 	my @Nest;
@@ -74,7 +81,7 @@ sub loadFile
 		}
 		elsif ($key eq 'BEGIN')
 		{
-			# Check that it is a hash - the assert function dies if it isn't
+			# Check that it is a hash
 			$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true);
 
 			if (not defined $CurrRef->{$value})
@@ -114,10 +121,108 @@ sub loadFile
 }
 
 # Purpose: Write the file
-# Usage: $object->writeFile();
+# Usage: $object->writeFile(file);
 sub writeFile
 {
 	my $this = shift;
+	my $file = shift;
+	# Checking SHOULD be done by parent
+	open(my $filehandle,'<',$file)
+		or do {
+		warn("DP::iCalendar::StructLoad: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
+		return(false);
+	};
+	$this->_HandleWriteHash($this->{data},$filehandle,undef,0);
+}
+
+# Purpose: Handle a new hash in writeFile();
+# Usage: $this->_HandleWriteHash(hashref, filehandle);
+sub _HandleWriteHash
+{
+	my $this = shift;
+	my $hash = shift;
+	my $filehandle = shift;
+	my $name = shift;
+	my $toplevel = shift;
+	my %postponed;
+	# Make sure it's a hashref
+	$this->_assertMustBeRef('HASH',$hash,'hash in _HandleWriteHash',true);
+	if ($name)
+	{
+		print 'BEGIN:'.$name."\n";
+	}
+	foreach my $name(keys(%{$hash}))
+	{
+		if (defined($toplevel))
+		{
+			if ($toplevel > 0 && $toplevel < 3)
+			{
+				# Examine structure and postpone some.
+				# 
+				# What this does is as follows:
+				# Purpose: Ensure that the information in the first few BEGIN: blocks
+				# 	that are NOT BEGIN: sections themselves are written out before the BEGIN
+				# 	blocks.
+				# Method: Keep a $toplevel variable for the first three instances of the _HandleWriteXXXX functions.
+				# 	This variable is incremented each run. When the variable is larger than zero and less than three
+				# 	_HandleWriteHash checks if the value to be written now is a BEGIN block, if it is, it postpones it and
+				# 	writes that last.
+				# How it Checks: If the first value of the current hashrefs array is a hash, that means it's a BEGIN block.
+				$this->_assertMustBeRef('ARRAY',$hash->{$name},'hash->{$name} in _HandleWriteHash (toplevel processing)',true);
+				if (ref($hash->{$name}->[0]) eq 'HASH')
+				{
+					$toplevel++;
+					$postponed{$name} = $hash->{$name};
+					next;
+				}
+			}
+			elsif($toplevel > 2)
+			{
+				$toplevel = undef;
+			}
+		}
+		$this->_HandleWriteArray($hash->{$name},$filehandle,$name,$toplevel);
+	}
+	if (defined($toplevel) && keys(%postponed))
+	{
+		$this->_HandleWriteHash(\%postponed,$filehandle,undef,$toplevel);
+	}
+	if ($name)
+	{
+		print 'END:'.$name."\n";
+	}
+}
+
+# Purpose: Handle a new array in writeFile();
+# Usage: $this->_HandleWriteArray(arrayref, filehandle);
+sub _HandleWriteArray
+{
+	my $this = shift;
+	my $array = shift;
+	my $filehandle = shift;
+	my $name = shift;
+	my $toplevel = shift;
+	if (defined($toplevel))
+	{
+		$toplevel++;
+		if ($toplevel > 2)
+		{
+			$toplevel = undef;
+		}
+	}
+	# Make sure it's an arrayref 
+	$this->_assertMustBeRef('ARRAY',$array,'array in _HandleWriteHash',true);
+	foreach my $value(@{$array})
+	{
+		if(ref($value) eq 'HASH')
+		{
+			$this->_HandleWriteHash($value,$filehandle,$name,$toplevel);
+		}
+		else
+		{
+			print "$name:$value\n";
+		}
+	}
 }
 
 # Purpose: Output a parser warning
@@ -183,3 +288,9 @@ sub _assertMustBeRef
 		}
 	}
 }
+#my $foo = DP::iCalendar::StructLoad->new();
+#$foo->loadFile('/home/zerodogg/.config/dayplanner/debug/calendar.ics');
+#use Data::Dumper;
+#print Dumper($foo);
+#exit(0);
+#$foo->writeFile('/dev/null');
