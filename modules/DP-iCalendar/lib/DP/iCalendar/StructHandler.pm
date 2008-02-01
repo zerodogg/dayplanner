@@ -90,7 +90,7 @@ sub loadFile
 			}
 			else
 			{
-				$this->_assertMustBeRef('ARRAY',$CurrRef,'CurrRef',true);
+				$this->_assertMustBeRef('ARRAY',$CurrRef->{$value},'CurrRef->{value}',true);
 			}
 			my $pushNo = push(@{$CurrRef->{$value}}, {});
 			$pushNo--;
