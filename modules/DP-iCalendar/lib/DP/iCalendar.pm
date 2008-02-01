@@ -29,7 +29,7 @@ $VERSION = 0.3.1;
 
 # - Public methods
 
-# Purpose: Create a new object, call _LoadFile and  _parse_file on it
+# Purpose: Create a new object and load the file
 # Usage: my $object = DP::iCalendar->new(/FILE/);
 sub new {
 	my $File = $_[1];
@@ -53,7 +53,7 @@ sub new {
 		}
 		$this = _NewObj($File);
 	}
-	$this->_LoadFile($File);
+	$this->_LoadICSFile($File);
 	return($this);
 }
 
@@ -812,6 +812,16 @@ sub _WarnOut {
 # Usage: _ErrOut(MESSAGE)
 sub _ErrOut {
 	warn("DP::iCalendar: ERROR: $_[0]\n");
+}
+
+# Purpose: Load or load+merge iCalendar data from a file
+# Usage: $this->_LoadICSFile(FILE);
+sub _LoadICSFile
+{
+	my $this = shift;
+	my $file = shift;
+	$this->{dataSource}->loadFile($file);
+	$this->_LoadFile($file);
 }
 
 # Purpose: Loads iCalendar data
