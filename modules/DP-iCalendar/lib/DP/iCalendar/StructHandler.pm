@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# DP::iCalendar::StructLoad
+# DP::iCalendar::StructHandler
 # $Id$
 # An iCalendar structure loader
 # Copyright (C) Eskild Hustvedt 2008
@@ -18,14 +18,14 @@
 
 use strict;
 use warnings;
-package DP::iCalendar::StructLoad;
+package DP::iCalendar::StructHandler;
 use constant { true => 1, false => 0 };
 
 our $VERSION;
 $VERSION = 0.1;
 
 # Purpose: Initialize a new object
-# Usage: object = DP::iCalendar::StructLoad->new();
+# Usage: object = DP::iCalendar::StructHandler->new();
 sub new
 {
 	my $class = shift;
@@ -47,7 +47,7 @@ sub loadFile
 	my $file = shift;
 	if (not -r $file)
 	{
-		warn("DP::iCalendar::StructLoad: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
+		warn("DP::iCalendar::StructHandler: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
 		return false;
 	}
 	my $sLevel = 0;
@@ -128,7 +128,7 @@ sub writeFile
 	# Checking SHOULD be done by parent
 	open($this->{FH},'>',$file)
 		or do {
-		warn("DP::iCalendar::StructLoad: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
+		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
 		return(false);
 	};
 	$this->_HandleWriteHash($this->{data},undef,0);
@@ -331,7 +331,7 @@ sub _assertMustBeRef
 		}
 	}
 }
-#my $foo = DP::iCalendar::StructLoad->new();
+#my $foo = DP::iCalendar::StructHandler->new();
 #$foo->loadFile('/home/zerodogg/.config/dayplanner/debug/calendar.ics');
 #use Data::Dumper;
 #print Dumper($foo);
