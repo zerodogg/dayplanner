@@ -134,6 +134,19 @@ sub writeFile
 	$this->_HandleWriteHash($this->{data},undef,0);
 }
 
+# Purpose: Get the raw source
+# Usage: $string = $object->getRaw();
+sub getRaw
+{
+	my $this = shift;
+	$this->{rawOutContents} = '';
+	$this->_HandleWriteHash($this->{data},undef,0);
+	my $rawOut = $this->{rawOutContents};
+	delete($this->{rawOutContents});
+	return($rawOut);
+}
+
+
 # Purpose: Handle a new hash in writeFile();
 # Usage: $this->_HandleWriteHash(hashref, filehandle);
 sub _HandleWriteHash
