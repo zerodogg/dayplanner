@@ -14,7 +14,6 @@
 # KEY:VALUE sets KEY in the current level to VALUE. You may have multiple KEY:VALUE pairs.
 # A line beginning with a space (or any whitespace char) denotes a continuation of the previous KEY:VALUE pair
 
-# TODO: Add writing
 # TODO: Replace iCalendar.pm's current loading routine with this
 
 use strict;
@@ -127,12 +126,12 @@ sub writeFile
 	my $this = shift;
 	my $file = shift;
 	# Checking SHOULD be done by parent
-	open(my $filehandle,'<',$file)
+	open($this->{FH},'>',$file)
 		or do {
 		warn("DP::iCalendar::StructLoad: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
 		return(false);
 	};
-	$this->_HandleWriteHash($this->{data},$filehandle,undef,0);
+	$this->_HandleWriteHash($this->{data},undef,0);
 }
 
 # Purpose: Handle a new hash in writeFile();
@@ -141,7 +140,6 @@ sub _HandleWriteHash
 {
 	my $this = shift;
 	my $hash = shift;
-	my $filehandle = shift;
 	my $name = shift;
 	my $toplevel = shift;
 	my %postponed;
@@ -149,7 +147,7 @@ sub _HandleWriteHash
 	$this->_assertMustBeRef('HASH',$hash,'hash in _HandleWriteHash',true);
 	if ($name)
 	{
-		print 'BEGIN:'.$name."\n";
+		$this->_write('BEGIN',$name);
 	}
 	foreach my $name(keys(%{$hash}))
 	{
@@ -181,15 +179,61 @@ sub _HandleWriteHash
 				$toplevel = undef;
 			}
 		}
-		$this->_HandleWriteArray($hash->{$name},$filehandle,$name,$toplevel);
+		$this->_HandleWriteArray($hash->{$name},$name,$toplevel);
 	}
 	if (defined($toplevel) && keys(%postponed))
 	{
-		$this->_HandleWriteHash(\%postponed,$filehandle,undef,$toplevel);
+		$this->_HandleWriteHash(\%postponed,undef,$toplevel);
 	}
 	if ($name)
 	{
-		print 'END:'.$name."\n";
+		$this->_write('END',$name);
+	}
+}
+
+# Purpose: Write out a line of data
+# Usage: $this->_write(key,value);
+sub _write
+{
+	my $this = shift;
+	my $key = shift;
+	my $value = shift;
+	my $line = $key.':'.$value."\r\n";
+	my $maxlen = 80;
+	if(length($line) > $maxlen)
+	{
+		$line = '';
+		my $currLine = $key.':';
+		foreach my $lpart (split(/ /,$value))
+		{
+			if (length($currLine) > $maxlen or (length($currLine)+length($lpart)) > $maxlen)
+			{
+				$line .= $currLine."\r\n";
+				$currLine = '  '.$lpart;
+			}
+			else
+			{
+				$currLine .= ' '.$lpart;
+			}
+		}
+		$line .= $currLine."\r\n";
+	}
+	$this->_realWrite($line);
+}
+
+# Purpose: Actually write out a line of data, or append to internal variable
+# Usage: this->_realWrite(LINE);
+sub _realWrite
+{
+	my $this = shift;
+	my $line = shift;
+	if ($this->{FH})
+	{
+		print {$this->{FH}} $line;
+	}
+	else
+	{
+		$this->{rawOutContents} .= $line;
 	}
 }
 
@@ -199,7 +243,6 @@ sub _HandleWriteArray
 {
 	my $this = shift;
 	my $array = shift;
-	my $filehandle = shift;
 	my $name = shift;
 	my $toplevel = shift;
 	if (defined($toplevel))
@@ -216,11 +259,11 @@ sub _HandleWriteArray
 	{
 		if(ref($value) eq 'HASH')
 		{
-			$this->_HandleWriteHash($value,$filehandle,$name,$toplevel);
+			$this->_HandleWriteHash($value,$name,$toplevel);
 		}
 		else
 		{
-			print "$name:$value\n";
+			$this->_write($name,$value);
 		}
 	}
 }
@@ -293,4 +336,4 @@ sub _assertMustBeRef
 #use Data::Dumper;
 #print Dumper($foo);
 #exit(0);
-#$foo->writeFile('/dev/null');
+#$foo->writeFile('./testfile');
