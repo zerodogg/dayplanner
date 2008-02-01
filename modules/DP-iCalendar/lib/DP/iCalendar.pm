@@ -145,8 +145,9 @@ sub get_months {
 # Usage: my $Info = $object->get_info(UID);
 sub get_info {
 	my($self,$UID) = @_;
-	if(defined($self->{RawCalendar}{$UID})) {
-		return($self->{RawCalendar}{$UID});
+	if ($self->exists($UID))
+	{
+		return $self->_GetUIDEntry($UID);
 	}
 	carp('get_info got invalid UID');
 	return(undef);
@@ -156,9 +157,12 @@ sub get_info {
 # Usage: my $Info = $object->get_RRULE(UID);
 sub get_RRULE {
 	my ($self, $UID) = @_;
-	if(defined($self->{RawCalendar}{$UID})) {
-		if(defined($self->{RawCalendar}{$UID}{RRULE})) {
-			return(_RRULE_Parser($self->{RawCalendar}{$UID}{RRULE}));
+	if ($self->exists($UID))
+	{
+		my $contents = $self->_GetUIDEntry($UID);
+		if(defined($contents->{RRULE}))
+		{
+			return(_RRULE_Parser($contents->{RRULE}));
 		} else {
 			return(undef);
 		}
@@ -173,7 +177,7 @@ sub get_RRULE {
 #   Time is optional.
 sub UID_exists_at
 {
-	my $this = shift;
+	my $self = shift;
 	my $CheckUID = shift;
 	my $year = shift;
 	my $month = shift;
@@ -188,11 +192,11 @@ sub UID_exists_at
 	}
 	else
 	{
-		$TimeRef = $this->get_dateinfo($year,$month,$day);
+		$TimeRef = $self->get_dateinfo($year,$month,$day);
 	}
 	foreach my $time (@{$TimeRef})
 	{
-		my $UIDRef = $this->get_timeinfo($year,$month,$day,$time);
+		my $UIDRef = $self->get_timeinfo($year,$month,$day,$time);
 		foreach my $UID (@{$UIDRef})
 		{
 			if($UID eq $CheckUID)
@@ -208,9 +212,12 @@ sub UID_exists_at
 # Usage: my $List = $object->get_exceptions(UID);
 sub get_exceptions {
 	my ($self, $UID) = @_;
-	if(defined($self->{RawCalendar}{$UID})) {
-		if(defined($self->{RawCalendar}{$UID}{EXDATE})) {
-			return($self->{RawCalendar}{$UID}{EXDATE});
+	if ($self->exists($UID))
+	{
+		my $contents = $self->_GetUIDEntry($UID);
+		if(defined($contents->{EXDATE}))
+		{
+			return($contents->{EXDATE});
 		} else {
 			return([]);
 		}
@@ -226,18 +233,29 @@ sub set_exceptions {
 	my $self = shift;
 	my $UID = shift;
 	my $Exceptions = shift;
-	# First, clean the current one.
-	delete($self->{RawCalendar}{$UID}{EXDATE});
-	# If Exceptions is undef then just return.
-	return(true) if not defined($Exceptions);
-	# Create the array
-	$self->{RawCalendar}{$UID}{EXDATE} = [];
-	foreach(@{$Exceptions}) {
-		# This doesn't do any syntax checking. We (stupidly) assume the caller
-		# did the proper thing(tm)
-		push(@{$self->{RawCalendar}{$UID}{EXDATE}},$_);
+	if ($self->exists($UID))
+	{
+		my $contents = $self->_GetUIDEntry($UID);
+		# First, clean the current one.
+		delete($contents->{EXDATE});
+		if(defined($Exceptions))
+		{
+			# Create the array
+			$contents->{EXDATE} = [];
+			foreach(@{$Exceptions}) {
+				# This doesn't do any syntax checking. We (stupidly) assume the caller
+				# did the proper thing(tm)
+				push(@{$contents->{EXDATE}},$_);
+			}
+		}
+		print "FIXME: set_exceptions: does this actually work?\n";
+		$self->_ChangeEntry($UID,$contents);
+		return(true);
 	}
-	return(true);
+	else
+	{
+		carp('set_exceptions got an invalid UID');
+	}
 }
 
 # Purpose: Write the data to a file.
@@ -307,6 +325,7 @@ sub get_rawdata {
 # Purpose: Delete an iCalendar entry
 # Usage: $object->delete(UID);
 sub delete {
+	print "delete(): FIXME: Still using RawCalendar\n";
 	my ($self, $UID) = @_;	# TODO verify UID
 	if(defined($self->{RawCalendar}{$UID})) {
 		delete($self->{RawCalendar}{$UID});
@@ -332,11 +351,11 @@ sub add {
 	} else {
 		$UID = $Hash{UID};
 	}
+	if(not $Hash{CREATED}) {
+		$Hash{CREATED} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
+	}
 	$self->_ClearCalculated();
 	$self->_ChangeEntry($UID,%Hash);
-	if(not $Hash{CREATED}) {
-		$self->{RawCalendar}{$UID}{CREATED} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
-	}
 	return(true);
 }
 
@@ -359,6 +378,7 @@ sub change {
 # Purpose: Check if an UID exists
 # Usage: $object->exists($UID);
 sub exists {
+	print "FIXME: exists() still using RawCalendar\n";
 	my($self,$UID) = @_;
 	if(defined($self->{RawCalendar}{$UID})) {
 		return(true);
@@ -394,6 +414,7 @@ sub addfile {
 # Usage: $object->clean()
 sub clean {
 	my $self = shift;
+	print "FIXME: clean() still using RawCalendar\n";
 	$self->{RawCalendar} = {};
 	$self->_ClearCalculated();
 	return(true);
@@ -441,10 +462,11 @@ sub reload {
 # Usage: $object->locateDupes();
 sub locateDupes
 {
+	print "FIXME: locateDupes(): still using RawCalendar\n";
 	# The object
-	my $this = shift;
+	my $self = shift;
 	# List of all UIDs
-	my @keyList = keys %{$this->{RawCalendar}};
+	my @keyList = keys %{$self->{RawCalendar}};
 	# The total number of UIDs - cached so we don't have to evaluate the array every turn through the loop
 	my $total = @keyList;
 	# List of processed files - so that no events gets tested twice
@@ -458,7 +480,7 @@ sub locateDupes
 	for(my $i=0; $i < $total; $i++)
 	{
 		# Get the keys from the current array
-		my $thiskeys = join(' ',sort keys %{$this->{RawCalendar}{$keyList[$i]}});
+		my $selfkeys = join(' ',sort keys %{$self->{RawCalendar}{$keyList[$i]}});
 		# Mark this one as processed for future use
 		$Processed{$keyList[$i]} = true;
 		# Now go through every other event
@@ -470,26 +492,26 @@ sub locateDupes
 			my @ArrayChecks;
 			# A sorted list of all of the events keys - events which doesn't have all
 			# the same keys can't be identical.
-			my $uidkeys = join(' ',sort keys %{$this->{RawCalendar}{$key}});
+			my $uidkeys = join(' ',sort keys %{$self->{RawCalendar}{$key}});
 			# If they don't have the same keys skip forwards
-			next if not $uidkeys eq $thiskeys;
+			next if not $uidkeys eq $selfkeys;
 
 			my $notEq;
 			my $equals;
 			# Now go through every iCalendar entry
-			foreach my $mkey (sort keys %{$this->{RawCalendar}{$keyList[$i]}})
+			foreach my $mkey (sort keys %{$self->{RawCalendar}{$keyList[$i]}})
 			{
 				# Skip tags that doesn't define anything useful and that often changes.
 				# Events are considered dupes even if these are not identical
 				next if($mkey =~ /^(UID|CREATED|LAST-MODIFIED)$/);
 				# Make sure it isn't an array
-				if(ref($this->{RawCalendar}{$key}{$mkey}) eq 'ARRAY') {
+				if(ref($self->{RawCalendar}{$key}{$mkey}) eq 'ARRAY') {
 					# The array check is slower than the simple string check we otherwise use.
 					# Therefore we only do array checks if everything else is identical
 					push(@ArrayChecks,$mkey);
 				}
 				# If the two strings aren't equal then the events can't be dupes
-				elsif(not $this->{RawCalendar}{$key}{$mkey} eq $this->{RawCalendar}{$keyList[$i]}{$mkey})
+				elsif(not $self->{RawCalendar}{$key}{$mkey} eq $self->{RawCalendar}{$keyList[$i]}{$mkey})
 				{
 					$notEq = 1;
 					last;
@@ -514,12 +536,12 @@ sub locateDupes
 				# This hash will contain everything in the array being processed
 				my %ArrayContents;
 				# Go through each key in the array and add it to $ArrayContents
-				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$arrayKey}})
+				foreach my $arrayElement (@{$self->{RawCalendar}{$key}{$arrayKey}})
 				{
 					$ArrayContents{$arrayElement} = true;
 				}
 				# Go through each key in THIS array and make sure it is in $ArrayContents
-				foreach my $arrayElement (@{$this->{RawCalendar}{$key}{$keyList[$i]}})
+				foreach my $arrayElement (@{$self->{RawCalendar}{$key}{$keyList[$i]}})
 				{
 					# If it isn't then they can't be equal
 					if(not $ArrayContents{$arrayElement})
@@ -1079,6 +1101,15 @@ sub _ClearCalculated {
 	$self->{OrderedCalendar} = {};
 	$self->{AlreadyCalculated} = {};
 	return(true);
+}
+
+# Purpose: Get an entry for an UID
+# Usage: my $href = self->_GetUIDEntry(UID);
+sub _GetUIDEntry
+{
+	my $self = shift;
+	my $UID = shift;
+	return($self->{RawCalendar}{$UID});
 }
 
 # --- Internal RRULE calculation functions ---
