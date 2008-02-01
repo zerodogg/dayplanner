@@ -335,9 +335,7 @@ sub add {
 	$self->_ClearCalculated();
 	$self->_ChangeEntry($UID,%Hash);
 	if(not $Hash{CREATED}) {
-		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
-		$curryear += 1900;
-		$self->{RawCalendar}{$UID}{CREATED} = iCal_GenDateTime($curryear, $currmonth, $currmday, _PrependZero($currhour) . ':' . _PrependZero($currmin));
+		$self->{RawCalendar}{$UID}{CREATED} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
 	}
 	return(true);
 }
@@ -773,9 +771,7 @@ sub _ChangeEntry {
 			}
 		}
 	}
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = gmtime(time);
-	$curryear += 1900;
-	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = iCal_GenDateTime($curryear, $currmonth, $currmday, _PrependZero($currhour) . ':' . _PrependZero($currmin));
+	$self->{RawCalendar}{$UID}{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
 	$self->_ClearCalculated();
 	return(true);
 }
@@ -915,6 +911,17 @@ sub _ParseiCalLine {
 		}
 	}
 	return();
+}
+
+# Purpose: Convenience wrapper around iCal_GenDateTime() that takes a localtime() or gmtime() arg
+#			This ensures that the year and month is properly increased.
+# Usage: $iCalTime = _iCal_GenDateTimeFromLocaltime(localtime());
+sub _iCal_GenDateTimeFromLocaltime
+{
+	my ($thesec,$themin,$thehour,$themday,$themonth,$theyear,$thewday,$theyday,$theisdst) = @_;
+	$themonth++;
+	$theyear += 1900;
+	return(iCal_GenDateTime($theyear, $themonth, $themday, _PrependZero($thehour) . ':' . _PrependZero($themin)));
 }
 
 # Purpose: Loads an iCalendar file and returns a simple data structure. Returns
