@@ -393,7 +393,6 @@ sub change {
 # Purpose: Check if an UID exists
 # Usage: $object->exists($UID);
 sub exists {
-	print "FIXME: exists() still using RawCalendar\n";
 	my($this,$UID) = @_;
 	if(not defined($UID) or not length($UID) or ref($UID))
 	{
@@ -435,8 +434,8 @@ sub addfile {
 # Usage: $object->clean()
 sub clean {
 	my $this = shift;
-	print "FIXME: clean() still using RawCalendar\n";
 	$this->{RawCalendar} = {};
+	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->_ClearCalculated();
 	return(true);
 }
@@ -802,8 +801,9 @@ sub _NewObj {
 
 # Purpose: Make changes to the raw calendar (append or change)
 # Usage: $this->_ChangeEntry(UID,%Hash);
-sub _ChangeEntry {
-	print "FIXME: _ChangeEntry: Still using RawCalendar\n";
+sub _ChangeEntry
+{
+	carp "DP::iCalendar: _ChangeEntry: Not working on live calendar. Changes will NOT be saved";
 	my($this,$UID,%Hash) = @_;
 	foreach my $key (keys(%Hash)) {
 		# If the key isn't defined that means we should remove the key if it
@@ -929,7 +929,6 @@ sub _PrependZero {
 #  Note: This will generate the calendar including recurring stuff for YEAR.
 #  It will create the normal calendar for all events.
 sub _GenerateCalendar {
-	print "FIXME: _GenerateCalendar: still using RawCalendar\n";
 	my $this = shift;
 	my $EventYear = shift;
 	return if defined($this->{AlreadyCalculated}{$EventYear});
@@ -1014,7 +1013,7 @@ sub _GetUIDEntry
 				}
 				else
 				{
-					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was an empty variable\n";
+					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was an empty variable";
 				}
 				$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
 			}
