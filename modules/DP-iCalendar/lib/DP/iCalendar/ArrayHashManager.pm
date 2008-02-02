@@ -30,9 +30,34 @@ sub new
 	my $this = {};
 	bless($this,$class);
 	$this->{array} = shift;
+	if(not ref($this->{array}))
+	{
+		die("DP::iCalendar::ArrayHasManager: FATAL, I don't have a reference");
+	}
 	$this->{indexBy} = shift;
 	$this->reindex();
 	return($this);
+}
+
+# Purpose: Check if an indexed value exists or not
+# Usage: bool = $this->exists(INDEXVALUE);
+sub exists
+{
+	my $this = shift;
+	my $indexval = shift;
+	if(defined($this->{index}{$indexval}))
+	{
+		return true;
+	}
+	return false;
+}
+
+# Purpose: List all values available (all indexed values)
+# Usage: $valuelist = $this->listvalues();
+sub listvalues
+{
+	my $this = shift;
+	return keys(%{$this->{index}});
 }
 
 # Purpose: Reindex the entire array
@@ -66,7 +91,9 @@ sub deleteEntry
 {
 	my $this = shift;
 	my $indexed = shift;
+	# Forget it
 	$this->{array}[$this->{index}{$indexed}] = undef;
+	delete($this->{index}{$indexed});
 }
 
 # Purpose: Change an entry, using its indexed value
@@ -112,6 +139,11 @@ sub _appendToIndex
 {
 	my $this = shift;
 	my $i = shift;
+	if(not ref($this->{array}[$i]))
+	{
+		warn("DP::iCalendar::ArrayHashManager: Array entry $i was not a reference. Colour me confused. Ignoring.\n");
+		return;
+	}
 	my $var = $this->{array}[$i]->{$this->{indexBy}}[0];
 	if(defined($var))
 	{

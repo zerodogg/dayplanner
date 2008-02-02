@@ -157,11 +157,12 @@ sub _HandleWriteHash
 	my %postponed;
 	# Make sure it's a hashref
 	$this->_assertMustBeRef('HASH',$hash,'hash in _HandleWriteHash',true);
+	# If the array is empty, ignore it
 	if ($name)
 	{
 		$this->_write('BEGIN',$name);
 	}
-	foreach my $name(keys(%{$hash}))
+	foreach my $name(sort keys(%{$hash}))
 	{
 		if (defined($toplevel))
 		{
@@ -210,6 +211,10 @@ sub _write
 	my $this = shift;
 	my $key = shift;
 	my $value = shift;
+	if (not defined($value) or not length($value))
+	{
+		return;
+	}
 	my $line = $key.':'.$value."\r\n";
 	my $maxlen = 80;
 	if(length($line) > $maxlen)
