@@ -18,6 +18,7 @@ use POSIX;
 use Data::Dumper;
 use Sys::Hostname;
 use DP::iCalendar::StructHandler;
+use DP::iCalendar::ArrayHashManager;
 use constant { true => 1, false => 0 };
 
 # Exported functions
@@ -303,53 +304,13 @@ sub write {
 sub get_rawdata {
 	my ($this) = @_;
 	return $this->{dataSource}->getRaw($this->{FILE});
-	# --- ----
-	my $iCalendar;
-	# Print initial info. The prodid could probably be changed to something mroe suitable.
-	$iCalendar .= "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:$this->{PRODID}\r\nCALSCALE:GREGORIAN\r\n";
-
-	foreach my $UID (sort keys(%{$this->{RawCalendar}})) {
-		$iCalendar .= "BEGIN:VEVENT\r\n";
-		$iCalendar .= "UID:$UID\r\n";
-		foreach my $setting (sort keys(%{$this->{RawCalendar}{$UID}})) {
-			my $value = ${$this->{RawCalendar}}{$UID}{$setting};
-			if(ref($value)) {
-				foreach my $TrueValue (@{$value}) {
-					$TrueValue = _GetSafe($TrueValue);
-					$iCalendar .= "$setting:$TrueValue";
-					$iCalendar .= "\r\n";
-				}
-			} else {
-				$value = _GetSafe($value);
-				# Check if value should be written with a ;
-				# FIXME: There are more cases than these
-				if($value =~ /^(TZID=\D+:|CN=|ROLE=|CUTYPE=|PARTSTAT=).*:.*/) {
-					$iCalendar .= "$setting;$value";
-				} else {
-					$iCalendar .= "$setting:$value";
-				}
-				$iCalendar .= "\r\n";
-			}
-		}
-		$iCalendar .= "END:VEVENT\r\n";
-	}
-	$iCalendar .= "END:VCALENDAR\r\n";
-	return($iCalendar);
 }
 
 # Purpose: Delete an iCalendar entry
 # Usage: $object->delete(UID);
 sub delete {
-	print "delete(): FIXME: Still using RawCalendar\n";
 	my ($this, $UID) = @_;	# TODO verify UID
-	if(defined($this->{RawCalendar}{$UID})) {
-		delete($this->{RawCalendar}{$UID});
-		$this->_ClearCalculated();
-		return(true);
-	} else {
-		carp('delete called without a valid UID');
-		return(undef);
-	}
+	return $this->{dataManager}->deleteEntry($UID);
 }
 
 # Purpose: Add an iCalendar entry
@@ -399,11 +360,7 @@ sub exists {
 		carp "exists: $UID: invalid UID, returning false!";
 		return false;
 	}
-	if(defined($this->{RawCalendar}{$UID})) {
-		return(true);
-	}
-	delete($this->{RawCalendar}{$UID});
-	return(false);
+	return $this->{dataManager}->exists($UID);
 }
 
 # Purpose: Add another file
@@ -784,6 +741,7 @@ sub _NewObj {
 	bless($this);
 	$this->{RawCalendar} = {};
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
+	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new([],'');
 	$this->{OrderedCalendar} = {};
 	$this->{AlreadyCalculated} = {};
 	$this->{PRODID} = "-//EskildHustvedt//NONSGML DP::iCalendar $VERSION//EN";
@@ -817,6 +775,7 @@ sub _ChangeEntry
 		}
 	}
 	$this->{RawCalendar}{$UID}{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
+	$Hash{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
 	$this->_ClearCalculated();
 	return(true);
 }
@@ -842,11 +801,7 @@ sub _LoadICSFile
 	# We really shouldn't do this, if it dies we're at least safe.
 	#$this->{dataSource}->{assertNeverFatal} = true;
 	$this->{dataSource}->loadFile($file);
-	# Convert dataSource data to RawCalendar
-	foreach my $VEVENT (@{$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}})
-	{
-		$this->{RawCalendar}{$VEVENT->{UID}[0]} = $VEVENT;
-	}
+	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT},'UID');
 }
 
 # Purpose: Loads iCalendar data
@@ -899,6 +854,7 @@ sub _UnSafe {
 # 	or similar. NONRANDOM *can* be omitted, if it is then it will be replaced
 # 	by a random numerical string.
 sub _UID {
+	print "WARNING: FIXME: _UID: Is using RawCalendar for checks!\n";
 	my $this = shift;
 	my $NonRandom = shift;
 	chomp($NonRandom);
@@ -988,39 +944,16 @@ sub _GetUIDEntry
 		carp "ERROR: _GetUIDEntry: Empty length\n";
 	}
 	my %Hash;
-	foreach my $val (keys(%{$this->{RawCalendar}{$UID}}))
+	my $entries = $this->{dataManager}->getEntry($UID);
+	foreach my $val (keys(%{$entries}))
 	{
-		# FIXME: The ref() check makes sure it doesn't crash, but really it shouldn't be needed.
 		if ($val =~ /^EXDATE/)
 		{
-			if(not ref($this->{RawCalendar}{$UID}{$val}) or ref($this->{RawCalendar}{$UID}{$val}) eq 'ARRAY')
-			{
-				carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was: ". ref($this->{RawCalendar}{$UID});
-			}
-			$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
+			$Hash{$val} = $entries->{$val};
 		}
 		else
 		{
-			if(not ref($this->{RawCalendar}{$UID}{$val}) or not (ref($this->{RawCalendar}{$UID}{$val}) eq 'ARRAY'))
-			{
-				if(ref($this->{RawCalendar}{$UID}{$val}))
-				{
-					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was: ". ref($this->{RawCalendar}{$UID}{$val});
-				}
-				elsif(length(($this->{RawCalendar}{$UID}{$val})))
-				{
-					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was variable with the value: ".$this->{RawCalendar}{$UID}{$val};
-				}
-				else
-				{
-					carp "_GetUIDEntry: For some reason the RawCalendar entry for $val in uid $UID was not a arrayref. Was an empty variable";
-				}
-				$Hash{$val} = $this->{RawCalendar}{$UID}{$val};
-			}
-			else
-			{
-				$Hash{$val} = $this->{RawCalendar}{$UID}{$val}[0];
-			}
+			$Hash{$val} = $entries->{$val}[0];
 		}
 	}
 	return(\%Hash);
@@ -1031,7 +964,7 @@ sub _GetUIDEntry
 sub _GetAllUIDS
 {
 	my $this = shift;
-	return keys(%{$this->{RawCalendar}});
+	return $this->{dataManager}->listvalues();
 }
 
 # --- Internal RRULE calculation functions ---
