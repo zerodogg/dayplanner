@@ -14,8 +14,6 @@
 # KEY:VALUE sets KEY in the current level to VALUE. You may have multiple KEY:VALUE pairs.
 # A line beginning with a space (or any whitespace char) denotes a continuation of the previous KEY:VALUE pair
 
-# TODO: Replace iCalendar.pm's current loading routine with this
-
 use strict;
 use warnings;
 package DP::iCalendar::StructHandler;
