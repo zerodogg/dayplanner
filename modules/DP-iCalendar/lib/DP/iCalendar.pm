@@ -390,6 +390,7 @@ sub addfile {
 # Purpose: Remove all loaded data
 # Usage: $object->clean()
 sub clean {
+	carp("DP::iCalendar->clean(): Deprecated. Create a new object instead.");
 	my $this = shift;
 	$this->{RawCalendar} = {};
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
@@ -739,7 +740,6 @@ sub _NewObj {
 	my $File = shift;
 	my $this = {};
 	bless($this);
-	$this->{RawCalendar} = {};
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new([],'');
 	$this->{OrderedCalendar} = {};
@@ -757,25 +757,37 @@ sub _NewObj {
 	return($this);
 }
 
+# Purpose: Convert a hash of values into a hash of arrays of values
+# Usage: my $contents = _convertHashArray(hashref);
+sub _convertHashArray
+{
+	my $href = shift;
+	my $newh = {};
+	foreach my $k (keys(%{$href}))
+	{
+		if(ref($href->{$k}))
+		{
+			$newh->{$k} = $href->{$k};
+		}
+		else
+		{
+			$newh->{$k} = [];
+			push(@{$newh->{$k}},$href->{$k});
+		}
+		delete($href->{$k});
+	}
+	return $newh;
+}
+
 # Purpose: Make changes to the raw calendar (append or change)
 # Usage: $this->_ChangeEntry(UID,%Hash);
 sub _ChangeEntry
 {
-	carp "DP::iCalendar: _ChangeEntry: Not working on live calendar. Changes will NOT be saved";
 	my($this,$UID,%Hash) = @_;
-	foreach my $key (keys(%Hash)) {
-		# If the key isn't defined that means we should remove the key if it
-		# exists.
-		if(defined($Hash{$key})) {
-			$this->{RawCalendar}{$UID}{$key} = $Hash{$key};
-		} else {
-			if(defined($this->{RawCalendar}{$UID}{$key})) {
-				delete($this->{RawCalendar}{$UID}{$key});
-			}
-		}
-	}
-	$this->{RawCalendar}{$UID}{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
 	$Hash{'LAST-MODIFIED'} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
+	$Hash{'UID'} = $UID;
+	my $hash = _convertHashArray(\%Hash);
+	$this->{dataManager}->changeEntry($UID,$hash);
 	$this->_ClearCalculated();
 	return(true);
 }
@@ -854,7 +866,6 @@ sub _UnSafe {
 # 	or similar. NONRANDOM *can* be omitted, if it is then it will be replaced
 # 	by a random numerical string.
 sub _UID {
-	print "WARNING: FIXME: _UID: Is using RawCalendar for checks!\n";
 	my $this = shift;
 	my $NonRandom = shift;
 	chomp($NonRandom);
@@ -865,7 +876,8 @@ sub _UID {
 	}
 	while(1) {
 		my $UID = 'dp-' . time() . $NonRandom . int(rand(10000)) . '-' . scalar(getpwuid($<)) . '@' . hostname();
-		if(not defined($this->{RawCalendar}{$UID})) {
+		if(not $this->{dataManager}->exists($UID))
+		{
 			return($UID);
 		}
 	}
