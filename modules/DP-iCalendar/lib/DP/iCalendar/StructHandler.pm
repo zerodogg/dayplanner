@@ -382,9 +382,3 @@ sub _assertMustBeRef
 		}
 	}
 }
-#my $foo = DP::iCalendar::StructHandler->new();
-#$foo->loadFile('/home/zerodogg/.config/dayplanner/debug/calendar.ics');
-#use Data::Dumper;
-#print Dumper($foo);
-#exit(0);
-#$foo->writeFile('./testfile');
