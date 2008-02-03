@@ -46,11 +46,11 @@ sub new {
 				# filepath argument
 		unless(defined($File)) {
 			carp('Needs an option: path to the iCalendar file');
-			return(undef);
+			return(false);
 		}
 		unless(-e $File) {
 			carp("\"$File\": does not exist");
-			return(undef);
+			return(false);
 		}
 		$this = _NewObj($File);
 	}
@@ -64,11 +64,11 @@ sub newfile {
 	my $File = $_[1];
 	if(not defined($File)) {
 		carp('Needs an option: path to the iCalendar file');
-		return(undef);
+		return(false);
 	}
 	if(ref($File)) {
 		carp('Doesn\'t take a reference');
-		return(undef);
+		return(false);
 	}
 	return(_NewObj($File));
 }
@@ -152,7 +152,7 @@ sub get_info {
 		return $this->_GetUIDEntry($UID);
 	}
 	carp('get_info got invalid UID');
-	return(undef);
+	return(false);
 }
 
 # Purpose: Get a parsed RRULE for the supplied UID
@@ -166,11 +166,11 @@ sub get_RRULE {
 		{
 			return(_RRULE_Parser($contents->{RRULE}));
 		} else {
-			return(undef);
+			return(false);
 		}
 	} else {
 		carp('get_RRULE got invalid UID');
-		return(undef);
+		return(false);
 	}
 }
 
@@ -275,7 +275,7 @@ sub write {
 	if(not defined($file)) {
 		if($this->{FILETYPE} eq 'ref') {
 			carp('write called on object created from array ref');
-			return(undef);
+			return(false);
 		}
 		$file = $this->{FILE};
 	}
@@ -304,7 +304,7 @@ sub add {
 	my ($this, %Hash) = @_;
 	unless(defined($Hash{DTSTART})) {
 		carp('Refusing to add a iCalendar entry without a DTSTART.');
-		return(undef);
+		return(false);
 	}
 	my $UID;
 	if(not ($Hash{UID}) or not length($Hash{UID})) {
@@ -326,11 +326,11 @@ sub change {
 	my ($this, $UID, %Hash) = @_;
 	unless(defined($UID)) {
 		carp('Refusing to change a iCalendar entry without a UID to change.');
-		return(undef);
+		return(false);
 	}
 	unless(defined($Hash{DTSTART})) {
 		carp('Refusing to change a iCalendar entry without a DTSTART.');
-		return(undef);
+		return(false);
 	}
 	$this->_ChangeEntry($UID,%Hash);
 	return(true);
@@ -355,17 +355,17 @@ sub addfile {
 	if(ref($File)) {	# If we got a reference
 		if(not ref($File) eq 'ARRAY') {
 			carp('Supplied a reference, but the reference is not a ARRAYREF.');
-			return(undef);
+			return(false);
 		}
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
 		unless(defined($File)) {
 			carp('Needs an option: path to the iCalendar file');
-			return(undef);
+			return(false);
 		}
 		unless(-e $File) {
 			carp("\"$File\": does not exist");
-			return(undef);
+			return(false);
 		}
 	}
 	print "DP::iCalendar->addfile(): Currently unsupported.\n";
@@ -392,7 +392,7 @@ sub enable {
 		return(true);
 	}
 	carp("Attempted to enable unknown feature: $feature");
-	return(undef);
+	return(false);
 }
 
 # Purpose: Disable a feature
@@ -405,7 +405,7 @@ sub disable {
 		return(true);
 	}
 	carp("Attempted to disable unknown feature: $feature");
-	return(undef);
+	return(false);
 }
 
 # Purpose: Reload the data
@@ -414,7 +414,7 @@ sub reload {
 	my $this = shift;
 	if($this->{FILETYPE} eq 'ref') {
 		carp('reload called on object created from array ref');
-		return(undef);
+		return(false);
 	}
 	$this->clean();
 	return($this->addfile($this->{FILE}));
@@ -1060,12 +1060,12 @@ sub _RRULE_Handler {
 			$this->{Settings}{UnixTimeLimitWarned} = 1;
 			_WarnOut('Can\'t handle RRULEs for years below 1970 or above 2037');
 		}
-		return(undef);
+		return(false);
 	}
 	my $contents = $this->_GetUIDEntry($UID);
 	# Don't bother doing anything if DTSTART is older than YEAR
 	my ($CalcYear,$CalcMonth,$CalcDay) = iCal_ParseDateTime($contents->{DTSTART});
-	return(undef) if $CalcYear > $YEAR;
+	return(false) if $CalcYear > $YEAR;
 
 	my $RRULE = _RRULE_Parser($contents->{RRULE});
 	my $AddDates;
@@ -1171,14 +1171,14 @@ sub _RRULE_DAILY {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-				return(undef);
+				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-			return(undef);
+			return(false);
 	}
 	
 	# Fetch UNTIL first if it is set
@@ -1255,14 +1255,14 @@ sub _RRULE_WEEKLY {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-				return(undef);
+				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-			return(undef);
+			return(false);
 	}
 	
 	# We will add and eliminate dates as we go. This is inefficient, but functional.
@@ -1402,14 +1402,14 @@ sub _RRULE_MONTHLY {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-				return(undef);
+				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-			return(undef);
+			return(false);
 	}
 	
 	# Fetch UNTIL first if it is set
@@ -1488,14 +1488,14 @@ sub _RRULE_YEARLY {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
 			} else {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-				return(undef);
+				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
 	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-			return(undef);
+			return(false);
 	}
 	# Fetch UNTIL first if it is set
 	if($RRULE->{UNTIL}) {
