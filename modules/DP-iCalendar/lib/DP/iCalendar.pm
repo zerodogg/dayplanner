@@ -279,14 +279,9 @@ sub write {
 		}
 		$file = $this->{FILE};
 	}
-	if($iCalendar) {
-		$this->{dataSource}->writeFile($file);
-		chmod($this->{FILEPERMS},$file);
-		return(true);
-	} else {
-		_OutWarn('Unknown error ocurred, get_rawdata returned false. Attempt to write data from uninitialized object?');
-		return(undef);
-	}
+	$this->{dataSource}->writeFile($file);
+	chmod($this->{FILEPERMS},$file);
+	return(true);
 }
 
 # Purpose: Get raw iCalendar data
