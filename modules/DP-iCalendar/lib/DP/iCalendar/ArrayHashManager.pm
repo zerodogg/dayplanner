@@ -13,7 +13,6 @@
 # Allows simple editing of the array without having to do all sort
 # of dirty stuff manually.
 
-
 use strict;
 use warnings;
 package DP::iCalendar::ArrayHashManager;
@@ -104,9 +103,16 @@ sub changeEntry
 	my $indexed = shift;
 	my $content = shift;
 	my $ival = $this->{index}{$indexed};
-	$this->{array}[$ival] = $content;
-	delete($this->{index}{$indexed});
-	$this->_appendToIndex($ival);
+	if(defined($ival))
+	{
+		$this->{array}[$ival] = $content;
+		delete($this->{index}{$indexed});
+		return $this->_appendToIndex($ival);
+	}
+	else
+	{
+		return $this->addEntry($content);
+	}
 }
 
 # Purpose: Add a new entry, automatically indexing in the process
@@ -116,6 +122,7 @@ sub addEntry
 	my $this = shift;
 	my $newentry = shift;
 	my $i = push(@{$this->{array}},$newentry);
+	$i--;
 	$this->_appendToIndex($i);
 }
 
@@ -141,7 +148,14 @@ sub _appendToIndex
 	my $i = shift;
 	if(not ref($this->{array}[$i]))
 	{
-		warn("DP::iCalendar::ArrayHashManager: Array entry $i was not a reference. Colour me confused. Ignoring.\n");
+		if(defined($this->{array}[$i]))
+		{
+			warn("DP::iCalendar::ArrayHashManager: Array entry $i was not a reference. Colour me confused. Ignoring it. It was: '$this->{array}[$i]'\n");
+		}
+		else
+		{
+			warn("DP::iCalendar::ArrayHashManager: Array entry $i was not a reference. Colour me confused. Ignoring it. It was undef\n");
+		}
 		return;
 	}
 	my $var = $this->{array}[$i]->{$this->{indexBy}}[0];
