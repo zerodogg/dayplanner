@@ -18,6 +18,7 @@ use strict;
 use warnings;
 package DP::iCalendar::StructHandler;
 use constant { true => 1, false => 0 };
+use Carp;
 
 our $VERSION;
 $VERSION = 0.1;
@@ -46,15 +47,71 @@ sub loadFile
 	my $file = shift;
 	if (not -r $file)
 	{
-		warn("DP::iCalendar::StructHandler: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
+		carp("DP::iCalendar::StructHandler: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
 		return false;
 	}
+	open(my $infile, '<',$file);
+	$this->_loadFH($infile);
+}
+
+# Purpose: Load data from a scalar
+# Usage: $object->loadDataString(scalar);
+sub loadDataString
+{
+	my $this = shift;
+	my $string = shift;
+	if(not defined($string))
+	{
+		carp("DP::iCalendar::StructHandler: Cowardly refusing to load undef\n");
+		return;
+	}
+	elsif(not $string =~ /\S/)
+	{
+		carp("DP::iCalendar::StructHandler: Cowardly refusing to load empty string\n");
+		return;
+	}
+	open(my $infile, '<',\$string);
+	$this->_loadFH($infile);
+}
+
+# Purpose: Write the file
+# Usage: $object->writeFile(file);
+sub writeFile
+{
+	my $this = shift;
+	my $file = shift;
+	# Checking SHOULD be done by parent
+	open($this->{FH},'>',$file)
+		or do {
+		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
+		return(false);
+	};
+	$this->_HandleWriteHash($this->{data},undef,0);
+}
+
+# Purpose: Get the raw source
+# Usage: $string = $object->getRaw();
+sub getRaw
+{
+	my $this = shift;
+	$this->{rawOutContents} = '';
+	$this->_HandleWriteHash($this->{data},undef,0);
+	my $rawOut = $this->{rawOutContents};
+	delete($this->{rawOutContents});
+	return($rawOut);
+}
+
+# Purpose: Do the actual parsing of the contents of a filehandle
+# Usage: $this->_loadFH(FH);
+sub _loadFH
+{
+	my $this = shift;
+	my $infile = shift;
 	my $sLevel = 0;
 	my %Struct;
 	my @Nest;
 	my $CurrRef = $this->{data};
 	my $PrevValue;
-	open(my $infile, '<',$file);
 	while($_ = <$infile>)
 	{
 		s/[\r\n]+//;
@@ -117,34 +174,6 @@ sub loadFile
 		}
 	}
 }
-
-# Purpose: Write the file
-# Usage: $object->writeFile(file);
-sub writeFile
-{
-	my $this = shift;
-	my $file = shift;
-	# Checking SHOULD be done by parent
-	open($this->{FH},'>',$file)
-		or do {
-		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
-		return(false);
-	};
-	$this->_HandleWriteHash($this->{data},undef,0);
-}
-
-# Purpose: Get the raw source
-# Usage: $string = $object->getRaw();
-sub getRaw
-{
-	my $this = shift;
-	$this->{rawOutContents} = '';
-	$this->_HandleWriteHash($this->{data},undef,0);
-	my $rawOut = $this->{rawOutContents};
-	delete($this->{rawOutContents});
-	return($rawOut);
-}
-
 
 # Purpose: Handle a new hash in writeFile();
 # Usage: $this->_HandleWriteHash(hashref, filehandle);
