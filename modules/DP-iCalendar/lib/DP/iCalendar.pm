@@ -272,10 +272,6 @@ sub set_exceptions {
 # Usage: $object->write(FILE?);
 sub write {
 	my ($this, $file) = @_;
-	$this->{dataSource}->writeFile($this->{FILE});
-	#print "writing disabled!\n";
-	return;
-	print "FIXME: write(): Should leave the writing to the StructHandler, only do sanity checks\n";
 	if(not defined($file)) {
 		if($this->{FILETYPE} eq 'ref') {
 			carp('write called on object created from array ref');
@@ -283,14 +279,8 @@ sub write {
 		}
 		$file = $this->{FILE};
 	}
-	my $iCalendar = $this->get_rawdata($this->{FILE},0,0);
 	if($iCalendar) {
-		open(my $TARGET, '>', $file) or do {
-			_OutWarn("Unable to open $file for writing: $!");
-			return(undef);
-		};
-		print $TARGET $iCalendar;
-		close($TARGET);
+		$this->{dataSource}->writeFile($file);
 		chmod($this->{FILEPERMS},$file);
 		return(true);
 	} else {
@@ -392,7 +382,6 @@ sub addfile {
 sub clean {
 	carp("DP::iCalendar->clean(): Deprecated. Create a new object instead.");
 	my $this = shift;
-	$this->{RawCalendar} = {};
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->_ClearCalculated();
 	return(true);
