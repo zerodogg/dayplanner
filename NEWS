@@ -4,6 +4,7 @@ Day Planner version history
 Version 0.9 (Unreleased)
 ------------------------
 * Client (dayplanner)
+- Now requires perl 5.8.0 or later
 - Some cleanups in daemon initialization
 - Fixed some issues with the synchronization system and certain locale
   configurations
