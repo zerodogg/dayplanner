@@ -18,4 +18,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import gtk 
+import hildon
 
+def mainwindow:
+	print "STUB"
+
+def addevent:
+	print "STUB"
+
+def editevent:
+	print "STUB"
+
+def ParseSuppliedData(data):
+	print "STUB"
+
+if __name__ == "__main__":
+	window = hildon.Window()
+	window.connect("destroy", gtk.main_quit)
+	label = gtk.Label("Day Planner World!")
+	window.add(label)
+
+	label.show()
+	window.show()
+
+	gtk.main()         
