@@ -21,13 +21,13 @@
 import gtk 
 import hildon
 
-def mainwindow:
+def mainwindow():
 	print "STUB"
 
-def addevent:
+def addevent():
 	print "STUB"
 
-def editevent:
+def editevent():
 	print "STUB"
 
 def ParseSuppliedData(data):
