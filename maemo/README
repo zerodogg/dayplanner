@@ -33,9 +33,9 @@ Items of interest:
 Required python work:
 - Dumb front-end
 - Dirty conversion functions:
-	- Hash transportformat -> internal associative array format
+	- Hash transportformat -> internal dict format
 	- Array transportformat -> internal array format
-	- Internal associative array format -> hash transportformat
+	- Internal dict format -> hash transportformat
 	- Internal array format -> hash transportformat
 
 Required perl work:
