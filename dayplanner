@@ -35,9 +35,11 @@ use constant { true => 1, false => 0 };
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
 use lib "$FindBin::RealBin/modules/";
 # Day Planner-specific libs
 use Date::HolidayParser 0.4;	# Parsing of .holiday files
+use DP::CoreModules;
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::iCalendar::Manager;		# Support for multiple iCalendars using a single object
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
@@ -196,30 +198,6 @@ sub Daemon_SendData {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Services layer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Return better errors than IO::Socket::SSL does.
-# Usage: my $ERROR = IO_Socket_INET_Errors($@);
-#	Errors:
-#		OFFLINE = Network is unreachable
-#		REFUSED = Connection refused
-#		BADHOST = Bad hostname (should often be handled as OFFLINE)
-#		TIMEOUT = The connection timed out
-#		* = Anything else simply returns $@
-sub IO_Socket_INET_Errors {
-	my $Error = shift;
-	if($Error =~ /Network is unreachable/i) {
-		return('OFFLINE');
-	} elsif ($Error =~ /Bad hostname/i) {
-		return('BADHOST');
-	} elsif ($Error =~ /Connection refused/i) {
-		return('REFUSED');
-	} elsif ($Error =~ /timeout/i) {
-		return('TIMEOUT');
-	} else {
-		DPIntWarn("Unknown IO::Socket::SSL error: $Error");
-		return($Error);
-	}
-}
 
 # Purpose: Output an error occurring with DPS
 # Usage: DPS_Error(User_Error, Technical_Error)
@@ -911,152 +889,6 @@ sub LoadCalendar {
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
 sub PrintHelp {
 	printf "%-4s %-16s %s\n", $_[0], $_[1], $_[2];
-}
-
-# Purpose: Get OS/distro version information
-# Usage: print "OS: ",GetDistVer(),"\n";
-sub GetDistVer {
-	# Try LSB first
-	my %LSB;
-	if (-e '/etc/lsb-release')
-	{
-		LoadConfigFile('/etc/lsb-release',\%LSB);
-		if(defined($LSB{DISTRIB_ID}) and $LSB{DISTRIB_ID} =~ /\S/ and defined($LSB{DISTRIB_RELEASE}) and $LSB{DISTRIB_RELEASE} =~ /\S/)
-		{
-			my $ret = '/etc/lsb-release: '.$LSB{DISTRIB_ID}.' '.$LSB{DISTRIB_RELEASE};
-			if(defined($LSB{DISTRIB_CODENAME}))
-			{
-				$ret .= ' ('.$LSB{DISTRIB_CODENAME}.')';
-			}
-			return($ret);
-		}
-	}
-	# GNU/Linux and BSD
-	foreach(qw/mandriva mandrakelinux mandrake fedora redhat red-hat ubuntu debian gentoo suse distro dist slackware freebsd openbsd netbsd dragonflybsd NULL/)
-	{
-		if (-e "/etc/$_-release" or -e "/etc/$_-version" or -e "/etc/${_}_version" or $_ eq "NULL") {
-			my ($DistVer, $File, $VERSION_FILE);
-			if(-e "/etc/$_-release") {
-				$File = "$_-release";
-				open($VERSION_FILE, '<', "/etc/$_-release");
-				$DistVer = <$VERSION_FILE>;
-			} elsif (-e "/etc/$_-version") {
-				$File = "$_-version";
-				open($VERSION_FILE, '<', "/etc/$_-release");
-				$DistVer = <$VERSION_FILE>;
-			} elsif (-e "/etc/${_}_version") {
-				$File = "${_}_version";
-				open($VERSION_FILE, '<', "/etc/${_}_version");
-				$DistVer = <$VERSION_FILE>;
-			} elsif ($_ eq 'NULL') {
-				last unless -e '/etc/version';
-				$File = 'version';
-				open($VERSION_FILE, '<', '/etc/version');
-				$DistVer = <$VERSION_FILE>;
-			}
-			close($VERSION_FILE);
-			chomp($DistVer);
-			return("/etc/$File: $DistVer");
-		}
-	}
-	# Didn't find anything yet. Get uname info
-	my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
-	if ($sysname =~ /darwin/i) {
-		my $DarwinName;
-		my $DarwinOSVer;
-		# Darwin kernel, try to get OS X info.
-		if(InPath('sw_vers')) {
-			if(eval('use IPC::Open2;1')) {
-				if(open2(my $SW_VERS, my $NULL_IN, 'sw_vers')) {
-					while(<$SW_VERS>) {
-						chomp;
-						if (s/^ProductName:\s+//gi) {
-							$DarwinName = $_;
-						} elsif(s/^ProductVersion:\s+//) {
-							$DarwinOSVer = $_;
-						}
-					}
-					close($SW_VERS);
-				}
-			}
-		}
-		if(defined($DarwinOSVer) and defined($DarwinName)) {
-			return("$DarwinName $DarwinOSVer ($machine)");
-		}
-	}
-	# Detect additional release/version files
-	my $RelFile;
-	foreach(glob('/etc/*'))
-	{
-		next if not /(release|version)/i;
-		next if m/\/(subversion|lsb-release)$/;
-		if ($RelFile)
-		{
-			$RelFile .= ', '.$_;
-		}
-		else
-		{
-			$RelFile = ' ('.$_;
-		}
-	}
-	if ($RelFile)
-	{
-		$RelFile .= ')';
-	}
-	else
-	{
-		$RelFile = '';
-	}
-	# Some distros set a LSB DISTRIB_ID but no version, try DISTRIB_ID
-	# along with the kernel info.
-	if ($LSB{DISTRIB_ID})
-	{
-		return($LSB{DISTRIB_ID}."/Unknown$RelFile ($sysname $release $version $machine)");
-	}
-	return("Unknown$RelFile ($sysname $release $version $machine)");
-}
-
-# Purpose: Launch a web browser with the supplied URL
-# Usage: LaunchWebBrowser(URL);
-sub LaunchWebBrowser {
-	my $URL = shift;
-	# Check if URL is a ref. If it is that means we're being used in a gtk2 callback
-	# and the first arg is the object we're called from, so shift again to the second
-	# arg we recieved which is the real url.
-	if(ref($URL)) {
-		$URL = shift;
-	}
-	my $Browser;
-	# First check for the BROWSER env var
-	if(defined($ENV{BROWSER}) and length($ENV{BROWSER})) {
-		# Allow it to be a :-seperated variable - this doesn't slow us down
-		# and is future-proof(tm)
-		foreach my $Part (split(/:/,$ENV{BROWSER}))
-		{
-			if(InPath($Part) or -x $Part) {
-				$Browser = $Part;
-			}
-		}
-	}
-	# Then check for various known file launchers and web browsers
-	if(not $Browser) {
-		foreach(qw/xdg-open gnome-open exo-open mozffremote mozilla-firefox firefox iceweasel epiphany galeon midori mozilla seamonkey konqueror dillo opera www-browser/) {
-			if(InPath($_)) {
-				$Browser = $_;
-				last;
-			}
-		}
-	}
-	# Then launch if found, or output an error if not found
-	if($Browser) {
-		my $PID = fork();
-		if(not $PID) {
-			exec($Browser,$URL);
-		}
-	} else {
-		# This should very rarely happen
-		DPIntWarn("Failed to detect any browser to launch for the URL $URL");
-	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2985,22 +2817,6 @@ sub QuitSub {
 	exit(0);
 }
 
-# Purpose: Report a bug
-# Usage: ReportBug();
-sub ReportBug
-{
-	my $BugUrl = 'http://www.day-planner.org/index.php/development/bugs/?b_version='.$Version;
-	if ($VersionName eq 'SVN')
-	{
-		$BugUrl .= '&b_issvn=1';
-	}
-	else
-	{
-		$BugUrl .= '&b_issvn=0';
-	}
-	LaunchWebBrowser($BugUrl);
-}
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI calendar functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3066,50 +2882,6 @@ sub CreateDetailsWidget {
 			}
 		});
 	return($FT_Expander);
-}
-
-# Purpose: Parse the contents of a text entry field containing various dates
-# 		and return an arrayref of dates in the format DD.MM.YYYY
-# Usage: my $Ref = ParseEntryField(TEXT ENTRY OBJECT);
-sub ParseEntryField {
-	my $Field = shift;
-	# First get the text
-	my $FieldText = $Field->get_text();
-	# If it is empty then return an empty array
-	if(not $FieldText =~ /\S/) {
-		return([]);
-	}
-	my @ReturnArray;
-	# Parse the entry field
-	foreach my $Text (split(/[,|\s]+/, $FieldText)) {
-		$Text =~ s/\s+//g;
-		if($Text =~ /^\d+\.\d+.\d\d\d\d$/) {
-			push(@ReturnArray, $Text);
-		} else {
-			DPIntWarn("Unrecognized date string (should be DD.MM.YYYY): $Text");
-		}
-	}
-	return(\@ReturnArray);
-}
-
-# Purpose: Parse a date string and return various date fields
-# Usage: my ($Year, $Month, $Day) = ParseDateString(STRING);
-sub ParseDateString {
-	my $String = shift;
-	# This function is currently stupid, so it doesn't really support more than
-	# one format. It is also very strict about that format.
-	# This can easily be improved though.
-	my $Year = $String;
-	my $Month = $String;
-	my $Day = $String;
-	$Year =~ s/^\d+\.\d+\.(\d\d\d\d)$/$1/;
-	$Month =~ s/^\d+\.(\d+)\.\d\d\d\d$/$1/;
-	$Day =~ s/^(\d+).*$/$1/;
-
-	# Drop leading zeros from returning
-	$Month =~ s/^0//;
-	$Day =~ s/^0//;
-	return($Year,$Month,$Day);
 }
 
 # Purpose: Add a date to a text field
@@ -5164,43 +4936,6 @@ sub InitDPCore {
 	# Set the redraw timer and populate the upcoming events widget
 	PopulateUpcomingEvents();
 	Set_DayChangeTimer();
-}
-
-# Purpose: Detect the user config  directory
-# Usage: DetectConfDir();
-sub DetectConfDir {
-	# First detect the HOME directory, and set $ENV{HOME} if successfull,
-	# if not we just fall back to the value of $ENV{HOME}.
-	my $HOME = getpwuid($>);
-	if(-d $HOME) {
-		$ENV{HOME} = $HOME;
-	}
-	# Compatibility mode, using the old conf dir
-	if(-d "$ENV{HOME}/.dayplanner") {
-		return("$ENV{HOME}/.dayplanner");
-	}
-	# Check for XDG_CONFIG_HOME in the env
-	my $XDG_CONFIG_HOME;
-	if(defined($ENV{XDG_CONFIG_HOME})) {
-		$XDG_CONFIG_HOME = $ENV{XDG_CONFIG_HOME};
-	} else {
-		if(defined($ENV{HOME}) and length($ENV{HOME})) {
-			# Verify that HOME is set properly
-			if(not -d $ENV{HOME}) {
-				DP_InitI18n();
-				print($i18n->get_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
-				Gtk2Init();
-				DPError($i18n->get_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
-				die("\n");
-			}
-			$XDG_CONFIG_HOME = "$ENV{HOME}/.config";
-		} else {
-			Gtk2Init();
-			DPError($i18n->get_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
-			die($i18n->get_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
-		}
-	}
-	return("$XDG_CONFIG_HOME/dayplanner");
 }
 
 # Get commandline options
