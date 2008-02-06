@@ -101,7 +101,7 @@ sub InitDataPaths
 	# First find the conf dir
 	if(not $DataDir)
 	{
-		$DataDir = DetectConfDir();
+		$DataDir = DetectConfDir(true);
 	}
 	# Set the path to the socket and logfile
 	$SocketPath = $DataDir . '/' . $SocketName;
@@ -254,7 +254,7 @@ sub OpenSocket {
 					Local	=> $SocketPath,
 					Type	=> SOCK_STREAM,
 					Listen	=> 5,
-			) or die "Unable to create a new socket: $@\n";
+			) or die "Unable to create a new socket: $@($!)\n";
 	# Enforce strict permissions
 	chmod(oct(600),$SocketPath);
 	# Trap SIGPIPE
