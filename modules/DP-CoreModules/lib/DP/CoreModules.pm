@@ -21,6 +21,7 @@ use warnings;
 
 our $Version = '0.9';
 my $VersionName = 'SVN';
+my %RuntimeModules;		# Keeps track of modules loaded during runtime
 
 # NOTE:
 # THIS DOES NOT DEFINE A PACKAGE, ON PURPOSE!
@@ -564,5 +565,28 @@ sub GetUpcomingEventsString
 		}
 	}
 	return($NewUpcoming);
+}
+
+# Purpose: Load a module during runtime or display an error if we can't
+# Usage: runtime_use('MODULENAME',SILENT?);
+# 	If not in silent mode it will output an error about a missing core module
+# 	and explain that the installation is corrupt.
+sub runtime_use
+{
+	my $module = shift;
+	# Return if it is present in the hash, regardless of true/false value.
+	return($RuntimeModules{$module}) if defined($RuntimeModules{$module});
+	if(eval("use $module; 1")) {
+		$RuntimeModules{$module} = true;
+		return(true);
+	} else {
+		$RuntimeModules{$module} = false;
+		my $silent = shift;
+		if(not $silent) {
+			DPIntWarn("FATAL: Module missing: $module");
+			DPError(i18nwrapper_advanced("A fatal error has occurred. Your installation of Day Planner is missing some files. This makes certain functions in Day Planner unusable. Please re-install Day Planner. See %(website) for more information on how to download and re-install Day Planner.\nDay Planner will continue to run but it is likely to crash.\n\n(The missing file was: %(module))", { website => 'http://www.day-planner.org/', module => $module }));
+		}
+		return(false);
+	}
 }
 1;
