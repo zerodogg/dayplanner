@@ -66,7 +66,7 @@ my $RCSRev = '$Id$';
 # The iCalendar object
 my $iCalendar;
 # The Day Planner directory
-my $DataDir; 
+my $SaveToDir; 
 # The calendar filename
 my $CalendarFile = 'calendar.ics';
 # The socket path
@@ -78,6 +78,13 @@ my $ConnectionSelector;
 # The socket filename
 my $OrigSocketName = 'Data_Servant';
 my $SocketName = $OrigSocketName;
+my $ConfigFile = 'dayplanner.maemo.conf';
+
+my %UserConfig;
+
+# Change this to make it daemonize properly
+my $NoFork = true;
+my $ForceFork = false;
 
 # Purpose: Output log information.
 # Usage: DaemonLog(LEVEL,Message);
@@ -99,12 +106,16 @@ sub DaemonLog
 sub InitDataPaths
 {
 	# First find the conf dir
-	if(not $DataDir)
+	if(not $SaveToDir)
 	{
-		$DataDir = DetectConfDir(true);
+		$SaveToDir = DetectConfDir(true);
+		if(not -d $SaveToDir)
+		{
+			P_CreateSaveDir($SaveToDir);
+		}
 	}
 	# Set the path to the socket and logfile
-	$SocketPath = $DataDir . '/' . $SocketName;
+	$SocketPath = $SaveToDir . '/' . $SocketName;
 }
 
 # Purpose: Go into daemon mode
@@ -139,24 +150,32 @@ sub LoadData
 	}
 	else
 	{
-		$iCalendar = DP::iCalendar->new($DataDir.'/'.$CalendarFile);
-		if ($iCalendar)
+		if (-e $SaveToDir.'/'.$CalendarFile)
 		{
-			DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
+			$iCalendar = DP::iCalendar->new($SaveToDir.'/'.$CalendarFile);
 		}
 		else
 		{
-			$iCalendar = DP::iCalendar->newfile($DataDir.'/'.$CalendarFile);
-			if ($iCalendar)
-			{
-				DaemonLog(3, 'Data file did not exist. Called ->newfile('.$DataDir.'/'.$CalendarFile.');');
-			}
-			else
+			$iCalendar = DP::iCalendar->newfile($SaveToDir.'/'.$CalendarFile);
+			if (not $iCalendar)
 			{
 				die("FATAL: Unable to create a ->new() or a ->newfile() DP::iCalendar object!\n");
 			}
 		}
 	}
+}
+
+# Purpose: Write the configuration file
+# Usage: WriteConfig(DIRECTORY, FILENAME);
+sub WriteConfig {
+	P_WriteConfig($SaveToDir,$ConfigFile,%UserConfig);
+}
+
+# Purpose: Load the configuration file
+# Usage: LoadConfig();
+sub LoadConfig {
+	%UserConfig = P_LoadConfig($SaveToDir,$ConfigFile);
+	return(1);
 }
 
 # Purpose: This is the main loop of the daemon. It should never return.
@@ -168,17 +187,11 @@ sub MainLoop
 	DaemonLog(5,'Entering main loop');
 	while(true)
 	{
-		my $SleepTime = FindSleepDuration();
-		DaemonLog(5,'Going to sleep for '.$SleepTime.' seconds');
 		# Block until one handle is available or it times out
-		my @Ready_Handles = $ConnectionSelector->can_read($SleepTime);
-		# Timeout is true if no handle was processed
-		my $Timeout = 1;
+		my @Ready_Handles = $ConnectionSelector->can_read();
 		DaemonLog(5,'Main loop processing');
 		foreach my $Handle (@Ready_Handles)
 		{
-			# We didn't timeout
-			$Timeout = 0;
 			# If the handle is $ServerSocket then it's a new connection
 			if ($Handle eq $ServerSocket)
 			{
@@ -195,7 +208,7 @@ sub MainLoop
 				if ($Command)
 				{
 					chomp($Command);
-					my ($Reply) = CommandHandler($Command);
+					my ($Reply) = CommandHandler($Command,$Handle);
 					DaemonLog(5,'Returning '.$Reply);
 					print $Handle "$Reply\n";
 				} 
@@ -206,10 +219,6 @@ sub MainLoop
 					DaemonLog(4,'Handle removed ',$Handle);
 				}
 			}
-		}
-		if($Timeout)
-		{
-			DaemonLog(5,'No handle had anything to say');
 		}
 	}
 }
@@ -223,21 +232,14 @@ sub InitDaemon
 	InitDataPaths();
 	# Now try to open our socket. If that fails OpenSocket() will die() for us.
 	OpenSocket();
-	#if ($ForceFork or not $NoFork)
-	#{
+	if ($ForceFork or not $NoFork)
+	{
 		Daemonize();
-		#}
+	}
 	# Load our data
 	LoadData();
 	# Load the Day Planner config
-	LoadDPConfig();
-	# Calculate notifications
-	CalculateNotifications();
-	# Load the previous state information
-	LoadDaemonState();
-	# Launch notifiers for events that has already occurred but that the user has
-	# not been notified about.
-	LaunchPrevNotifications();
+	LoadConfig();
 	# Okay, all initialiation has been done. Just rest in the main loop.
 	MainLoop();
 	# This should never happen
@@ -265,6 +267,40 @@ sub OpenSocket {
 	$ConnectionSelector->add($ServerSocket);
 
 	DaemonLog(3,'Now listening on '.$SocketPath);
+}
+
+# Purpose: Handle incoming daemon commands
+# Usage: $Return = CommandHandler(LINE,HANDLE);
+sub CommandHandler 
+{
+	$_ = shift;
+	my $Handle = shift;
+	DaemonLog(5,$_);
+	my $PID = $_;
+	$PID =~ s/^(\d+)\s+(.*)/$1/;
+	unless ($PID) {
+		DaemonLog(3,"Malformed request: $_");
+		return('ERR MALFORMED_REQUEST');
+	}
+	study();
+	s/^(\d+)\s+//;
+	if(/^SHUTDOWN/)
+	{
+		Shutdown("Requested by $PID");
+	}
+	elsif (/^VERSION/)
+	{
+		return($Version);
+	}
+	elsif(/^PING/)
+	{
+		return('PONG');
+	}
+	else
+	{
+		return('ERR INVALID_COMMAND');
+	}
+	
 }
 
 InitDaemon();
