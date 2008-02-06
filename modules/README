@@ -9,6 +9,9 @@ Date::HolidayParser	A parser for .holiday files. Day planner uses it to
 DP::iCalendar		The iCalendar format parser used by Day Planner.
 DP::GeneralHelpers	The library providing useful general helper functions
 			to Day Planner
+DP::CoreModules	The main Day Planner functions, split into a module for
+				use between versions. Nearly all non-gui code that is not
+				in any of the other modules
 --
 IO::Conduit		A work-in-progress perl interface to Conduit
 			- http://www.conduit-project.org/
