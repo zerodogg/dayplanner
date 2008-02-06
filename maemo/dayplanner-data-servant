@@ -303,4 +303,57 @@ sub CommandHandler
 	
 }
 
+# Purpose: Convert to communication hash format
+# Usage: GetComHash(HASH);
+sub GetComHash
+{
+	my %Hash = shift;
+	my $ret = 'HASH: ';
+	foreach my $key(%Hash)
+	{
+		$Hash{$key} = GetComString($Hash{$key});
+	}
+	foreach my $key(%Hash)
+	{
+		# FIXME
+		if(ref($Hash{$key}))
+		{
+			die("UNHANDLED HASH ELEMENT IS REFERENCE!");
+		}
+		$ret .= 'k:'.$key.'v:'.$Hash{$key}.'{DPSEP}';
+	}
+	return $ret;
+}
+
+# Purpose: Convert to communication array format
+# Usage: GetComArray(ARRAY);
+sub GetComArray
+{
+	my $ret = 'ARRAY: ';
+	foreach my $v (@_)
+	{
+		$ret .= GetComString($v).'{DPSEP}';
+	}
+	return $ret;
+}
+
+# Purpose: Convert to communication string format
+# Usage: GetComString(STRING);
+sub GetComString
+{
+	$_ = shift;
+	s/\n/{DPNL}/g;
+	s/\r//g;
+	return($_);
+}
+
+# Purpose: Convert from communication string format
+# Usage: UnGetComString(STRING);
+sub UnGetComString
+{
+	$_ = shift;
+	s/{DPNL}/\n/g;
+	return($_);
+}
+
 InitDaemon();
