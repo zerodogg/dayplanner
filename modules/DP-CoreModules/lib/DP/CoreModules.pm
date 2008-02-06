@@ -24,19 +24,25 @@ my $VersionName = 'SVN';
 
 # NOTE:
 # THIS DOES NOT DEFINE A PACKAGE, ON PURPOSE!
+# Some functions start with P_, this is because the "proper" function is here,
+# while other components might have convenience wrappers.
 
 # Purpose: Detect the user config  directory
-# Usage: DetectConfDir();
+# Usage: DetectConfDir(MAEMO?);
 sub DetectConfDir {
+	my $Maemo = shift;
 	# First detect the HOME directory, and set $ENV{HOME} if successfull,
 	# if not we just fall back to the value of $ENV{HOME}.
 	my $HOME = getpwuid($>);
 	if(-d $HOME) {
 		$ENV{HOME} = $HOME;
 	}
-	# Compatibility mode, using the old conf dir
-	if(-d "$ENV{HOME}/.dayplanner") {
-		return("$ENV{HOME}/.dayplanner");
+	if(not $Maemo)
+	{
+		# Compatibility mode, using the old conf dir
+		if(-d "$ENV{HOME}/.dayplanner") {
+			return("$ENV{HOME}/.dayplanner");
+		}
 	}
 	# Check for XDG_CONFIG_HOME in the env
 	my $XDG_CONFIG_HOME;
@@ -62,7 +68,14 @@ sub DetectConfDir {
 			die();
 		}
 	}
-	return("$XDG_CONFIG_HOME/dayplanner");
+	if ($Maemo)
+	{
+		return("$XDG_CONFIG_HOME/dayplanner.maemo");
+	}
+	else
+	{
+		return("$XDG_CONFIG_HOME/dayplanner");
+	}
 }
 
 # Purpose: Parse a date string and return various date fields
@@ -292,5 +305,91 @@ sub LaunchWebBrowser {
 		# This should very rarely happen
 		DPIntWarn("Failed to detect any browser to launch for the URL $URL");
 	}
+}
+
+# Purpose: Write the configuration file
+# Usage: P_WriteConfig(DIRECTORY, FILENAME,HASH);
+sub P_WriteConfig {
+	# The parameters
+	my $Dir = shift;
+	my $File = shift;
+	my %UserConfig = @_;
+	# Verify the options first
+	unless(defined($UserConfig{Events_NotifyPre}) and length($UserConfig{Events_NotifyPre})) {
+		$UserConfig{Events_NotifyPre} = '30min';
+	}
+	unless(defined($UserConfig{Events_DayNotify}) and length($UserConfig{Events_DayNotify})) {
+		$UserConfig{Events_DayNotify} = 0;
+	}
+	if(not defined($UserConfig{DPS_enable}) or not length($UserConfig{DPS_enable})) {
+		$UserConfig{DPS_enable} = 0;
+	}
+	if(not defined($UserConfig{HTTP_Calendars}) or not length($UserConfig{HTTP_Calendars}))
+	{
+		$UserConfig{HTTP_Calendars} = ' ';
+	}
+	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
+		$UserConfig{DPS_pass} = encode_base64(encode_base64($UserConfig{DPS_pass}));
+		chomp($UserConfig{DPS_pass});
+	}
+
+	my %Explanations = (
+		Events_NotifyPre => "If Day Planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
+		Events_DayNotify => "If Day Planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
+		HTTP_Calendars => 'The space-seperated list of http calendar subscriptions',
+		DPS_host => 'The DPS host to connect to',
+		DPS_pass => 'The password',
+		DPS_port => 'The port to connect to on the DPS server',
+		DPS_user => 'The username',
+		DPS_enable => 'If DPS (Day Planner services) is enabled or not (1/0)',
+		HEADER => "Day Planner $Version configuration file",
+	);
+	
+	# Write the actual file
+	WriteConfigFile("$Dir/$File", \%UserConfig, \%Explanations);
+
+	# Tell the daemon to reload the config file
+	# FIXME: Need some generic method to check.
+#	if($DaemonInitialized) {
+#		Daemon_SendData('RELOAD_CONFIG');
+#	}
+	# Reset DPS_pass
+	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
+		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
+	}
+	# Enforce perms
+	chmod(oct(600),"$Dir/$File");
+	return(%UserConfig);
+}
+
+# Purpose: Load the configuration file
+# Usage: P_LoadConfig(DIR,FILE,HASH);
+sub P_LoadConfig {
+	# The parameters
+	my $Dir = shift;
+	my $File = shift;
+	my %UserConfig;
+	# If it doesn't exist then we just let WriteConfig handle it
+	unless (-e "$Dir/$File") {
+		WriteConfig($Dir, $File);
+		return(1);
+	}
+	
+	my %OptionRegexHash = (
+			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
+			Events_DayNotify => '^\d+$',
+			DPS_enable => '^(1|0)$',
+			DPS_port => '^\d+$',
+			DPS_user => '^.+$',
+			DPS_host => '^.+$',
+			DPS_pass => '^.+$',
+			HTTP_Calendars => '.?',
+		);
+
+	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash,1);
+	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
+		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
+	}
+	return(%UserConfig);
 }
 1;
