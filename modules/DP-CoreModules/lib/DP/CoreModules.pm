@@ -125,6 +125,7 @@ sub ParseEntryField {
 	}
 	return(\@ReturnArray);
 }
+
 # Purpose: Return better errors than IO::Socket::SSL does.
 # Usage: my $ERROR = IO_Socket_INET_Errors($@);
 #	Errors:
@@ -376,7 +377,7 @@ sub P_LoadConfig {
 	# If it doesn't exist then we just let WriteConfig handle it
 	unless (-e "$Dir/$File") {
 		WriteConfig($Dir, $File);
-		return(1);
+		return({});
 	}
 	
 	my %OptionRegexHash = (
