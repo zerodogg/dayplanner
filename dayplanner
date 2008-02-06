@@ -2391,21 +2391,6 @@ sub PopulateUpcomingEvents {
 	}
 }
 
-# Purpose: Detect the path to the image file(s) supplied. Returns the path to the
-#		first one found or undef
-# Usage: $Image = DetectImage(image1, image2);
-sub DetectImage {
-	my $I_Am_At = $FindBin::RealBin;
-	foreach my $Image (@_) {
-		foreach my $Dir ("$I_Am_At/art", $I_Am_At, '/usr/share/dayplanner', '/usr/local/dayplanner', '/usr/local/share/dayplanner', '/usr/share/dayplanner/art', '/usr/local/dayplanner/art', '/usr/local/share/dayplanner/art', '/usr/share/icons/large', '/usr/share/icons', '/usr/share/icons/mini') {
-			if (-e "$Dir/$Image") {
-				return("$Dir/$Image");
-			}
-		}
-	}
-	return(undef);
-}
-
 # Purpose: Delete the event currently selected in the eventlist
 # Usage: DeleteEvent();
 sub DeleteEvent {
