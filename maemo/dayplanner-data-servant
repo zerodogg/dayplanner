@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 # dayplanner-data-servant
 # Data servant for the Day Planner maemo client
+#
+# This is a sort of dayplanner-daemon meets dayplanner
 # Copyright (C) Eskild Hustvedt 2008
 #
 # $Id$
@@ -21,3 +23,248 @@
 use strict;
 use warnings;
 
+# We use IO::Socket for communication with dayplanenr and
+# IO::Select to wait for connections and a timeout
+use IO::Socket;
+use IO::Select;
+# These constants prettify things
+use constant { true => 1, false => 0 };
+# Parameter parser
+use Getopt::Long;
+Getopt::Long::Configure ('bundling', 'prefix_pattern=(--|-)');
+# Used to locate the notifier
+use Cwd;
+use File::Basename;
+# We need mktime and setsid
+use POSIX qw/ mktime setsid/;		# We need setsid();
+# Used to locate our own modules
+use FindBin;			# So that we can detect module dirs during runtime
+# This here is done so that we can use local versions of our libs
+use lib "$FindBin::RealBin/modules/";
+use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
+use lib "$FindBin::RealBin/../modules/";
+use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/../modules/DP-CoreModules/lib/";
+# Day Planner-specific libs
+use DP::iCalendar qw(iCal_ConvertToUnixTime); # iCalendar support
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
+use DP::CoreModules;
+
+# The path to us
+my $Self = $0;
+# Set the name
+$0 = 'dayplanner-data-servant';
+# Our version number
+my $Version = 0.9;
+# The version name. Used for SVN detection
+my $VersionName = 'SVN';
+# Our RCS revision
+my $RCSRev = '$Id$';
+# The iCalendar object
+my $iCalendar;
+# The Day Planner directory
+my $DataDir; 
+# The calendar filename
+my $CalendarFile = 'calendar.ics';
+# The socket path
+my $SocketPath;
+# The socket FH
+my $ServerSocket;
+# The connection selection object
+my $ConnectionSelector;
+# The socket filename
+my $OrigSocketName = 'Data_Servant';
+my $SocketName = $OrigSocketName;
+
+# Purpose: Output log information.
+# Usage: DaemonLog(LEVEL,Message);
+# 	LEVEL is an int:
+# 	0  - Critical
+# 	1  - Error
+# 	2  - Warning
+#   3  - Notification
+# 	4  - Debugging
+#   5  - Calltrace
+sub DaemonLog
+{
+	print $_[1]."\n";
+	return;
+}
+
+# Purpose: Initialize data paths
+# Usage: InitDataPaths();
+sub InitDataPaths
+{
+	# First find the conf dir
+	if(not $DataDir)
+	{
+		$DataDir = DetectConfDir();
+	}
+	# Set the path to the socket and logfile
+	$SocketPath = $DataDir . '/' . $SocketName;
+}
+
+# Purpose: Go into daemon mode
+# Usage: Daemonize();
+sub Daemonize
+{
+	my $Logfile = '/dev/null';
+	# Fork
+	my $PID = fork;
+	exit if $PID;
+	die "Unable to fork: $!\nYou may want to try --nofork\n" if not defined($PID);
+	# Create a new session
+	setsid() or DaemonLog(1,"Unable to start a new POSIX session (setsid()): $!");
+	# Change dir to / - this to avoid clogging up a mountpoint
+	chdir('/') or DaemonLog(1,"Unable to chdir to /: $!");
+	# (We finish the daemonizing after loading the config and calendar)
+	# FIXME
+	open(STDIN, '<', '/dev/null') or DaemonLog(1,"Couldn't reopen STDIN to /dev/null: $!");
+#	open(STDOUT, '>>', $Logfile) or DaemonLog(1,"Couldn't reopen STDOUT to $Logfile: $!");
+#	open(STDERR, '>>', $Logfile) or DaemonLog(1,"Couldn't reopen STDERR to $Logfile: $!");
+}
+
+# Purpose: Load or reload the calendar data
+# Usage: LoadData();
+sub LoadData
+{
+	if($iCalendar)
+	{
+		DaemonLog(5,'Data reloaded');
+		$iCalendar->reload();
+		CalculateNotifications();
+	}
+	else
+	{
+		$iCalendar = DP::iCalendar->new($DataDir.'/'.$CalendarFile);
+		if ($iCalendar)
+		{
+			DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
+		}
+		else
+		{
+			$iCalendar = DP::iCalendar->newfile($DataDir.'/'.$CalendarFile);
+			if ($iCalendar)
+			{
+				DaemonLog(3, 'Data file did not exist. Called ->newfile('.$DataDir.'/'.$CalendarFile.');');
+			}
+			else
+			{
+				die("FATAL: Unable to create a ->new() or a ->newfile() DP::iCalendar object!\n");
+			}
+		}
+	}
+}
+
+# Purpose: This is the main loop of the daemon. It should never return.
+# Usage: MainLoop();
+# 	The data should be loaded, notifications calculated and socket opened before running this
+#    - to put it simply. Never run directly. Run DaemonInit();
+sub MainLoop
+{
+	DaemonLog(5,'Entering main loop');
+	while(true)
+	{
+		my $SleepTime = FindSleepDuration();
+		DaemonLog(5,'Going to sleep for '.$SleepTime.' seconds');
+		# Block until one handle is available or it times out
+		my @Ready_Handles = $ConnectionSelector->can_read($SleepTime);
+		# Timeout is true if no handle was processed
+		my $Timeout = 1;
+		DaemonLog(5,'Main loop processing');
+		foreach my $Handle (@Ready_Handles)
+		{
+			# We didn't timeout
+			$Timeout = 0;
+			# If the handle is $ServerSocket then it's a new connection
+			if ($Handle eq $ServerSocket)
+			{
+				my $NewClient = $ServerSocket->accept();
+				$ConnectionSelector->add($NewClient);
+				DaemonLog(4,'New handle '.$NewClient);
+			} 
+			# Handle isn't $ServerSocket, it's an existing connection trying to tell us something
+			else
+			{
+				# What is it trying to tell us?
+				my $Command = <$Handle>;
+				# If it is defined then it's a command
+				if ($Command)
+				{
+					chomp($Command);
+					my ($Reply) = CommandHandler($Command);
+					DaemonLog(5,'Returning '.$Reply);
+					print $Handle "$Reply\n";
+				} 
+				# If it isn't, then it closed the connection
+				else
+				{
+					$ConnectionSelector->remove($Handle);
+					DaemonLog(4,'Handle removed ',$Handle);
+				}
+			}
+		}
+		if($Timeout)
+		{
+			DaemonLog(5,'No handle had anything to say');
+		}
+	}
+}
+
+# Purpose: Perform initialization, then rest in the main loop
+# Usage: InitDaemon();
+sub InitDaemon
+{
+	DaemonLog(5,'Initializing');
+	# Initialize data paths
+	InitDataPaths();
+	# Now try to open our socket. If that fails OpenSocket() will die() for us.
+	OpenSocket();
+	#if ($ForceFork or not $NoFork)
+	#{
+		Daemonize();
+		#}
+	# Load our data
+	LoadData();
+	# Load the Day Planner config
+	LoadDPConfig();
+	# Calculate notifications
+	CalculateNotifications();
+	# Load the previous state information
+	LoadDaemonState();
+	# Launch notifiers for events that has already occurred but that the user has
+	# not been notified about.
+	LaunchPrevNotifications();
+	# Okay, all initialiation has been done. Just rest in the main loop.
+	MainLoop();
+	# This should never happen
+	die('FATAL ERROR: MainLoop() returned');
+}
+
+# Purpose: Open our main communication socket
+# Usage: OpenSocket();
+sub OpenSocket {
+	if (-e $SocketPath) {
+		die("$SocketPath: existed\n");
+	}
+	$ServerSocket = IO::Socket::UNIX->new(
+					Local	=> $SocketPath,
+					Type	=> SOCK_STREAM,
+					Listen	=> 5,
+			) or die "Unable to create a new socket: $@\n";
+	# Enforce strict permissions
+	chmod(oct(600),$SocketPath);
+	# Trap SIGPIPE
+	$SIG{PIPE} = \&SigPipeHandler;
+	# Create a new select handle for reading
+	$ConnectionSelector = IO::Select->new();
+	# Add the main server
+	$ConnectionSelector->add($ServerSocket);
+
+	DaemonLog(3,'Now listening on '.$SocketPath);
+}
+
+InitDaemon();
