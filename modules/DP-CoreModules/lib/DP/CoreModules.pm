@@ -27,6 +27,12 @@ my $VersionName = 'SVN';
 # Some functions start with P_, this is because the "proper" function is here,
 # while other components might have convenience wrappers.
 
+# Purpose: Find out if a command is in PATH or not
+# Usage: InPath(COMMAND);
+sub InPath {
+	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
+}
+
 # Purpose: Detect the user config  directory
 # Usage: DetectConfDir(MAEMO?);
 sub DetectConfDir {
@@ -391,5 +397,23 @@ sub P_LoadConfig {
 		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
 	}
 	return(%UserConfig);
+}
+
+# Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
+# Usage: CreateSaveDir();
+sub P_CreateSaveDir {
+	my $SaveToDir = shift;
+	if(not -e $SaveToDir)
+	{
+		runtime_use('File::Path');
+		File::Path::mkpath($SaveToDir) or do {
+			# FIXME: I18n
+#				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
+				unless(-d $SaveToDir) {
+					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
+				}
+		};
+		chmod(oct(700),$SaveToDir);
+	}
 }
 1;

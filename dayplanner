@@ -644,17 +644,7 @@ sub LoadConfig {
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
 # Usage: CreateSaveDir();
 sub CreateSaveDir {
-	if(not -e $SaveToDir)
-	{
-		runtime_use('File::Path');
-		File::Path::mkpath($SaveToDir) or do {
-				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
-				unless(-d $SaveToDir) {
-					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
-				}
-		};
-		chmod(oct(700),$SaveToDir);
-	}
+	return P_CreateSaveDir($SaveToDir);
 }
 
 # Purpose: Perform certain commands on first startup
@@ -1545,12 +1535,6 @@ sub Day_Changed_Event {
 sub Set_DayChangeTimer {
 	# Set the timer
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
-}
-
-# Purpose: Find out if a command is in PATH or not
-# Usage: InPath(COMMAND);
-sub InPath {
-	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
 
 # =============================================================================
