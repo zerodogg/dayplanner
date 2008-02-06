@@ -58,20 +58,17 @@ sub DetectConfDir {
 		if(defined($ENV{HOME}) and length($ENV{HOME})) {
 			# Verify that HOME is set properly
 			if(not -d $ENV{HOME}) {
-				# FIXME!
-#				DP_InitI18n();
-#				print($i18n->get_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
-#				Gtk2Init();
-#				DPError($i18n->get_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
+				DP_InitI18n();
+				print(i18nwrapper_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
+				Gtk2Init();
+				DPError(i18nwrapper_advanced("The home directory of the user %(user) doesn't exist at %(path)! Please verify that the environment variable %(VAR) is properly set. Unable to continue\n", { user => [getpwuid($<)]->[0], path => $ENV{HOME}, VAR => 'HOME'}));
 				die("\n");
 			}
 			$XDG_CONFIG_HOME = "$ENV{HOME}/.config";
 		} else {
 			Gtk2Init();
-			# FIXME
-#			DPError($i18n->get_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
-#			die($i18n->get_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
-			die();
+			DPError(i18nwrapper_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
+			die(i18nwrapper_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
 		}
 	}
 	if ($Maemo)
@@ -407,13 +404,165 @@ sub P_CreateSaveDir {
 	{
 		runtime_use('File::Path');
 		File::Path::mkpath($SaveToDir) or do {
-			# FIXME: I18n
-#				DPError($i18n->get_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
+				DPError(i18nwrapper_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
 				unless(-d $SaveToDir) {
 					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
 				}
 		};
 		chmod(oct(700),$SaveToDir);
 	}
+}
+
+# Purpose: Create the upcoming events string
+# Usage: GetUpcomingEventsString()
+sub GetUpcomingEventsString
+{
+	my $iCalendar = shift;
+	my $NewUpcoming;
+	my $HasUpcoming;
+	my %InformationHash;
+	my %DayNames = (
+		0 => i18nwrapper('Sunday'),
+		1 => i18nwrapper('Monday'),
+		2 => i18nwrapper('Tuesday'),
+		3 => i18nwrapper('Wednesday'),
+		4 => i18nwrapper('Thursday'),
+		5 => i18nwrapper('Friday'),
+		6 => i18nwrapper('Saturday'),
+	);
+
+	# Today is
+	my $TheTime = time();
+
+	# Prepare
+	my $FirstDay = 1;
+	my $AddDays = 7;
+
+	# Loop used to populate the %InformationHash
+	while($AddDays) {
+		$AddDays--;	# One less day to add
+		$TheTime += 86400;
+
+		$InformationHash{$TheTime} = {};
+		my $h = $InformationHash{$TheTime};
+		
+		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($TheTime);	# Get the real time of this day
+		$getmonth++;	# Month should be 1-12 not 0-11
+		my $Year = $getyear;
+
+		my $HumanYear = $getyear+1900;	# Human readable year
+
+		if($FirstDay) {
+			$h->{text}= i18nwrapper('Tomorrow');
+			$h->{dayname} = $h->{text};
+			$FirstDay = 0;
+		} else {
+			$h->{text} .= "\n\n";
+			$h->{text} .= $DayNames{$getwday};
+			$h->{dayname} = $DayNames{$getwday};
+		}
+		$h->{date} = "$getmday.$getmonth.$HumanYear";
+		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
+		my $HasEvents;
+		if(my $DateHash = $iCalendar->get_dateinfo($Year+1900, $getmonth, $getmday)) {
+			# FIXME: This sort should be so that alphabetical chars come first, then numbers
+			# This so that DAY comes before the normal events.
+			foreach my $time (sort(@{$iCalendar->get_dateinfo($HumanYear,$getmonth,$getmday)})) {
+				foreach my $UID (@{$iCalendar->get_timeinfo($HumanYear,$getmonth,$getmday,$time)}) {
+					$HasEvents = 1;
+					# If the time is DAY then it lasts the entire day
+					if($time eq 'DAY') {
+						$h->{text} .= "\n" . GetSummaryString($UID);
+					} else {
+						# TRANSLATORS: String used in the list of upcoming events in the
+						# 		lower right hand corner of the UI. You should
+						# 		probably keep this short.
+						$h->{text} .= "\n" . i18nwrapper_advanced('At %(time)', { 'time' =>  i18nwrapper_AMPM_From24($time)}) . ': ' . GetSummaryString($UID);
+					}
+				}
+			}
+		}
+		unless($HasEvents) {
+			# TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
+			#  when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
+			$h->{text} .= "\n" . i18nwrapper('(nothing)');
+			$h->{noevents} = 1;
+		} else {
+			$HasUpcoming = 1;
+		}
+
+	}
+	unless($HasUpcoming) {
+		$NewUpcoming = i18nwrapper('No upcoming events exist for the next seven days');
+	} else {
+		my $LoopNum;
+		# Remove duplicate (nothing)'s
+		foreach my $key (sort(keys(%InformationHash))) {
+			# If the key doesn't exist (any more) or doesn't have noevents then skip it
+			next unless(defined($InformationHash{$key}));
+			$LoopNum++;		# Up the loop counter
+			next unless(defined($InformationHash{$key}{noevents}));
+			# Find out which key is next
+			my $Next = $key;
+			$Next += 86400;
+			# Skip if the next key doesn't have noevents set
+			next unless(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents}));
+
+			my @OtherNoevents;	# Array of the next keys without any events
+			my $LastDate;
+			my $LastDay;		# The last day with noevents
+
+			# For each of the next dates with no events set it up for usage here and if we had another
+			# noevents before this push it onto the @OtherNoevents array and replace the $LastDay value
+			# with ours.
+			while(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents})) {
+				$LastDate = $InformationHash{$Next}{date};
+				if(defined($LastDay)) {
+					push(@OtherNoevents, $LastDay);
+				}
+				$LastDay = $Next;
+				$Next += 86400;
+			}
+			# Reset the current text 
+			if($LoopNum > 1) {
+				$InformationHash{$key}{text} = "\n\n";
+			} else {
+				$InformationHash{$key}{text} = '';
+			}
+			# If there is something in @OtherNoevents then do more processing
+			if(@OtherNoevents) {
+				# First day (current key)
+				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname},";
+
+				my $Counter;	# Count how many times we've gone through the foreach
+				foreach(@OtherNoevents) {
+					$Counter++;	# Up the counter
+					$InformationHash{$key}{text} .= " $InformationHash{$_}{dayname}";
+					unless($Counter eq scalar(@OtherNoevents)) {	# If the counter doesn't equal the number of entries
+											# in the array then append a comma.
+						$InformationHash{$key}{text} .= ',';
+					}
+					# Delete the key
+					delete($InformationHash{$_});
+				}
+				# Append the last entries
+				# TRANSLATORS: This is used to bind together a list. It is a list of days
+				# 	such as: Friday, Saturday *and* Sunday.
+				$InformationHash{$key}{text} .= ' ' . i18nwrapper('and') . " $InformationHash{$LastDay}{dayname}";
+			} else {
+				# Build the string
+				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname} " . i18nwrapper('and') . " $InformationHash{$LastDay}{dayname}";
+			}
+			# Delete the $LastDay key
+			delete($InformationHash{$LastDay});
+			# Finalize the string
+			$InformationHash{$key}{text} .= " ($InformationHash{$key}{date}-$LastDate): " . i18nwrapper('(nothing)');
+		}
+		# Build our $NewUpcoming
+		foreach my $key(sort(keys(%InformationHash))) {
+			$NewUpcoming .= $InformationHash{$key}{text};
+		}
+	}
+	return($NewUpcoming);
 }
 1;

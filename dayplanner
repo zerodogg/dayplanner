@@ -116,6 +116,27 @@ sub DP_InitI18n {
 	}
 }
 
+# Purpose: i18n wrapper for CoreModules
+# Usage: i18nwrapper(SAME AS $I18n->get);
+sub i18nwrapper
+{
+	return($i18n->get(@_));
+}
+
+# Purpose: i18n wrapper for CoreModules
+# Usage: i18nwrapper_advanced(SAME AS $I18n->get_advanced);
+sub i18nwrapper_advanced
+{
+	return($i18n->get_advanced(@_));
+}
+
+# Purpose: i18n wrapper for CoreModules
+# Usage: i18nwrapper_AMPM_From24(SAME AS $I18n->AMPM_From24);
+sub i18nwrapper_AMPM_From24
+{
+	return($i18n->AMPM_From24(@_));
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Daemon communication functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2387,151 +2408,7 @@ sub ProgressFraction {
 # Purpose: Populate the upcoming events widget
 # Usage: PopulateUpcomingEvents();
 sub PopulateUpcomingEvents {
-	my $NewUpcoming;
-	my $HasUpcoming;
-	my %InformationHash;
-	my %DayNames = (
-		0 => $i18n->get('Sunday'),
-		1 => $i18n->get('Monday'),
-		2 => $i18n->get('Tuesday'),
-		3 => $i18n->get('Wednesday'),
-		4 => $i18n->get('Thursday'),
-		5 => $i18n->get('Friday'),
-		6 => $i18n->get('Saturday'),
-	);
-
-	# Today is
-	my $TheTime = time();
-
-	# Prepare
-	my $FirstDay = 1;
-	my $AddDays = 7;
-
-	# Loop used to populate the %InformationHash
-	while($AddDays) {
-		$AddDays--;	# One less day to add
-		$TheTime += 86400;
-
-		$InformationHash{$TheTime} = {};
-		my $h = $InformationHash{$TheTime};
-		
-		my ($getsec,$getmin,$gethour,$getmday,$getmonth,$getyear,$getwday,$getyday,$getisdst) = localtime($TheTime);	# Get the real time of this day
-		$getmonth++;	# Month should be 1-12 not 0-11
-		my $Year = $getyear;
-
-		my $HumanYear = $getyear+1900;	# Human readable year
-
-		if($FirstDay) {
-			$h->{text}= $i18n->get('Tomorrow');
-			$h->{dayname} = $h->{text};
-			$FirstDay = 0;
-		} else {
-			$h->{text} .= "\n\n";
-			$h->{text} .= $DayNames{$getwday};
-			$h->{dayname} = $DayNames{$getwday};
-		}
-		$h->{date} = "$getmday.$getmonth.$HumanYear";
-		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
-		my $HasEvents;
-		if(my $DateHash = $iCalendar->get_dateinfo($Year+1900, $getmonth, $getmday)) {
-			# FIXME: This sort should be so that alphabetical chars come first, then numbers
-			# This so that DAY comes before the normal events.
-			foreach my $time (sort(@{$iCalendar->get_dateinfo($HumanYear,$getmonth,$getmday)})) {
-				foreach my $UID (@{$iCalendar->get_timeinfo($HumanYear,$getmonth,$getmday,$time)}) {
-					$HasEvents = 1;
-					# If the time is DAY then it lasts the entire day
-					if($time eq 'DAY') {
-						$h->{text} .= "\n" . GetSummaryString($UID);
-					} else {
-						# TRANSLATORS: String used in the list of upcoming events in the
-						# 		lower right hand corner of the UI. You should
-						# 		probably keep this short.
-						$h->{text} .= "\n" . $i18n->get_advanced('At %(time)', { 'time' =>  $i18n->AMPM_From24($time)}) . ': ' . GetSummaryString($UID);
-					}
-				}
-			}
-		}
-		unless($HasEvents) {
-			# TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
-			#  when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
-			$h->{text} .= "\n" . $i18n->get('(nothing)');
-			$h->{noevents} = 1;
-		} else {
-			$HasUpcoming = 1;
-		}
-
-	}
-	unless($HasUpcoming) {
-		$NewUpcoming = $i18n->get('No upcoming events exist for the next seven days');
-	} else {
-		my $LoopNum;
-		# Remove duplicate (nothing)'s
-		foreach my $key (sort(keys(%InformationHash))) {
-			# If the key doesn't exist (any more) or doesn't have noevents then skip it
-			next unless(defined($InformationHash{$key}));
-			$LoopNum++;		# Up the loop counter
-			next unless(defined($InformationHash{$key}{noevents}));
-			# Find out which key is next
-			my $Next = $key;
-			$Next += 86400;
-			# Skip if the next key doesn't have noevents set
-			next unless(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents}));
-
-			my @OtherNoevents;	# Array of the next keys without any events
-			my $LastDate;
-			my $LastDay;		# The last day with noevents
-
-			# For each of the next dates with no events set it up for usage here and if we had another
-			# noevents before this push it onto the @OtherNoevents array and replace the $LastDay value
-			# with ours.
-			while(defined($InformationHash{$Next}) and defined($InformationHash{$Next}{noevents})) {
-				$LastDate = $InformationHash{$Next}{date};
-				if(defined($LastDay)) {
-					push(@OtherNoevents, $LastDay);
-				}
-				$LastDay = $Next;
-				$Next += 86400;
-			}
-			# Reset the current text 
-			if($LoopNum > 1) {
-				$InformationHash{$key}{text} = "\n\n";
-			} else {
-				$InformationHash{$key}{text} = '';
-			}
-			# If there is something in @OtherNoevents then do more processing
-			if(@OtherNoevents) {
-				# First day (current key)
-				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname},";
-
-				my $Counter;	# Count how many times we've gone through the foreach
-				foreach(@OtherNoevents) {
-					$Counter++;	# Up the counter
-					$InformationHash{$key}{text} .= " $InformationHash{$_}{dayname}";
-					unless($Counter eq scalar(@OtherNoevents)) {	# If the counter doesn't equal the number of entries
-											# in the array then append a comma.
-						$InformationHash{$key}{text} .= ',';
-					}
-					# Delete the key
-					delete($InformationHash{$_});
-				}
-				# Append the last entries
-				# TRANSLATORS: This is used to bind together a list. It is a list of days
-				# 	such as: Friday, Saturday *and* Sunday.
-				$InformationHash{$key}{text} .= ' ' . $i18n->get('and') . " $InformationHash{$LastDay}{dayname}";
-			} else {
-				# Build the string
-				$InformationHash{$key}{text} .= "$InformationHash{$key}{dayname} " . $i18n->get('and') . " $InformationHash{$LastDay}{dayname}";
-			}
-			# Delete the $LastDay key
-			delete($InformationHash{$LastDay});
-			# Finalize the string
-			$InformationHash{$key}{text} .= " ($InformationHash{$key}{date}-$LastDate): " . $i18n->get('(nothing)');
-		}
-		# Build our $NewUpcoming
-		foreach my $key(sort(keys(%InformationHash))) {
-			$NewUpcoming .= $InformationHash{$key}{text};
-		}
-	}
+	my $NewUpcoming = GetUpcomingEventsString($iCalendar);
 	# Don't update the widget if the text hasn't changed
 	if(not $UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
