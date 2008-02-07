@@ -76,6 +76,19 @@ def GetComArray(array):
 		ret = ret+GetComString(v)+'{DPSEP}'
 	return ret
 
+def ParseRecieved(data):
+	if data == "":
+		print "ParseRecieved(): got ''"
+		return str()
+	hash = re.compile("^HASH")
+	array = re.compile("^ARRAY")
+	if hash.match(data):
+		return UnGetComHash(data)
+	elif array.match(data):
+		return UnGetComArray(data)
+	else:
+		return UnGetComString(data)
+
 # -- Communication methods --
 def StartServant():
 	print "StartServant(): STUB"
@@ -90,16 +103,18 @@ def OpenSocket():
 
 def SocketSend(data):
 	print "SocketSend("+data+"): STUB"
+	if data == "":
+		print "SocketSend(): got '' - not sending"
+		return str()
 
 def SocketRecv():
 	print "SocketRecv(): STUB"
 
 def SocketIO(data):
 	SocketSend(data)
-	return SocketRecv()
+	return ParseRecieved(SocketRecv())
 
 # -- Main --
-
 def mainwindow():
 	print "STUB"
 
@@ -109,20 +124,8 @@ def addevent():
 def editevent():
 	print "STUB"
 
-def ParseSuppliedData(data):
-	print "STUB"
-
-def parseHash(hash):
-	print "STUB"
-
-def parseArray(array):
-	print "STUB"
-
 def EditEvent(treeview,two,treeviewcolumn):
 	print "EditEvent(): STUBBED"
-
-def parseString(string):
-	print "STUB"
 
 def gettext(string):
 	return string;
