@@ -114,14 +114,25 @@ def SocketIO(data):
 	SocketSend(data)
 	return ParseRecieved(SocketRecv())
 
+# -- Various data methods. Fetches and sends data --
+def SendIcalData(list):
+	netsend = GetComHash(list)
+	if SocketIO("SEND_ICAL "+netsend) != "OK":
+		print "ERROR: FAILED TO SEND ICALENDAR DATA, SocketIO DID NOT RETURN OK"
+
+def GetIcalData(UID):
+	netsend = "GET_ICAL "+UID
+	iCalList = SocketIO(netsend)
+	return iCalList
+
+def Ical_MonthList(NIXTIME):
+	print "STUB"
+
+def Ical_DayEventList(NIXTIME):
+	print "STUB"
+
 # -- Main --
-def mainwindow():
-	print "STUB"
-
 def addevent():
-	print "STUB"
-
-def editevent():
 	print "STUB"
 
 def EditEvent(treeview,two,treeviewcolumn):
