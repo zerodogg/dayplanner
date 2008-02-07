@@ -307,22 +307,17 @@ sub CommandHandler
 # Usage: GetComHash(HASH);
 sub GetComHash
 {
-	my %Hash = shift;
-	my $ret = 'HASH: ';
-	foreach my $key(%Hash)
+	my %Hash = @_;
+	my @Array;
+	foreach my $key(keys %Hash)
 	{
-		$Hash{$key} = GetComString($Hash{$key});
+		my $newKey = GetComString($key);
+		my $newEntry = GetComString($Hash{$key});
+		delete($Hash{$key});
+		push(@Array,$newKey);
+		push(@Array,$newEntry);
 	}
-	foreach my $key(%Hash)
-	{
-		# FIXME
-		if(ref($Hash{$key}))
-		{
-			die("UNHANDLED HASH ELEMENT IS REFERENCE!");
-		}
-		$ret .= 'k:'.$key.'v:'.$Hash{$key}.'{DPSEP}';
-	}
-	return $ret;
+	return 'HASH'.GetComArray(@Array);
 }
 
 # Purpose: Convert to communication array format
@@ -342,9 +337,34 @@ sub GetComArray
 sub GetComString
 {
 	$_ = shift;
+	return '' if not defined $_;
 	s/\n/{DPNL}/g;
 	s/\r//g;
 	return($_);
+}
+
+# Purpose: Convert from communication array format
+# Usage: UnGetComArray(STRING);
+sub UnGetComArray
+{
+	my $string = shift;
+	$string =~ s/^ARRAY: //;
+	my @NewArray;
+	foreach my $e (split(/{DPSEP}/,$string))
+	{
+		push(@NewArray,$e);
+	}
+	return(@NewArray);
+}
+
+# Purpose: Convert from communication hash format
+# Usage: UnGetComHash(STRING);
+sub UnGetComHash
+{
+	my $string = shift;
+	$string =~ s/^HASH//;
+	my %Hash = UnGetComArray($string);
+	return(%Hash);
 }
 
 # Purpose: Convert from communication string format
