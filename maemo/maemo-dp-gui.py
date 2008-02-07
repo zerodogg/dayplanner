@@ -22,6 +22,10 @@ import gtk
 import hildon
 import re
 import sys
+import socket
+import os
+
+comSocket = ''
 
 # -- Communication conversion methods --
 def UnGetComString(string):
@@ -71,6 +75,28 @@ def GetComArray(array):
 	for v in array:
 		ret = ret+GetComString(v)+'{DPSEP}'
 	return ret
+
+# -- Communication methods --
+def StartServant():
+	print "StartServant(): STUB"
+
+def OpenSocket():
+	if os.path.exists("/tmp/comsocket"):
+		comSocket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+		comSocket.connect("/tmp/comsocket")
+	else:
+		StartServant()
+		print "Socket did not exist, continuing anyway"
+
+def SocketSend(data):
+	print "SocketSend("+data+"): STUB"
+
+def SocketRecv():
+	print "SocketRecv(): STUB"
+
+def SocketIO(data):
+	SocketSend(data)
+	return SocketRecv()
 
 # -- Main --
 
@@ -205,5 +231,6 @@ def DrawMainWindow():
 	window.show()
 
 if __name__ == "__main__":
+	OpenSocket()
 	DrawMainWindow()
 	gtk.main()         
