@@ -20,6 +20,59 @@
 
 import gtk 
 import hildon
+import re
+import sys
+
+# -- Communication conversion methods --
+def UnGetComString(string):
+	slashn = re.compile("{DPNL}")
+	newstring = slashn.sub("\n",string)
+	return(newstring)
+def GetComString(string):
+	slashn = re.compile("\n")
+	newstring = slashn.sub("{DPNL}",string)
+	return(newstring)
+
+def UnGetComHash(string):
+	there = re.compile("^HASH")
+	string = there.sub('',string)
+	array = UnGetComArray(string)
+
+	key = str()
+	newDict = dict()
+	for entry in array:
+		if key != "":
+			newDict[key] =  entry
+			key = ""
+		else:
+			key = entry
+	return newDict
+
+def GetComHash(hash):
+	newlist = list()
+	for key in hash.keys():
+		newKey = GetComString(key)
+		newValue = GetComString(hash[key])
+		newlist.add(newKey)
+		newlist.add(newValue)
+	return "HASH"+GetComArray(newdict)
+
+def UnGetComArray(string):
+	mainre = re.compile('^ARRAY: ')
+	string = mainre.sub('',string)
+	myArray = []
+	for v in string.split("{DPSEP}"):
+		if not v == "":
+			myArray.append(GetComString(v))
+	return myArray
+
+def GetComArray(array):
+	ret = 'ARRAY: '
+	for v in array:
+		ret = ret+GetComString(v)+'{DPSEP}'
+	return ret
+
+# -- Main --
 
 def mainwindow():
 	print "STUB"
