@@ -258,7 +258,6 @@ def DayChangedEvent(cal):
 def DrawMainWindow():
 	window = hildon.Window()
 	window.set_title(gettext("Day Planner"))
-	# TODO: Clean exit
 	# TODO: More signal handlers
 	window.connect("destroy", Exit)
 	# Check something that will only be present on desktops.
@@ -293,7 +292,6 @@ def DrawMainWindow():
 	# TODO: Get the current time and set it as done in the perl GUI
 	#my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
 	# Create the calendar
-	# TODO SetActiveCalItems
 	CalendarWidget.show()
 	CalendarWidget.connect("day-selected",DayChangedEvent)
 	CalendarWidget.connect("month-changed",MonthChangedEvent)
@@ -302,7 +300,6 @@ def DrawMainWindow():
 	# Work around a possible Gtk2::Calendar bug by explicitly setting the month/year combo
 	#$CalendarWidget->select_month($currmonth, $curryear);
 	#$RightHandVBox->pack_start($CalendarWidget,0,0,0);
-	# TODO: Signal handling in the calendar
 	RightHandVBox.pack_start(CalendarWidget)
 
 	# UPCOMING EVENTS
@@ -336,7 +333,6 @@ def DrawMainWindow():
 
 	DrawEventlist(EventlistWin)
 	GetUpcomingEvents()
-	# FIXME
 	SetActiveMonth()
 
 	window.show()
