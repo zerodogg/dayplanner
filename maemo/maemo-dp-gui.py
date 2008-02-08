@@ -117,13 +117,13 @@ def SocketSend(data):
 	if data == "":
 		print "SocketSend(): got '' - not sending"
 		return str()
-	comSocket.write(pid+" "+data+"\n")
+	comSocket.write(pid+" "+data.encode('utf-8')+"\n")
 	comSocket.flush()
 	return str()
 
 def SocketRecv():
 	global comSocket
-	reply = comSocket.readline().rstrip()
+	reply = comSocket.readline().rstrip().decode('utf-8')
 	return reply
 
 def SocketIO(data):

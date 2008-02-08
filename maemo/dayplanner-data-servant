@@ -39,6 +39,7 @@ use File::Basename;
 use POSIX qw/ mktime setsid/;		# We need setsid();
 # Used to locate our own modules
 use FindBin;			# So that we can detect module dirs during runtime
+use Encode qw(encode_utf8 decode_utf8);
 # This here is done so that we can use local versions of our libs
 use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
@@ -242,9 +243,10 @@ sub MainLoop
 				if ($Command)
 				{
 					chomp($Command);
+					$Command = decode_utf8($Command);
 					my ($Reply) = CommandHandler($Command,$Handle);
 					DaemonLog(5,'Returning '.$Reply);
-					print $Handle "$Reply\n";
+					print $Handle encode_utf8($Reply)."\n";
 				} 
 				# If it isn't, then it closed the connection
 				else
