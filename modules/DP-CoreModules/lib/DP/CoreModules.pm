@@ -565,7 +565,6 @@ sub GetUpcomingEventsString
 			$NewUpcoming .= $InformationHash{$key}{text};
 		}
 	}
-	print "$NewUpcoming\n";
 	return($NewUpcoming);
 }
 
