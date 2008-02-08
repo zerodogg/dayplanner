@@ -86,6 +86,45 @@ my %UserConfig;
 # Change this to make it daemonize properly
 my $NoFork = true;
 my $ForceFork = false;
+my $LogLevel = 5;
+
+# Purpose: Shut down.
+# Usage: Shutdown(reason);
+sub Shutdown
+{
+	my $reason = shift;
+	$iCalendar->write();
+	DaemonLog(5,"Shutdown due to: $reason");
+	unlink($SocketPath) if -e $SocketPath;
+	exit(0);
+}
+
+# Purpose: Handle SIGPIPEs properly. Runs sanity checks on handles and shuts down if needed
+sub SigPipeHandler
+{
+	DaemonLog(4, "SIGPIPE, running sanity checks");
+	my @Handles = $ConnectionSelector->handles();
+	if (scalar(@Handles) <= 0)
+	{
+		Shutdown("No handles left");
+	}
+	else
+	{
+		my $def = false;
+		foreach my $h(@Handles)
+		{
+			if(defined($h))
+			{
+				$def = true;
+			}
+		}
+		if (not $def)
+		{
+			Shutdown("No defined handles left");
+		}
+	}
+	DaemonLog(4,"Handles are OK, not shutting down");
+}
 
 # Purpose: i18n wrapper for CoreModules
 # Usage: i18nwrapper(SAME AS $I18n->get);
@@ -132,8 +171,37 @@ sub GetSummaryString
 #   5  - Calltrace
 sub DaemonLog
 {
-	print $_[1]."\n";
-	return;
+	my $Level = shift;
+	return if not($Level <= $LogLevel);
+	my $Message = shift;
+	my $MsgPrefix;
+	if($Level == 0 or $Level == 1)
+	{
+		$MsgPrefix = 'Error:        ';
+	}
+	elsif($Level == 2)
+	{
+		$MsgPrefix = 'Warning:      ';
+	}
+	elsif($Level == 3)
+	{
+		$MsgPrefix = 'Notification: ';
+	}
+	elsif($Level == 4)
+	{
+		$MsgPrefix = 'Debug:        ';
+	}
+	elsif($Level == 5)
+	{
+		$MsgPrefix = 'Calltrace:    ';
+	}
+	my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = GetDate(time());
+	$lhour = "0$lhour" unless $lhour >= 10;
+	$lmin = "0$lmin" unless $lmin >= 10;
+	$lsec = "0$lsec" unless $lsec >= 10;
+	print "[$lmday/$lmon/$lyear $lhour:$lmin:$lsec ($$)] ";
+	print($MsgPrefix.$Message);
+	print "\n";
 }
 
 # Purpose: Initialize data paths
@@ -252,7 +320,7 @@ sub MainLoop
 				else
 				{
 					$ConnectionSelector->remove($Handle);
-					DaemonLog(4,'Handle removed ',$Handle);
+					Shutdown("Handle removed: ".$Handle);
 				}
 			}
 		}
@@ -467,5 +535,16 @@ sub UnGetComString
 	s/{DPNL}/\n/g;
 	return($_);
 }
+
+GetOptions (
+	'v|verbose+' => \$LogLevel,
+	'f|force-fork' => \$ForceFork,
+	'n|nofork' => \$NoFork,
+	'version' => sub {
+		print "Day Planner maemo data servant daemon version $Version\n";
+		print "RCS revision: $RCSRev\n";
+		exit(0);
+	},
+) or die "See $0 --help for more information\n";
 
 InitDaemon();
