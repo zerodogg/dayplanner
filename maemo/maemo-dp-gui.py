@@ -172,6 +172,12 @@ def DrawMainWindow():
 	# TODO: Clean exit
 	# TODO: More signal handlers
 	window.connect("destroy", gtk.main_quit)
+	# Check something that will only be present on desktops.
+	# If it is present, then set a default size. If we're on a Maemo that file
+	# won't be present, and the maemo WM will force the size of our main window
+	# to fit the screen anyway
+	if os.path.exists("/usr/bin/gnome-about-me"):
+		window.set_default_size(600,365)
 
 	# TODO: Set icon
 	PrimaryWindowVBox = gtk.VBox()
