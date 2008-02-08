@@ -265,6 +265,9 @@ def DrawMainWindow():
 	# won't be present, and the maemo WM will force the size of our main window
 	# to fit the screen anyway
 	if os.path.exists("/usr/bin/gnome-about-me"):
+		print "WARNING: You are running the maemo port of Day Planner on a desktop"
+		print "         This is NOT supported and NOT recommended. You should go use the"
+		print "         desktop version."
 		window.set_default_size(600,365)
 
 	# TODO: Set icon
