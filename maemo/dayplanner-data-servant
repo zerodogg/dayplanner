@@ -88,6 +88,9 @@ my $NoFork = true;
 my $ForceFork = false;
 my $LogLevel = 5;
 
+$SIG{INT} = sub { Shutdown('SIGINT');};
+$SIG{TERM} = sub { Shutdown('SIGTERM');};
+
 # Purpose: Shut down.
 # Usage: Shutdown(reason);
 sub Shutdown
