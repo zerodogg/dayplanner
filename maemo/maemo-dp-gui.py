@@ -97,9 +97,6 @@ def ParseRecieved(data):
 		return UnGetComString(data)
 
 # -- Communication methods --
-def StartServant():
-	print "StartServant(): STUB"
-
 def OpenSocket(loop=False):
 	global comSocket
 	if os.path.exists(socketPath):
@@ -111,17 +108,23 @@ def OpenSocket(loop=False):
 	else:
 		if loop:
 			print "FATAL: Failed to start servant. Giving up."
-			sys.exit(0)
+			sys.exit(1)
 		StartServant()
 		OpenSocket(True)
 
+def LocateServant():
+	directories = [os.path.dirname(os.path.abspath(sys.argv[0])),"./","/usr/bin/"]
+	for dir in directories:
+		if os.path.exists(dir+'/dayplanner-data-servant'):
+			return(dir+'/dayplanner-data-servant')
+	# Failure
+	print "FATAL: Unable to locate servant. Sorry about that, but I can't work without it."
+	print "       Startup cancelled. (dayplanner-data-servant not found)"
+	sys.exit(1)
+
 def StartServant():
-	if os.path.exists('./dayplanner-data-servant'):
-		os.system('./dayplanner-data-servant --force-fork')
-	else:
-		print "FATAL: Unable to locate servant. Sorry about that, but I can't work without it."
-		print "       Startup cancelled. (dayplanner-data-servant not found)"
-		sys.exit(0)
+	if os.system(LocateServant()+" --force-fork") != 0:
+		print "Servant startup failure?"
 
 def SocketSend(data):
 	global comSocket
@@ -177,6 +180,7 @@ def Exit(arg):
 	sys.exit(0)
 
 # -- Main --
+
 def SetActiveMonth():
 	(year,month,day) = CalendarWidget.get_date()
 	month += 1;
