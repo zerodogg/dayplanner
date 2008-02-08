@@ -146,7 +146,7 @@ def Ical_DayEventList(NIXTIME):
 	print "STUB"
 
 # -- Main --
-def GetActiveMonth(year,month):
+def SetActiveMonth(year,month):
 	list = SocketIO("GET_DAYS "+str(year)+" "+str(month))
 	for day in list:
 		CalendarWidget.mark_day(int(day))
@@ -269,7 +269,7 @@ def DrawMainWindow():
 	DrawEventlist(EventlistWin)
 	GetUpcomingEvents()
 	# FIXME
-	GetActiveMonth(2007,2)
+	SetActiveMonth(2007,2)
 
 	window.show()
 
