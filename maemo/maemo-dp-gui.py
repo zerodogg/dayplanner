@@ -31,6 +31,8 @@ socketPath = '/home/zerodogg/.config/dayplanner.maemo/Data_Servant'
 pid = str(getpid())
 UpcomingEventsBuffer = gtk.TextBuffer()
 CalendarWidget = gtk.Calendar();
+EventlistWin = gtk.ScrolledWindow()
+liststore = gtk.ListStore(str, str, str)
 
 # -- Communication conversion methods --
 def UnGetComString(string):
@@ -67,7 +69,7 @@ def GetComHash(hash):
 	return "HASH"+GetComArray(newdict)
 
 def UnGetComArray(string):
-	mainre = re.compile('^ARRAY: ')
+	mainre = re.compile('^ARRAY: ?')
 	string = mainre.sub('',string)
 	myArray = []
 	for v in string.split("{DPSEP}"):
@@ -126,7 +128,11 @@ def SocketRecv():
 
 def SocketIO(data):
 	SocketSend(data)
-	return ParseRecieved(SocketRecv())
+	recieveddata = ParseRecieved(SocketRecv())
+	if type(recieveddata) == str:
+		if recieveddata.startswith("ERR "):
+			print "Recieved error on request '"+data+"': "+recieveddata
+	return recieveddata
 
 # -- Various data methods. Fetches and sends data --
 def SendIcalData(list):
@@ -159,6 +165,7 @@ def SetActiveMonth():
 	(year,month,day) = CalendarWidget.get_date()
 	month += 1;
 	list = SocketIO("GET_DAYS "+str(year)+" "+str(month))
+	CalendarWidget.clear_marks()
 	for day in list:
 		CalendarWidget.mark_day(int(day))
 
@@ -177,7 +184,6 @@ def gettext(string):
 def DrawEventlist(EventlistWin):
 	# NOTE: Difference from perl implementation: No SimpleList, using raw TreeView
 	# create a liststore with one string column to use as the model
-	liststore = gtk.ListStore(str, str, str)
 	EventlistWidget = gtk.TreeView(liststore)
 	# create the TreeViewColumns to display the data
 	tvcolumn = gtk.TreeViewColumn(gettext('Time'))
@@ -199,12 +205,24 @@ def DrawEventlist(EventlistWin):
 
 	EventlistWin.add(EventlistWidget);
 
+def UpdateEventList():
+	liststore.clear()
+	AddToEventList(liststore)
+
 def AddToEventList(liststore):
-	UIDs = GetEventsOnCurrentDay();
-	for UID in UIDs:
-		eventInfo = GetIcalData(UID)
-		time = GetIcalTime(eventInfo.get("DTSTART"))
-		liststore.append(['UID',time, eventInfo.get("SUMMARY")])
+	UIDs = GetEventsOnCurrentDay()
+	if type(UIDs) == list:
+		for UID in UIDs:
+			eventInfo = GetIcalData(UID)
+			if type(eventInfo) == dict:
+				time = GetIcalTime(eventInfo.get("DTSTART"))
+				liststore.append(['UID',time, eventInfo.get("SUMMARY")])
+
+def MonthChangedEvent(cal):
+	SetActiveMonth()
+
+def DayChangedEvent(cal):
+	UpdateEventList()
 
 # Purpose: Draw the main window
 def DrawMainWindow():
@@ -247,6 +265,8 @@ def DrawMainWindow():
 	# Create the calendar
 	# TODO SetActiveCalItems
 	CalendarWidget.show()
+	CalendarWidget.connect("day-selected",DayChangedEvent)
+	CalendarWidget.connect("month-changed",MonthChangedEvent)
 	#$CalendarWidget->display_options(['show-week-numbers', 'show-day-names','show-heading']);
 	#$currmonth--;
 	# Work around a possible Gtk2::Calendar bug by explicitly setting the month/year combo
@@ -280,7 +300,6 @@ def DrawMainWindow():
 	LeftHandVBox.show()
 	
 	# Add a window for use for it
-	EventlistWin = gtk.ScrolledWindow()
 	EventlistWin.set_policy('automatic','automatic')
 	LeftHandVBox.pack_start(EventlistWin,1,1,0)
 	EventlistWin.show()
