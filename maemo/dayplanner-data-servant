@@ -49,7 +49,7 @@ use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
 use lib "$FindBin::RealBin/../modules/DP-CoreModules/lib/";
 # Day Planner-specific libs
-use DP::iCalendar qw(iCal_ConvertToUnixTime); # iCalendar support
+use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
 use DP::CoreModules;
 
@@ -334,6 +334,31 @@ sub CommandHandler
 	{
 		return(GetComString(GetUpcomingEventsString($iCalendar)));
 	}
+	elsif(/^GET_ICAL/)
+	{
+		my $UID = $_;
+		$UID =~ s/^GET_ICAL\s+//;
+		return(GetComHash(%{$iCalendar->get_info($UID)}));
+	}
+	elsif(/^GET_EVENTS/)
+	{
+		my $year = $_;
+		my $month = $_;
+		my $day = $_;
+		$year =~ s/^GET_EVENTS\s+(\d+).*/$1/;
+		$month =~ s/^GET_EVENTS\s+\d+\s+(\d+).*/$1/;
+		$day =~ s/^GET_EVENTS\s+\d+\s+\d+\s+(\d+).*/$1/;
+		my @EventList;
+		# Main calendar contents
+		if (my $TimeArray = $iCalendar->get_dateinfo($year,$month,$day)) {
+			foreach my $Time (sort @{$TimeArray}) {
+				foreach my $UID (@{$iCalendar->get_timeinfo($year,$month,$day,$Time)}) {
+					push(@EventList,$UID);
+				}
+			}
+		}
+		return(GetComArray(@EventList));
+	}
 	elsif(/^GET_DAYS/)
 	{
 		my $year = $_;
@@ -348,6 +373,13 @@ sub CommandHandler
 			}
 		}
 		return(GetComArray(@array));
+	}
+	elsif(/^GET_ICSTIME/)
+	{
+		my $time = $_;
+		$time =~ s/^GET_ICSTIME\s+//;
+		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($time);
+		return($Time);
 	}
 	else
 	{
