@@ -24,8 +24,11 @@ import re
 import sys
 import socket
 import os
+from posix import getpid
 
-comSocket = ''
+comSocket = file('/dev/null')
+socketPath = '/home/zerodogg/.config/dayplanner.maemo/Data_Servant'
+pid = str(getpid())
 
 # -- Communication conversion methods --
 def UnGetComString(string):
@@ -94,21 +97,33 @@ def StartServant():
 	print "StartServant(): STUB"
 
 def OpenSocket():
-	if os.path.exists("/tmp/comsocket"):
-		comSocket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-		comSocket.connect("/tmp/comsocket")
+	global comSocket
+	if os.path.exists(socketPath):
+		mySocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		mySocket.connect(socketPath)
+		comSocket = mySocket.makefile()
+		if not SocketIO("HI") == "HI":
+			print "SocketIO failure: Did not reply HI"
 	else:
 		StartServant()
 		print "Socket did not exist, continuing anyway"
 
 def SocketSend(data):
+	global comSocket
 	print "SocketSend("+data+"): STUB"
 	if data == "":
 		print "SocketSend(): got '' - not sending"
 		return str()
+	comSocket.write(pid+" "+data+"\n")
+	comSocket.flush()
+	return str()
 
 def SocketRecv():
+	global comSocket
 	print "SocketRecv(): STUB"
+	reply = comSocket.readline().rstrip()
+	print "REPLY: "+reply
+	return reply
 
 def SocketIO(data):
 	SocketSend(data)
