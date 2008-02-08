@@ -111,7 +111,6 @@ def OpenSocket():
 
 def SocketSend(data):
 	global comSocket
-	print "SocketSend("+data+"): STUB"
 	if data == "":
 		print "SocketSend(): got '' - not sending"
 		return str()
@@ -121,9 +120,7 @@ def SocketSend(data):
 
 def SocketRecv():
 	global comSocket
-	print "SocketRecv(): STUB"
 	reply = comSocket.readline().rstrip()
-	print "REPLY: "+reply
 	return reply
 
 def SocketIO(data):
