@@ -354,7 +354,14 @@ sub InitDaemon
 # Usage: OpenSocket();
 sub OpenSocket {
 	if (-e $SocketPath) {
-		die("$SocketPath: existed\n");
+		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $SocketPath,
+							Type	=> SOCK_STREAM
+							Timeout => 2);
+		if (defined($TestSocket)) {
+			# We could connect
+			print $TestSocket "$$ SHUTDOWN\n";
+		}
+		unlink($SocketPath);
 	}
 	$ServerSocket = IO::Socket::UNIX->new(
 					Local	=> $SocketPath,
