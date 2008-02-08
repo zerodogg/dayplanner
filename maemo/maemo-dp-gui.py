@@ -100,7 +100,7 @@ def ParseRecieved(data):
 def StartServant():
 	print "StartServant(): STUB"
 
-def OpenSocket():
+def OpenSocket(loop=False):
 	global comSocket
 	if os.path.exists(socketPath):
 		mySocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -109,8 +109,19 @@ def OpenSocket():
 		if not SocketIO("PING") == "PONG":
 			print "SocketIO failure: Did not reply to PING request"
 	else:
+		if loop:
+			print "FATAL: Failed to start servant. Giving up."
+			sys.exit(0)
 		StartServant()
-		print "Socket did not exist, continuing anyway. Prepare to crash."
+		OpenSocket(True)
+
+def StartServant():
+	if os.path.exists('./dayplanner-data-servant'):
+		os.system('./dayplanner-data-servant --force-fork')
+	else:
+		print "FATAL: Unable to locate servant. Sorry about that, but I can't work without it."
+		print "       Startup cancelled. (dayplanner-data-servant not found)"
+		sys.exit(0)
 
 def SocketSend(data):
 	global comSocket
