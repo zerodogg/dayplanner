@@ -29,6 +29,7 @@ from posix import getpid
 comSocket = file('/dev/null')
 socketPath = '/home/zerodogg/.config/dayplanner.maemo/Data_Servant'
 pid = str(getpid())
+UpcomingEventsBuffer = gtk.TextBuffer()
 
 # -- Communication conversion methods --
 def UnGetComString(string):
@@ -102,8 +103,8 @@ def OpenSocket():
 		mySocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		mySocket.connect(socketPath)
 		comSocket = mySocket.makefile()
-		if not SocketIO("HI") == "HI":
-			print "SocketIO failure: Did not reply HI"
+		if not SocketIO("PING") == "PONG":
+			print "SocketIO failure: Did not reply to PING request"
 	else:
 		StartServant()
 		print "Socket did not exist, continuing anyway"
@@ -147,6 +148,9 @@ def Ical_DayEventList(NIXTIME):
 	print "STUB"
 
 # -- Main --
+def GetUpcomingEvents():
+	UpcomingEventsBuffer.set_text(SocketIO("GET_UPCOMINGEVENTS"));
+
 def addevent():
 	print "STUB"
 
@@ -237,7 +241,6 @@ def DrawMainWindow():
 	UpcomingEventsWindow.show();
 	# Create the TextView and TextBuffer objects
 	UpcomingEventsWidget = gtk.TextView()
-	UpcomingEventsBuffer = gtk.TextBuffer()
 	UpcomingEventsBuffer.set_text("Upcoming events here")
 	UpcomingEventsWidget.set_buffer(UpcomingEventsBuffer)
 	UpcomingEventsWidget.set_editable(0)
@@ -262,6 +265,7 @@ def DrawMainWindow():
 	EventlistWin.show()
 
 	DrawEventlist(EventlistWin)
+	GetUpcomingEvents()
 
 	window.show()
 
