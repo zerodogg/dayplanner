@@ -86,6 +86,40 @@ my %UserConfig;
 my $NoFork = true;
 my $ForceFork = false;
 
+# Purpose: i18n wrapper for CoreModules
+# Usage: i18nwrapper(SAME AS $I18n->get);
+sub i18nwrapper
+{
+	return(shift);
+#	return($i18n->get(@_));
+}
+
+# Purpose: i18n wrapper for CoreModules
+# Usage: i18nwrapper_advanced(SAME AS $I18n->get_advanced);
+sub i18nwrapper_advanced
+{
+	my $String = shift;
+	my $Values = shift;
+	foreach my $Key (keys(%{$Values})) {
+		$String =~ s/%\($Key\)/$Values->{$Key}/g;
+	}
+	return($String);
+	#return($i18n->get_advanced(@_));
+}
+
+# Purpose: i18n wrapper for CoreModules
+# Usage: i18nwrapper_AMPM_From24(SAME AS $I18n->AMPM_From24);
+sub i18nwrapper_AMPM_From24
+{
+	return(shift);
+	#return($i18n->AMPM_From24(@_));
+}
+
+sub GetSummaryString
+{
+	return P_GetSummaryString(undef,$iCalendar,@_);
+}
+
 # Purpose: Output log information.
 # Usage: DaemonLog(LEVEL,Message);
 # 	LEVEL is an int:
@@ -295,6 +329,10 @@ sub CommandHandler
 	elsif(/^PING/)
 	{
 		return('PONG');
+	}
+	elsif(/^GET_UPCOMINGEVENTS/)
+	{
+		return(GetComString(GetUpcomingEventsString($iCalendar)));
 	}
 	else
 	{
