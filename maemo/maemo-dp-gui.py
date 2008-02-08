@@ -134,6 +134,12 @@ def SendIcalData(list):
 	if SocketIO("SEND_ICAL "+netsend) != "OK":
 		print "ERROR: FAILED TO SEND ICALENDAR DATA, SocketIO DID NOT RETURN OK"
 
+def GetEventsOnCurrentDay():
+	(year,month,day) = CalendarWidget.get_date()
+	month += 1
+	list = SocketIO("GET_EVENTS "+str(year)+" "+str(month)+" "+str(day))
+	return list
+
 def GetIcalData(UID):
 	netsend = "GET_ICAL "+UID
 	iCalList = SocketIO(netsend)
@@ -144,6 +150,9 @@ def Ical_MonthList(NIXTIME):
 
 def Ical_DayEventList(NIXTIME):
 	print "STUB"
+
+def GetIcalTime(string):
+	return SocketIO("GET_ICSTIME "+string)
 
 # -- Main --
 def SetActiveMonth():
@@ -176,8 +185,6 @@ def DrawEventlist(EventlistWin):
 	# add columns to EventlistWidget
 	EventlistWidget.append_column(tvcolumn)
 	EventlistWidget.append_column(tvcolumn1)
-	# TODO: Get every event on the date here
-	liststore.append(['UID','19:30', 'Write Maemo/Python DP GUI'])
 	cell = gtk.CellRendererText()
 	cell1 = gtk.CellRendererText()
 	# add the cells to the columns
@@ -187,7 +194,17 @@ def DrawEventlist(EventlistWin):
 	tvcolumn1.set_attributes(cell1, text=2)
 	EventlistWidget.connect('row_activated', EditEvent)
 	EventlistWidget.show()
+	# Add entries
+	AddToEventList(liststore)
+
 	EventlistWin.add(EventlistWidget);
+
+def AddToEventList(liststore):
+	UIDs = GetEventsOnCurrentDay();
+	for UID in UIDs:
+		eventInfo = GetIcalData(UID)
+		time = GetIcalTime(eventInfo.get("DTSTART"))
+		liststore.append(['UID',time, eventInfo.get("SUMMARY")])
 
 # Purpose: Draw the main window
 def DrawMainWindow():
