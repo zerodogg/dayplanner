@@ -15,7 +15,6 @@ use warnings;
 use Carp;
 use Exporter qw(import);
 use POSIX;
-use Data::Dumper;
 use Sys::Hostname;
 use DP::iCalendar::StructHandler;
 use DP::iCalendar::ArrayHashManager;
