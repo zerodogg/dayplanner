@@ -169,6 +169,17 @@ def SetActiveMonth():
 	for day in list:
 		CalendarWidget.mark_day(int(day))
 
+def GetEtype(UIDInfo):
+	if UIDInfo.has_key('X-DP-BIRTHDAY') and UIDInfo.get('X-DP-BIRTHDAY') == "TRUE":
+		return "bday"
+	else:
+		time = UIDInfo.get('DTSTART')
+		myre = re.compile('^\d+T\d+$')
+		if myre.match(time):
+			return("norm")
+		else:
+			return("all")
+
 def GetUpcomingEvents():
 	UpcomingEventsBuffer.set_text(SocketIO("GET_UPCOMINGEVENTS"));
 
@@ -215,7 +226,10 @@ def AddToEventList(liststore):
 		for UID in UIDs:
 			eventInfo = GetIcalData(UID)
 			if type(eventInfo) == dict:
-				time = GetIcalTime(eventInfo.get("DTSTART"))
+				if GetEtype(eventInfo) ==  "norm":
+					time = GetIcalTime(eventInfo.get("DTSTART"))
+				else:
+					time = ""
 				liststore.append(['UID',time, eventInfo.get("SUMMARY")])
 
 def MonthChangedEvent(cal):
