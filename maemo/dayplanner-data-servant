@@ -338,7 +338,12 @@ sub CommandHandler
 	{
 		my $UID = $_;
 		$UID =~ s/^GET_ICAL\s+//;
-		return(GetComHash(%{$iCalendar->get_info($UID)}));
+		my $ret = $iCalendar->get_info($UID);
+		if(ref($ret) eq 'HASH')
+		{
+			return(GetComHash(%{$ret}));
+		}
+		return("ERR UNKNWON_ERROR");
 	}
 	elsif(/^GET_EVENTS/)
 	{
