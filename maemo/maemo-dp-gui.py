@@ -108,7 +108,7 @@ def OpenSocket():
 			print "SocketIO failure: Did not reply to PING request"
 	else:
 		StartServant()
-		print "Socket did not exist, continuing anyway"
+		print "Socket did not exist, continuing anyway. Prepare to crash."
 
 def SocketSend(data):
 	global comSocket
