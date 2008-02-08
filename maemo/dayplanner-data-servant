@@ -339,13 +339,11 @@ sub CommandHandler
 		my $year = $_;
 		my $month = $_;
 		$year =~ s/^GET_DAYS\s+(\d+).*/$1/;
-		$month =~ s/^GET_DAYS\s+\d+(\d+).*/$1/;
+		$month =~ s/^GET_DAYS\s+\d+\s+(\d+).*/$1/;
 		my $MonthInfo = $iCalendar->get_monthinfo($year,$month);
 		my @array;
 		if ($MonthInfo) {
 			foreach my $Day (@{$MonthInfo}) {
-				# The days in the python version isn't the same as here, they are zero indexed it seems
-				$Day--;
 				push(@array,$Day);
 			}
 		}
