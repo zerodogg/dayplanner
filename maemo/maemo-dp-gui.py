@@ -30,6 +30,7 @@ comSocket = file('/dev/null')
 socketPath = '/home/zerodogg/.config/dayplanner.maemo/Data_Servant'
 pid = str(getpid())
 UpcomingEventsBuffer = gtk.TextBuffer()
+CalendarWidget = gtk.Calendar();
 
 # -- Communication conversion methods --
 def UnGetComString(string):
@@ -145,6 +146,11 @@ def Ical_DayEventList(NIXTIME):
 	print "STUB"
 
 # -- Main --
+def GetActiveMonth(year,month):
+	list = SocketIO("GET_DAYS "+str(year)+" "+str(month))
+	for day in list:
+		CalendarWidget.mark_day(int(day))
+
 def GetUpcomingEvents():
 	UpcomingEventsBuffer.set_text(SocketIO("GET_UPCOMINGEVENTS"));
 
@@ -220,7 +226,6 @@ def DrawMainWindow():
 	# TODO: Get the current time and set it as done in the perl GUI
 	#my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
 	# Create the calendar
-	CalendarWidget = gtk.Calendar();
 	# TODO SetActiveCalItems
 	CalendarWidget.show()
 	#$CalendarWidget->display_options(['show-week-numbers', 'show-day-names','show-heading']);
@@ -263,6 +268,8 @@ def DrawMainWindow():
 
 	DrawEventlist(EventlistWin)
 	GetUpcomingEvents()
+	# FIXME
+	GetActiveMonth(2007,2)
 
 	window.show()
 
