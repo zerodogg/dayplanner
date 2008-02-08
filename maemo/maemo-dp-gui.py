@@ -160,6 +160,11 @@ def Ical_DayEventList(NIXTIME):
 def GetIcalTime(string):
 	return SocketIO("GET_ICSTIME "+string)
 
+def Exit(arg):
+	SocketSend("SHUTDOWN")
+	gtk.main_quit()
+	sys.exit(0)
+
 # -- Main --
 def SetActiveMonth():
 	(year,month,day) = CalendarWidget.get_date()
@@ -244,7 +249,7 @@ def DrawMainWindow():
 	window.set_title(gettext("Day Planner"))
 	# TODO: Clean exit
 	# TODO: More signal handlers
-	window.connect("destroy", gtk.main_quit)
+	window.connect("destroy", Exit)
 	# Check something that will only be present on desktops.
 	# If it is present, then set a default size. If we're on a Maemo that file
 	# won't be present, and the maemo WM will force the size of our main window
