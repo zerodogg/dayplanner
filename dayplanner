@@ -4671,7 +4671,7 @@ GetOptions (
 		my @AvailModules;
 		my @UnavailModules;
 		print "Available modules:";
-		foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus/) {
+		foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/) {
 			if(eval("use $Module; 1")) {
 				if($Prev) {
 					print ',';
