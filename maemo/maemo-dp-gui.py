@@ -307,7 +307,7 @@ def DrawMainWindow():
 	# Work around a possible Gtk2::Calendar bug by explicitly setting the month/year combo
 	#$CalendarWidget->select_month($currmonth, $curryear);
 	#$RightHandVBox->pack_start($CalendarWidget,0,0,0);
-	RightHandVBox.pack_start(CalendarWidget)
+	RightHandVBox.pack_start(CalendarWidget,0,0,0)
 
 	# UPCOMING EVENTS
 	# Create the scrolled window
