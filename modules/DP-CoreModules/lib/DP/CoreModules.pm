@@ -398,14 +398,42 @@ sub P_LoadConfig {
 	return(%UserConfig);
 }
 
+# Purpose: Portable mkpath()
+# Usage: DP_mkpath(PATH);
+sub DP_mkpath
+{
+	my $path = shift;
+	if(runtime_use('File::Path',true))
+	{
+		return(File::Path::mkpath($path));
+	}
+	else
+	{
+		DPIntWarn("Load of module 'File::Path' failed. Will attempt to use fallback version. This may not work on non-maemo platforms");
+		my $tpath = '/';
+		foreach my $part(split(/\//,$path))
+		{
+			$tpath .= $part .'/';
+			if (not -d $tpath)
+			{
+				my $ret = mkdir($tpath);
+				if(not $ret)
+				{
+					return $ret;
+				}
+			}
+		}
+		return true;
+	}
+}
+
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
 # Usage: CreateSaveDir();
 sub P_CreateSaveDir {
 	my $SaveToDir = shift;
 	if(not -e $SaveToDir)
 	{
-		runtime_use('File::Path');
-		File::Path::mkpath($SaveToDir) or do {
+		DP_mkpath($SaveToDir) or do {
 				DPError(i18nwrapper_advanced("Unable to create the directory %(directory): %(error)\nManually create this directory before closing this dialog.", { directory => $SaveToDir, error => $!}));
 				unless(-d $SaveToDir) {
 					die("$SaveToDir does not exist, I was unable to create it and the user didn't create it\n");
