@@ -32,23 +32,8 @@ use constant { true => 1, false => 0 };
 # Parameter parser
 use Getopt::Long;
 Getopt::Long::Configure ('bundling', 'prefix_pattern=(--|-)');
-# Used to locate the notifier
-use Cwd;
-use File::Basename;
 # We need mktime and setsid
 use POSIX qw/ mktime setsid/;		# We need setsid();
-# Used to locate our own modules
-use FindBin;			# So that we can detect module dirs during runtime
-use Encode qw(encode_utf8 decode_utf8);
-# This here is done so that we can use local versions of our libs
-use lib "$FindBin::RealBin/modules/";
-use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
-use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
-use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
-use lib "$FindBin::RealBin/../modules/";
-use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
-use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
-use lib "$FindBin::RealBin/../modules/DP-CoreModules/lib/";
 # Day Planner-specific libs
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
@@ -90,6 +75,24 @@ my $LogLevel = 5;
 
 $SIG{INT} = sub { Shutdown('SIGINT');};
 $SIG{TERM} = sub { Shutdown('SIGTERM');};
+
+# The maemo doesn't have these :(
+sub encode_utf8
+{
+	if(wantarray())
+	{
+		return(@_);
+	}
+	return shift;
+}
+sub decode_utf8
+{
+	if(wantarray())
+	{
+		return(@_);
+	}
+	return shift;
+}
 
 # Purpose: Shut down.
 # Usage: Shutdown(reason);
