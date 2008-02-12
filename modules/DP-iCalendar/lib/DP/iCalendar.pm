@@ -15,7 +15,6 @@ use warnings;
 use Carp;
 use Exporter qw(import);
 use POSIX;
-use Sys::Hostname;
 use DP::iCalendar::StructHandler;
 use DP::iCalendar::ArrayHashManager;
 use constant { true => 1, false => 0 };
@@ -858,10 +857,38 @@ sub _UID {
 		$NonRandom = int(rand(10000));
 	}
 	while(1) {
-		my $UID = 'dp-' . time() . $NonRandom . int(rand(10000)) . '-' . scalar(getpwuid($<)) . '@' . hostname();
+		my $UID = 'dp-' . time() . $NonRandom . int(rand(10000)) . '-' . scalar(getpwuid($<)) . '@' . $this->_GetHostname();
 		if(not $this->{dataManager}->exists($UID))
 		{
 			return($UID);
+		}
+	}
+}
+
+# Purpose: Support for dynamic loading of Sys::Hostname
+# Usage: $this->_GetHostname();
+sub _GetHostname
+{
+	my $this = shift
+	if($this->{syshostnameAvail})
+	{
+		return(hostname());
+	}
+	if (defined($this->{syshostnameAvail}) and $this->{syshostnameAvail} == 0)
+	{
+		return('nohost');
+	}
+	else
+	{
+		if(eval('use Sys::Hostname; 1;'))
+		{
+			$this->{syshostnameAvail} = true;
+			return(hostname());
+		}
+		else
+		{
+			$this->{syshostnameAvail} = 0;
+			return('nohost');
 		}
 	}
 }
