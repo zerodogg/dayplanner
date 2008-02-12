@@ -68,7 +68,19 @@ sub newfile {
 		carp('Doesn\'t take a reference');
 		return(false);
 	}
-	return(_NewObj($File));
+	if (-e $File)
+	{
+		carp('File already exists. Refusing to create. Returning DP::iCalendar->new('.$File.');');
+		return DP::iCalendar->new($File);
+	}
+	open(my $fh, '>',$File) or do
+	{
+		carp("Failed to open $File: $! ($@).");
+		return undef;
+	};
+	print $fh "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//day-planner.org//NONSGML DP::iCalendar//EN\r\nCALSCALE:GREGORIAN\r\nEND:VCALENDAR\r\n";
+	close($fh);
+	return DP::iCalendar->new($File);
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
@@ -795,6 +807,29 @@ sub _LoadICSFile
 	# We really shouldn't do this, if it dies we're at least safe.
 	#$this->{dataSource}->{assertNeverFatal} = true;
 	$this->{dataSource}->loadFile($file);
+	$this->_ArrayHashSetup();
+}
+
+# Purpose: Set up the ArrayHashManager
+# Usage: $this->_ArrayHashSetup();
+sub _ArrayHashSetup
+{
+	my $this = shift;
+	if(not defined($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}))
+	{
+		if(not ref($this->{dataSource}->{data}->{VCALENDAR}))
+		{
+			$this->{dataSource}->{data}->{VCALENDAR} = [];
+		}
+		if (not ref($this->{dataSource}->{data}->{VCALENDAR}->[0]))
+		{
+			$this->{dataSource}->{data}->{VCALENDAR}->[0] = {};
+		}
+		if (not ref($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}))
+		{
+			$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT} = [];
+		}
+	}
 	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT},'UID');
 }
 
@@ -869,7 +904,7 @@ sub _UID {
 # Usage: $this->_GetHostname();
 sub _GetHostname
 {
-	my $this = shift
+	my $this = shift;
 	if($this->{syshostnameAvail})
 	{
 		return(hostname());
@@ -940,6 +975,7 @@ sub _ClearCalculated {
 	my $this = shift;
 	$this->{OrderedCalendar} = {};
 	$this->{AlreadyCalculated} = {};
+	$this->{dataManager}->reindex();
 	return(true);
 }
 
