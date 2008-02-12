@@ -114,9 +114,14 @@ def OpenSocket(loop=False):
 
 def LocateServant():
 	directories = [os.path.dirname(os.path.abspath(sys.argv[0])),"./","/usr/bin/"]
+	strinc = str()
+	for part in ['modules/','modules/DP-iCalendar/lib/','modules/DP-GeneralHelpers/lib/','modules/DP-CoreModules/lib/']:
+		strinc = strinc+' -I./'+part+' -I../'+part+' '
+	print strinc
+	# Construct include list
 	for dir in directories:
 		if os.path.exists(dir+'/dayplanner-data-servant'):
-			return(dir+'/dayplanner-data-servant')
+			return('perl '+strinc+dir+'/dayplanner-data-servant')
 	# Failure
 	print "FATAL: Unable to locate servant. Sorry about that, but I can't work without it."
 	print "       Startup cancelled. (dayplanner-data-servant not found)"
