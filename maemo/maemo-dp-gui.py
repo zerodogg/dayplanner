@@ -335,17 +335,10 @@ def DrawMainWindow():
 	WorkingAreaHBox.pack_end(RightHandVBox,0,0,0)
 	RightHandVBox.show()
 	# CALENDAR
-	# TODO: Get the current time and set it as done in the perl GUI
-	#my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate();
 	# Create the calendar
 	CalendarWidget.show()
 	CalendarWidget.connect("day-selected",DayChangedEvent)
 	CalendarWidget.connect("month-changed",MonthChangedEvent)
-	#$CalendarWidget->display_options(['show-week-numbers', 'show-day-names','show-heading']);
-	#$currmonth--;
-	# Work around a possible Gtk2::Calendar bug by explicitly setting the month/year combo
-	#$CalendarWidget->select_month($currmonth, $curryear);
-	#$RightHandVBox->pack_start($CalendarWidget,0,0,0);
 	RightHandVBox.pack_start(CalendarWidget,0,0,0)
 
 	# UPCOMING EVENTS
