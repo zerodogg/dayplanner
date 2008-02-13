@@ -319,6 +319,7 @@ sub MainLoop
 					chomp($Command);
 					$Command = decode_utf8($Command);
 					my ($Reply) = CommandHandler($Command,$Handle);
+					chomp($Reply);
 					DaemonLog(5,'Returning '.$Reply);
 					print $Handle encode_utf8($Reply)."\n";
 				} 
