@@ -288,7 +288,8 @@ def AddToEventList(liststore):
 					time = GetIcalTime(eventInfo.get("DTSTART"))
 				else:
 					time = ""
-				liststore.append(['UID',time, eventInfo.get("SUMMARY")])
+				summary = SocketIO('GET_SUMMARY '+UID)
+				liststore.append([UID, time, summary])
 
 def MonthChangedEvent(cal):
 	SetActiveMonth()
