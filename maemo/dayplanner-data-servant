@@ -71,7 +71,7 @@ my %UserConfig;
 # Change this to make it daemonize properly
 my $NoFork = true;
 my $ForceFork = false;
-my $LogLevel = 5;
+my $LogLevel = 1;
 
 $SIG{INT} = sub { Shutdown('SIGINT');};
 $SIG{TERM} = sub { Shutdown('SIGTERM');};
