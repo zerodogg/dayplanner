@@ -24,15 +24,25 @@ import re
 import sys
 import socket
 import os
+import time
 from posix import getpid
 
 comSocket = file('/dev/null')
-socketPath = '/home/zerodogg/.config/dayplanner.maemo/Data_Servant'
+socketPath = os.environ['HOME']+"/.config/dayplanner.maemo/Data_Servant"
 pid = str(getpid())
 UpcomingEventsBuffer = gtk.TextBuffer()
 CalendarWidget = gtk.Calendar();
 EventlistWin = gtk.ScrolledWindow()
 liststore = gtk.ListStore(str, str, str)
+
+if not os.environ['HOME']:
+	print "HOME environment variable missing. Attempting stupid detection."
+	if os.path.exists('/home/user') and os.path.exists('/usr/bin/ossofilemanager'):
+		print "Stupid detection succeeded, using /home/user/"
+		os.environ['HOME'] = '/home/user/'
+	else:
+		print "Stupid detection failed. HOME missing. Refusing to continue."
+		sys.exit(0)
 
 # -- Communication conversion methods --
 def UnGetComString(string):
@@ -97,7 +107,7 @@ def ParseRecieved(data):
 		return UnGetComString(data)
 
 # -- Communication methods --
-def OpenSocket(loop=False):
+def OpenSocket(loopa=False, loopb=False, loopc=False):
 	global comSocket
 	if os.path.exists(socketPath):
 		mySocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -106,18 +116,30 @@ def OpenSocket(loop=False):
 		if not SocketIO("PING") == "PONG":
 			print "SocketIO failure: Did not reply to PING request"
 	else:
-		if loop:
-			print "FATAL: Failed to start servant. Giving up."
+		if loopc:
+			print "FATAL ERROR: Failed to connect to servant."
+			print "             Attempted to connect to: "+socketPath
+			if os.path.exists(socketPath):
+				print "             The path existed, but still we failed."
+			else:
+				print "             The path did not exist"
 			sys.exit(1)
+		elif loopb:
+			print "Second attempt to connect to servant failed. Waiting five seconds,"
+			print "then attempting one final time"
+			time.sleep(5)
+			return(OpenSocket(True,True,True))
+		elif loopa:
+			time.sleep(1.5)
+			return OpenSocket(True,True)
 		StartServant()
-		OpenSocket(True)
+		return OpenSocket(True)
 
 def LocateServant():
 	directories = [os.path.dirname(os.path.abspath(sys.argv[0])),"./","/usr/bin/"]
 	strinc = str()
 	for part in ['modules/','modules/DP-iCalendar/lib/','modules/DP-GeneralHelpers/lib/','modules/DP-CoreModules/lib/']:
 		strinc = strinc+' -I./'+part+' -I../'+part+' '
-	print strinc
 	# Construct include list
 	for dir in directories:
 		if os.path.exists(dir+'/dayplanner-data-servant'):
@@ -138,7 +160,7 @@ def SocketSend(data):
 		return str()
 	try:
 		encdata = data.encode('utf-8')
-	except UnicodeDecodeError:
+	except UnicodeEncodeError:
 		encdata = data
 	comSocket.write(pid+" "+encdata+"\n")
 	comSocket.flush()
