@@ -45,15 +45,22 @@ if not os.environ['HOME']:
 		sys.exit(0)
 
 # -- Communication conversion methods --
+# Purpose: Extract a quoted communication string.
+# Returns: The new string
 def UnGetComString(string):
 	slashn = re.compile("{DPNL}")
 	newstring = slashn.sub("\n",string)
 	return(newstring)
+
+# Purpose: Quote a string for communication
+# Returns: The new string
 def GetComString(string):
 	slashn = re.compile("\n")
 	newstring = slashn.sub("{DPNL}",string)
 	return(newstring)
 
+# Purpose: Extract a quoted perl hash (dictionary)
+# Returns: The dictionary
 def UnGetComHash(string):
 	there = re.compile("^HASH")
 	string = there.sub('',string)
@@ -69,6 +76,8 @@ def UnGetComHash(string):
 			key = entry
 	return newDict
 
+# Purpose: Quote a dictionary (perl hash)
+# Returns: String
 def GetComHash(hash):
 	newlist = list()
 	for key in hash.keys():
@@ -78,6 +87,8 @@ def GetComHash(hash):
 		newlist.add(newValue)
 	return "HASH"+GetComArray(newdict)
 
+# Purpose: Extract a quoted array
+# Returns: Array
 def UnGetComArray(string):
 	mainre = re.compile('^ARRAY: ?')
 	string = mainre.sub('',string)
@@ -87,12 +98,16 @@ def UnGetComArray(string):
 			myArray.append(GetComString(v))
 	return myArray
 
+# Purpose: Quote an array
+# Returns: String
 def GetComArray(array):
 	ret = 'ARRAY: '
 	for v in array:
 		ret = ret+GetComString(v)+'{DPSEP}'
 	return ret
 
+# Purpose: Wrapper for socket IO functions, unquotes strings, arrays and dictionaries
+# Returns: String, dictionary or array depending on what data was recieved
 def ParseRecieved(data):
 	if data == "":
 		print "ParseRecieved(): got ''"
@@ -107,6 +122,9 @@ def ParseRecieved(data):
 		return UnGetComString(data)
 
 # -- Communication methods --
+# Purpose: Open our socket
+# Returns: (nothing)
+#	The arguments are used internally for looping
 def OpenSocket(loopa=False, loopb=False, loopc=False):
 	global comSocket
 	if os.path.exists(socketPath):
@@ -135,6 +153,8 @@ def OpenSocket(loopa=False, loopb=False, loopc=False):
 		StartServant()
 		return OpenSocket(True)
 
+# Purpose: Locate the dayplanner-data-servant perl part
+# Returns: String, command to run to start it
 def LocateServant():
 	directories = [os.path.dirname(os.path.abspath(sys.argv[0])),"./","/usr/bin/"]
 	strinc = str()
@@ -149,10 +169,14 @@ def LocateServant():
 	print "       Startup cancelled. (dayplanner-data-servant not found)"
 	sys.exit(1)
 
+# Purpose: Start the servant
+# Returns: Nothing
 def StartServant():
 	if os.system(LocateServant()+" --force-fork") != 0:
 		print "Servant startup failure?"
 
+# Purpose: Send some data on our communication socket
+# Returns: Empty str()
 def SocketSend(data):
 	global comSocket
 	if data == "":
@@ -166,6 +190,8 @@ def SocketSend(data):
 	comSocket.flush()
 	return str()
 
+# Purpose: Recieve some data from our communication socket
+# Returns: Recieved string
 def SocketRecv():
 	global comSocket
 	reply = comSocket.readline().rstrip()
@@ -175,6 +201,9 @@ def SocketRecv():
 		myreply = reply
 	return myreply
 
+# Purpose: Send some data, and recieve some data
+#			(wrapper around SocketSend() and SocketRecv())
+# Returns: Recieved data
 def SocketIO(data):
 	SocketSend(data)
 	recieveddata = ParseRecieved(SocketRecv())
@@ -184,31 +213,35 @@ def SocketIO(data):
 	return recieveddata
 
 # -- Various data methods. Fetches and sends data --
+# Purpose: Send updated iCalendar data to the data servant
+# Returns: (nothing)
 def SendIcalData(list):
 	netsend = GetComHash(list)
 	if SocketIO("SEND_ICAL "+netsend) != "OK":
 		print "ERROR: FAILED TO SEND ICALENDAR DATA, SocketIO DID NOT RETURN OK"
 
+# Purpose: Get events on the current day
+# Returns: Array of UIDs
 def GetEventsOnCurrentDay():
 	(year,month,day) = CalendarWidget.get_date()
 	month += 1
 	list = SocketIO("GET_EVENTS "+str(year)+" "+str(month)+" "+str(day))
 	return list
 
+# Purpose: Get iCalendar data for the set day
+# Returns: iCalendar dictionary
 def GetIcalData(UID):
 	netsend = "GET_ICAL "+UID
 	iCalList = SocketIO(netsend)
 	return iCalList
 
-def Ical_MonthList(NIXTIME):
-	print "STUB"
-
-def Ical_DayEventList(NIXTIME):
-	print "STUB"
-
+# Purpose: Get the iCalendar time for the string
+# Returns: string
 def GetIcalTime(string):
 	return SocketIO("GET_ICSTIME "+string)
 
+# Purpose: Exit the program
+# Returns: Never
 def Exit(arg):
 	SocketSend("SHUTDOWN")
 	gtk.main_quit()
@@ -216,6 +249,8 @@ def Exit(arg):
 
 # -- Main --
 
+# Purpose: Mark the days with events in the calendar
+# Returns: Nothing
 def SetActiveMonth():
 	(year,month,day) = CalendarWidget.get_date()
 	month += 1;
@@ -224,6 +259,8 @@ def SetActiveMonth():
 	for day in list:
 		CalendarWidget.mark_day(int(day))
 
+# Purpose: Get the event type for an iCalendar event
+# Returns: string - bday, norm or all
 def GetEtype(UIDInfo):
 	if UIDInfo.has_key('X-DP-BIRTHDAY') and UIDInfo.get('X-DP-BIRTHDAY') == "TRUE":
 		return "bday"
@@ -235,21 +272,34 @@ def GetEtype(UIDInfo):
 		else:
 			return("all")
 
+# Purpose: Get the upcoming events string
+# Returns: Nothing, sets the text in the UpcomingEventsBuffer
 def GetUpcomingEvents():
 	UpcomingEventsBuffer.set_text(SocketIO("GET_UPCOMINGEVENTS"));
 
+# Purpose: Add an event
+# Returns: Undecided.
 def addevent(arg):
 	print "addevent(): STUB"
 
+# Purpose: Edit an event
+# Returns: Undecided.
 def EditEvent(treeview,two,treeviewcolumn):
 	print "EditEvent(): STUBBED"
 
+# Purpose: Delete an event
+# Returns: Undecided.
 def DeleteEvent(arg):
 	print "DeleteEvent(): STUBBED"
 
+# Purpose: Get a localized string. Not implemented yet
+# Returns: Localized string
 def gettext(string):
+	# FIXME
 	return string;
 
+# Purpose: Draw the event list
+# Returns: Nothing
 def DrawEventlist(EventlistWin):
 	# NOTE: Difference from perl implementation: No SimpleList, using raw TreeView
 	# create a liststore with one string column to use as the model
@@ -274,10 +324,14 @@ def DrawEventlist(EventlistWin):
 
 	EventlistWin.add(EventlistWidget);
 
+# Purpose: Update the event list
+# Returns: Nothing
 def UpdateEventList():
 	liststore.clear()
 	AddToEventList(liststore)
 
+# Purpose: Add events to the liststore supplied
+# Returns: Nothing
 def AddToEventList(liststore):
 	UIDs = GetEventsOnCurrentDay()
 	if type(UIDs) == list:
@@ -291,13 +345,18 @@ def AddToEventList(liststore):
 				summary = SocketIO('GET_SUMMARY '+UID)
 				liststore.append([UID, time, summary])
 
+# Purpose: Do stuff when the month changes
+# Returns: Nothing
 def MonthChangedEvent(cal):
 	SetActiveMonth()
 
+# Purpose: Do stuff when the day changes
+# Returns: Nothing
 def DayChangedEvent(cal):
 	UpdateEventList()
 
 # Purpose: Draw the main window
+# Returns: Nothing
 def DrawMainWindow():
 	window = hildon.Window()
 	window.set_title(gettext("Day Planner"))
