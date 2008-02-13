@@ -469,6 +469,12 @@ sub CommandHandler
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($time);
 		return($Time);
 	}
+	elsif(/^GET_SUMMARY/)
+	{
+		my $UID = $_;
+		$UID =~ s/^GET_SUMMARY\s+//;
+		return GetSummaryString($UID);
+	}
 	else
 	{
 		return('ERR INVALID_COMMAND');
