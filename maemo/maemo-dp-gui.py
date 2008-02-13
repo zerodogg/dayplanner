@@ -136,14 +136,22 @@ def SocketSend(data):
 	if data == "":
 		print "SocketSend(): got '' - not sending"
 		return str()
-	comSocket.write(pid+" "+data.encode('utf-8')+"\n")
+	try:
+		encdata = data.encode('utf-8')
+	except UnicodeDecodeError:
+		encdata = data
+	comSocket.write(pid+" "+encdata+"\n")
 	comSocket.flush()
 	return str()
 
 def SocketRecv():
 	global comSocket
-	reply = comSocket.readline().rstrip().decode('utf-8')
-	return reply
+	reply = comSocket.readline().rstrip()
+	try:
+		myreply = reply.decode('utf-8')
+	except UnicodeDecodeError:
+		myreply = reply
+	return myreply
 
 def SocketIO(data):
 	SocketSend(data)
