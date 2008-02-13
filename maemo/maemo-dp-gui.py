@@ -238,11 +238,14 @@ def GetEtype(UIDInfo):
 def GetUpcomingEvents():
 	UpcomingEventsBuffer.set_text(SocketIO("GET_UPCOMINGEVENTS"));
 
-def addevent():
-	print "STUB"
+def addevent(arg):
+	print "addevent(): STUB"
 
 def EditEvent(treeview,two,treeviewcolumn):
 	print "EditEvent(): STUBBED"
+
+def DeleteEvent(arg):
+	print "DeleteEvent(): STUBBED"
 
 def gettext(string):
 	return string;
@@ -372,6 +375,27 @@ def DrawMainWindow():
 	EventlistWin.set_policy('automatic','automatic')
 	LeftHandVBox.pack_start(EventlistWin,1,1,0)
 	EventlistWin.show()
+
+	# --- Toolbar ---
+	Toolbar = gtk.Toolbar()
+	Toolbar.set_style('icons')
+	LeftHandVBox.pack_end(Toolbar,0,0,0);
+	Toolbar.show()
+
+	# Delete button
+	ToolbarDeleteButton = gtk.ToolButton('gtk-delete')
+	ToolbarDeleteButton.connect('clicked',DeleteEvent)
+	Toolbar.insert(ToolbarDeleteButton,0)
+	ToolbarDeleteButton.show()
+	
+	# Add button
+	AddButton = gtk.ToolButton('gtk-add')
+	AddButton.connect('clicked', addevent)
+	Toolbar.insert(AddButton,0)
+	AddButton.show()
+
+	Toolbar.get_nth_item(0).set_is_important(True);
+	Toolbar.get_nth_item(1).set_is_important(True);
 
 	DrawEventlist(EventlistWin)
 	GetUpcomingEvents()
