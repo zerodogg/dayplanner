@@ -28,7 +28,8 @@ import time
 from posix import getpid
 
 comSocket = file('/dev/null')
-socketPath = os.environ['HOME']+"/.config/dayplanner.maemo/Data_Servant"
+confDir = os.environ['HOME']+"/.config/dayplanner.maemo/"
+socketPath = confDir+"Data_Servant"
 pid = str(getpid())
 UpcomingEventsBuffer = gtk.TextBuffer()
 CalendarWidget = gtk.Calendar();
@@ -370,6 +371,14 @@ def DPError(message):
 	Dialog.run()
 	Dialog.destroy()
 
+# Purpose: Display an information dialog
+# Returns: Nothing
+def DPInfo(message):
+	Dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_INFO,gtk.BUTTONS_OK,message.encode("utf-8"))
+	Dialog.set_title(gettext("Day Planner"))
+	Dialog.run()
+	Dialog.destroy()
+
 # Purpose: Draw the main window
 # Returns: Nothing
 def DrawMainWindow():
@@ -476,9 +485,10 @@ def DrawMainWindow():
 # Returns: Never
 def main():
 	try:
+		if not os.path.exists(confDir) and not os.path.exists("/usr/bin/ossofilemanager"):
+			DPInfo("You're running the Day Planner maemo port on a desktop machine. This is completely unsupported. You REALLY should use the proper client instead, as they differ in significant ways, this one being tailored for use on the Maemo-based tablets.")
 		OpenSocket()
 		DrawMainWindow()
-		moo()
 		gtk.main()
 	except KeyboardInterrupt:
 		print "\nInterrupted by the user.\n"
