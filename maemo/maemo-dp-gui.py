@@ -502,3 +502,5 @@ def main():
 
 if __name__ == "__main__":
 	main()
+else:
+	print "__name__ != __main__. Why?"
