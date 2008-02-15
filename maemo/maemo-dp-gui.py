@@ -42,7 +42,7 @@ if not os.environ['HOME']:
 		os.environ['HOME'] = '/home/user/'
 	else:
 		print "Stupid detection failed. HOME missing. Refusing to continue."
-		sys.exit(0)
+		sys.exit(1)
 
 # -- Communication conversion methods --
 # Purpose: Extract a quoted communication string.
@@ -213,6 +213,7 @@ def SocketIO(data):
 	return recieveddata
 
 # -- Various data methods. Fetches and sends data --
+
 # Purpose: Send updated iCalendar data to the data servant
 # Returns: (nothing)
 def SendIcalData(list):
@@ -242,10 +243,16 @@ def GetIcalTime(string):
 
 # Purpose: Exit the program
 # Returns: Never
-def Exit(arg):
+def Exit(argA=False, argB=False,retval = 0):
 	SocketSend("SHUTDOWN")
 	gtk.main_quit()
-	sys.exit(0)
+	sys.exit(retval)
+
+# ----
+# Add and edit functions
+# ----
+def NormalEventWindow ( UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET):
+	print "NormalEventWindow(): STUB"
 
 # -- Main --
 
@@ -355,6 +362,14 @@ def MonthChangedEvent(cal):
 def DayChangedEvent(cal):
 	UpdateEventList()
 
+# Purpose: Display an error dialog
+# Returns: Nothing
+def DPError(message):
+	Dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_ERROR,gtk.BUTTONS_OK,message.encode("utf-8"))
+	Dialog.set_title(gettext("Day Planner"))
+	Dialog.run()
+	Dialog.destroy()
+
 # Purpose: Draw the main window
 # Returns: Nothing
 def DrawMainWindow():
@@ -362,6 +377,7 @@ def DrawMainWindow():
 	window.set_title(gettext("Day Planner"))
 	# TODO: More signal handlers
 	window.connect("destroy", Exit)
+	window.connect("delete-event", Exit)
 	# Check something that will only be present on desktops.
 	# If it is present, then set a default size. If we're on a Maemo that file
 	# won't be present, and the maemo WM will force the size of our main window
@@ -456,7 +472,23 @@ def DrawMainWindow():
 
 	window.show()
 
+# Purpose: The main function
+# Returns: Never
+def main():
+	try:
+		OpenSocket()
+		DrawMainWindow()
+		moo()
+		gtk.main()
+	except KeyboardInterrupt:
+		print "\nInterrupted by the user.\n"
+		SocketSend("SHUTDOWN")
+		sys.exit(1)
+	except StandardError:
+		import traceback
+		tb = traceback.format_exc()
+		print tb
+		DPError("An unhandled exception occurred. This is a bug and should be reported. Day Planner will attempt to continue, but is likely to crash.\n\n"+tb)
+
 if __name__ == "__main__":
-	OpenSocket()
-	DrawMainWindow()
-	gtk.main()         
+	main()
