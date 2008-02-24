@@ -32,13 +32,25 @@ Items of interest:
 
 Required python work:
 - Dumb front-end
+
+Required perl work:
+- LOWMEM mode?
+	- Destroy objects after each use, slow, but would conserve memory
+
+---
+
+Done:
+
+Python:
+- Partial UI
+- Communication functions
 - Dirty conversion functions:
 	- Hash transportformat -> internal dict format
 	- Array transportformat -> internal array format
 	- Internal dict format -> hash transportformat
 	- Internal array format -> hash transportformat
 
-Required perl work:
+Perl:
 - Modularization of more of the code in dayplanner, put it into modules for
   it all to share. Add DP::InternalCore.
 - Dirty conversion functions:
@@ -47,5 +59,4 @@ Required perl work:
 	- Hash transportformat -> hash
 	- Array transportformat -> array
 - Client handler, rip from dayplanner-daemon
-- LOWMEM mode?
-	- Destroy objects after each use, slow, but would conserve memory
+- Parses and provides iCalendar data
