@@ -906,6 +906,7 @@ GetOptions (
 		PrintHelp('-n','--nofork',"Don't fork, stay in the foreground");
 		PrintHelp('-f','--force-fork','Force forking, overrides --nofork');
 		PrintHelp('', '--version', 'Display version information and exit');
+		PrintHelp('-t','--test','Use a seperate debug/ configuration directory');
 		PrintHelp('-h,', '--help', 'Display this help screen');
 		PrintHelp('-v,', '--verbose', 'Be verbose. Supply several times to increase verbosity.');
 		exit(0);
@@ -951,6 +952,14 @@ GetOptions (
 		print "Day Planner daemon version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
+	},
+	'test|t:i' => sub {
+		my $NumberPrefix = $_[1] ? $_[1] : '';
+		$DataDir = DetectConfDir();
+		$DataDir .= "/debug$NumberPrefix";
+		my $Dir = $DataDir;
+		$Dir =~ s/^$ENV{HOME}/~/g;
+		DPIntInfo("Running in test mode (using $Dir)");
 	},
 	# For backwards compatibility. Ignored parameters.
 	'D|V|o|output|debug|veryverbose' => sub {
