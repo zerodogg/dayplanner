@@ -12,7 +12,7 @@ package DP::iCalendar::HTTPSubscription;
 use strict;
 use warnings;
 use constant { true => 1, false => 0 };
-use Digest::MD5;
+use Digest::MD5 qw(md5_base64);
 use DP::iCalendar;
 use DP::GeneralHelpers::HTTPFetch;
 
@@ -41,7 +41,7 @@ sub new {
 	# Convert webcal:// to http://
 	$self->{HTTP_address} =~ s/^webcal/http/;
 	# Generate MD5 filename for the HTTP address
-	$self->{FilenameMD5} = md5_base64($self->{HTTP_address});
+	$self->{CacheFilename} = $self->_GetCacheName();
 	
 	# Do the actual adding
 	$self->update();
@@ -78,8 +78,9 @@ sub update {
 	);
 	# Check for errors
 	if($ErrorInformation{$self->{HTTP_data}}) {
-			print " DP::iCalendar::HTTPSubscription: Unable to download icalendar file: $ErrorInformation{$self->{HTTP_data}}\n";
+			print " DP::iCalendar::HTTPSubscription: Unable to download iCalendar file (will read from cache): $ErrorInformation{$self->{HTTP_data}}\n";
 			$self->{HTTP_UPD_RET} = $ErrorInformation{$self->{HTTP_data}};
+			$self->_ReadFromCache();
 			return(false);
 	}
 
@@ -88,6 +89,7 @@ sub update {
 	push(@Array, $_) foreach(split(/\n/,$self->{HTTP_data}));
 	$self->addfile(\@Array);
 	$self->{HTTP_UPD_RET} = false;
+	$self->_WriteCache();
 
 	return(true);
 }
@@ -101,9 +103,39 @@ sub update_error
 	return($self->{HTTP_UPD_RET});
 }
 
+# Purpose: Write the cache
+# Usage: object->_WriteCache();
+sub _WriteCache
+{
+	my $self = shift;
+	my $cfile = $self->{HTTP_cachedir}.'/'.$self->{CacheFilename};
+	return $self->write($cfile);
+}
+
+# Purpose: Get the cache name for this instance
+# Usage: $name = object->_GetCacheName();
+sub _GetCacheName
+{
+	my $self = shift;
+	# First extract the hostname
+	my $host = $self->{HTTP_address};
+	$host =~ s#^http://(www\.)?([^/]+).*#$2#;
+	my $fname = md5_base64($host)."_".md5_base64($self->{HTTP_real_address}).'.ics_cache';
+	return $fname;
+}
+
 # Purpose: Read the calendar from cache
 # Usage: object->_ReadFromCache();
 sub _ReadFromCache
 {
+	my $self = shift;
+	my $cfile = $self->{HTTP_cachedir}.'/'.$self->{CacheFilename};
+	if (-e $cfile)
+	{
+		$self->addfile($cfile);
+		return true;
+	}
+	print " DP::iCalendar::HTTPSubscription: File not cached\n";
+	return false;
 }
 1;
