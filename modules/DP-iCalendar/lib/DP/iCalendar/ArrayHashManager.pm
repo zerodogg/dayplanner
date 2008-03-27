@@ -171,3 +171,4 @@ sub _appendToIndex
 		}
 	}
 }
+1;
