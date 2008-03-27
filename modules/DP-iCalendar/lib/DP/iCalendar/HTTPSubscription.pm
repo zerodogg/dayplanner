@@ -84,10 +84,9 @@ sub update {
 			return(false);
 	}
 
-	my @Array;
 	$self->{HTTP_data} =~ s/\r//g;
-	push(@Array, $_) foreach(split(/\n/,$self->{HTTP_data}));
-	$self->addfile(\@Array);
+	my $ref = $self->{HTTP_data};
+	$self->addfile(\$ref);
 	$self->{HTTP_UPD_RET} = false;
 	$self->_WriteCache();
 
