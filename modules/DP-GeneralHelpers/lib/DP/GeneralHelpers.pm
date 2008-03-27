@@ -43,7 +43,8 @@ sub DPIntWarn {
 # Purpose: Print an info message to STDOUT with proper output
 # Usage: DPIntInfo("Info");
 sub DPIntInfo {
-	print "*** (Day Planner $main::Version): $_[0]\n";
+	my $ver = $main::Version ? " $main::Version" : "";
+	print "*** (Day Planner$ver): $_[0]\n";
 }
 
 # Purpose: Open a file
