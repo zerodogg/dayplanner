@@ -760,7 +760,7 @@ sub LoadHTTPSubscriptions
 					$loopturn = 0;
 				}
 				$loopturn++;
-			}
+			}, $SaveToDir
 		);
 		$iCalendar->add_object($obj,false);
 		$added = true;
