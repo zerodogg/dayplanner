@@ -382,3 +382,4 @@ sub _assertMustBeRef
 		}
 	}
 }
+1;
