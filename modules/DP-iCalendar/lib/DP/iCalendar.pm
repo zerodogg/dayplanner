@@ -363,9 +363,20 @@ sub exists {
 sub addfile {
 	my ($this,$File) = @_;
 	if(ref($File)) {	# If we got a reference
-		if(not ref($File) eq 'ARRAY') {
-			carp('Supplied a reference, but the reference is not a ARRAYREF.');
-			return(false);
+		if(not ref($File) eq 'SCALAR')
+		{
+			if(ref($File) eq 'ARRAY')
+			{
+				carp "DP::iCalendar->addfile(): Supplied an ARRAYREF. This is deprecated. You should use a scalar reference instead. For now, I'll convert it for you";
+				my $scalar;
+				$scalar .= $_ ."\n" foreach(@{$File});
+				$File = \$scalar;
+			}
+			else
+			{
+				carp "DP::iCalendar->addfile(): Does not support a reference of type ".ref($File);
+				return false;
+			}
 		}
 	} else {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
@@ -378,8 +389,7 @@ sub addfile {
 			return(false);
 		}
 	}
-	print "DP::iCalendar->addfile(): Currently unsupported.\n";
-	return;
+	return $this->_LoadICSFile($File);
 }
 
 # Purpose: Remove all loaded data
@@ -806,7 +816,14 @@ sub _LoadICSFile
 	my $file = shift;
 	# We really shouldn't do this, if it dies we're at least safe.
 	#$this->{dataSource}->{assertNeverFatal} = true;
-	$this->{dataSource}->loadFile($file);
+	if(ref($file))
+	{
+		$this->{dataSource}->loadDataString($$file);
+	}
+	else
+	{
+		$this->{dataSource}->loadFile($file);
+	}
 	$this->_ArrayHashSetup();
 }
 
