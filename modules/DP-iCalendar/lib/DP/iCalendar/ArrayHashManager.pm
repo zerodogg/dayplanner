@@ -159,15 +159,59 @@ sub _appendToIndex
 		return;
 	}
 	my $var = $this->{array}[$i]->{$this->{indexBy}}[0];
+	if(not defined($var) or not length($var))
+	{
+		my $rndString = 'DP-NIDX-'.time().rand(1000).rand(1000);
+		$var = $rndString;
+		$this->{array}[$i]->{$this->{indexBy}}[0] = $rndString;
+		# Uh oh. No value to index by. Now what do we do.
+		warn("DP::iCalendar::ArrayHashManager: Array entry $i did not have an ".$this->{indexBy}."! This is bad. Generated random string '$rndString', using that instead");
+	}
 	if(defined($var))
 	{
 		if(defined($this->{index}{$var}))
 		{
-			warn("DP::iCalendar::ArrayHashManager: index value $var belongs to ".$this->{index}{$var}." but $i also wants it. Duplicates. Ignoring $i\'s request\n");
+			my $IsEQ = true;
+			# Okay, it seems we've got a problem. The index value already exists.
+			# So either we've got a dupe on our hands, or a broken file with multiple entries with the defined index value.
+			# Now we iterate through the two events, comparing the first value of each entry. If they are not
+			# equal then it means the two events are not equal either. Thus we create a new unique index value.
+			foreach my $k (keys(%{$this->{array}[$this->{index}{$var}]}))
+			{
+				if (not $this->{array}[$i]{$k}[0] eq $this->{array}[$this->{index}{$var}]{$k}[0])
+				{
+					$IsEQ = false;
+					last;
+				}
+			}
+			# Is it equal?
+			if ($IsEQ)
+			{
+				# If so, dupe. Don't bother doing anything more.
+				warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it. Duplicates. Ignoring $i\'s request\n");
+				return false;
+			}
+			else
+			{
+				# It's not, generate a new index value by appending some random numbers to it.
+				my $newIdx = $var;
+				while(defined($this->{index}{$newIdx}))
+				{
+					$newIdx.= int(rand(10000));
+				}
+				# Warn about the condition, the file is cleary broken (even though we have now fixed it)
+				warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it and is not a duplicate. Renamed $i\'s ".$this->{indexBy}." to '$newIdx'.\n");
+				# Set the new index value
+				$this->{array}[$i]{$this->{indexBy}}[0] = $newIdx;
+				# And finally, append this to our index. Our job is done.
+				$this->{index}{$newIdx} = $i;
+				return true;
+			}
 		}
 		else
 		{
 			$this->{index}{$var} = $i;
+			return true;
 		}
 	}
 }
