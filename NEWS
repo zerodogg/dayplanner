@@ -9,6 +9,10 @@ Version 0.9 (Unreleased)
 - Fixed some issues with the synchronization system and certain locale
   configurations
 - Somewhat improved distro detection, better fallbacks for unknown distros
+- Rewritten the back end of DP::iCalendar:
+	- Now gracefully handles events that have duplicate UIDs
+	- Much better handling of files, preserves the entire file properly
+	- Faster 
 - Fixed a bug that caused DP to crash on some distributions using Gtk+ 2.14
 - Fixed a bug that caused LAST-MODIFIED and CREATED entries to be wrong
 	(zero-indexed month instead of one-indexed)
