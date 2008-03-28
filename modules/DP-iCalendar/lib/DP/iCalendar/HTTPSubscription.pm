@@ -119,7 +119,7 @@ sub _GetCacheName
 	# First extract the hostname
 	my $host = $self->{HTTP_address};
 	$host =~ s#^http://(www\.)?([^/]+).*#$2#;
-	my $fname = md5_base64($host)."_".md5_base64($self->{HTTP_real_address}).'.ics_cache';
+	my $fname = md5_base64($host).md5_base64($self->{HTTP_real_address}).'.ics_cache';
 	return $fname;
 }
 
