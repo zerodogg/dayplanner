@@ -32,7 +32,7 @@ use constant {
 };
 
 # Exported functions
-our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
+our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero InPath);
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
