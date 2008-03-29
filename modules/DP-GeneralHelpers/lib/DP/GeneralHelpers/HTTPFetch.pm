@@ -33,7 +33,7 @@ use DP::GeneralHelpers;
 # Usage: my $Data = DP::GeneralHelpers::HTTPFetch->get("URL",$ProgressCallback);
 # 	Progresscallback is a function that can recieve values in order to run
 # 	a progress window. It can also be undef.
-# 	If not undef then the function referenced will recieve either a vlue from
+# 	If not undef then the function referenced will recieve either a value from
 # 	1-100, which is the percentage completed, or the string UNKOWN.
 # 	UNKNOWN means that the download has progressed, but it is not known how
 # 	much is left.
@@ -54,13 +54,14 @@ sub get {
 	}
 
 	if($ENV{DP_HTTP_FORCEUSEOF}) {
-		if($ENV{DP_HTTP_FORCEUSEOF} =~ /^(LWP|wget|curl|lynx)/i)
+		if($ENV{DP_HTTP_FORCEUSEOF} =~ /^(LWP|wget|curl|lynx|dummy)/i)
 		{
+			debugOut("DP_HTTP_FORCEUSEOF=$ENV{DP_HTTP_FORCEUSEOF}");
 			if($ENV{DP_HTTP_FORCEUSEOF} =~ /LWP/i) {
 				if(eval("use LWP;")) {
 					return($self->_LWPFetch($file));
 				}
-			} elsif($ENV{DP_HTTP_FOCEUSEOF} =~ /wget/i) {
+			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /wget/i) {
 				if(DP::GeneralHelpers::InPath('wget')) {
 					return($self->_WgetFetch($file));
 				}
@@ -72,6 +73,19 @@ sub get {
 			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /lynx/i) {
 				if(DP::GeneralHelpers::InPath('lynx')) {
 					return($self->_LynxFetch($file));
+				}
+			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /dummy/i) {
+				if ($ENV{DP_HTTP_FORCEUSEOF} =~ /noresolve/i)
+				{
+					return('NORESOLVE');
+				}
+				elsif ($ENV{DP_HTTP_FORCEUSEOF} =~ /fail/i)
+				{
+					return('FAIL');
+				}
+				else
+				{
+					return('NOPROGRAM');
 				}
 			}
 			warn("DP_HTTP_FORCEUSEOF: $ENV{DP_HTTP_FORCEUSEOF}: Not available, falling back to automatic detection\n");
@@ -98,6 +112,7 @@ sub get {
 		debugOut("Using lynx");
 		return($self->_LynxFetch($file,$progress));
 	}
+	debugOut("No program detected. What an odd system.");
 	return('NOPROGRAM');
 }
 
@@ -142,7 +157,51 @@ sub _LWPFetch {
 		}
 	} else {
 		debugOut("Failure using LWP - not is_success");
-		return('FAILED');
+		return('FAIL');
+	}
+}
+
+# Purpose: Download a file using a command
+# Usage: $self->_FetchFileCMD(PROGRESS,COMMAND);
+sub _FetchFileCMD
+{
+	my $self = shift;
+	my $progress = shift;
+	my $cmd = $_[0];
+
+	my ($in, $out, $err);
+	my $ChildPID = open3($in,$out,$err,@_);
+	my $output;
+	while($output .= <$out> and not eof($out)) {
+		if($progress) {
+			$progress->('UNKNOWN');
+		}
+	}
+	close($in) if($in);
+	close($out) if($out);
+	close($err) if($err);
+	waitpid($ChildPID,WNOHANG);
+	my $ret = $?;
+	if ($ret == -1)
+	{
+		my $err = $!;
+		# Generally only means it worked, but it exited. Assume this if length > 100
+		if(length($output) > 100)
+		{
+			$ret = 0;
+		}
+		else
+		{
+			print " DP::GeneralHelpers::HTTPFetch: Odd error from $cmd: ret was -1: $!\n";
+			return('FAIL');
+		}
+	}
+	if($ret == 0) {
+		return($output);
+	} else {
+		$ret = $ret >> 8;
+		debugOut("Failure using $cmd, ret == $ret");
+		return('FAIL');
 	}
 }
 
@@ -153,27 +212,7 @@ sub _LynxFetch {
 	my $file = shift;
 	my $progress = shift;
 
-	# Have lynx output the file to STDOUT and read from that.
-	# Ignore STDERR
-	my ($in, $out, $err);
-	my $ChildPID = open3($in,$out,$err,'lynx','-useragent=DP::GeneralHelpers::HTTPFetch//lynx','-source',$file);
-	my $output;
-	while($output .= <$out> and not eof($out)) {
-		if($progress) {
-			$progress->('UNKNOWN');
-		}
-	}
-	close($in) if($in);
-	close($out) if($out);
-	close($err) if($err);
-	waitpid($ChildPID,WNOHANG);
-	my $ret = $? >> 8;
-	if($ret == 0) {
-		return($output);
-	} else {
-		debugOut("Failure using Lynx, ret == $ret");
-		return('FAIL');
-	}
+	return($self->_FetchFileCMD($progress,'lynx','-useragent=DP::GeneralHelpers::HTTPFetch//lynx','-source',$file));
 }
 
 # Purpose: Download a file from HTTP using curl.
@@ -183,27 +222,7 @@ sub _CurlFetch {
 	my $file = shift;
 	my $progress = shift;
 
-	# Have curl output the file to STDOUT and read from that.
-	# Ignore STDERR
-	my ($in, $out, $err);
-	my $ChildPID = open3($in,$out,$err,'curl','--user-agent','DP::GeneralHelpers::HTTPFetch//curl','--fail','--location','--silent',$file);
-	my $output;
-	while($output .= <$out> and not eof($out)) {
-		if($progress) {
-			$progress->('UNKNOWN');
-		}
-	}
-	close($in) if($in);
-	close($out) if($out);
-	close($err) if($err);
-	waitpid($ChildPID,WNOHANG);
-	my $ret = $? >> 8;
-	if($ret == 0) {
-		return($output);
-	} else {
-		debugOut("Failure using Curl, ret == $ret");
-		return('FAIL');
-	}
+	return($self->_FetchFileCMD($progress,'curl','--user-agent','DP::GeneralHelpers::HTTPFetch//curl','--fail','--location','--silent',$file));
 }
 
 # Purpose: Download a file from HTTP using wget.
@@ -213,27 +232,7 @@ sub _WgetFetch {
 	my $file = shift;
 	my $progress = shift;
 
-	# Have wget output the file to STDOUT and read from that. Ignore
-	# STDERR.
-	my ($in, $out, $err);
-	my $ChildPID = open3($in,$out,$err,'wget','--user-agent','DP::GeneralHelpers::HTTPFetch//wget','--quiet','-O','-',$file);
-	my $output;
-	while($output .= <$out> and not eof($out)) {
-		if(defined($progress)) {
-			$progress->('UNKNOWN');
-		}
-	}
-	close($in) if($in);
-	close($out) if($out);
-	close($err) if($err);
-	waitpid($ChildPID,WNOHANG);
-	my $ret = $? >> 8;
-	if($ret == 0) {
-		return($output);
-	} else {
-		debugOut("Failure using Wget, ret == $ret");
-		return('FAIL');
-	}
+	return($self->_FetchFileCMD($progress,'wget','--user-agent','DP::GeneralHelpers::HTTPFetch//wget','--quiet','-O','-',$file));
 }
 
 1;
