@@ -159,6 +159,13 @@ sub _IO_IN_EVENT {
 }
 
 # TODO: Clean and document
+# Purpose: Check for a socket and unlink it, as long as it is safe
+# Usage: self->_CheckOrUnlink();
+#
+# It is considered safe when all of the following is met:
+# File exists
+# File is a socket
+# Socket can not be connected to.
 sub _CheckOrUnlink {
 	my $self = shift;
 	if(-e $self->{FileName}) {
