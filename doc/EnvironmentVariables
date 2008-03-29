@@ -17,6 +17,11 @@ DP_FORCE_GETTEXT_WORKAROUND
 			Forced to on if set to 1, forced to off if
 			set to anything else.
 
+			If you're experiencing weird problems with
+			accented characters, try setting this to 0
+			or 1 (either might help, depending on setup
+			and versions).
+
 DP_FORCE_24H
 			Forces Day Planner into 24 hour mode if
 			set to 1.
