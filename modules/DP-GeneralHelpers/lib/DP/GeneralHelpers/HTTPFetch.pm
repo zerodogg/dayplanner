@@ -26,7 +26,7 @@ package DP::GeneralHelpers::HTTPFetch;
 use IPC::Open3;
 use POSIX;
 use Socket;
-use DP::GeneralHelpers;
+use DP::GeneralHelpers qw(InPath);
 
 # Purpose: Download a file from HTTP (other protocols might also work, but there are
 # 		no guarantees for that)
@@ -54,39 +54,13 @@ sub get {
 	}
 
 	if($ENV{DP_HTTP_FORCEUSEOF}) {
-		if($ENV{DP_HTTP_FORCEUSEOF} =~ /^(LWP|wget|curl|lynx|dummy)/i)
+		if($ENV{DP_HTTP_FORCEUSEOF} =~ /^(LWP|wget|curl|lynx|elinks|dummy)/i)
 		{
 			debugOut("DP_HTTP_FORCEUSEOF=$ENV{DP_HTTP_FORCEUSEOF}");
-			if($ENV{DP_HTTP_FORCEUSEOF} =~ /LWP/i) {
-				if(eval("use LWP;")) {
-					return($self->_LWPFetch($file));
-				}
-			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /wget/i) {
-				if(DP::GeneralHelpers::InPath('wget')) {
-					return($self->_WgetFetch($file));
-				}
-			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /curl/i) {
-
-				if(DP::GeneralHelpers::InPath('curl')) {
-					return($self->_CurlFetch($file));
-				}
-			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /lynx/i) {
-				if(DP::GeneralHelpers::InPath('lynx')) {
-					return($self->_LynxFetch($file));
-				}
-			} elsif($ENV{DP_HTTP_FORCEUSEOF} =~ /dummy/i) {
-				if ($ENV{DP_HTTP_FORCEUSEOF} =~ /noresolve/i)
-				{
-					return('NORESOLVE');
-				}
-				elsif ($ENV{DP_HTTP_FORCEUSEOF} =~ /fail/i)
-				{
-					return('FAIL');
-				}
-				else
-				{
-					return('NOPROGRAM');
-				}
+			my $ret = $self->_TryInterface($ENV{DP_HTTP_FORCEUSEOF},$file,$progress);
+			if(defined($ret))
+			{
+				return($ret);
 			}
 			warn("DP_HTTP_FORCEUSEOF: $ENV{DP_HTTP_FORCEUSEOF}: Not available, falling back to automatic detection\n");
 		} else {
@@ -94,26 +68,68 @@ sub get {
 		}
 	}
 
-	# First try LWP
-	if(eval('use LWP;1')) {
-		debugOut("Using LWP");
-		return($self->_LWPFetch($file,$progress));
-	}
-	# Okay, LWP isn't available. Check for others
-	if(DP::GeneralHelpers::InPath('wget')) {
-		debugOut("Using wget");
-		return($self->_WgetFetch($file,$progress));
-	}
-	if(DP::GeneralHelpers::InPath('curl')) {
-		debugOut("Using curl");
-		return($self->_CurlFetch($file,$progress));
-	}
-	if(DP::GeneralHelpers::InPath('lynx')) {
-		debugOut("Using lynx");
-		return($self->_LynxFetch($file,$progress));
+	foreach my $i (qw(LWP wget curl lynx elinks))
+	{
+		my $ret = $self->_TryInterface($i,$file,$progress);
+		if(defined($ret))
+		{
+			return($ret);
+		}
 	}
 	debugOut("No program detected. What an odd system.");
 	return('NOPROGRAM');
+}
+
+# Purpose: Try to use the interface specified for file+progress
+# Usage: this->_TryInterface(INTERFACE,file,progress);
+sub _TryInterface
+{
+	my $self = shift;
+	my $interface = shift;
+	my $file = shift;
+	my $progress = shift;
+
+	if ($interface eq 'LWP' && eval('use LWP;1'))
+	{
+		debugOut("Using LWP");
+		return($self->_LWPFetch($file,$progress));
+	}
+	elsif($interface eq 'wget' && InPath('wget'))
+	{
+		debugOut("Using wget");
+		return($self->_WgetFetch($file,$progress));
+	}
+	elsif($interface eq 'curl' && InPath('curl'))
+	{
+		debugOut("Using curl");
+		return($self->_CurlFetch($file,$progress));
+	}
+	elsif($interface eq 'lynx' && InPath('lynx'))
+	{
+		debugOut("Using lynx");
+		return($self->_LynxFetch($file,$progress));
+	}
+	elsif($interface eq 'elinks' && InPath('elinks'))
+	{
+		debugOut("Using elinks");
+		return($self->_eLinksFetch($file,$progress));
+	}
+	elsif($interface =~ /^dummy/)
+	{
+		if ($interface =~ /noresolve/i)
+		{
+			return('NORESOLVE');
+		}
+		elsif ($interface =~ /fail/i)
+		{
+			return('FAIL');
+		}
+		else
+		{
+			return('NOPROGRAM');
+		}
+	}
+	return(undef);
 }
 
 # Purpose: Output a debugging message, only displayed when HTTPFETCH_DEBUG=1
@@ -201,8 +217,22 @@ sub _FetchFileCMD
 	} else {
 		$ret = $ret >> 8;
 		debugOut("Failure using $cmd, ret == $ret");
+		if (defined($ENV{HTTPFETCH_DEBUG_RETONE}))
+		{
+			debugOut("Contents: $output");
+		}
 		return('FAIL');
 	}
+}
+
+# Purpose: Download a file from HTTP using elinks.
+# Usage: $self->_eLinksFetch(FILE,PROGRESS);
+sub _eLinksFetch {
+	my $self = shift;
+	my $file = shift;
+	my $progress = shift;
+
+	return($self->_FetchFileCMD($progress,'elinks','-eval',"set protocol.http.user_agent = 'DP::GeneralHelpers::HTTPFetch//eLinks'",'-source',$file));
 }
 
 # Purpose: Download a file from HTTP using lynx.
