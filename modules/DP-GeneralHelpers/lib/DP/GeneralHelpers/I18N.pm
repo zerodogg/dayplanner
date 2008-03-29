@@ -22,6 +22,8 @@
 # along with this program in a file named COPYING.gpl. 
 # If not, see <http://www.gnu.org/licenses/>.
 package DP::GeneralHelpers::I18N;
+use warnings;
+use strict;
 use POSIX;
 
 # Purpose: Wrapper around the gettext functions that does the right thing(tm)
@@ -122,10 +124,14 @@ sub new {
 			textdomain('dayplanner');
 		} else {
 			$self->{I18N_Mode} = 2;
-			my $Workaround;
-			if($Gtk2::VERSION >= 1.144) {
+			my $Workaround = 0;
+			# Workaround detection. Appears to be a bug
+			# in versions somewhere between 1.144 and 1.160.
+			if($Gtk2::VERSION >= 1.144 && $Gtk2::VERSION < 1.160) {
 				$Workaround = 1;
 			}
+			# Check if the env var is set, if it is then ignore detection
+			# and use that.
 			if(defined($ENV{DP_FORCE_GETTEXT_WORKAROUND})) {
 				if ($ENV{DP_FORCE_GETTEXT_WORKAROUND} eq '1') {
 					$Workaround = 1;
@@ -134,11 +140,15 @@ sub new {
 				}
 			}
 			if($Workaround) {
-				# This is needed on some boxes in some cases. It appears to be when using one of the
-				# later Gtk2 versions.
-				$self->{Gettext} = Locale::gettext->domain_raw('dayplanner');	# Set the gettext domain
+				# This appears to be needed on /some/ boxes in certain cases.
+				# Seems to be a bug in certain versions of perl-gtk2, though
+				# it can also be forced on by the user.
+
+				# Set the raw gettext domain and enforce an UTF-8 codeset
+				$self->{Gettext} = Locale::gettext->domain_raw('dayplanner');
 				$self->{Gettext}->codeset('UTF-8');
 			} else {
+				# Standard (no workaround applied)
 				$self->{Gettext} = Locale::gettext->domain('dayplanner');
 			}
 			if($BindTo) {
