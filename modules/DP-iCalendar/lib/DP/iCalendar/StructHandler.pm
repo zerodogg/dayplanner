@@ -137,7 +137,7 @@ sub _loadFH
 		elsif ($key eq 'BEGIN')
 		{
 			# Check that it is a hash
-			$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true);
+			$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true,"$key:$value");
 
 			if (not defined $CurrRef->{$value})
 			{
@@ -145,7 +145,7 @@ sub _loadFH
 			}
 			else
 			{
-				$this->_assertMustBeRef('ARRAY',$CurrRef->{$value},'CurrRef->{value}',true);
+				$this->_assertMustBeRef('ARRAY',$CurrRef->{$value},'CurrRef->{value}',true,"$key:$value");
 			}
 			my $pushNo = push(@{$CurrRef->{$value}}, {});
 			$pushNo--;
@@ -345,6 +345,7 @@ sub _assertMustBeRef
 	{
 		my $varname = shift;
 		my $fatal = shift;
+		my $addInfo = shift;
 
 		my $errMsg;
 		# It wasn't, work hard to get a useful error message
@@ -362,6 +363,10 @@ sub _assertMustBeRef
 		else
 		{
 			$errMsg = "\$$varname turned out to NOT be a reference of type $refName, was a: ".ref($ref);
+		}
+		if ($addInfo)
+		{
+			$errMsg .= " ($addInfo)";
 		}
 		my ($caller_package, $caller_filename, $caller_line) = caller;
 		$errMsg .= " on line $caller_line in $caller_filename";
