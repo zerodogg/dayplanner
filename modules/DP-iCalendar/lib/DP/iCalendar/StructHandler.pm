@@ -122,6 +122,7 @@ sub _loadFH
 		$key =~ s/^([^:]+):.*$/$1/;
 		my $value = $_;
 		$value =~ s/^([^:]+):(.*)$/$2/;
+		$value = _UnSafe($value);
 		if ($key =~ /\s/ and not $key =~ /^\s/)
 		{
 			_parseWarn("key ($key:$value) contains whitespace! This is bad, other parsers might get very confused by that");
@@ -132,6 +133,7 @@ sub _loadFH
 			# Append to PrevValue
 			my $prevLen = scalar(@{$PrevValue});
 			$prevLen--;
+			$_ = _UnSafe($_);
 			$PrevValue->[$prevLen] .= $_;
 		}
 		elsif ($key eq 'BEGIN')
@@ -244,22 +246,23 @@ sub _write
 	{
 		return;
 	}
+	$value = _GetSafe($value);
 	my $line = $key.':'.$value."\r\n";
 	my $maxlen = 80;
 	if(length($line) > $maxlen)
 	{
 		$line = '';
 		my $currLine = $key.':';
-		foreach my $lpart (split(/ /,$value))
+		foreach my $lpart (split(//,$value))
 		{
 			if (length($currLine) > $maxlen or (length($currLine)+length($lpart)) > $maxlen)
 			{
 				$line .= $currLine."\r\n";
-				$currLine = '  '.$lpart;
+				$currLine = ' '.$lpart;
 			}
 			else
 			{
-				$currLine .= ' '.$lpart;
+				$currLine .= $lpart;
 			}
 		}
 		$line .= $currLine."\r\n";
@@ -319,6 +322,31 @@ sub _HandleWriteArray
 sub _parseWarn
 {
 	warn($_[0]);
+}
+
+# Purpose: Escape certain characters that are special
+# Usage: my $SafeData = _GetSafe($Data);
+sub _GetSafe {
+	$_[0] =~ s/\\/\\\\/g;
+	$_[0] =~ s/,/\,/g;
+	$_[0] =~ s/;/\;/g;
+	$_[0] =~ s/\n/\\n/g;
+	return($_[0]);
+}
+
+# Purpose: Removes escaping of entries
+# Usage: my $UnsafeEntry = _UnSafe($DATA);
+sub _UnSafe {
+	my $data = shift;
+	if(not defined($data))
+	{
+		_parseWarn("_UnSafe called on undef");
+	}
+	$data =~ s/\\n/\n/g;
+	$data =~ s/\\,/,/g;
+	$data =~ s/\\;/;/g;
+	$data =~ s/\\\\/\\/g;
+	return($data);
 }
 
 # Purpose: Assert if a variable is what we want it to be and display useful errors if it isn't
