@@ -868,31 +868,6 @@ sub _iCal_GenDateTimeFromLocaltime
 	return(iCal_GenDateTime($theyear, $themonth, $themday, _PrependZero($thehour) . ':' . _PrependZero($themin)));
 }
 
-# Purpose: Escape certain characters that are special in iCalendar
-# Usage: my $SafeData = iCal_GetSafe($Data);
-sub _GetSafe {
-	$_[0] =~ s/\\/\\\\/g;
-	$_[0] =~ s/,/\,/g;
-	$_[0] =~ s/;/\;/g;
-	$_[0] =~ s/\n/\\n/g;
-	return($_[0]);
-}
-
-# Purpose: Removes escaping of iCalendar entries
-# Usage: my $UnsafeEntry = iCal_UnSafe($DATA);
-sub _UnSafe {
-	my $data = shift;
-	if(not defined($data))
-	{
-		_WarnOut("_UnSafe called on undef");
-	}
-	$data =~ s/\\n/\n/g;
-	$data =~ s/\\,/,/g;
-	$data =~ s/\\;/;/g;
-	$data =~ s/\\\\/\\/g;
-	return($data);
-}
-
 # Purpose: Get a unique ID for an event
 # Usage: $iCalendar .= $this->_UID(NONRANDOM?);
 # 	NONRANDOM is a non random string to be included into
