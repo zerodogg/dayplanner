@@ -3835,8 +3835,8 @@ sub AboutBox {
 	# TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 	#		For instance "Dagsplanleggar" for Norwegian.
 	my $AppName = $i18n->get('Day Planner');
-	# Use set_program_name instead of set_name in Gtk2 2.14+
-	if(Gtk2->CHECK_VERSION(2,14,0)) {
+	# Use set_program_name instead of set_name in Gtk2 2.12+
+	if(Gtk2->CHECK_VERSION(2,12,0)) {
 		$AboutDialog->set_program_name($AppName);
 	}
 	else
@@ -3844,12 +3844,12 @@ sub AboutBox {
 		$AboutDialog->set_name($AppName);
 	}
 	$AboutDialog->set_version($Version);
+	# Add revision when we're the SVN version
 	if ($VersionName eq 'SVN')
 	{
-		if (not $Version =~ /svn/i)
-		{
-			$AboutDialog->set_version($Version.' SVN');
-		}
+		my $Rev = $RCSRev;
+		$Rev =~ s/^.*dayplanner\s+(\d+)\s+.*/$1/;
+		$AboutDialog->set_version($Version.' SVN r'.$Rev);
 	}
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day Planner is free software: you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation, either version 3\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\nGNU General Public License for more details.\n\nYou should have recieved a copy of the GNU General Public License\nalong with this program. If not, see <http://www.gnu.org/licenses/>.");
