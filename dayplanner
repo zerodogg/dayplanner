@@ -4740,6 +4740,13 @@ GetOptions (
 	'exporthtml=s' => \&CLI_Export,
 	'exportphp=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
+	# Compatibility for evolution-commandline
+	'component=s' => sub {
+		if ( not $_[1] eq 'calendar')
+		{
+			DPIntWarn("Evolution compat: --component was not calendar - Day Planner does not support '$_[1]'");
+		}
+	},
 ) or die "Run $0 --help for more information\n";
 
 my $Gtk2_Initialized = 0;
