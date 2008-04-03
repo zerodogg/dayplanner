@@ -1464,6 +1464,122 @@ sub Set_DayChangeTimer {
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Evolution compat mode
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Evolution compat mode is a very hacky temporary solution to the issue of
+# GNOME panel integration. It spits out symlinks that makes e-d-s read the
+# day planner iCalendar file instead of the real evolution file, and adds
+# a symlink in PATH that does evolution -> dayplanner so that when an event
+# from the panel is edited, day planner will pop up instead of evolution.
+#
+# This has the unfortunate side-effect of rendering evolution partly unusable
+# for the user in question, because day planner will often be launched instead
+# of evolution.
+#
+# TODO:
+# - Add evolution wrapping functions into day planner that takes action before
+# 	day planner option parsing occurs, this will enable us to only ever intercept
+# 	--component=calendar calls, passing the rest on to the real evolution.
+
+# Purpose: Get evolution compat mode. Returns true if enabled.
+# Usage: EvoCompat_GetMode();
+sub EvoCompat_GetMode
+{
+	if(not -d $ENV{HOME}.'/.evolution')
+	{
+		return(false);
+	}
+	if(-l $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics')
+	{
+		if (-l $ENV{HOME}.'/.local/bin/evolution' && readlink($ENV{HOME}.'/.local/bin/evolution') =~ /dayplanner$/)
+		{
+			return(true);
+		}
+		else
+		{
+			return(false);
+		}
+	}
+	else
+	{
+		return(false);
+	}
+}
+
+# Purpose: Enable evolution compat mode
+# Usage: EvoCompat_Enable();
+sub EvoCompat_Enable
+{
+	my $Total = 5;
+	if(not EvoCompat_GetMode())
+	{
+		my $ProgressWin = DPCreateProgressWin($i18n->get("Enabling evolution compatibility"));
+		my $EVO_Target_Link = $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics';
+		my $DP_EVO_Link = $ENV{HOME}.'/.local/bin/evolution';
+		ProgressMade(1, $Total, $ProgressWin);
+		if (-e $EVO_Target_Link)
+		{
+			if (-l $EVO_Target_Link)
+			{
+				unlink($EVO_Target_Link);
+			}
+			elsif (not -e $EVO_Target_Link.'.dayplanner_evocompat_backup')
+			{
+				runtime_use('File::Copy qw(move)');
+				move($EVO_Target_Link,$EVO_Target_Link.'.dayplanner_evocompat_backup');
+			}
+			else
+			{
+				DPIntWarn("Refusing to enable Evolution compat: an earlier day planner evocompat file was found.");
+				$ProgressWin->{Window}->destroy();
+				return false;
+			}
+		}
+		ProgressMade(2, $Total, $ProgressWin);
+		symlink($SaveToDir.'/'.$ICSFile,$EVO_Target_Link);
+		ProgressMade(3, $Total, $ProgressWin);
+		if (-e $DP_EVO_Link)
+		{
+			if (-l $DP_EVO_Link && readlink($DP_EVO_Link) =~ /dayplanner$/)
+			{
+				unlink($DP_EVO_Link);
+			}
+			else
+			{
+				DPIntWarn("Failed to enable evolution compat. $DP_EVO_Link was not a symlink that pointed to a day planner file.");
+				$ProgressWin->{Window}->destroy();
+				return false;
+			}
+		}
+		ProgressMade(4, $Total, $ProgressWin);
+		symlink($FindBin::RealBin.'/dayplanner',$DP_EVO_Link);
+		ProgressMade(5, $Total, $ProgressWin);
+		$ProgressWin->{Window}->destroy();
+		return true;
+	}
+	DPIntWarn("EvoCompat_Enable() called when evo compat was already enabled");
+	return false;
+}
+
+# Purpose: Disable Evolution compat moe.
+# Usage: EvoCompat_Disable();
+sub EvoCompat_Disable
+{
+	my $EVO_Target_Link = $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics';
+	my $DP_EVO_Link = $ENV{HOME}.'/.local/bin/evolution';
+	if (-e $DP_EVO_Link && readlink($DP_EVO_Link) =~ /dayplanner$/)
+	{
+		unlink($DP_EVO_Link);
+	}
+	if (-l $EVO_Target_Link && -e $EVO_Target_Link.'.dayplanner_evocompat_backup')
+	{
+		unlink($EVO_Target_Link);
+		runtime_use('File::Copy qw(move)');
+		move($EVO_Target_Link.'.dayplanner_evocompat_backup',$EVO_Target_Link);
+	}
+}
+
 # =============================================================================
 # IMPORT/EXPORT
 # =============================================================================
