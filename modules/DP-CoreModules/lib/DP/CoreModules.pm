@@ -18,6 +18,8 @@
 
 use strict;
 use warnings;
+# Useful constants for prettier code
+use constant { true => 1, false => 0 };
 
 our $Version = '0.9';
 my $VersionName = 'SVN';
@@ -34,28 +36,23 @@ sub InPath {
 	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
 }
 
-# Purpose: Detect the user config  directory
-# Usage: DetectConfDir(MAEMO?);
-sub DetectConfDir {
-	my $Maemo = shift;
+# Purpose: Get the XDG dir
+# Usage: GetXDGDir();
+sub GetXDGDir
+{
 	# First detect the HOME directory, and set $ENV{HOME} if successfull,
 	# if not we just fall back to the value of $ENV{HOME}.
 	my $HOME = getpwuid($>);
 	if(-d $HOME) {
 		$ENV{HOME} = $HOME;
 	}
-	if(not $Maemo)
-	{
-		# Compatibility mode, using the old conf dir
-		if(-d "$ENV{HOME}/.dayplanner") {
-			return("$ENV{HOME}/.dayplanner");
-		}
-	}
 	# Check for XDG_CONFIG_HOME in the env
 	my $XDG_CONFIG_HOME;
 	if(defined($ENV{XDG_CONFIG_HOME})) {
 		$XDG_CONFIG_HOME = $ENV{XDG_CONFIG_HOME};
-	} else {
+	}
+	else
+	{
 		if(defined($ENV{HOME}) and length($ENV{HOME})) {
 			# Verify that HOME is set properly
 			if(not -d $ENV{HOME}) {
@@ -70,6 +67,22 @@ sub DetectConfDir {
 			Gtk2Init();
 			DPError(i18nwrapper_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
 			die(i18nwrapper_advanced("The environment variable %(VAR) is not set! Unable to continue\n", { VAR => 'HOME'}));
+		}
+	}
+	return($XDG_CONFIG_HOME);
+}
+
+# Purpose: Detect the user config  directory
+# Usage: DetectConfDir(MAEMO?);
+sub DetectConfDir {
+	my $Maemo = shift;
+
+	my $XDG_CONFIG_HOME = GetXDGDir();
+	if(not $Maemo)
+	{
+		# Compatibility mode, using the old conf dir
+		if(-d "$ENV{HOME}/.dayplanner") {
+			return("$ENV{HOME}/.dayplanner");
 		}
 	}
 	if ($Maemo)
