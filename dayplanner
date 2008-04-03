@@ -1492,7 +1492,7 @@ sub EvoCompat_GetMode
 	}
 	if(-l $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics')
 	{
-		if (-l $ENV{HOME}.'/.local/bin/evolution' && readlink($ENV{HOME}.'/.local/bin/evolution') =~ /dayplanner$/)
+		if (-l $ENV{HOME}.'/.local/bin/evolution' && readlink($ENV{HOME}.'/.local/bin/evolution') =~ /dayplanner$/ && readlink($ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics') eq $SaveToDir.'/'.$ICSFile)
 		{
 			return(true);
 		}
@@ -4172,6 +4172,40 @@ sub PreferencesWindow {
 	# Create the table
 	my $Config_Table = Gtk2::Table->new(3,4);
 	$Config_Table->show();
+
+	# Enable/disable evolution checkbox
+	my $EnableDisableEButton = Gtk2::CheckButton->new($i18n->get('Enable GNOME integration'));
+	$Sync_VBox->pack_start($EnableDisableEButton,0,0,0);
+	if(EvoCompat_GetMode())
+	{
+		$EnableDisableEButton->set_active(true);
+	}
+	$EnableDisableEButton->signal_connect('toggled' => sub 
+		{
+			if ($EnableDisableEButton->get_active())
+			{
+				if(DPQuestion(
+						$i18n->get("This will enable GNOME integration mode. When enabled you will be able to view Day Planner events in the calendar in the GNOME panel.\n\nIt is not recommended that you enable this if you use Evolution because Day Planner will override certain evolution functions.\n\nAre you sure you want to enable GNOME integration?")
+				))
+				{
+					EvoCompat_Enable();
+					DPInfo("Evolution integration mode has been enabled. You may need to log out and in again for it to take effect.");
+				}
+			}
+			else
+			{
+				EvoCompat_Disable();
+			}
+			if (EvoCompat_GetMode())
+			{
+				$EnableDisableEButton->set_active(true);
+			}
+			else
+			{
+				$EnableDisableEButton->set_active(false);
+			}
+		});
+	$EnableDisableEButton->show();
 
 	# Enable/disable checkbox
 	my $EnableDisableCButton = Gtk2::CheckButton->new($i18n->get('Automatically synchronize an online copy of this calendar'));
