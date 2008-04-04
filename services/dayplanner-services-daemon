@@ -380,6 +380,7 @@ sub RecieveData {
 
 	my $MD5 = md5_base64($Data);
 	unless($MD5 eq $THIS_MD5) {
+		IntDebug("Expected MD5 $THIS_MD5 but got $MD5. Returning ERR MD5_MISMATCH");
 		return("ERR MD5_MISMATCH # $MD5 - $THIS_MD5");
 	}
 
