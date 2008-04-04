@@ -663,6 +663,10 @@ sub P_GetSummaryString {
 	my $CURRENT = shift;
 	my ($AltYear, $AltMonth) = @_;
 	my $UID_Obj = $iCalendar->get_info($UID);
+	if (not $UID_Obj)
+	{
+		return(undef);
+	}
 	if(defined($UID_Obj->{'X-DP-BIRTHDAY'}) and $UID_Obj->{'X-DP-BIRTHDAY'} eq 'TRUE') {
 		if($UID_Obj->{'X-DP-BIRTHDAYNAME'}) {
 			if(defined($UID_Obj->{'X-DP-BORNATDTSTART'}) and $UID_Obj->{'X-DP-BORNATDTSTART'} eq 'TRUE') {
