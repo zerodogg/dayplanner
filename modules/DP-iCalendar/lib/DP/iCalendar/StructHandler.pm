@@ -52,6 +52,7 @@ sub loadFile
 	}
 	open(my $infile, '<',$file);
 	$this->_loadFH($infile);
+	close($infile);
 }
 
 # Purpose: Load data from a scalar
@@ -72,6 +73,7 @@ sub loadDataString
 	}
 	open(my $infile, '<',\$string);
 	$this->_loadFH($infile);
+	close($infile);
 }
 
 # Purpose: Write the file
@@ -87,6 +89,8 @@ sub writeFile
 		return(false);
 	};
 	$this->_HandleWriteHash($this->{data},undef,0);
+	close($this->{FH});
+	$this->{FH} = undef;
 }
 
 # Purpose: Get the raw source
@@ -111,9 +115,13 @@ sub _loadFH
 	my %Struct;
 	my @Nest;
 	my $CurrRef = $this->{data};
+	push(@Nest,$CurrRef);
 	my $PrevValue;
+	my $lineNo;
+	$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true,"start _loadFH");
 	while($_ = <$infile>)
 	{
+		$lineNo++;
 		s/[\r\n]+//;
 		# If it's only whitespace, ignore it
 		next if not /\S/;
@@ -139,7 +147,7 @@ sub _loadFH
 		elsif ($key eq 'BEGIN')
 		{
 			# Check that it is a hash
-			$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true,"$key:$value");
+			$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true,"$key:$value line $lineNo");
 
 			if (not defined $CurrRef->{$value})
 			{
@@ -150,8 +158,18 @@ sub _loadFH
 				$this->_assertMustBeRef('ARRAY',$CurrRef->{$value},'CurrRef->{value}',true,"$key:$value");
 			}
 			my $pushNo = push(@{$CurrRef->{$value}}, {});
-			$pushNo--;
-			$CurrRef = $CurrRef->{$value}[$pushNo];
+			# This check is only useful in iCalendar files,
+			# but should be safe when run on others.
+			if ($pushNo != 1 && $value eq 'VCALENDAR' && defined($CurrRef->{'VCALENDAR'}))
+			{
+				$CurrRef = $CurrRef->{$value}[0];
+				_parseWarn("Line $lineNo: Multiple BEGIN:VCALENDAR detected (on line $lineNo)! The file is broken, ignoring request to restart BEGIN:VCALENDAR, basing new block on the old one to attempt to fix this mess");
+			}
+			else
+			{
+				$pushNo--;
+				$CurrRef = $CurrRef->{$value}[$pushNo];
+			}
 			push(@Nest,$CurrRef);
 		}
 		elsif ($key eq 'END')
@@ -172,7 +190,7 @@ sub _loadFH
 		}
 		else
 		{
-			_parseWarn("Line unparseable: $_");
+			_parseWarn("Line $lineNo unparseable: $_");
 		}
 	}
 }
