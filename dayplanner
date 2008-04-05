@@ -1599,13 +1599,16 @@ sub EvoCompat_Disable
 	my $DP_EVO_Link = $ENV{HOME}.'/.local/bin/evolution';
 	if (-e $DP_EVO_Link && readlink($DP_EVO_Link) =~ /dayplanner$/)
 	{
-		unlink($DP_EVO_Link);
+		unlink($DP_EVO_Link) or DPIntWarn("Unlinking $DP_EVO_Link failed: $!");
 	}
-	if (-l $EVO_Target_Link && -e $EVO_Target_Link.'.dayplanner_evocompat_backup')
+	if (-l $EVO_Target_Link)
 	{
-		unlink($EVO_Target_Link);
-		runtime_use('File::Copy qw(move)');
-		move($EVO_Target_Link.'.dayplanner_evocompat_backup',$EVO_Target_Link);
+		unlink($EVO_Target_Link) or DPIntWarn("Unlinking $EVO_Target_Link failed: $!");
+		if (-e $EVO_Target_Link.'.dayplanner_evocompat_backup')
+		{
+			runtime_use('File::Copy qw(move)');
+			move($EVO_Target_Link.'.dayplanner_evocompat_backup',$EVO_Target_Link) or DPIntWarn("Dropping .dayplanner_evocompat_backup failed: $!");
+		}
 	}
 }
 
@@ -4208,6 +4211,10 @@ sub PreferencesWindow {
 	if(EvoCompat_GetMode())
 	{
 		$EnableDisableEButton->set_active(true);
+	}
+	else
+	{
+		$EnableDisableEButton->set_active(false);
 	}
 	$EnableDisableEButton->signal_connect('toggled' => sub 
 		{
