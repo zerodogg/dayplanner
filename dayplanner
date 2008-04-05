@@ -1492,9 +1492,19 @@ sub EvoCompat_GetMode
 	}
 	if(-l $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics')
 	{
-		if (-l $ENV{HOME}.'/.local/bin/evolution' && readlink($ENV{HOME}.'/.local/bin/evolution') =~ /dayplanner$/ && readlink($ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics') eq $SaveToDir.'/'.$ICSFile)
+		if (not -l $ENV{HOME}.'/.local/bin/evolution' or not readlink($ENV{HOME}.'/.local/bin/evolution') =~ /dayplanner$/)
 		{
 			return(true);
+		}
+		elsif (not readlink($ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics') eq $SaveToDir.'/'.$ICSFile)
+		{
+			my $link = readlink($ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics');
+			$link =~ s/^.*(dayplanner.*)$/$1/;
+			if ($link =~ /dayplanner/)
+			{
+				DPIntWarn("EvoCompat_GetMode(): another day planner instance appears to be in evolution compat mode: $link");
+			}
+			return (false);
 		}
 		else
 		{
@@ -1514,6 +1524,25 @@ sub EvoCompat_Enable
 	my $Total = 5;
 	if(not EvoCompat_GetMode())
 	{
+		# Check for e-d-s
+		open(my $PS, 'ps uxw|');
+		my $oldslash = $/;
+		undef $/;
+		my $PSIn = <$PS>;
+		$/ = $oldslash;
+		close($PS);
+		my $EDSExists;
+		foreach (split(/\n/,$PSIn))
+		{
+			next if not /evolution-data-server/;
+			$EDSExists = true;
+		}
+		if(not $EDSExists)
+		{
+			DPIntWarn("Unable to enable evolution compat: evolution-data-server appears to not be running");
+			return false;
+		}
+
 		my $ProgressWin = DPCreateProgressWin($i18n->get("Enabling evolution compatibility"));
 		my $EVO_Target_Link = $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics';
 		my $DP_EVO_Link = $ENV{HOME}.'/.local/bin/evolution';
@@ -1527,7 +1556,7 @@ sub EvoCompat_Enable
 			elsif (not -e $EVO_Target_Link.'.dayplanner_evocompat_backup')
 			{
 				runtime_use('File::Copy qw(move)');
-				move($EVO_Target_Link,$EVO_Target_Link.'.dayplanner_evocompat_backup');
+				move($EVO_Target_Link,$EVO_Target_Link.'.dayplanner_evocompat_backup') or DPIntWarn("Unable to move Evolutions calendar.ics to backup file: $!");
 			}
 			else
 			{
@@ -1537,7 +1566,7 @@ sub EvoCompat_Enable
 			}
 		}
 		ProgressMade(2, $Total, $ProgressWin);
-		symlink($SaveToDir.'/'.$ICSFile,$EVO_Target_Link);
+		symlink($SaveToDir.'/'.$ICSFile,$EVO_Target_Link) or DPIntWarn("Unable to symlink Day Planner's calendar.ics over Evolution's calendar.ics: $!");
 		ProgressMade(3, $Total, $ProgressWin);
 		if (-e $DP_EVO_Link)
 		{
@@ -1553,7 +1582,7 @@ sub EvoCompat_Enable
 			}
 		}
 		ProgressMade(4, $Total, $ProgressWin);
-		symlink($FindBin::RealBin.'/dayplanner',$DP_EVO_Link);
+		symlink($FindBin::RealBin.'/dayplanner',$DP_EVO_Link) or DPIntWarn("Unable to symlink day planner to evolution: $!");
 		ProgressMade(5, $Total, $ProgressWin);
 		$ProgressWin->{Window}->destroy();
 		return true;
