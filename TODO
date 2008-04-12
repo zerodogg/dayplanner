@@ -6,7 +6,13 @@ subversion repository. The version information are only approximates and
 may be subject to change.
 ===========================================================================
 
-* Version 0.9
+* Version 0.10
+- - - - - - -
+- Left align labels
+- Move HTML exporting to module
+- Move GUI add/edit events to OO-code
+
+* Version 0.11
 - - - - - - -
 - Use Conduit for synchronization of Calendars (except when using
 	DPServices). Offer:
@@ -16,7 +22,6 @@ may be subject to change.
 	- Sync with device
 		- Calendar -> Synchronize with device ?
 - Add support for choosing how long an event lasts
-- Left align labels
 
 * Longer term
 - - - - - - -
