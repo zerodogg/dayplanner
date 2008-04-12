@@ -1,6 +1,0 @@
-Revision history for Perl extension IO::Conduit.
-
-0.01  Wed Aug 22 22:37:20 2007
-	- original version; created by h2xs 1.23 with options
-		-AXc -n IO::Conduit
-
