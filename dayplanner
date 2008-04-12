@@ -4425,25 +4425,6 @@ sub PopulateEventList {
 			}
 		}
 	}
-	# Fetch the Holidays if the year is above 1970 (UNIX epoch) and 2037 (UNIX epoch overflow)
-	#
-	# TODO: REMOVE
-#	unless($Year > 2037) {
-#		unless($Year < 1970) {
-#			unless(defined($HolidayParser)) {
-#				$HolidayParser = Date::HolidayParser->new($HolidayFile);
-#			}
-#			unless(defined($Holidays{$Year})) {
-#					$Holidays{$Year} = $HolidayParser->get($Year);
-#			}
-#			if(defined($Holidays{$Year}) and defined($Holidays{$Year}->{$Month}) and defined($Holidays{$Year}->{$Month}{$Day})) {
-#				foreach my $CurrHoliday (keys(%{$Holidays{$Year}->{$Month}{$Day}})) {
-#					push(@{$EventlistWidget->{data}}, [0,'', $CurrHoliday]);
-#				}
-#			}
-#		}
-#
-#	}
 	$EventlistWidget->show();
 }
 
