@@ -1543,7 +1543,7 @@ sub EvoCompat_Enable
 			return false;
 		}
 
-		my $ProgressWin = DPCreateProgressWin($i18n->get("Enabling evolution compatibility"));
+		my $ProgressWin = DPCreateProgressWin("Enabling evolution compatibility");
 		my $EVO_Target_Link = $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics';
 		my $DP_EVO_Link = $ENV{HOME}.'/.local/bin/evolution';
 		ProgressMade(1, $Total, $ProgressWin);
