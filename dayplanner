@@ -425,7 +425,7 @@ sub DPS_Perform {
 	# dialogues used.
 	my $GuiEnded = sub {
 		return unless($Gtk2Init);
-		$DPServices{ProgressWin}->{Window}->destroy();
+		DP_DestroyProgressWin($DPServices{ProgressWin});
 		if(defined($DPServices{Error})) {
 			DPError($i18n->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $DPServices{Error}}));
 			delete($DPServices{Error});
@@ -771,7 +771,7 @@ sub LoadHTTPSubscriptions
 		UpdatedData(true,false);
 		PulsateProgressbar($ProgressWin);
 	}
-	$ProgressWin->{Window}->destroy();
+	DP_DestroyProgressWin($ProgressWin);
 }
 
 # Purpose: Load the calendar contents
@@ -996,7 +996,7 @@ sub UpgradeVersion {
 		DP_AddAutostart();
 	}
 	ProgressMade(9, $Total, $ProgressWin) if($Gtk2Init);
-	$ProgressWin->{Window}->destroy();
+	DP_DestroyProgressWin($ProgressWin);
 }
 
 # Purpose: Handle various signals gracefully
@@ -1561,7 +1561,7 @@ sub EvoCompat_Enable
 			else
 			{
 				DPIntWarn("Refusing to enable Evolution compat: an earlier day planner evocompat file was found.");
-				$ProgressWin->{Window}->destroy();
+				DP_DestroyProgressWin($ProgressWin);
 				return false;
 			}
 		}
@@ -1577,14 +1577,14 @@ sub EvoCompat_Enable
 			else
 			{
 				DPIntWarn("Failed to enable evolution compat. $DP_EVO_Link was not a symlink that pointed to a day planner file.");
-				$ProgressWin->{Window}->destroy();
+				DP_DestroyProgressWin($ProgressWin);
 				return false;
 			}
 		}
 		ProgressMade(4, $Total, $ProgressWin);
 		symlink($FindBin::RealBin.'/dayplanner',$DP_EVO_Link) or DPIntWarn("Unable to symlink day planner to evolution: $!");
 		ProgressMade(5, $Total, $ProgressWin);
-		$ProgressWin->{Window}->destroy();
+		DP_DestroyProgressWin($ProgressWin);
 		return true;
 	}
 	DPIntWarn("EvoCompat_Enable() called when evo compat was already enabled");
@@ -1964,7 +1964,7 @@ sub ImportDataFromProgram {
 	}
 	ProgressMade($Programs{TotalPrograms}, 5, $ProgressWindow);
 
-	$ProgressWindow->{Window}->destroy();
+	DP_DestroyProgressWin($ProgressWindow);
 	if(not $Programs{ImportPossible}) {
 		if(not $FirstTime) {
 			$MainWindow->show();
@@ -2177,7 +2177,7 @@ sub ImportProgData {
 	}
 	ProgressMade($MaxProgress, $CurrentProgress, $Progress, $i18n->get("Done"));
 	UpdatedData(1);
-	$Progress->{Window}->destroy();
+	DP_DestroyProgressWin($Progress);
 	
 	$MainWindow->set_sensitive(1) if $MainWindow;
 }
@@ -2373,12 +2373,23 @@ sub Gtk2Init {
 	$Gtk2Init = 1;
 }
 
+# Purpose: Destroy a progress window created with DPCreateProgressWin()
+# Usage: DP_DestroyProgressWin(HASH);
+sub DP_DestroyProgressWin
+{
+	return if not $Gtk2Init;
+	my $win = shift;
+	$win->{Window}->destroy();
+}
+
 # Purpose: Create a progresswindow
 # Usage: my $ProgressWin = DPCreateProgressWin(WINDOW NAME, INITIAL PROGRESS BAR TEXT, PULSATE_MODE?);
 #	Returns a hashref with the following keys:
 #		Window = The window
 #		ProgressBar = The progress bar
 sub DPCreateProgressWin {
+	return if not $Gtk2Init;
+
 	my ($Name, $Text, $PulsateMode) = @_;
 	my %ProgressHash;
 	$ProgressHash{Window} = Gtk2::Window->new();
@@ -2417,6 +2428,7 @@ sub DPCreateProgressWin {
 # Usage: PulsateProgressbar($Progressbar);
 sub PulsateProgressbar {
 	my $ProgressHash = shift;
+	return if not $Gtk2Init;
 	if(defined($ProgressHash)) {		# So that the calling function can just *assume* it has a progressbar
 						# even when it doesn't
 		my $Bar = $ProgressHash->{ProgressBar};
@@ -2429,7 +2441,7 @@ sub PulsateProgressbar {
 # Purpose: Set the progress of a progressbar
 # Usage: ProgressMade(FUNCTIONS TO PERFORM, FUNCTIONS PERFORMED, $ProgressWindowHashref, NewText?);
 sub ProgressMade {
-	return unless $Gtk2Init;
+	return if not $Gtk2Init;
 
 	my ($ToPerform, $Performed, $ProgressHash,$Text) = @_;
 	my $Bar = $ProgressHash->{ProgressBar};
@@ -4206,42 +4218,42 @@ sub PreferencesWindow {
 	$Config_Table->show();
 
 	# Enable/disable evolution checkbox
-	my $EnableDisableEButton = Gtk2::CheckButton->new($i18n->get('Enable GNOME integration'));
-	$Sync_VBox->pack_start($EnableDisableEButton,0,0,0);
-	if(EvoCompat_GetMode())
-	{
-		$EnableDisableEButton->set_active(true);
-	}
-	else
-	{
-		$EnableDisableEButton->set_active(false);
-	}
-	$EnableDisableEButton->signal_connect('toggled' => sub 
-		{
-			if ($EnableDisableEButton->get_active())
-			{
-				if(DPQuestion(
-						$i18n->get("This will enable GNOME integration mode. When enabled you will be able to view Day Planner events in the calendar in the GNOME panel.\n\nIt is not recommended that you enable this if you use Evolution because Day Planner will override certain evolution functions.\n\nAre you sure you want to enable GNOME integration?")
-				))
-				{
-					EvoCompat_Enable();
-					DPInfo("Evolution integration mode has been enabled. You may need to log out and in again for it to take effect.");
-				}
-			}
-			else
-			{
-				EvoCompat_Disable();
-			}
-			if (EvoCompat_GetMode())
-			{
-				$EnableDisableEButton->set_active(true);
-			}
-			else
-			{
-				$EnableDisableEButton->set_active(false);
-			}
-		});
-	$EnableDisableEButton->show();
+#	my $EnableDisableEButton = Gtk2::CheckButton->new($i18n->get('Enable GNOME integration'));
+#	$Sync_VBox->pack_start($EnableDisableEButton,0,0,0);
+#	if(EvoCompat_GetMode())
+#	{
+#		$EnableDisableEButton->set_active(true);
+#	}
+#	else
+#	{
+#		$EnableDisableEButton->set_active(false);
+#	}
+#	$EnableDisableEButton->signal_connect('toggled' => sub 
+#		{
+#			if ($EnableDisableEButton->get_active())
+#			{
+#				if(DPQuestion(
+#						$i18n->get("This will enable GNOME integration mode. When enabled you will be able to view Day Planner events in the calendar in the GNOME panel.\n\nIt is not recommended that you enable this if you use Evolution because Day Planner will override certain evolution functions.\n\nAre you sure you want to enable GNOME integration?")
+#				))
+#				{
+#					EvoCompat_Enable();
+#					DPInfo("Evolution integration mode has been enabled. You may need to log out and in again for it to take effect.");
+#				}
+#			}
+#			else
+#			{
+#				EvoCompat_Disable();
+#			}
+#			if (EvoCompat_GetMode())
+#			{
+#				$EnableDisableEButton->set_active(true);
+#			}
+#			else
+#			{
+#				$EnableDisableEButton->set_active(false);
+#			}
+#		});
+#	$EnableDisableEButton->show();
 
 	# Enable/disable checkbox
 	my $EnableDisableCButton = Gtk2::CheckButton->new($i18n->get('Automatically synchronize an online copy of this calendar'));
@@ -4502,7 +4514,7 @@ sub DrawMainWindow {
 	}
 
 	# Set the icon
-	my $MainWindowIcon = DetectImage('dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
+	my $MainWindowIcon = DetectImage('dayplanner-16x16.png', 'dayplanner-24x24.png', 'dayplanner-32x32.png', 'dayplanner-48x48.png', 'dayplanner.png', 'dayplanner_HC16.png', 'dayplanner_HC24.png','dayplanner_HC48.png',);
 	if ($MainWindowIcon) {
 		$MainWindow->set_default_icon_from_file($MainWindowIcon);
 	}
@@ -4926,6 +4938,31 @@ GetOptions (
 	'exporthtml=s' => \&CLI_Export,
 	'exportphp=s' => \&CLI_Export,
 	'importical|importics=s' => \&CLI_Import,
+	# Commandline supprot for experimental evocompat
+	'evocompat-enable' => sub 
+	{
+		DPIntWarn("EvoCompat is experimental, use at your own risk");
+		DP_InitI18n();
+		$SaveToDir = DetectConfDir();
+		EvoCompat_Enable();
+		exit(0);
+	},
+	'evocompat-disable' => sub 
+	{
+		DPIntWarn("EvoCompat is experimental, use at your own risk");
+		DP_InitI18n();
+		$SaveToDir = DetectConfDir();
+		EvoCompat_Disable();
+		exit(0);
+	},
+	'evocompat-status' => sub 
+	{
+		DPIntWarn("EvoCompat is experimental, use at your own risk");
+		DP_InitI18n();
+		$SaveToDir = DetectConfDir();
+		print EvoCompat_GetMode() ? "EvoCompat enabled" : "EvoCompat Disabled";print "\n";
+		exit(0);
+	},
 	# Compatibility for evolution-commandline
 	'component=s' => sub {
 		if ( not $_[1] eq 'calendar')
