@@ -1,7 +1,11 @@
 Specification of the Day Planner iCalendar diff format
 by Eskild Hustvedt
-$Id: DPS_Spec 1361 2007-04-16 05:32:46Z zero_dogg $
+$Id$
 ------------------------------------------------------------
+
+****
+DRAFT SPECIFICATION - DO NOT USE
+****
 
 1 - Introduction
 2 - Format commands
@@ -18,29 +22,37 @@ of as a revision control system for iCalendar. The purpose is twofold:
   on iCalendar files and also keep the undo information after closing the
   calendar software.
 
-The format contains a list of commands, each which is applied to the iCalendar
-file in turns. Optionally it can also be a set of transactions.
-If one command fails then one of two things will happen:
-1. If the file does not have any transactions, then processing of the file
-   must stop.
-2. If the file has transactions then the rest of the current transaction is
-   skipped and the program just moves to the next transaction.
+The format contains a list of commands, each of which is applied to the
+iCalendar file in turns. It is divided into a set of transactions,
+each transaction being the changes to one UID (though you can divide
+them up more).
+
+1.2 - Special syntax
+
+Empty lines should be ignored.
+Lines beginning with # should be ignored.
 
 2 - FORMAT COMMANDS
 -------------------
 
 2.1 - DPICSDIFF
-This should always be the first word on the first line in any file
+This must always be the first word on the first line in any file
 that uses this specification.
 
 Syntax: DPICSDIFF [VERSION]
 Parameters:
-	[VERSION] - the version of the spec the file adheres to
+	[VERSION] - the version of the spec the file requires.
+	So for instance if you only use version 1.0 commands, then
+	you should only specify version 1.0.
 
 2.2 - QUOTESTRING
 This sets the quote string. By default this is ". The quote string
 is used around strings in iCalendar commands. It can be between
-one and four characters long.
+one and four characters long. This can be changed many times in
+one file, and can thus be supplied as many times as you want.
+
+This is used in place of an advanced escaping system. Everything inside
+the quotestring is interperated literally.
 
 Syntax: QUOTESTRING [STRING]
 Parameters:
@@ -48,45 +60,57 @@ Parameters:
 		but no longer than four characters and no less than one.
 		If omitted then QUOTESTRING " is assumed.
 
-2.3 - TRANSACTION
-This command merely defines that a new transaction starts here.
-This command is optional, but can be used for better compatibility
-with files.
+2.3 - ENTER [UID] [CREATE?] [TYPE]
+This command begins a new transaction, defining that the following
+commands work on UID. The CREATE keyword must be appended, followed by
+the iCalendar section type, if it is new.
+
+If the UID exists and the CREATE keyword was given then the parser
+should attempt to process the following section as if it was a patch
+(like the CREATE keyword was not given). If it is not possible then
+the parser must rename the UID that existed and re-process this section.
+
+If the UID does not exist and the CREATE keyword was not given then
+the parser should attempt to process the following section as if the
+CREATE keyword was given and assume TYPE=VEVENT, if that is not possible
+then the transaction MUST fail.
+
+Any file can have any number of transactions on one UID. One might
+even ENTER a new UID transaction after each command to have
+very fuzzy applying of the changes.
+
+If one command in the transaction fails, then all following and
+preceeding commands in the transaction MUST fail and the UID be
+reverted to its state before the transaction.
+
+A transaction SHOULD be considered as failed if the UID is empty after
+processing and it was not deleted completely.
 
 3 - ICALENDAR COMMANDS
 ----------------------
 
-3.1 - CREATE
-This command creates a new, empty UID.
-This command fails if the UID already exists.
+3.1 - DELETE
+This command deletes the current UID and ALL CONTENTS.
 
-Syntax: CREATE [UID] [TYPE]
-Parameters:
-	[UID] - The UID string as defined in the iCalendar spec.
-	[TYPE] - The type of entry, as defined in the iCalendar spec. For instance
-		VEVENT
+Syntax: DELETE
+Failure: Never. Ignore it if the UID doesn't exist.
 
-3.2 - DELETE
-This command removes an existing UID and ALL CONTENTS IN IT.
-
-Syntax: DELETE [UID]
-Parameters:
-	[UID] - The UID to remove
-
-3.3 - REMOVE
+3.2 - REMOVE
 Removes an entry from an existing UID.
 
-Syntax: REMOVE "[Entry:Value]" FROM [UID]
+Syntax: REMOVE "[Entry:Value]" -or- REMOVE "[ENTRY]"
 Parameters:
 	[Entry:Value] - The iCalendar entry AND value as it is in the calendar file.
 		This part must be enclosed in the current QUOTESTRING string.
-	[UID] - The UID to remove an entry from
+	[Entry] - Alternate syntax. Removes the first entry of type ENTRY from the
+	current UID.
+Failure: Entry:value or Entry does not exist.
 
-3.4 - ADD
+3.3 - ADD
 Adds an entry to an existing UID.
 
-Syntax: ADD "[Entry:Value]" TO [UID]
+Syntax: ADD "[Entry:Value]"
 Parameters:
 	[Entry:Value] - The iCalendar entry AND value as it is in the calendar file.
 		This part must be enclosed in the current QUOTESTRING string.
-	[UID] - The UID to remove an entry from
+Failure: If adding the contents was not possible.
