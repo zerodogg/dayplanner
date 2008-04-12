@@ -21,7 +21,7 @@ use warnings;
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 
-our $Version = '0.9';
+our $Version = '0.10';
 my $VersionName = 'SVN';
 my %RuntimeModules;		# Keeps track of modules loaded during runtime
 

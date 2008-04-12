@@ -66,7 +66,7 @@ my %Servers;		# A list of all of our server objects. These are the objects
 # level 4 = ADMIN - rw access and ADMIN command access
 
 my $RCSRev = '$Id$';
-my $Version = '0.9';
+my $Version = '0.10';
 
 $SIG{INT} = sub {
 	IntOutputMSG("Shutdown by SIG$_[0]\n");

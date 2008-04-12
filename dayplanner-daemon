@@ -68,7 +68,7 @@ $0 = 'dayplanner-daemon';
 # The name of the notifier
 my $NotifierName = 'dayplanner-notifier';
 # Our version number
-my $Version = 0.9;
+my $Version = 0.10;
 # The version name. Used for SVN detection
 my $VersionName = 'SVN';
 # Our RCS revision
