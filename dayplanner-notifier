@@ -30,10 +30,12 @@ use lib "$FindBin::RealBin/modules/";
 use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
 # Day Planner-specific libs
 use DP::GeneralHelpers qw(AppendZero DPIntWarn);
 use DP::GeneralHelpers::I18N;
 use DP::iCalendar qw(iCal_ParseDateTime iCal_ConvertToUnixTime);
+use DP::CoreModules;
 
 my $RealZero = $0;
 $0 = 'dayplanner-notifier';
@@ -57,21 +59,6 @@ my $LaunchTime = time();
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Detect the path to the image file(s) supplied. Returns the path to the
-#		first one found or undef
-# Usage: $Image = DetectImage(image1, image2);
-sub DetectImage {
-	my $I_Am_At = $FindBin::RealBin;
-	foreach my $Image (@_) {
-		foreach my $Dir ("$I_Am_At/art", $I_Am_At, '/usr/share/dayplanner', '/usr/local/dayplanner', '/usr/local/share/dayplanner', '/usr/share/dayplanner/art', '/usr/local/dayplanner/art', '/usr/local/share/dayplanner/art', '/usr/share/icons/large', '/usr/share/icons', '/usr/share/icons/mini') {
-			if (-e "$Dir/$Image") {
-				return("$Dir/$Image");
-			}
-		}
-	}
-	return(undef);
-}
 
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
@@ -124,24 +111,6 @@ sub X_Available {
 			return(1);
 		}
 	}
-}
-
-# Purpose: Find out if a command is in PATH or not
-# Usage: InPath(COMMAND);
-sub InPath {
-	foreach (split /:/, $ENV{PATH}) { if (-x "$_/@_" and ! -d "$_/@_" ) {   return 1; } } return 0;
-}
-
-# Purpose: The same as localtime(TIME?); but returns proper years and months
-# Usage: my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(TIME);
-#  TIME is optional. If not present then the builtin time function is called.
-#  FIXME: MOVE TO GENERALHELPERS
-sub GetDate {
-	my $Time = $_[0] ? $_[0] : time;
-	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime($Time);
-	$curryear += 1900;						# Fix the year format
-	$currmonth++;							# Fix the month format
-	return($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst);
 }
 
 # Purpose: Get information from the calendar
