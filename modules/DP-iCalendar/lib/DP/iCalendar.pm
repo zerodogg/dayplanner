@@ -289,6 +289,12 @@ sub write {
 		}
 		$file = $this->{FILE};
 	}
+	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{PRODID} = [];
+	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{PRODID}[0] = $this->{PRODID};
+	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{CALSCALE} = [];
+	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{CALSCALE}[0] = 'GREGORIAN';
+	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VERSION} = [];
+	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VERSION}[0] = '2.0';
 	$this->{dataSource}->writeFile($file);
 	chmod($this->{FILEPERMS},$file);
 	return(true);

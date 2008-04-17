@@ -88,7 +88,7 @@ sub writeFile
 		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
 		return(false);
 	};
-	$this->_HandleWriteHash($this->{data},undef,0);
+	$this->_HandleWriteHash($this->{data},undef,undef,false,true);
 	close($this->{FH});
 	$this->{FH} = undef;
 }
@@ -196,13 +196,20 @@ sub _loadFH
 }
 
 # Purpose: Handle a new hash in writeFile();
-# Usage: $this->_HandleWriteHash(hashref, filehandle);
+# Usage: $this->_HandleWriteHash(hashref, name, toplevel?, firstCall?);
 sub _HandleWriteHash
 {
+	# Object
 	my $this = shift;
+	# Hash we're currently working on
 	my $hash = shift;
+	# The name, if any
 	my $name = shift;
+	# If we are a toplevel section
 	my $toplevel = shift;
+	# This is true if this is the first call of _HandleWriteHash. Forces additional
+	# checks.
+	my $firstCall = shift;
 	my %postponed;
 	# Make sure it's a hashref
 	$this->_assertMustBeRef('HASH',$hash,'hash in _HandleWriteHash',true);
@@ -241,7 +248,8 @@ sub _HandleWriteHash
 				$toplevel = undef;
 			}
 		}
-		$this->_HandleWriteArray($hash->{$name},$name,$toplevel);
+		$this->_HandleWriteArray($hash->{$name},$name,$toplevel,$firstCall);
+		$firstCall = false;
 	}
 	if (defined($toplevel) && keys(%postponed))
 	{
@@ -305,13 +313,14 @@ sub _realWrite
 }
 
 # Purpose: Handle a new array in writeFile();
-# Usage: $this->_HandleWriteArray(arrayref, filehandle);
+# Usage: $this->_HandleWriteArray(arrayref, name, toplevel?, firstCall?);
 sub _HandleWriteArray
 {
 	my $this = shift;
 	my $array = shift;
 	my $name = shift;
 	my $toplevel = shift;
+	my $firstCall = shift;
 	if (defined($toplevel))
 	{
 		$toplevel++;
@@ -322,6 +331,19 @@ sub _HandleWriteArray
 	}
 	# Make sure it's an arrayref 
 	$this->_assertMustBeRef('ARRAY',$array,'array in _HandleWriteHash',true);
+	if ($firstCall)
+	{
+		if (scalar @{$array} > 1)
+		{
+			$this->_parseWarn("Detected multiple root-level $name entries. This is bad, and almost certainly a bug. Will attempt to merge all into a signle entry. Expect trouble\n");
+			my @newArray;
+			foreach my $e (@{$array})
+			{
+				push(@newArray,$e);
+			}
+			$array = \@newArray;
+		}
+	}
 	foreach my $value(@{$array})
 	{
 		if(ref($value) eq 'HASH')
