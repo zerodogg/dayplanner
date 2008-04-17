@@ -188,7 +188,15 @@ sub _appendToIndex
 			if ($IsEQ)
 			{
 				# If so, dupe. Don't bother doing anything more.
-				warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it. Duplicates. Ignoring $i\'s request\n");
+				if(defined($ENV{DP_AHM_DeleteDupes}) and $ENV{DP_AHM_DeleteDupes} eq '1')
+				{
+					warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it. Duplicates. Deleting $i as requested in the environment variable DP_AHM_DeleteDupes\n");
+					$this->{array}[$i] = undef;
+				}
+				else
+				{
+					warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it. Duplicates. Ignoring $i\'s request\n");
+				}
 				return false;
 			}
 			else
