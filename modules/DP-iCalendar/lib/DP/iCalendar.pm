@@ -24,7 +24,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 
 # Version number
 our $VERSION;
-$VERSION = 0.3.1;
+$VERSION = '0.3.1';
 
 # - Public methods
 
