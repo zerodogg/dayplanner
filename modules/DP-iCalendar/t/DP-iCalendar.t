@@ -10,7 +10,7 @@ use strict;
 # Tests run before the loop
 my $pretests = 6;
 # Tests run after the loop
-my $maintests = 52;
+my $maintests = 65;
 # Times we pass through the loop
 my $looptimes = 3;
 
@@ -67,7 +67,7 @@ isa_ok($dp_s,'DP::iCalendar');
 # parameters.
 foreach my $d($dpi,$dp_s,$dpi_mgr)
 {
-	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at','add');
+	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at','add','change');
 	can_ok($d,@Methods) or BAIL_OUT('Required methods not present in object of type '.ref($d).'!');
 
 	ok($d->exists('dayplanner-117045552311276773'),'UID existance for '.ref($d));
@@ -169,4 +169,27 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	# Make sure we have a CREATED and LAST-MODIFIED entry that matches today.
 	like($uid_obj->{'CREATED'},qr/^${date_year}0?${date_mon}0?$date_mday/,'Creation date of uid for '.ref($d));
 	like($uid_obj->{'LAST-MODIFIED'},qr/^${date_year}0?${date_mon}0?$date_mday/,'Last modification date of uid for '.ref($d));
+
+	# Now, change the event.
+	my %ChangedEvent = (
+		DTEND => '20080919T214500',
+		DTSTART => '20080919T214500',
+		RRULE => 'FREQ=YEARLY',
+		SUMMARY => 'Changed',
+	);
+	ok($d->change($UID,%ChangedEvent));
+	is_deeply($d->get_monthinfo(2008,8),[],'Month info 2008 for '.ref($d));
+	is_deeply($d->get_dateinfo(2028,8,19),[],'Date info 2008 for '.ref($d));
+	is_deeply($d->get_timeinfo(2008,8,19,'21:44'),[],'Time info 2008 for '.ref($d));
+	is_deeply($d->get_monthinfo(2008,9),['19'],'Month info 2008 for '.ref($d));
+	is_deeply($d->get_dateinfo(2028,9,19),['21:45'],'Date info 2008 for '.ref($d));
+	is_deeply($d->get_timeinfo(2008,9,19,'21:45'),[$UID],'Time info 2008 for '.ref($d));
+	is_deeply($d->get_timeinfo(2008,9,19,'21:44'),[],'Time info 2008 for '.ref($d));
+	# Verify contents
+	$uid_obj = $d->get_info($UID);
+	ok($uid_obj,'Returned uid object from get_info for '.ref($d));
+	foreach my $part (keys(%NewEvent))
+	{
+		is($uid_obj->{$part},$ChangedEvent{$part},'Part of UID object from get_info ('.$part.')'.' for '.ref($d));
+	}
 }
