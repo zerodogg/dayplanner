@@ -59,7 +59,7 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at');
 	can_ok($d,@Methods) or BAIL_OUT('Required methods not present in object of type '.ref($d).'!');
 
-	ok($d->exists('dayplanner-117045552311276773'),'UID existance');
+	ok($d->exists('dayplanner-117045552311276773'),'UID existance for '.ref($d));
 
 	my %BDayResult = (
 		DTEND => '19881127',
@@ -73,64 +73,64 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 		'X-DP-BIRTHDAYNAME' => 'Foo',
 	);
 
-	is_deeply($d->get_info('dayplanner-117045552311276773'),\%BDayResult,'Returned hash');
+	is_deeply($d->get_info('dayplanner-117045552311276773'),\%BDayResult,'Returned hash for '.ref($d));
 
-	ok($d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID Existance on datetime, 2008');
-	ok($d->UID_exists_at('dayplanner-117045552311276773',2006,11,27,),'UID Existance on datetime, 2006');
-	ok($d->UID_exists_at('dayplanner-117045552311276773',2028,11,27,),'UID Existance on datetime, 2028');
-	ok($d->UID_exists_at('dayplanner-117045552311276773',1988,11,27,),'UID Existance on datetime, 1988');
-	ok(!$d->UID_exists_at('dayplanner-117045552311276773',1987,11,27),'UID non-existance on datetime, 1987');
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID Existance on datetime, 2008 for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2006,11,27,),'UID Existance on datetime, 2006 for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2028,11,27,),'UID Existance on datetime, 2028 for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',1988,11,27,),'UID Existance on datetime, 1988 for '.ref($d));
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',1987,11,27),'UID non-existance on datetime, 1987 for '.ref($d));
 
-	is_deeply($d->get_RRULE('dayplanner-117045552311276773'),{ 'FREQ' => 'YEARLY' },'RRULE');
+	is_deeply($d->get_RRULE('dayplanner-117045552311276773'),{ 'FREQ' => 'YEARLY' },'RRULE for '.ref($d));
 
-	is_deeply($d->get_monthinfo(2008,11),[27],'Month info 2008');
-	is_deeply($d->get_monthinfo(1988,11),[27],'Month info 1988');
-	is_deeply($d->get_monthinfo(2028,11),[27],'Month info 2028');
-	is_deeply($d->get_monthinfo(1987,11),[],'Month info 1987');
+	is_deeply($d->get_monthinfo(2008,11),[27],'Month info 2008 for '.ref($d));
+	is_deeply($d->get_monthinfo(1988,11),[27],'Month info 1988 for '.ref($d));
+	is_deeply($d->get_monthinfo(2028,11),[27],'Month info 2028 for '.ref($d));
+	is_deeply($d->get_monthinfo(1987,11),[],'Month info 1987 for '.ref($d));
 
-	is_deeply($d->get_dateinfo(2008,11,27),['DAY'],'Date info 2008');
-	is_deeply($d->get_dateinfo(1988,11,27),['DAY'],'Date info 1988');
-	is_deeply($d->get_dateinfo(2028,11,27),['DAY'],'Date info 2028');
-	is_deeply($d->get_dateinfo(1987,11,27),[],'Date info 1987');
+	is_deeply($d->get_dateinfo(2008,11,27),['DAY'],'Date info 2008 for '.ref($d));
+	is_deeply($d->get_dateinfo(1988,11,27),['DAY'],'Date info 1988 for '.ref($d));
+	is_deeply($d->get_dateinfo(2028,11,27),['DAY'],'Date info 2028 for '.ref($d));
+	is_deeply($d->get_dateinfo(1987,11,27),[],'Date info 1987 for '.ref($d));
 
-	is_deeply($d->get_timeinfo(2028,11,27,'DAY'),['dayplanner-117045552311276773'],'Time info 2028');
-	is_deeply($d->get_timeinfo(1988,11,27,'DAY'),['dayplanner-117045552311276773'],'Time info 1988');
-	is_deeply($d->get_timeinfo(2008,11,27,'DAY'),['dayplanner-117045552311276773'],'Time info 2008');
-	is_deeply($d->get_timeinfo(1987,11,27,'DAY'),[],'Time info 1987');
+	is_deeply($d->get_timeinfo(2028,11,27,'DAY'),['dayplanner-117045552311276773'],'Time info 2028 for '.ref($d));
+	is_deeply($d->get_timeinfo(1988,11,27,'DAY'),['dayplanner-117045552311276773'],'Time info 1988 for '.ref($d));
+	is_deeply($d->get_timeinfo(2008,11,27,'DAY'),['dayplanner-117045552311276773'],'Time info 2008 for '.ref($d));
+	is_deeply($d->get_timeinfo(1987,11,27,'DAY'),[],'Time info 1987 for '.ref($d));
 
-	is_deeply($d->get_timeinfo(2008,11,27,'00:00'),[],'Timeinfo, 00:00');
+	is_deeply($d->get_timeinfo(2008,11,27,'00:00'),[],'Timeinfo, 00:00 for '.ref($d));
 
-	is_deeply($d->get_exceptions('dayplanner-117045552311276773'),[],'No exceptions');
+	is_deeply($d->get_exceptions('dayplanner-117045552311276773'),[],'No exceptions for '.ref($d));
 	
 	# Get raw data, ensure it is in unix format, and compare them
 	my $rd = $d->get_rawdata();
 	$rd =~ s/\r\n/\n/g;
-	is($rd,$rawdata,'Raw data');
+	is($rd,$rawdata,'Raw data for '.ref($d));
 
 	# Now we do a load of the tests over again after deleting the event
 	$d->delete('dayplanner-117045552311276773');
-	ok(!$d->exists('dayplanner-117045552311276773'),'UID non-existance');
+	ok(!$d->exists('dayplanner-117045552311276773'),'UID non-existance for '.ref($d));
 
-	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID non-existance after delete on datetime, 2008');
-	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2006,11,27,),'UID non-existance after delete on datetime, 2006');
-	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2028,11,27,),'UID non-existance after delete on datetime, 2028');
-	ok(!$d->UID_exists_at('dayplanner-117045552311276773',1988,11,27,),'UID non-existance after delete on datetime, 1988');
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID non-existance after delete on datetime, 2008 for '.ref($d));
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2006,11,27,),'UID non-existance after delete on datetime, 2006 for '.ref($d));
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2028,11,27,),'UID non-existance after delete on datetime, 2028 for '.ref($d));
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',1988,11,27,),'UID non-existance after delete on datetime, 1988 for '.ref($d));
 
-	is_deeply($d->get_monthinfo(2008,11),[],'Month info 2008');
-	is_deeply($d->get_monthinfo(1988,11),[],'Month info 1988');
-	is_deeply($d->get_monthinfo(2028,11),[],'Month info 2028');
+	is_deeply($d->get_monthinfo(2008,11),[],'Month info 2008 for '.ref($d));
+	is_deeply($d->get_monthinfo(1988,11),[],'Month info 1988 for '.ref($d));
+	is_deeply($d->get_monthinfo(2028,11),[],'Month info 2028 for '.ref($d));
 
-	is_deeply($d->get_dateinfo(2008,11,27),[],'Date info 2008');
-	is_deeply($d->get_dateinfo(1988,11,27),[],'Date info 1988');
-	is_deeply($d->get_dateinfo(2028,11,27),[],'Date info 2028');
-	is_deeply($d->get_dateinfo(1987,11,27),[],'Date info 1987');
+	is_deeply($d->get_dateinfo(2008,11,27),[],'Date info 2008 for '.ref($d));
+	is_deeply($d->get_dateinfo(1988,11,27),[],'Date info 1988 for '.ref($d));
+	is_deeply($d->get_dateinfo(2028,11,27),[],'Date info 2028 for '.ref($d));
+	is_deeply($d->get_dateinfo(1987,11,27),[],'Date info 1987 for '.ref($d));
 
-	is_deeply($d->get_timeinfo(2028,11,27,'DAY'),[],'Time info 2028');
-	is_deeply($d->get_timeinfo(1988,11,27,'DAY'),[],'Time info 1988');
-	is_deeply($d->get_timeinfo(2008,11,27,'DAY'),[],'Time info 2008');
+	is_deeply($d->get_timeinfo(2028,11,27,'DAY'),[],'Time info 2028 for '.ref($d));
+	is_deeply($d->get_timeinfo(1988,11,27,'DAY'),[],'Time info 1988 for '.ref($d));
+	is_deeply($d->get_timeinfo(2008,11,27,'DAY'),[],'Time info 2008 for '.ref($d));
 
 	# Get raw data, ensure it is in unix format, and compare them. This time it wouldn't match.
 	my $rd2 = $d->get_rawdata();
 	$rd2 =~ s/\r\n/\n/g;
-	isnt($rd2,$rawdata,'Raw data');
+	isnt($rd2,$rawdata,'Raw data for '.ref($d));
 }
