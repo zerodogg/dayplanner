@@ -10,7 +10,7 @@ use strict;
 # Tests run before the loop
 my $pretests = 6;
 # Tests run after the loop
-my $maintests = 69;
+my $maintests = 75;
 # Times we pass through the loop
 my $looptimes = 3;
 
@@ -28,7 +28,7 @@ $Data::Dumper::Sortkeys = 1;
 use_ok('DP::iCalendar');
 use_ok('DP::iCalendar::Manager');
 
-my ($date_sec,$date_min,$date_hour,$date_mday,$date_mon,$date_year,$date_wday,$date_yday,$date_isdst) = localtime();
+my ($date_sec,$date_min,$date_hour,$date_mday,$date_mon,$date_year,$date_wday,$date_yday,$date_isdst) = gmtime();
 $date_year += 1900;
 $date_mon++;
 
@@ -194,12 +194,20 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 		is($uid_obj->{$part},$ChangedEvent{$part},'Part of UID object from get_info ('.$part.')'.' for '.ref($d));
 	}
 
+	# Re-import the file again.
+	$d->addfile($f);
+	ok($d->exists('dayplanner-117045552311276773'),'UID existance after re-adding file for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID Existance on datetime, 2008 after re-adding for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2006,11,27,),'UID Existance on datetime, 2006 after re-adding for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2028,11,27,),'UID Existance on datetime, 2028 after re-adding for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',1988,11,27,),'UID Existance on datetime, 1988 after re-adding for '.ref($d));
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',1987,11,27),'UID non-existance on datetime, 1987 after re-adding for '.ref($d));
+
 	ok($d->delete($UID));
 	ok(!$d->exists($UID),'UID non-existance after add for '.ref($d));
-
-	$d->addfile($f);
 	my $rd3 = $d->get_rawdata();
 	$rd3 =~ s/\r\n/\n/g;
-	# Now it is equal again, because we just imported it.
+	# Now it is equal again, because we just imported deleted the only other event
+	# and imported the other file.
 	is($rd3,$rawdata,'Raw data after delete for '.ref($d));
 }

@@ -35,6 +35,9 @@ the tests, not the whole document. Like so:
 In addition to that you will need to provide the revision number of
 the TESTCASES file you used. This one is: $Rev$
 
+The date format used in this file is the international date format.
+DD.MM.YYYY
+
 2 - MAIN GUI
 ============
 These are tests on the main Day Planner GUI.
@@ -50,10 +53,14 @@ Action: Start Day Planner for the first time. In order to get a clean
 	~/.config/dayplanner/debug beforehand.
 
 	If you use -t, then use it on all subsequent tests aswell.
-Expected result: The import dialog appears, welcoming you to Day
-	Planner and listing possible sources to import from.
-	After this screen the normal Day Planner window appears and you
-	should be able to close it normally.
+Expected result:
+	The import dialog appears if a source to import from is available,
+	welcoming you to Day Planner and displaying sources which you can
+	import from. If you don't have a source to import from, this
+	should not appear.
+
+	After that the Day Planner window should appear and you should be
+	able to close it normally.
 
 2.2 - Second startup
 --------------------
