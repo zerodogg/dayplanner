@@ -1,0 +1,105 @@
+Day Planner test cases
+by Eskild Hustvedt
+$Id$
+----------------------------
+
+Index:
+1 - Introduction
+2 -  Main GUI
+2.1 - First startup
+2.2 - Second startup
+2.3 - Adding a simple event
+2.4 - Adding a recurring event
+2.5 - Adding a birthday
+2.6 - Adding a full day event
+3 - iCalendar
+3.1 - Importing
+3.2 - Exporting
+
+1 - INTRODUCTION
+================
+This document outlines a set of tests for Day Planner.
+If one of these tests does not produce the result outlined in this
+document, that will in nearly all cases be considered a release
+critical bug.
+
+One thing to note is that you do not need to perform all tests to be
+helpful (usually section 2, and probably 3 will be enough). Any
+results are helpful.
+
+When reporting failure/pass information for this, you need simply list
+the tests, not the whole document. Like so:
+2.1 - failed. Bla bla happened instead.
+2.2 - pass
+
+In addition to that you will need to provide the revision number of
+the TESTCASES file you used. This one is: $Rev$
+
+2 - MAIN GUI
+============
+These are tests on the main Day Planner GUI.
+
+2.1 - First startup
+-------------------
+Action: Start Day Planner for the first time. In order to get a clean
+	Day Planner you can run it with the -d commandline option. This
+	will give you a clean instance that does not modify any data you
+	already have in your normal day planner.
+
+	If you already have run Day Planner with -d before, delete
+	~/.config/dayplanner/debug beforehand.
+
+	If you use -d, then use it on all subsequent tests aswell.
+Expected result: The import dialog appears, welcoming you to Day
+	Planner and listing possible sources to import from.
+	After this screen the normal Day Planner window appears and you
+	should be able to close it normally.
+
+2.2 - Second startup
+--------------------
+Action: Start Day Planner
+Expected result: The Day Planner window appears
+
+2.3 - Adding a simple event
+---------------------------
+Action: Open the «add event» window (either via the menu, or the
+	toolbutton). Type some summary, select tomorrow as the date and
+	add the event.
+Expected result: The event appears in the list for tomorrows events,
+	both in the main list and in the «upcoming events» list (the one
+	in the lower right corner).
+
+2.4 - Adding a recurring event
+------------------------------
+Action: Open the «add event» window (either via the menu, or the
+	toolbutton). Type some summary, select tomorrow as the date.
+	Expand advanced options, enable recurrance. Add one event per
+	recurrance type (daily, weekly, monthly).
+Expected result: The event recurs with the selected interval.
+
+2.5 - Adding a birthday
+-----------------------
+Action: Open the «add event» window (either via the menu, or the
+	toolbutton). Select «Birthday». Type some name,
+	select 06.04.1988 as the date.
+Expected result: On 06.04.1988 it says "NAME was born" and on
+	06.04.2008 this year it says "NAME's birthday (20 years old)".
+	The event is not displayed on 06.04.1978.
+
+2.6 - Adding a full day event
+---------------------------
+Action: Open the «add event» window (either via the menu, or the
+	toolbutton). Select «full day event». Type some summary,
+	select tomorrow as the date.
+Expected result: The event appears in the list for tomorrows events,
+	both in the main list and in the «upcoming events» list (the one
+	in the lower right corner). The event is displayed without any
+	time.
+
+3 - ICALENDAR
+=============
+These are tests on iCalendar importing and exporting.
+
+TODO.
+
+vim: set tw=70 :
