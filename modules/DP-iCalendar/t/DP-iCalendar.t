@@ -10,7 +10,7 @@ use strict;
 # Tests run before the loop
 my $pretests = 6;
 # Tests run after the loop
-my $maintests = 69;
+my $maintests = 75;
 # Times we pass through the loop
 my $looptimes = 3;
 
@@ -202,4 +202,10 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	$rd3 =~ s/\r\n/\n/g;
 	# Now it is equal again, because we just imported it.
 	is($rd3,$rawdata,'Raw data after delete for '.ref($d));
+	ok($d->exists('dayplanner-117045552311276773'),'UID existance after re-adding file for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID Existance on datetime, 2008 after re-adding for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2006,11,27,),'UID Existance on datetime, 2006 after re-adding for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',2028,11,27,),'UID Existance on datetime, 2028 after re-adding for '.ref($d));
+	ok($d->UID_exists_at('dayplanner-117045552311276773',1988,11,27,),'UID Existance on datetime, 1988 after re-adding for '.ref($d));
+	ok(!$d->UID_exists_at('dayplanner-117045552311276773',1987,11,27),'UID non-existance on datetime, 1987 after re-adding for '.ref($d));
 }
