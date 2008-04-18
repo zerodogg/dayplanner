@@ -10,7 +10,7 @@ use strict;
 # Tests run before the loop
 my $pretests = 6;
 # Tests run after the loop
-my $maintests = 68;
+my $maintests = 69;
 # Times we pass through the loop
 my $looptimes = 3;
 
@@ -194,8 +194,8 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 		is($uid_obj->{$part},$ChangedEvent{$part},'Part of UID object from get_info ('.$part.')'.' for '.ref($d));
 	}
 
-	$d->delete($UID);
-	ok($d->exists($UID),'UID non-existance after add for '.ref($d));
+	ok($d->delete($UID));
+	ok(!$d->exists($UID),'UID non-existance after add for '.ref($d));
 
 	$d->addfile($f);
 	my $rd3 = $d->get_rawdata();
