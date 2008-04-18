@@ -343,7 +343,7 @@ sub add {
 	}
 	$this->_ClearCalculated();
 	$this->_ChangeEntry($UID,%Hash);
-	return(true);
+	return($UID);
 }
 
 # Purpose: Change an iCalendar entry
