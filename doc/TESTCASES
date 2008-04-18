@@ -42,14 +42,14 @@ These are tests on the main Day Planner GUI.
 2.1 - First startup
 -------------------
 Action: Start Day Planner for the first time. In order to get a clean
-	Day Planner you can run it with the -d commandline option. This
+	Day Planner you can run it with the -t commandline option. This
 	will give you a clean instance that does not modify any data you
 	already have in your normal day planner.
 
-	If you already have run Day Planner with -d before, delete
+	If you already have run Day Planner with -t before, delete
 	~/.config/dayplanner/debug beforehand.
 
-	If you use -d, then use it on all subsequent tests aswell.
+	If you use -t, then use it on all subsequent tests aswell.
 Expected result: The import dialog appears, welcoming you to Day
 	Planner and listing possible sources to import from.
 	After this screen the normal Day Planner window appears and you
