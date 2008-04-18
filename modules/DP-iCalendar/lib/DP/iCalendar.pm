@@ -347,7 +347,7 @@ sub add {
 }
 
 # Purpose: Change an iCalendar entry
-# Usage: $object->change(%EntryHash);
+# Usage: $object->change(UID,%EntryHash);
 sub change {
 	my ($this, $UID, %Hash) = @_;
 	unless(defined($UID)) {
