@@ -93,6 +93,7 @@ sub deleteEntry
 	# Forget it
 	$this->{array}[$this->{index}{$indexed}] = undef;
 	delete($this->{index}{$indexed});
+	return true;
 }
 
 # Purpose: Change an entry, using its indexed value
