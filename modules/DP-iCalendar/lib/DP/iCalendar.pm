@@ -84,7 +84,7 @@ sub newfile {
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
-# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
+# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH);
 sub get_monthinfo {
 	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
 	$this->_GenerateCalendar($Year);
@@ -311,6 +311,7 @@ sub get_rawdata {
 # Usage: $object->delete(UID);
 sub delete {
 	my ($this, $UID) = @_;	# TODO verify UID
+	$this->_ClearCalculated();
 	return $this->{dataManager}->deleteEntry($UID);
 }
 
