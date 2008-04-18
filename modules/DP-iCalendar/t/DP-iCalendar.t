@@ -6,12 +6,12 @@
 use Test::More;
 use FindBin;
 
-my $pretests = 5;
+my $pretests = 6;
 my $maintests = 39;
 # With Manager
-# plan tests => ($maintests*2)+$pretests;
+# plan tests => ($maintests*3)+$pretests;
 # Without Manager
-plan tests => $maintests+$pretests;
+plan tests => ($maintests*2)+$pretests;
 
 # This is useful for diagnosing issues.
 # Only /really/ used during writing of the tests, but won't hurt to
@@ -50,8 +50,15 @@ $rawdata =~ s/\r\n/\n/g;
 # Make sure it's not undef or empty.
 ok($rawdata);
 
-foreach my $d($dpi)
-#foreach my $d($dpi,$dpi_mgr)
+# Now do one object that is created from the scalar
+my $dp_s = DP::iCalendar->new(\$rawdata);
+isa_ok($dp_s,'DP::iCalendar');
+
+# Now, why do we run tests on so many objects?
+# Simple. We need to verify that all instances yield the same data, and accept the same
+# parameters.
+foreach my $d($dpi,$dp_s)
+#foreach my $d($dpi,$dp_s,$dpi_mgr)
 {
 	ok($d->exists('dayplanner-117045552311276773'),'UID existance');
 
