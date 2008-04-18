@@ -649,15 +649,15 @@ sub set_file_perms
 # Usage: get_manager_version();
 sub get_manager_version
 {
-	return('01_capable');
+	return('02_capable');
 }
 
 # Purpose: Return manager capability information
 # Usage: get_manager_capabilities
 sub get_manager_capabilities
 {
-	# All capabilites as of 01_capable
-	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD'])
+	# All capabilites as of 02_capable
+	return(['LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD','PRODID','UID_EXISTS_AT']);
 }
 
 # - Public functions
