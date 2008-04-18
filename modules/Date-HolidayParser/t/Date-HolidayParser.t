@@ -1,17 +1,16 @@
 #!perl -T
 use strict;
 use warnings;
-use Test::More 'no_plan';
-use Cwd;
-use File::Basename;
+use Test::More;
 use Date::HolidayParser;
+use FindBin;
 
-my $MyPath = dirname(Cwd::realpath($0));
+plan tests => 26;
 
-my $parser = Date::HolidayParser->new("$MyPath/testholiday");
+my $parser = Date::HolidayParser->new("$FindBin::RealBin/testholiday");
 
 ok(defined $parser, "->new returned something usable");
-ok($parser->isa('Date::HolidayParser'), "->new returned the right class");
+isa_ok($parser,'Date::HolidayParser');
 
 my %YearTests = (
 	2006 => {
@@ -55,19 +54,19 @@ my %YearTests = (
 );
 
 foreach my $year (sort(keys(%YearTests))) {
-		my $YearP = $parser->get($year);
-		ok(defined $YearP, "->get($year) returned something usable");
-		foreach my $month (sort(keys(%{$YearTests{$year}}))) {
-					ok(defined $YearP->{$month}, "->get->month($month) defined");
-					foreach my $day (sort(keys(%{$YearTests{$year}{$month}}))) {
-						ok(defined $YearP->{$month}{$day}, "->get->month($month)->day($day) defined");
-						foreach my $name (sort(keys(%{$YearP->{$month}{$day}}))) {
-							if(defined($YearTests{$year}{$month}{$day}{$name})) {
-								ok($YearP->{$month}{$day}{$name} eq $YearTests{$year}{$month}{$day}{$name}, "->get->month($month)->day($day)->name($name) eq $YearTests{$year}{$month}{$day}{$name}");
-							} else {
-								ok(! defined($YearP->{$month}{$day}{$name}), "->get->month($month)->day($day)->name($name) eq undef");
-								}
-						}
-					}
+	my $YearP = $parser->get($year);
+	ok(defined $YearP, "->get($year) returned something usable");
+	foreach my $month (sort(keys(%{$YearTests{$year}}))) {
+		ok(defined $YearP->{$month}, "->get->month($month) defined");
+		foreach my $day (sort(keys(%{$YearTests{$year}{$month}}))) {
+			ok(defined $YearP->{$month}{$day}, "->get->month($month)->day($day) defined");
+			foreach my $name (sort(keys(%{$YearP->{$month}{$day}}))) {
+				if(defined($YearTests{$year}{$month}{$day}{$name})) {
+					ok($YearP->{$month}{$day}{$name} eq $YearTests{$year}{$month}{$day}{$name}, "->get->month($month)->day($day)->name($name) eq $YearTests{$year}{$month}{$day}{$name}");
+				} else {
+					ok(! defined($YearP->{$month}{$day}{$name}), "->get->month($month)->day($day)->name($name) eq undef");
 				}
+			}
+		}
 	}
+}
