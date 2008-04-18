@@ -287,6 +287,7 @@ sub delete {
 	if(not $this->_verify_capab($obj,'DELETE')) {
 		return;
 	}
+	delete($this->{UID_Cache}{$UID});
 	return($obj->delete($UID));
 }
 
