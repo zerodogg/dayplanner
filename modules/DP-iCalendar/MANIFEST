@@ -3,6 +3,8 @@ Makefile.PL
 MANIFEST
 README
 t/DP-iCalendar.t
+t/Manager.t
+t/calendar.ics
 lib/DP/iCalendar.pm
 COPYING
 COPYING.gpl
