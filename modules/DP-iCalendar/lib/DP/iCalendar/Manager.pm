@@ -26,7 +26,7 @@ my %API_COMPAT = (
 	'01_capable' => \&_01_capable_compat,
 );
 my $CurrentAPIVer = '02_capable';
-my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD','PRODID');
+my @Capabilities = ('LIST_DPI','RRULE','SAVE','CHANGE','ADD','EXT_FUNCS','ICS_FILE_LOADING','RAWDATA','EXCEPTIONS','DELETE','RELOAD','PRODID','UID_EXISTS_AT');
 
 # -- Manager stuff --
 sub new
@@ -114,6 +114,24 @@ sub get_primary
 }
 
 # -- DP::iCalendar API wrapper --
+
+# Purpose: Find out if an UID exists at a given date
+# Usage: true/false = $object->UID_exists_at(UID, YEAR,MONTH,DAY,TIME);
+#   Time is optional.
+sub UID_exists_at
+{
+	my $this = shift;
+	my $ret = false;
+	my @OBJArray;
+	foreach my $obj (@{$this->{UID_EXISTS_AT}}) {
+		if($obj->UID_exists_at(@_))
+		{
+			$ret = true;
+			last;
+		}
+	}
+	return($ret);
+}
 
 # Purpose: Get information for a supplied UID
 # Usage: my $Info = $object->get_info(UID);
@@ -269,6 +287,7 @@ sub delete {
 	if(not $this->_verify_capab($obj,'DELETE')) {
 		return;
 	}
+	delete($this->{UID_Cache}{$UID});
 	return($obj->delete($UID));
 }
 

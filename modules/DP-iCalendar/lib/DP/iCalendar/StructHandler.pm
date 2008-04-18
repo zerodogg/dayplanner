@@ -32,6 +32,7 @@ sub new
 	bless($this,$class);
 	# The data structure will be saved here
 	$this->{data} = {};
+	$this->{loadFileMode} = false;
 
 	# WARNING: NEVER SET THIS TO true UNLESS YOU KNOW FOR CERTAIN YOUR PROGRAM WON'T GENERATE INVALID ARRAYS/HASHES
 	$this->{ignoreAssertions} = false;
@@ -50,6 +51,7 @@ sub loadFile
 		carp("DP::iCalendar::StructHandler: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
 		return false;
 	}
+	$this->{loadFileMode} = true;
 	open(my $infile, '<',$file);
 	$this->_loadFH($infile);
 	close($infile);
@@ -157,16 +159,19 @@ sub _loadFH
 			{
 				$this->_assertMustBeRef('ARRAY',$CurrRef->{$value},'CurrRef->{value}',true,"$key:$value");
 			}
-			my $pushNo = push(@{$CurrRef->{$value}}, {});
 			# This check is only useful in iCalendar files,
 			# but should be safe when run on others.
-			if ($pushNo != 1 && $value eq 'VCALENDAR' && defined($CurrRef->{'VCALENDAR'}))
+			if (scalar(@Nest) == 1 && $value eq 'VCALENDAR' && defined($CurrRef->{'VCALENDAR'}) && scalar(@{$CurrRef->{'VCALENDAR'}}) > 0)
 			{
 				$CurrRef = $CurrRef->{$value}[0];
-				_parseWarn("Line $lineNo: Multiple BEGIN:VCALENDAR detected (on line $lineNo)! The file is broken, ignoring request to restart BEGIN:VCALENDAR, basing new block on the old one to attempt to fix this mess");
+				if(not $this->{loadFileMode})
+				{
+					_parseWarn("Line $lineNo: Multiple BEGIN:VCALENDAR detected (on line $lineNo)! The file is broken, ignoring request to restart BEGIN:VCALENDAR, basing new block on the old one to attempt to fix this mess");
+				}
 			}
 			else
 			{
+				my $pushNo = push(@{$CurrRef->{$value}}, {});
 				$pushNo--;
 				$CurrRef = $CurrRef->{$value}[$pushNo];
 			}
@@ -181,6 +186,17 @@ sub _loadFH
 		}
 		elsif (defined($key) and defined($value))
 		{
+			if($this->{loadFileMode})
+			{
+				# Disallow multiple keys in the first level in loadFileMode.
+				if (scalar(@Nest) == 2)
+				{
+					if (defined $CurrRef->{$key})
+					{
+						next;
+					}
+				}
+			}
 			if(not defined($CurrRef->{$key}))
 			{
 				$CurrRef->{$key} = [];

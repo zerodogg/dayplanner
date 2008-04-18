@@ -77,6 +77,8 @@ clean:
 	rm -f po/*.mo po/*.pot
 	rm -rf po/locale packages locale dayplanner-$(VERSION) installer
 	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+	[ ! -e ./modules/DP-iCalendar/Makefile ] || make -C ./modules/DP-iCalendar/ distclean
+	[ ! -e ./modules/Date-HolidayParser/Makefile ] || make -C ./modules/Date-HolidayParser/ distclean
 distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 	rm -f doc/dayplanner.desktop
