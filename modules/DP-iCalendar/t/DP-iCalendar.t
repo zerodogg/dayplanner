@@ -67,7 +67,7 @@ isa_ok($dp_s,'DP::iCalendar');
 # parameters.
 foreach my $d($dpi,$dp_s,$dpi_mgr)
 {
-	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at','add','change');
+	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at','add','change','addfile');
 	can_ok($d,@Methods) or BAIL_OUT('Required methods not present in object of type '.ref($d).'!');
 
 	ok($d->exists('dayplanner-117045552311276773'),'UID existance for '.ref($d));
