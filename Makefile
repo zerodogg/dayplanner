@@ -81,30 +81,6 @@ distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 	rm -f doc/dayplanner.desktop
 
-# Verify sanity
-test:
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/HTTPSubscription.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner-daemon
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner-notifier
-	@perl -c ./devel-tools/installer/MainInstallerPart
-	@perl -c ./devel-tools/installer/InstallLocal
-	@perl -c ./devel-tools/GenDesktop
-	@perl -c ./devel-tools/BuildLocale
-	@perl -c ./devel-tools/SetVersion
-	@perl -c ./devel-tools/postat
-	@perl -c ./devel-tools/updatepo
-	@perl -c ./services/tools/DPSAdmin
-	@perl -c ./services/tools/GenHTML
-	@perl -c ./services/dayplanner-services-daemon
-
 # Date::HolidayParser installation
 DHPinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/Date/
@@ -218,3 +194,39 @@ installer: prepdistrib tarball
 	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; ./makeself.sh --bzip2 --nox11 $$OLDPWD/installer/ dayplanner-$(VERSION).run 'Generic Day Planner installation script' ./StartInstaller &> /dev/null || exit 1; mv ./dayplanner-$(VERSION).run $$OLDPWD/packages )
 	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
 	rm -rf installer
+
+# -- Tests --
+test: sanity dpi_test date_holiday
+
+# Verify sanity
+sanity:
+	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/HTTPSubscription.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner-daemon
+	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner-notifier
+	@perl -c ./devel-tools/installer/MainInstallerPart
+	@perl -c ./devel-tools/installer/InstallLocal
+	@perl -c ./devel-tools/GenDesktop
+	@perl -c ./devel-tools/BuildLocale
+	@perl -c ./devel-tools/SetVersion
+	@perl -c ./devel-tools/postat
+	@perl -c ./devel-tools/updatepo
+	@perl -c ./services/tools/DPSAdmin
+	@perl -c ./services/tools/GenHTML
+	@perl -c ./services/dayplanner-services-daemon
+
+# DP::iCalendar tests
+dpi_test: sanity
+	[ -e ./modules/DP-iCalendar/Makefile ] || (cd ./modules/DP-iCalendar/ && perl Makefile.PL)
+	make -C ./modules/DP-iCalendar/ test
+# Date::HolidayParser tests
+date_holiday: sanity
+	[ -e ./modules/Date-HolidayParser/Makefile ] || (cd ./modules/Date-HolidayParser/ && perl Makefile.PL)
+	make -C ./modules/Date-HolidayParser/ test

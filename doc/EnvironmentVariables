@@ -46,4 +46,13 @@ DP_BYPASS_MANAGER
 			assist in identifying where an issue lies (in
 			DP::iCalendar, the data or the Manager).
 
+DP_AHM_DeleteDupes
+			If set to 1 then the internal data structure handler will
+			delete duplicate entries it detects. This can be useful
+			for cleaning up files created by buggy programs (or when
+			using DP SVN.)
+			Warning: Do NOT use this regulary, do NOT use it without a
+			backup of your calendar. It is possible that it can delete
+			an event you wanted (though unlikely).
+
 vim: set tw=70 autoindent :

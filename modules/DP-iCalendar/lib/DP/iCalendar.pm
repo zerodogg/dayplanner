@@ -24,7 +24,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 
 # Version number
 our $VERSION;
-$VERSION = 0.3.1;
+$VERSION = '0.3.1';
 
 # - Public methods
 
@@ -34,10 +34,19 @@ sub new {
 	my $File = $_[1];
 	my $this;
 	if(ref($File)) {	# If we got a reference
-		if(ref($File) eq 'ARRAY') {
-			# Do stuff
-		} else {
-			carp('Supplied a reference, but the reference is not a ARRAYREF.');
+		if(not ref($File) eq 'SCALAR')
+		{
+			if(ref($File) eq 'ARRAY')
+			{
+				carp "DP::iCalendar->addfile(): Supplied an ARRAYREF. This is deprecated. You should use a scalar reference instead. For now, I'll convert it for you";
+				my $scalar;
+				$scalar .= $_ ."\n" foreach(@{$File});
+				$File = \$scalar;
+			}
+			else
+			{
+				carp "DP::iCalendar->addfile(): Does not support a reference of type ".ref($File);
+			}
 		}
 		$this = _NewObj();
 	} else {		# If we don't have a reference, treat it as a scalar
@@ -84,7 +93,7 @@ sub newfile {
 }
 
 # Purpose: Get information for the supplied month (list of days there are events)
-# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
+# Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH);
 sub get_monthinfo {
 	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
 	$this->_GenerateCalendar($Year);
@@ -311,6 +320,7 @@ sub get_rawdata {
 # Usage: $object->delete(UID);
 sub delete {
 	my ($this, $UID) = @_;	# TODO verify UID
+	$this->_ClearCalculated();
 	return $this->{dataManager}->deleteEntry($UID);
 }
 
