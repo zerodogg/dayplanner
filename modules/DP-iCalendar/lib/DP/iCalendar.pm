@@ -841,6 +841,7 @@ sub _LoadICSFile
 		$this->{dataSource}->loadFile($file);
 	}
 	$this->_ArrayHashSetup();
+	$this->_ClearCalculated();
 }
 
 # Purpose: Set up the ArrayHashManager
