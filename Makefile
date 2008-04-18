@@ -196,7 +196,7 @@ installer: prepdistrib tarball
 	rm -rf installer
 
 # -- Tests --
-test: sanity dpi_test
+test: sanity dpi_test date_holiday
 
 # Verify sanity
 sanity:
@@ -224,5 +224,9 @@ sanity:
 
 # DP::iCalendar tests
 dpi_test: sanity
-	[ -e ./modules/DP-iCalendar/Makefile ] || perl ./modules/DP-iCalendar/Makefile.PL
+	[ -e ./modules/DP-iCalendar/Makefile ] || (cd ./modules/DP-iCalendar/ && perl Makefile.PL)
 	make -C ./modules/DP-iCalendar/ test
+# Date::HolidayParser tests
+date_holiday: sanity
+	[ -e ./modules/Date-HolidayParser/Makefile ] || (cd ./modules/Date-HolidayParser/ && perl Makefile.PL)
+	make -C ./modules/Date-HolidayParser/ test
