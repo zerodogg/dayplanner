@@ -35,6 +35,9 @@ the tests, not the whole document. Like so:
 In addition to that you will need to provide the revision number of
 the TESTCASES file you used. This one is: $Rev$
 
+The date format used in this file is the international date format.
+DD.MM.YYYY
+
 2 - MAIN GUI
 ============
 These are tests on the main Day Planner GUI.
