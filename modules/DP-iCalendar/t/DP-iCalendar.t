@@ -7,11 +7,8 @@ use Test::More;
 use FindBin;
 
 my $pretests = 6;
-my $maintests = 39;
-# With Manager
-# plan tests => ($maintests*3)+$pretests;
-# Without Manager
-plan tests => ($maintests*2)+$pretests;
+my $maintests = 40;
+plan tests => ($maintests*3)+$pretests;
 
 # This is useful for diagnosing issues.
 # Only /really/ used during writing of the tests, but won't hurt to
@@ -57,9 +54,11 @@ isa_ok($dp_s,'DP::iCalendar');
 # Now, why do we run tests on so many objects?
 # Simple. We need to verify that all instances yield the same data, and accept the same
 # parameters.
-foreach my $d($dpi,$dp_s)
-#foreach my $d($dpi,$dp_s,$dpi_mgr)
+foreach my $d($dpi,$dp_s,$dpi_mgr)
 {
+	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at');
+	can_ok($d,@Methods) or BAIL_OUT('Required methods not present in object of type '.ref($d).'!');
+
 	ok($d->exists('dayplanner-117045552311276773'),'UID existance');
 
 	my %BDayResult = (
