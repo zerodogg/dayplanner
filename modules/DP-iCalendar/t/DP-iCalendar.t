@@ -5,10 +5,17 @@
 
 use Test::More;
 use FindBin;
+use strict;
 
+# Tests run before the loop
 my $pretests = 6;
-my $maintests = 40;
-plan tests => ($maintests*3)+$pretests;
+# Tests run after the loop
+my $maintests = 52;
+# Times we pass through the loop
+my $looptimes = 3;
+
+# Plan it.
+plan tests => ($maintests*$looptimes)+$pretests;
 
 # This is useful for diagnosing issues.
 # Only /really/ used during writing of the tests, but won't hurt to
@@ -20,6 +27,10 @@ $Data::Dumper::Sortkeys = 1;
 
 use_ok('DP::iCalendar');
 use_ok('DP::iCalendar::Manager');
+
+my ($date_sec,$date_min,$date_hour,$date_mday,$date_mon,$date_year,$date_wday,$date_yday,$date_isdst) = localtime();
+$date_year += 1900;
+$date_mon++;
 
 my $f = $FindBin::RealBin.'/calendar.ics';
 if(not -e $f)
@@ -56,7 +67,7 @@ isa_ok($dp_s,'DP::iCalendar');
 # parameters.
 foreach my $d($dpi,$dp_s,$dpi_mgr)
 {
-	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at');
+	my @Methods = ('exists','get_info','get_RRULE','get_monthinfo','get_timeinfo','get_dateinfo','get_exceptions','get_info','get_rawdata','UID_exists_at','add');
 	can_ok($d,@Methods) or BAIL_OUT('Required methods not present in object of type '.ref($d).'!');
 
 	ok($d->exists('dayplanner-117045552311276773'),'UID existance for '.ref($d));
@@ -108,7 +119,7 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	is($rd,$rawdata,'Raw data for '.ref($d));
 
 	# Now we do a load of the tests over again after deleting the event
-	$d->delete('dayplanner-117045552311276773');
+	ok($d->delete('dayplanner-117045552311276773'),'Deleting event for '.ref($d));
 	ok(!$d->exists('dayplanner-117045552311276773'),'UID non-existance for '.ref($d));
 
 	ok(!$d->UID_exists_at('dayplanner-117045552311276773',2008,11,27,),'UID non-existance after delete on datetime, 2008 for '.ref($d));
@@ -133,4 +144,29 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	my $rd2 = $d->get_rawdata();
 	$rd2 =~ s/\r\n/\n/g;
 	isnt($rd2,$rawdata,'Raw data for '.ref($d));
+
+	# Now, add a new event, without a UID.
+	my %NewEvent = (
+		DTEND => '20080819T214400',
+		DTSTART => '20080819T214400',
+		RRULE => 'FREQ=YEARLY',
+		SUMMARY => 'Newevent',
+	);
+	my $UID = $d->add(%NewEvent);
+	ok($UID,'Add new event for '.ref($d));
+	is_deeply($d->get_monthinfo(2008,8),['19'],'Month info 2008 for '.ref($d));
+	is_deeply($d->get_dateinfo(2028,8,19),['21:44'],'Date info 2008 for '.ref($d));
+	is_deeply($d->get_timeinfo(2008,8,19,'21:44'),[$UID],'Time info 2008 for '.ref($d));
+
+	my $uid_obj = $d->get_info($UID);
+	ok($uid_obj,'Returned uid object from get_info for '.ref($d));
+
+	# Verify contents
+	foreach my $part (keys(%NewEvent))
+	{
+		is($uid_obj->{$part},$NewEvent{$part},'Part of UID object from get_info ('.$part.')'.' for '.ref($d));
+	}
+	# Make sure we have a CREATED and LAST-MODIFIED entry that matches today.
+	like($uid_obj->{'CREATED'},qr/^${date_year}0?${date_mon}0?$date_mday/,'Creation date of uid for '.ref($d));
+	like($uid_obj->{'LAST-MODIFIED'},qr/^${date_year}0?${date_mon}0?$date_mday/,'Last modification date of uid for '.ref($d));
 }
