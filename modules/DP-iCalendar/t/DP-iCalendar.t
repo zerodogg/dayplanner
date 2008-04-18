@@ -10,7 +10,7 @@ use strict;
 # Tests run before the loop
 my $pretests = 6;
 # Tests run after the loop
-my $maintests = 65;
+my $maintests = 68;
 # Times we pass through the loop
 my $looptimes = 3;
 
@@ -154,6 +154,7 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	);
 	my $UID = $d->add(%NewEvent);
 	ok($UID,'Add new event for '.ref($d));
+	ok($d->exists($UID),'UID existance after add for '.ref($d));
 	is_deeply($d->get_monthinfo(2008,8),['19'],'Month info 2008 for '.ref($d));
 	is_deeply($d->get_dateinfo(2028,8,19),['21:44'],'Date info 2008 for '.ref($d));
 	is_deeply($d->get_timeinfo(2008,8,19,'21:44'),[$UID],'Time info 2008 for '.ref($d));
@@ -192,4 +193,13 @@ foreach my $d($dpi,$dp_s,$dpi_mgr)
 	{
 		is($uid_obj->{$part},$ChangedEvent{$part},'Part of UID object from get_info ('.$part.')'.' for '.ref($d));
 	}
+
+	$d->delete($UID);
+	ok($d->exists($UID),'UID non-existance after add for '.ref($d));
+
+	$d->addfile($f);
+	my $rd3 = $d->get_rawdata();
+	$rd3 =~ s/\r\n/\n/g;
+	# Now it is equal again, because we just imported it.
+	is($rd3,$rawdata,'Raw data after delete for '.ref($d));
 }
