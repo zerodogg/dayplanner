@@ -51,7 +51,7 @@ help:
 	@echo " tarball      - create tarball"
 	@echo " installer    - create tarball and installer"
 	@echo " rpm          - create tarball and rpm"
-	@echo " test         - verify release sanity"
+	@echo " test         - run automated tests"
 
 install: $(INSTALLRULES)
 
