@@ -1,5 +1,5 @@
 # Makefile for Day Planner
-# Copyright (C) Eskild Hustvedt 2007
+# Copyright (C) Eskild Hustvedt 2007, 2008
 # $Id$
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,15 +17,18 @@
 
 # If prefix is already set then use some distro-friendly install rules
 ifdef prefix
-INSTALLRULES=maininstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
+INSTALLRULES=maininstall maninstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
+INSTALLRULES=maininstall maninstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
 prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
+
+# If this file does not exist it means manpages aren't built. So build them.
+MANPAGES=$(shell [ ! -e ./dayplanner.1 ] && echo man)
 
 VERSION=0.10
 DP_DATADIR ?= dayplanner
@@ -53,7 +56,7 @@ help:
 	@echo " rpm          - create tarball and rpm"
 	@echo " test         - run automated tests"
 
-install: $(INSTALLRULES)
+install: $(MANPAGES) $(INSTALLRULES)
 
 localinstall: desktoplocal
 	mkdir -p $(DESTDIR)$(prefix)/$(BINDIR)/
@@ -82,6 +85,16 @@ clean:
 distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
 	rm -f doc/dayplanner.desktop
+
+# Create manpages
+man:
+	pod2man --name "Day Planner" --center "" --release "Day Planner $(VERSION)" ./dayplanner ./dayplanner.1
+	pod2man --name "Day Planne Daemonr" --center "" --release "Day Planner $(VERSION)" ./dayplanner-daemon ./dayplanner-daemon.1
+	pod2man --name "Day Planner" --center "" --release "Day Planner Notifier $(VERSION)" ./dayplanner-notifier ./dayplanner-notifier.1
+# Install manpages
+maninstall:
+	mkdir -p "$(DATADIR)/man/man1"
+	cp -f dayplanner.1 dayplanner-daemon.1 dayplanner-notifier.1 "$(DATADIR)/man/man1" 
 
 # Date::HolidayParser installation
 DHPinstall:
