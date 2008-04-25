@@ -382,3 +382,98 @@ if(defined($MessageID)) {
 }
 
 NotifyUser();
+__END__
+=head1 NAME
+
+Day Planner notifier - notifier program for Day Planner.
+
+=head1 SYNOPSIS
+
+B<dayplanner-notifier> [I<OPTIONS>]
+
+=head1 DESCRIPTION
+
+This is the Day Planner notifier. It is called by I<dayplanner-daemon(1)> to
+display notifications of events to users.
+
+It can also be used standalone in a script by using a combination of the
+I<--message>, I<--time> and I<--date> (and optionally I<--fulltext>) options.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-h, --help>
+
+Display the help screen.
+
+=item B<-v, --version>
+
+Display version information.
+
+=item B<-m, --message> I<MESSAGE>
+
+Set the message when in standalone mode.
+
+=item B<-f, --fulltext> I<MESSAGE>
+
+Set the fulltext when in standalone mode. This is optional
+and is hidden by default.
+
+=item B<-t, --time> I<TIME>
+
+Set the time when in standalone mode. Should be HH:MM.
+
+=item B<-t, --date> I<DATE>
+
+Set the date when in standalone mode. Either use a numeric date,
+or the strings 'today' or 'tomorrow' (which enables translation).
+
+=item B<--dayplannerdir> I<DIR>
+
+Use the directory I<DIR> instead of the default Day Planner configuration
+directory. See also I<--test> and I<--confdir> in L<dayplanner(1)>.
+
+=item B<-k, --kill>
+
+Shut down the currently running daemon.
+
+=item B<-n, --nofork> 
+
+Don't fork. Stay in the foreground.
+
+=head1 HELP/SUPPORT
+
+See L<http://www.day-planner.org/index.php/help>
+
+=head1 AUTHOR
+
+Eskild Hustvedt I<<eskild
+at zerodogg
+dot
+org>>
+
+=head1 FILES
+
+See the FILES section in L<dayplanner(1)>
+
+=head1 SEE ALSO
+
+L<dayplanner(1)> L<dayplanner-daemon(1)>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (C) Eskild Hustvedt 2006, 2007, 2008
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see L<http://www.gnu.org/licenses/>.
