@@ -926,3 +926,93 @@ GetOptions (
 ) or die "See $0 --help for more information\n";
 
 InitDaemon();
+__END__
+=head1 NAME
+
+Day Planner daemon - reminding daemon for Day Planner.
+
+=head1 SYNOPSIS
+
+B<dayplanner-daemon> [I<OPTIONS>]
+
+=head1 DESCRIPTION
+
+This is the Day Planner daemon. It is started by the main L<Day
+Planner|dayplanner(1)> program and it is almost never neccesary to call it
+manually.
+
+It calls I<dayplanner-notifier(1)> to display the notifications to the user.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-h, --help>
+
+Display the help screen.
+
+=item B<-v, --version>
+
+Display version information.
+
+=item B<-t, --test> I<N>
+
+Start in test mode. See the --test documentation in L<dayplanner(1)>.
+
+=item B<--dayplannerdir> I<DIR>
+
+Use the directory I<DIR> instead of the default Day Planner configuration
+directory. See also I<--test> and I<--confdir> in L<dayplanner(1)>.
+
+=item B<-k, --kill>
+
+Shut down the currently running daemon.
+
+=item B<-n, --nofork> 
+
+Don't fork. Stay in the foreground.
+
+=item B<-f, --force-fork>
+
+Force forking. Overrides --nofork.
+
+=item B<-v, --verbose>
+
+Be verbose. Supply multiple times to increase verbosity.
+This goes to the daemon log if I<--nofork> was not supplied.
+
+=head1 HELP/SUPPORT
+
+See L<http://www.day-planner.org/index.php/help>
+
+=head1 AUTHOR
+
+Eskild Hustvedt I<<eskild
+at zerodogg
+dot
+org>>
+
+=head1 FILES
+
+See the FILES section in L<dayplanner(1)>
+
+=head1 SEE ALSO
+
+L<dayplanner(1)> L<dayplanner-notifier(1)>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (C) Eskild Hustvedt 2006, 2007, 2008
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see L<http://www.gnu.org/licenses/>.
