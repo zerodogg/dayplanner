@@ -4959,3 +4959,144 @@ Gtk2Init();
 InitDPCore();
 # Rest in the Gtk2 main loop
 Gtk2->main;
+
+__END__
+=head1 NAME
+
+Day Planner - a simple Day Planner for Gtk2/GNOME.
+
+=head1 SYNOPSIS
+
+B<dayplanner> [I<OPTIONS>]
+
+=head1 DESCRIPTION
+
+Day Planner is a program designed to help you easily plan and manage your
+time. It can manage appointments, birthdays and more and makes sure you
+remember your appointments by displaying reminders.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-h, --help>
+
+Display the help screen.
+
+=item B<-v, --version>
+
+Display version information.
+
+=item B<-d, --debuginfo>
+
+Display information useful for debugging. You should include the output
+of this command with any bug report.
+
+=item B<-t, --test> I<N>
+
+Start Day Planner in "test" mode. This starts up a Day Planner instance
+completely separate from your real instance, so that no data will be touched.
+This is mainly useful for testing unstable versions of Day Planner.
+
+I<--test> can take an optional argument (I<N>) which is a number. This number
+specifies the test instance to use, which allows you to have many different
+instances for different purposes.
+
+=item B<--confdir> I<DIR>
+
+Use the directory I<DIR> instead of the default Day Planner configuration
+directory. See also I<--test>.
+
+=item B<-s, --shutdaemon>
+
+Shut down the Day Planner daemon when closing Day Planner.
+
+=item B<--exportical> I<FILE>
+
+Export the iCalendar data to I<FILE>.
+
+=item B<--importical> I<FILE>
+
+Import iCalendar data from I<FILE>.
+
+=item B<--exporthtml> I<DIR>
+
+Export HTML to I<DIR>. I<DIR> should be empty before you issue this
+command.
+
+=head1 HELP/SUPPORT
+
+If you need help with SilverFW you can, for now, contact me via e-mail.
+
+=head1 AUTHOR
+
+B<SilverFW> is written by Eskild Hustvedt I<<eskild at
+zerodogg
+dot
+org>>
+
+=head1 FILES
+
+CONFDIR is XDG_CONFIG_PATH/dayplanner by default XDG_CONFIG_PATH is ~/.config
+by default. So on most installations CONFDIR is ~/.config/dayplanner/. See
+I<--debuginfo> to see which path this install is using.
+
+These paths are altered by the I<--confdir> and I<--test>
+commandline arguments.
+
+=over
+
+=item I<CONFDIR/dayplanner.conf>
+
+The configuration file.
+
+=item I<CONFDIR/calendar.ics>
+
+The calendar file.
+
+=item I<CONFDIR/state.conf>
+
+The internal state file, you should not edit this.
+
+=item I<CONFDIR/holidays>
+
+The holiday definitions file. Feel free to edit it.
+
+=item I<CONFDIR/daemon_state.conf>
+
+The daemon's internal state file. You really should not edit this.
+
+=item I<CONFDIR/daemon.log> I<CONFDIR/services.log>
+
+The daemon and services logfiles. The latter may not exist on some setups.
+
+=item I<CONFDIR/Daemon_Socket> I<CONFDIR/ipcsocket>
+
+The daemon's communication socket, and Day Planner's IPC sockett
+
+=back
+
+=head1 SEE ALSO
+
+For additional program documentation: 
+L<dayplanner-daemon(1)> L<dayplanner-notifier(1)>
+
+For API documentation:
+L<DP::iCalendar> L<DP::iCalendar::Manager> L<Date::HolidayParser>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (C) Eskild Hustvedt 2006, 2007, 2008
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see L<http://www.gnu.org/licenses/>.
