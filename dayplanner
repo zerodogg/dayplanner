@@ -3995,8 +3995,8 @@ sub AboutBox {
 	# TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 	#		For instance "Dagsplanleggar" for Norwegian.
 	my $AppName = $i18n->get('Day Planner');
-	# Use set_program_name instead of set_name in Gtk2 2.12+
-	if(Gtk2->CHECK_VERSION(2,12,0)) {
+	# Use set_program_name instead of set_name in Gtk2 2.14+
+	if(Gtk2->CHECK_VERSION(2,14,0)) {
 		$AboutDialog->set_program_name($AppName);
 	}
 	else
