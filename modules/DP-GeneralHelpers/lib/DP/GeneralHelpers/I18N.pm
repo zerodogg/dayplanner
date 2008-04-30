@@ -269,7 +269,7 @@ sub _detectWorkaraound
 	}
 	# Workaround detection. Appears to be a bug
 	# in versions somewhere between 1.144 and 1.160.
-	if($Gtk2::VERSION <= 1.144 && $Gtk2::VERSION > 1.160)
+	if($Gtk2::VERSION <= 1.144 || $Gtk2::VERSION > 1.160)
 	{
 		return 0;
 	}
