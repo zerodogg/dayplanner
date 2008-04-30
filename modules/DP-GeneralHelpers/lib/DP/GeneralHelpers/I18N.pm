@@ -84,6 +84,7 @@ sub new {
 	my $Package = shift;
 	my $self = {};
 	bless($self,$Package);
+	$self->{'workaround'} = 0;
 	
 	setlocale(LC_ALL, '' );
 	if(eval('use Locale::gettext;1')) {
@@ -124,22 +125,8 @@ sub new {
 			textdomain('dayplanner');
 		} else {
 			$self->{I18N_Mode} = 2;
-			my $Workaround = 0;
-			# Workaround detection. Appears to be a bug
-			# in versions somewhere between 1.144 and 1.160.
-			if($Gtk2::VERSION >= 1.144 && $Gtk2::VERSION < 1.160) {
-				$Workaround = 1;
-			}
-			# Check if the env var is set, if it is then ignore detection
-			# and use that.
-			if(defined($ENV{DP_FORCE_GETTEXT_WORKAROUND})) {
-				if ($ENV{DP_FORCE_GETTEXT_WORKAROUND} eq '1') {
-					$Workaround = 1;
-				} else {
-					$Workaround = 0;
-				}
-			}
-			if($Workaround) {
+			$self->{'workaround'} = $self->_detectWorkaraound();
+			if($self->{'workaround'}) {
 				# This appears to be needed on /some/ boxes in certain cases.
 				# Seems to be a bug in certain versions of perl-gtk2, though
 				# it can also be forced on by the user.
@@ -261,5 +248,37 @@ sub AMPM_From24 {
 		$Suffix = $self->{AM_String};
 	}
 	return("$Hour:$Minutes $Suffix");
+}
+
+# Purpose: Detect if we should use the workaround or not
+# Usage: workaround = this->_detectWorkaraound();
+sub _detectWorkaraound
+{
+	# Check if the env var is set, if it is then ignore detection
+	# and use that.
+	if(defined($ENV{DP_FORCE_GETTEXT_WORKAROUND}))
+	{
+		if ($ENV{DP_FORCE_GETTEXT_WORKAROUND} eq '1')
+		{
+			return 1;
+		} 
+		else
+		{
+			return 0;
+		}
+	}
+	# Workaround detection. Appears to be a bug
+	# in versions somewhere between 1.144 and 1.160.
+	if($Gtk2::VERSION <= 1.144 && $Gtk2::VERSION > 1.160)
+	{
+		return 0;
+	}
+	# Ignore it on some distros
+	if(main::GetDistVer() =~ /suse/i)
+	{
+		return 0
+	}
+	# Use it
+	return 1;
 }
 1;
