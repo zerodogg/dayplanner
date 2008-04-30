@@ -16,6 +16,8 @@ Version 0.9 (Unreleased)
 - Fixed a bug that caused DP to crash on some distributions using Gtk+ 2.14
 - Fixed a bug that caused LAST-MODIFIED and CREATED entries to be wrong
 	(zero-indexed month instead of one-indexed)
+- Added a whitelist of distros that does not need the i18n workaround for
+	certain versions of perl-gtk2.
 
 * Notifier (dayplanner-notifier)
 
