@@ -2775,18 +2775,25 @@ sub RemoveFromField {
 # 	DEFAULT_DATE is one of:
 # 		undef - Use the first entry in the entry field
 # 		CURRENT - Use todays date
-sub PopupDateSel {
+sub PopupDateSel
+{
 	my $TextEntry = shift;
 	my $CalButton = shift;
 	$CalButton->set_sensitive(0);
 	my $Mode = shift;
 	my $Default_Date = shift;
-	
+
 	# This is used to indicate when we are changing months,
 	# so that changing month doesn't inadvertedly change the date too.
 	my $ChangingNow;
 
 	if(not $Mode) {
+		DPIntWarn('PopupDateSel() called without a mode. Defaulting to MULTI.');
+		$Mode = 'MULTI';
+	}
+	elsif(not $Mode eq 'MULTI' && not $Mode eq 'SINGLE')
+	{
+		DPIntWarn('PopupDateSel() called with invalid mode: "'.$Mode'". Defaulting to MULTI.');
 		$Mode = 'MULTI';
 	}
 
@@ -2803,12 +2810,12 @@ sub PopupDateSel {
 	$Window->set_transient_for($MainWindow);
 	$Window->set_type_hint('dialog');
 	$Window->signal_connect('destroy' => sub {
-		$Window->destroy();
+			$Window->destroy();
 			$CalButton->set_sensitive(1);
 			$TextEntry->grab_focus();
 		});
 	$Window->signal_connect('delete-event' => sub {
-		$Window->destroy();
+			$Window->destroy();
 			$CalButton->set_sensitive(1);
 			$TextEntry->grab_focus();
 		});
@@ -2841,7 +2848,7 @@ sub PopupDateSel {
 		}
 	}
 
-		# Get the dates
+	# Get the dates
 	$Calendar->signal_connect('month-changed' => sub {
 			# If ChangingNow is undef that means we just
 			# got created, so initialize it to zero instead of one
@@ -2863,24 +2870,42 @@ sub PopupDateSel {
 					$Calendar->mark_day($Day);
 				}
 			}
-	});
-	$Calendar->signal_emit('month-changed');
-		# Set the handler for clicking on a date
-		# This will add and remove dates from the field
-	$Calendar->signal_connect('day-selected' => sub {
-			if($ChangingNow) {
+			# If we're in single mode, then make our day-selected handler do some work aswell
+			if($Mode eq 'SINGLE')
+			{
+				$Calendar->signal_emit('day-selected');
+			}
+		});
+	# Emit a day-selected event on year change in single mode.
+	$Calendar->signal_connect('prev-year', => sub { 
+			if ($Mode eq 'SINGLE')
+			{
+				$Calendar->signal_emit('day-selected');
+			}
+		});
+	$Calendar->signal_connect('next-year', => sub { 
+			if ($Mode eq 'SINGLE')
+			{
+				$Calendar->signal_emit('day-selected');
+			}
+		});
+	# Set the handler for clicking on a date
+	# This will add and remove dates from the field
+	$Calendar->signal_connect('day-selected' => sub 
+		{
+			# ChangingNow is used for handling of windows that are not in SINGLE mode
+			if ($ChangingNow)
+			{
 				$ChangingNow = 0;
 				return;
 			}
 			my $Selected = $Calendar->selected_day();
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
-			if($SelHash{$Selected}) {
-				if(not $Mode eq 'SINGLE') {
-					$Calendar->unmark_day($Selected);
-					delete($SelHash{$Selected});
-					RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
-				}
+			if($SelHash{$Selected} && !$Mode eq 'SINGLE') {
+				$Calendar->unmark_day($Selected);
+				delete($SelHash{$Selected});
+				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
 			} else {
 				if($Mode eq 'SINGLE') {
 					$Calendar->clear_marks();
@@ -2891,13 +2916,20 @@ sub PopupDateSel {
 				$SelHash{$Selected} = 1;
 				AddToField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
 			}
-			});
+		});
+	# On double-click in a single-mode window we close.
 	$Calendar->signal_connect('day-selected-double-click' => sub {
 			if($Mode eq 'SINGLE') {
 				$Calendar->signal_emit('day-selected');
 				$CloseButton->signal_emit('clicked');
 			}
 		});
+
+	# Emit a month-changed signal to initialize fields
+	$Calendar->signal_emit('month-changed');
+
+	# Let ESC close the window
+	$Window->signal_connect('key_release_event' => \&EscapeKeyHandler);
 
 	# Show it all
 	$Window->show_all();
