@@ -18,6 +18,9 @@ Version 0.9 (Unreleased)
 	(zero-indexed month instead of one-indexed)
 - Added a whitelist of distros that does not need the i18n workaround for
 	certain versions of perl-gtk2.
+- The popup-calendar can now handle "ESC" to close it
+- The popup-calendar now handles month and year changes in a saner way
+	(changes the date in the entry field as expected).
 
 * Notifier (dayplanner-notifier)
 
