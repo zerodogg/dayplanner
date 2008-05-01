@@ -158,12 +158,13 @@ desktoplocal:
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Distrib .desktop file installation
-distribdesktop:
+distribdesktop: ./doc/dayplanner.desktop
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Gen distrib desktop file
 gendistribdesktop:
 	./devel-tools/GenDesktop .
+./doc/dayplanner.desktop: gendistribdesktop
 # --- DISTRIB TARGETS ---
 distrib: prepdistrib tarball rpm installer
 prepdistrib: gendistribdesktop test clean
