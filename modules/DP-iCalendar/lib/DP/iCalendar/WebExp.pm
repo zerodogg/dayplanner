@@ -1,13 +1,11 @@
 # DP::iCalendar::WebExp
 # $Id: iCalendar.pm 1615 2007-08-10 17:58:24Z zero_dogg $
 # An DP::iCalendar handler that exports data to XHTML or PHP
-# Copyright (C) Eskild Hustvedt 2007, 2008
+# Copyright (C) Eskild Hustvedt 2008
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself. There is NO warranty;
 # not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-# NOTE: PHP is not implemented fully
 
 package DP::iCalendar::WebExp;
 use DP::GeneralHelpers::I18N;
@@ -17,23 +15,19 @@ use strict;
 use warnings;
 use constant { true => 1, false => undef };
 
-# TODO: Drop these, transitional variables used during porting
-my $_HTML_PHP;
-my $Version;
-# TODO: Drop these transitional subs used during porting
-sub DPIntWarn
+# Purpose: Mark something as a stub
+# Usage: STUB();
+sub STUB
 {
-	warn(@_);
-	warn("DPIntWarn() called: deprecated");
+	my ($package, $filename, $line, $subroutine, $hasargs,
+		$wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	my $msg = "STUB: $subroutine";
+	warn($msg);
 }
-
-# ---
-# Public methods
-# ---
 
 sub new
 {
-	warn('STUB');
+	STUB();
 	my $this = {};
 	bless($this);
 	$this->{'generator'} = 'DP::iCalendar::WebExp';
@@ -49,13 +43,14 @@ sub new
 
 sub set_dpi
 {
-	warn('STUB');
+	STUB();
 	my $this = shift;
 	$this->{DPI} = shift;
 }
 
 sub set_generator
 {
+	STUB();
 	my ($this,$name,$url) = @_;
 	$this->{'generator'} = _HTML_Encode($name);
 	$this->{'generator_url'} = _HTML_Encode($url);
@@ -65,187 +60,130 @@ sub writehtml
 {
 	my $this = shift;
 	my $dir = shift;
-	warn('STUB');
 	die("DPI not set!") if not $this->{DPI};
 	die("DIR not supplied!") if not $dir;
-	$this->{out_dir} = $dir;
-	$this->_process_out();
+	# This is a rather deep loop.
+	#  We loop through each (existing) day of each (existing) month
+	#  of each (exisiting) year.
+	# Start with the year.
+	foreach my $Year (@{$this->{DPI}->get_years()})
+	{
+		$this->_HTML_YearIndex($dir,$Year);
+		# Proceed with months
+		foreach my $Month (@{$this->{DPI}->get_months($Year)})
+		{
+			$this->_HTML_MonthIndex($dir,$Year,$Month);
+			# And finish with the days
+			foreach my $Day (@{$this->{DPI}->get_monthinfo($Year,$Month)})
+			{
+				$this->_HTML_DayIndex($dir,$Year,$Month,$Day);
+			}
+		}
+	}
 }
 
 sub writephp
 {
+	STUB();
 	warn('STUB');
 	# Write year list
 	# Write month list for each year
 	# Write day list for each month for each year
 }
 
-# ---
-# Internal methods
-# ---
-
-sub _process_out
+sub _HTML_YearIndex
 {
 	my $this = shift;
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	if(not -d $this->{out_dir}) {
-		eval("mkpath('$this->{out_dir}')");
-		if($@) {
-			DPIntWarn("Unable to mkpath($this->{out_dir}): $@");
-			# FIXME: Use of DPError and i18n is deprecated. Let DP handle the error.
-			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $this->{out_dir}, error => $@}));
-			return(undef);
+	my $Year = shift;
+	my $Dir = shift;
+	my $HTML = $this->_getYear($Year);
+	STUB();
+}
+sub _HTML_MonthIndex
+{
+	my $this = shift;
+	my $Year = shift;
+	my $Month = shift;
+	my $Dir = shift;
+	my $HTML = $this->_getMonth($Year,$Month);
+	STUB();
+}
+sub _HTML_DayIndex
+{
+	my $this = shift;
+	my $Dir = shift;
+	my $Year = shift;
+	my $Month = shift;
+	my $Day = shift;
+	my $HTML = $this->_getDay($Year,$Month,$Day);
+	STUB();
+}
+sub _HTML_GetHeader
+{
+	my $this = shift;
+	STUB();
+	return('');
+}
+sub _HTML_GetFooter
+{
+	my $this = shift;
+	STUB();
+	return('');
+}
+sub _HTML_GetMenu
+{
+	my $this = shift;
+	my $Year = shift;
+	my $Month = shift;
+	STUB();
+	return('');
+}
+
+# Purpose: Get the HTML containing information about a year
+# Usage: this->_getYear(year);
+sub _getYear
+{
+	STUB();
+	my ($this,$Year) = @_;
+	return('');
+}
+
+# Purpose: Get the HTML containing information about a month
+# Usage: this->_getMonth(year,month);
+sub _getMonth
+{
+	STUB();
+	my ($this,$Year,$Month) = @_;
+	return('');
+}
+
+# Purpose: Get the HTML containing events for a specific day
+# Usage: this->_getDay(year,month,day);
+sub _getDay
+{
+	my ($this,$Year,$Month,$Day) = @_;
+	my $Return = '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2"><tbody><tr><td>' . _HTML_Encode($i18n->get('Time')) . '</td><td>' . _HTML_Encode($i18n->get('Description')) . "</td></tr>\n";
+	if (my $TimeArray = $this->{DPI}->get_dateinfo($Year,$Month,$Day)) {
+		foreach my $Time (sort @{$TimeArray}) {
+			foreach my $UID (@{$this->{DPI}->get_timeinfo($Year,$Month,$Day,$Time)}) {
+				# FIXME
+				my $EventSummary = main::GetSummaryString($UID);
+				# Don't add Time = DAY.
+				if($Time eq 'DAY') {
+					$Time = '';
+				}
+				$Return .= '<tr><td>'.$Time.'</td><td>'._HTML_Encode($EventSummary);
+				my $info = $this->{DPI}->get_info($UID);
+				if (defined($info->{DESCRIPTION}))
+				{
+					$Return .= '<br /><i>'._HTML_Encode($info->{DESCRIPTION}).'</i>';
+				}
+				$Return .= '</td></tr>';
+			}
 		}
 	}
-	# Process each year, month and day
-	foreach my $Year (@{$this->{DPI}->get_years}) {
-		$this->_HTML_outputYear($Year);
-#		foreach my $Month (@{$this->{DPI}->get_months($Year)}) {
-#			foreach my $Day (@{$this->{DPI}->get_monthinfo($Year,$Month)}) {
-#				_HTML_DayToHtml($Year, $Month, $Day, $this->{out_dir});
-#			}
-#		}
-#		# Make sure we have every month
-#		foreach(1..12) {
-#			_HTML_MonthToHtml($Year,$_,$this->{out_dir});
-#		}
-	}
-	# TODO: FIXME
-#	_HTML_YearList($this->{out_dir});
-#	_HTML_PHPIndex($this->{out_dir});
+	return($Return);
 }
-
-sub _HTML_outputYear
-{
-	my $this = shift;
-	# Okay, we're now suppose to process this year
-	my $Year = shift;
-	# TODO: Error handling
-	open(my $FILE, '>', $this->{out_dir}.'/'.$Year.'.html');
-	print $FILE $this->_HTML_Header($Year, $Year, 'Y');
-	# FIXME: i18n shouldn't be used
-	print $FILE $this->_HTML_Encode($i18n->get('Select the month to view in the list above')) . "<br />\n";
-	print $FILE $this->_HTML_Footer();
-}
-sub _PHP_outputYear
-{
-	my $this = shift;
-	my $Year = shift;
-}
-
-# Purpose: Output the header for all Day Planner HTML files
-# Usage: print $FILE _HTML_Header(YEAR,DATE,NONDATEMODE?);
-sub _HTML_Header
-{
-	my($this,$Year,$Date,$NoDate) = @_;
-	my $Header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-	$Header .= "<html><head>\n";
-	$Header .= '<meta content="text/html; charset=iso-8859-1" http-equiv="content-type" />';
-	$Header .= "<meta name='generator' content='".$this->{generator}. '- '.$this->{generator_url} ."' />\n";
-	# FIXME: This uses the internal $i18n object - that's not legal in a module.
-	if($NoDate) {
-		$Header .= "<title>" . _HTML_Encode($Date) . "</title>";
-	} else {
-		$Header .= '<title>' . _HTML_Encode($i18n->get_advanced('Day Planner for %(date)', { date => $Date})) . '</title>';
-	}
-	$Header .= "</head>\n";
-	$Header .= '<body>';
-	$Header .= '<h2>' . _HTML_Encode($Date) . '</h2>';
-	$Header .= "<!-- Generated by  " . $this->{generator}. '- '.$this->{generator_url} . " -->\n";
-	$Header .= $this->_HTML_Menu(@_);
-	$Header .= '<hr />';
-	return($Header); }
-
-# Purpose: Print the menu for a Day Planner HTML doc
-# Usage: print $FILE _HTML_Menu(YEAR,DATE,NONDATEMODE?);
-sub _HTML_Menu {
-	my $this = shift;
-	my ($Year,$Date,$NonDateMode) = @_;
-	my $Menu = '';
-	my %Links;
-	if($_HTML_PHP) {
-		# PHP-style links
-		%Links = (
-			1 => 'index.php?year=<?php print "$Year" ?>&amp;month=1',
-			2 => 'index.php?year=<?php print "$Year" ?>&amp;month=2',
-			3 => 'index.php?year=<?php print "$Year" ?>&amp;month=3',
-			4 => 'index.php?year=<?php print "$Year" ?>&amp;month=4',
-			5 => 'index.php?year=<?php print "$Year" ?>&amp;month=5',
-			6 => 'index.php?year=<?php print "$Year" ?>&amp;month=6',
-			7 => 'index.php?year=<?php print "$Year" ?>&amp;month=7',
-			8 => 'index.php?year=<?php print "$Year" ?>&amp;month=8',
-			9 => 'index.php?year=<?php print "$Year" ?>&amp;month=9',
-			10 => 'index.php?year=<?php print "$Year" ?>&amp;month=10',
-			11 => 'index.php?year=<?php print "$Year" ?>&amp;month=11',
-			12 => 'index.php?year=<?php print "$Year" ?>&amp;month=12',
-			yearindex => 'index.php?page=yearindex',
-		);
-	} else {
-		# HTML-style links
-		%Links = (
-			1 => "january-$Year.html",
-			2 => "february-$Year.html",
-			3 => "march-$Year.html",
-			4 => "april-$Year.html",
-			5 => "may-$Year.html",
-			6 => "june-$Year.html",
-			7 => "july-$Year.html",
-			8 => "august-$Year.html",
-			9 => "september-$Year.html",
-			10 => "october-$Year.html",
-			11 => "november-$Year.html",
-			12 => "december-$Year.html",
-			yearindex => 'index.html',
-		);
-	}
-	if(not defined($NonDateMode) or not $NonDateMode eq 'M') {
-		
-#	if(defined($NonDateMode) and not $NonDateMode eq "M") {
-#		$Menu .= _HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . _HTML_Encode($i18n->get("View the main page")) . "</a><br/>\n";
-#	} elsif(not defined($NonDateMode) or not $NonDateMode eq "M") {
-		$Menu .= _HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . _HTML_Encode($i18n->get("Change to another year")) . "</a> (" . _HTML_Encode($i18n->get_advanced("current: %(year)", { year => $Year })) . ") - </a><br />\n";
-		$Menu .= _HTML_Encode($i18n->get("Months")) .
-			": <a href='$Links{1}'>" . _HTML_Encode($i18n->get_month(1)) .
-			"</a> - <a href='$Links{2}'>" . _HTML_Encode($i18n->get_month(2)).
-			"</a> - <a href='$Links{3}'>" . _HTML_Encode($i18n->get_month(3)) .
-			"</a> - \n<a href='$Links{4}'>" . _HTML_Encode($i18n->get_month(4)) .
-			"</a> - <a href='$Links{5}'>" . _HTML_Encode($i18n->get_month(5)) .
-			"</a> - <a href='$Links{6}'>" . _HTML_Encode($i18n->get_month(6)) .
-			"</a> - \n<a href='$Links{7}'>" . _HTML_Encode($i18n->get_month(7)) .
-			"</a> - <a href='$Links{8}'>" . _HTML_Encode($i18n->get_month(8)) .
-			"</a> - <a href='$Links{9}'>" . _HTML_Encode($i18n->get_month(9)) .
-			"</a> - \n<a href='$Links{10}'>" . _HTML_Encode($i18n->get_month(10)) .
-			"</a> - <a href='$Links{11}'>" . _HTML_Encode($i18n->get_month(11)) .
-			"</a> - <a href='$Links{12}'>" . _HTML_Encode($i18n->get_month(12)) . "</a><br/>\n";
-	}
-	return($Menu);
-}
-
-# Purpose: Print the footer of all Day Planner HTML documents
-# Usage: print $FILE _HTML_Footer();
-sub _HTML_Footer {
-	return('') if $_HTML_PHP;
-	my $Footer = '<br /><small><small>' . _HTML_Encode($i18n->get('Generated by')) .  ' <a href="http://www.day-planner.org/">' . _HTML_Encode($i18n->get('Day Planner')) . '</a> ' . _HTML_Encode($i18n->get('version')) . " $Version</small></small><br />";
-	$Footer .= "</body></html>";
-	return($Footer);
-}
-
-# ---
-# Internal functions
-# ---
 
 # Purpose: Encode special HTML entities
 # Usage: _HTML_Encode(STRING);
@@ -259,320 +197,3 @@ sub _HTML_Encode {
 	$String =~ s/"/&quot;/g;
 	return($String);
 }
-
-# -----------
-# LEGACY CODE
-# -----------
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# HTML export functions (almost all of these are shared with the PHP exporter)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Output a specified day to HTML
-# Usage: _HTML_DayToHtml(YEAR,MONTH,DAY,DIRECTORY);
-sub _HTML_DayToHtml {
-	my $this = shift;
-	my ($Year,$Month,$Day,$Dir) = @_;
-	my (@AllDay, @OtherEvents);
-	open(my $FILE, '>', "$this->{out_dir}/dp_$Year$Month$Day.html") or do {
-		DPIntWarn("Unable to open $this->{out_dir}/dp_$Year$Month$Day.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$this->{out_dir}/dp_$Year$Month$Day.html", error => $!}));
-		return(undef);
-	};
-	# Header
-	print $FILE _HTML_Header($Year,"$Day-$Month-$Year");
-	print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
-	print $FILE '<tbody><tr><td>' . _HTML_Encode($i18n->get('Time')) . '</td><td>' . _HTML_Encode($i18n->get('Description')) . "</td></tr>\n";
-	# Write allday and birthdays
-	foreach my $Event (sort (@{$this->{DPI}->get_timeinfo($Year,$Month,$Day,'DAY')})) {
-		print $FILE '<tr><td></td><td>' . _HTML_Encode(GetSummaryString($Event,false,$Year,$Month));
-		my $EventInfo = $this->{DPI}->get_info($Event);
-		if(defined($EventInfo->{DESCRIPTION})) {
-			my $_HTML_Fulltext = _HTML_Encode($EventInfo->{DESCRIPTION});
-			print $FILE "<br /><i>$_HTML_Fulltext</i>";
-		}
-		print $FILE "</td></tr>\n";
-	}
-	# Write others
-	foreach my $Time (sort(@{$this->{DPI}->get_dateinfo($Year,$Month,$Day)})) {
-		next if $Time eq 'DAY';
-		foreach my $Event (sort (@{$this->{DPI}->get_timeinfo($Year,$Month,$Day,$Time)})) {
-			print $FILE "<tr><td>$Time</td><td>" . _HTML_Encode(GetSummaryString($Event,false,$Year,$Month));
-			my $EventInfo = $this->{DPI}->get_info($Event);
-			if(defined($EventInfo->{DESCRIPTION})) {
-				my $_HTML_Fulltext = _HTML_Encode($EventInfo->{DESCRIPTION});
-				print $FILE "<br /><i>$_HTML_Fulltext</i>";
-			}
-			print $FILE "</td></tr>\n";
-		}
-	}
-	print $FILE '</tbody></table>';
-	print $FILE _HTML_Footer();
-	close($FILE);
-}
-
-# Purpose: Output a specified month in HTML
-# Usage: _HTML_MonthToHtml
-sub _HTML_MonthToHtml {
-	my $this = shift;
-	my ($Year,$Month,$Dir) = @_;
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	open(my $FILE, '>', "$this->{out_dir}/$RawMonthNames{$Month}-$Year.html") or do {
-		DPIntWarn("Unable to open $this->{out_dir}/$RawMonthNames{$Month}-$Year.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$RawMonthNames{$Month}-$Year.html", error => $!}));
-		return(undef);
-	};
-	print $FILE _HTML_Header($Year, $i18n->get_month($Month) . " $Year");
-	my $HadContent;
-	my $MonthInfo = $this->{DPI}->get_monthinfo($Year,$Month);
-	foreach my $Day (sort @{$MonthInfo}) {
-		$HadContent = 1;
-		print $FILE "<a href='dp_$Year$Month$Day.html'>" . _HTML_Encode("$Day. " . $i18n->get_month($Month) ." $Year") . "</a><br/>\n";
-	}
-	unless($HadContent) {
-		print $FILE '<i>' . _HTML_Encode($i18n->get('There are no events this month')) . '</i>';
-	}
-	print $FILE _HTML_Footer();
-	close($FILE);
-}
-
-# Purpose: Output all birthdays to a file
-# Usage: _HTML_BirthdayList(DIRECTORY);
-sub _HTML_BirthdayList {
-	warn("_HTML_BirthdayList: STUBBED, using \%BirthdayContents!");
-=cut
-	my($this->{out_dir}) = @_;
-	open(my $FILE, '>', "$this->{out_dir}/birthdays.html") or do {
-		DPIntWarn("Unable to open $this->{out_dir}/birthdays.html for writing: $!");
-		DPError(sprintf($i18n->get("Unable to open %s for writing: %s"), "$this->{out_dir}/birthdays.html", $!));
-		return(undef);
-	};
-	print $FILE _HTML_Header(undef,$i18n->get("Birthdays"),1);
-	if(keys(%BirthdayContents)) {
-		print $FILE '<table style="text-align: left;" border="1" cellpadding="2" cellspacing="2">';
-		print $FILE "<tbody><tr><td>" . _HTML_Encode($i18n->get("Date")) . "</td><td>" . _HTML_Encode($i18n->get("Name")) . "</td></tr>\n";
-		foreach my $Month (sort {$a <=> $b}  keys(%BirthdayContents)) {
-			foreach my $Day (sort {$a <=> $b} keys(%{$BirthdayContents{$Month}})) {
-				my $PrintDay = AppendZero($Day);
-				foreach my $Name (sort(keys(%{$BirthdayContents{$Month}{$Day}}))) {
-					print $FILE "<tr><td>" . _HTML_Encode("$PrintDay $MonthNames{$Month}") . "</td><td>" . _HTML_Encode($Name) . "</td></tr>\n";
-				}
-			}
-		}
-		print $FILE '</tbody></table>';
-	} else {
-		print $FILE . "<i>" .  _HTML_Encode($i18n->get("No birthdays are defined.")) . "</i><br/>";
-	}
-	print $FILE _HTML_Footer();
-=cut
-}
-
-# Purpose: Output a year information page to HTML
-# Usage: _HTML_YearHtml(YEAR,DIRECTORY);
-sub _HTML_YearHtml {
-	my ($Year, $this,$Dir) = @_;
-	open(my $FILE, '>', "$this->{out_dir}/$Year.html") or do {
-		DPIntWarn("Unable to open $this->{out_dir}/$Year.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$this->{out_dir}/$Year.html", error => $!}));
-		return(undef);
-	};
-	print $FILE _HTML_Header($Year, $Year, 'Y');
-	print $FILE _HTML_Encode($i18n->get('Select the month to view in the list above')) . "<br />\n";
-	print $FILE _HTML_Footer();
-}
-
-# Purpose: Output a list of years (aka. the index page) to HTML
-# Usage: _HTML_YearList(DIRECTORY);
-sub _HTML_YearList {
-	my $this = shift;
-	my ($Dir) = @_;
-	open(my $FILE, '>', "$this->{out_dir}/index.html") or do {
-		DPIntWarn("Unable to open $this->{out_dir}/index.html for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$this->{out_dir}/index.html", error => $!}));
-		return(undef);
-	};
-	print $FILE _HTML_Header("", "Day Planner", "M");
-	print $FILE _HTML_Encode($i18n->get("Select the year to view:")) . "<br />\n";
-	foreach(@{$this->{DPI}->get_years()}) {
-		print $FILE "<a href='$_.html'>" . _HTML_Encode($_) . "</a><br />\n";
-	}
-	print $FILE _HTML_Footer();
-}
-
-# Purpose: Output a php file that adds autodetection of todays date to
-#	Day Planner HTML exports. (NOTE: Not used for actual PHP exporting)
-# Usage: _HTML_PHPIndex(DIRECTORY);
-sub _HTML_PHPIndex {
-	my $this = shift;
-	open(my $FILE, '>', "$this->{out_dir}/index.php") or do {
-		DPIntWarn("Unable to open $this->{out_dir}/index.php for writing: $!");
-		DPError($i18n->get_advanced("Unable to open %(file) for writing: %(error)", { file => "$this->{out_dir}/index.php", error => $!}));
-		return(undef);
-	};
-	print $FILE "<?php\n// This is a simple script written by Day Planner to add autodetection of\n// the current day to exported Day Planner HTML sites. Only useful on\n// webservers with php support.\n// See also Day Planners php export feature for a more complete\n// PHP export of Day Planner data.\n// Copyright (C) Eskild Hustvedt 2006. Licensed under the same license as Day Planner\n";
-	print $FILE _HTML_PHP_DayDetectFunc();
-	print $FILE '$file = DayDetectFunc("./");' . "\n";
-	print $FILE 'if($file) {' . "\n";
-	print $FILE "\t" . 'include($file);' . "\n";
-	print $FILE "} else {" . "\n";
-	print $FILE "\t" . 'print("Unable to detect files. This export is corrupt!");' . "\n";
-	print $FILE "}\n?>";
-}
-
-# Purpose: Export Day Planner data to HTML
-# Usage: _HTML_Export(DIRECTORY);
-sub _HTML_Export {
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	my $this->{out_dir} = $_[0];
-	unless(-d $this->{out_dir}) {
-		eval("mkpath('$this->{out_dir}')");
-		if($@) {
-			DPIntWarn("Unable to mkpath($this->{out_dir}): $@");
-			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $this->{out_dir}, error => $@}));
-			return(undef);
-		}
-	}
-	foreach my $Year (@{$this->{DPI}->get_years}) {
-		_HTML_YearHtml($Year,$this->{out_dir});
-		foreach my $Month (@{$this->{DPI}->get_months($Year)}) {
-			foreach my $Day (@{$this->{DPI}->get_monthinfo($Year,$Month)}) {
-				_HTML_DayToHtml($Year, $Month, $Day, $this->{out_dir});
-			}
-		}
-		foreach(1..12) {
-			_HTML_MonthToHtml($Year,$_,$this->{out_dir});
-		}
-	}
-	_HTML_YearList($this->{out_dir});
-	_HTML_PHPIndex($this->{out_dir});
-	# TODO: Either FIXME or DROPME!
-#	_HTML_BirthdayList($this->{out_dir});
-}
-
-# Purpose: Function to detect todays day using php
-# Usage: print _HTML_PHP_DayDetectFunc();
-sub _HTML_PHP_DayDetectFunc {
-	my $Return = 'function DayDetectFunc ($datadir) {' . "\n";
-	$Return .= "\t" . '$Year = date("Y");' . "\n";
-	$Return .= "\t" . '$Month = date("n");' . "\n";
-	$Return .= "\t" . '$Day = date("j");' . "\n";
-	$Return .= "\t" . '$Months = array(1 => "january", 2 => "february", 3 => "march", 4 => "april", 5 => "may", 6 => "june", 7 => "july", 8 =>"august", 9 =>"september", 10 => "october", 11 => "november", 12 =>"december");' . "\n";
-	$Return .= "\t" . 'if(file_exists("$datadir/dp_$Year$Month$Day.html")) {' . "\n";
-	$Return .= "\t\t" . 'return("$datadir/dp_$Year$Month$Day.html");' . "\n";
-	$Return .= "\t" . '} elseif(file_exists("$datadir/$Months[$Month]-$Year.html")) {' . "\n";
-	$Return .= "\t\t" . 'return("$datadir/$Months[$Month]-$Year.html");' . "\n";
-	$Return .= "\t" . '} elseif(file_exists("$datadir/index.html")) {' . "\n";
-	$Return .= "\t\t" . 'return("$datadir/index.html");' . "\n";
-	$Return .= "\t} else {" . "\n";
-	$Return .= "\t\treturn 0;\n";
-	$Return .= "\t}\n}\n";
-	return($Return);
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# PHP export functions
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Export Day Planner data to PHP/HTML
-# Usage: PHP_Export(DIRECTORY);
-sub PHP_Export {
-	$_HTML_PHP = 1;
-	# FIXME: Code from _HTML_Export needlessly copied here
-	my %RawMonthNames = (
-		1 => 'january',
-		2 => 'february',
-		3 => 'march',
-		4 => 'april',
-		5 => 'may',
-		6 => 'june',
-		7 => 'july',
-		8 => 'august',
-		9 => 'september',
-		10 => 'october',
-		11 => 'november',
-		12 => 'december',
-	);
-	my $this->{out_dir} = $_[0];
-	my $BaseDir = $this->{out_dir};
-	$this->{out_dir} = $this->{out_dir} . '/dp_data/';
-	unless(-d $this->{out_dir}) {
-		eval("mkpath('$this->{out_dir}')");
-		if($@) {
-			DPIntWarn("Unable to mkpath($this->{out_dir}): $@");
-			DPError($i18n->get_advanced("Unable to create the directory %(dir): %(error)", { dir => $this->{out_dir}, error => $@}));
-			return(undef);
-		}
-	}
-=cut
-	foreach my $Year (keys(%CalendarContents)) {
-		_HTML_YearHtml($Year,$this->{out_dir});
-		foreach my $Month (keys(%{$CalendarContents{$Year}})) {
-			foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
-				_HTML_DayToHtml($Year, $Month, $Day, $this->{out_dir});
-			}
-		}
-		foreach(1..12) {
-			_HTML_MonthToHtml($Year,$_,$this->{out_dir});
-		}
-	}
-=cut
-	warn("PHP_Export: STUBBED");
-	_HTML_BirthdayList($this->{out_dir});
-	$_HTML_PHP = 0;
-	PHP_WriteFiles($BaseDir, $this->{out_dir});
-}
-
-# Purpose: Create the PHP files used by the Day Planner PHP/HTML UI
-# Usage: PHP_WriteFiles(DIRECTORY);
-sub PHP_WriteFiles {
-	my ($BaseDir, $DataDir) = @_;
-	# Write the header and footer files
-	# ...
-	open(my $INDEX, '>', "$BaseDir/index.php");
-	# Write index.php
-	print $INDEX "<?php\n// Day Planner index.php\n// Copyright (C) Eskild Hustvedt 2006\n// Licensed under the GNU General Public License version 3 or newer\n// as published by the Free Software Foundation\n\n";
-	print $INDEX '$year = $_GET[\'year\'];' . "\n";
-	print $INDEX '$month = $_GET[\'month\'];' . "\n";
-	print $INDEX '$day = $_GET[\'day\'];' . "\n";
-	print $INDEX '$page = $_GET[\'page\'];' . "\n";
-	# NOTES:
-	# $page should always be used if present, but should also be limited to one of
-	# birthdays and yearindex
-	#
-	# TODO: Drop yearindex in favor of a drop-down box?
-	print $INDEX "// Begin by including the header here\n";
-	print $INDEX "// Include the page here\n";
-	print $INDEX '?>';
-	close($INDEX);
-	
-	# TODO: Write a dummy index.html that just redirects to ../
-	#	maybe this could just be done using a .htaccess file too
-	#	but if so, have both so that it'll work on non-apache httpds.
-}
-1;
