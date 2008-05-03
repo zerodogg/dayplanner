@@ -217,6 +217,7 @@ test: sanity dpi_test date_holiday
 # Verify sanity
 sanity:
 	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/HTTPSubscription.pm
+	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/WebExp.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
 	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
