@@ -140,7 +140,8 @@ sub _HTML_WriteIndex
 	$PHP .=  "\t" . 'print("Unable to detect files. This export is corrupt!");' . "\n";
 	$PHP .=  "}\n?>";
 	my $HTML = $this->_HTML_YearList();
-	STUB();
+	$this->_writeFile($this->{_currdir}.'/index.php',$PHP);
+	$this->_writeFile($this->{_currdir}.'/index.html',$HTML);
 }
 
 # Purpose: Function to detect todays day using php
@@ -164,7 +165,14 @@ sub _HTML_PHP_DayDetectFunc {
 }
 sub _HTML_YearList
 {
-	STUB();
+	my $this = shift;
+	my $HTML =  $this->_HTML_GetHeader("", "Day Planner", "M");
+	$HTML .=  _HTML_Encode($i18n->get("Select the year to view:")) . "<br />\n";
+	foreach(@{$this->{DPI}->get_years()}) {
+		$HTML .=  "<a href='$_.html'>" . _HTML_Encode($_) . "</a><br />\n";
+	}
+	$HTML .=  $this->_HTML_GetFooter();
+	return($HTML);
 }
 
 sub _HTML_YearIndex
@@ -220,7 +228,8 @@ sub _HTML_GetHeader
 	my $this = shift;
 	my $Date = shift;
 	my $Header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-	$Header .= "<html><head>\n";
+	$Header .= '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">';
+	$Header .= "<head>\n";
 	$Header .= '<meta content="text/html; charset=iso-8859-1" http-equiv="content-type" />';
 	$Header .= "<meta name='generator' content='".$this->{generator}. '- '.$this->{generator_url} ."' />\n";
 	if($Date)
@@ -231,6 +240,8 @@ sub _HTML_GetHeader
 	{
 		$Header .= "<title>" . _HTML_Encode($Date) . "</title>";
 	}
+	$Header .= "</head>\n";
+	$Header .= '<body>';
 	return($Header);
 }
 
