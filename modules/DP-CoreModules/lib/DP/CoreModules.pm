@@ -662,6 +662,11 @@ sub P_GetSummaryString {
 	my $UID = shift;
 	my $CURRENT = shift;
 	my ($AltYear, $AltMonth) = @_;
+	if(not length($UID))
+	{
+		DPIntWarn("P_GetSummaryString(): Got UNDEF UID");
+		return(undef);
+	}
 	my $UID_Obj = $iCalendar->get_info($UID);
 	if (not $UID_Obj)
 	{
