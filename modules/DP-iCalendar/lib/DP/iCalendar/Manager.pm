@@ -152,7 +152,15 @@ sub get_info {
 # Purpose: Get information for the supplied month (list of days there are events)
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH,DAY);
 sub get_monthinfo {
-	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
+	my($this, $Year, $Month) = @_;
+	if(not defined $Year or not defined $Month)
+	{
+		_DPIM_carp('get_monthinfo(): needs a Year and Month');
+	}
+	elsif (not length($Year) or not length($Month))
+	{
+		_DPIM_carp("get_monthinfo($Year,$Month); called. Needs proper year and month");
+	}
 	my @OBJArray;
 	foreach my $obj (@{$this->{LIST_DPI}}) {
 		push(@OBJArray,$obj->get_monthinfo($Year,$Month));
