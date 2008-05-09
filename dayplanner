@@ -698,7 +698,7 @@ sub UpdatedData {
 	if($MainWindow) {
 		if(not $DontRedrawEventList) {
 			# Redraw the event list
-			PopulateEventList();
+			DrawEventlist();
 		}
 		# Repopulate the upcoming events
 		PopulateUpcomingEvents();
@@ -4821,6 +4821,12 @@ sub DrawEventlist {
 	$PopupWidget->append($edit);
 	$PopupWidget->append($delete);
 	$PopupWidget->show();
+	
+	# Destroy the widget if it already exists
+	if ($EventlistWidget)
+	{
+		$EventlistWidget->destroy();
+	}
 
 	# Create the widget and set up signal handlers
 	$EventlistWidget = Gtk2::SimpleList->new (
@@ -4991,7 +4997,7 @@ sub DrawMainWindow {
 				return;
 			}
 			$LastDay = Get_DateInfo($CalendarWidget);
-			PopulateEventList();
+			DrawEventlist();
 		});
 
 	# UPCOMING EVENTS
