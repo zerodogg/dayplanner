@@ -246,7 +246,7 @@ sub DPS_Status {
 	if(defined($DPServices{ProgressWin})) {
 		$DPServices{ProgressWin}->{ProgressBar}->set_fraction($Completed);
 		$DPServices{ProgressWin}->{ProgressBar}->set_text($Text);
-		Gtk2->main_iteration while Gtk2->events_pending;
+		GTK_Flush();
 	}
 }
 
@@ -697,7 +697,7 @@ sub UpdatedData {
 	if($MainWindow) {
 		if(not $DontRedrawEventList) {
 			# Redraw the event list
-			PopulateEventList();
+			PopulateEventList(true);
 		}
 		# Repopulate the upcoming events
 		PopulateUpcomingEvents();
@@ -2352,6 +2352,15 @@ sub PromptOverwrite {
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Flush the UI buffer
+# Usage: GTK_Flush();
+sub GTK_Flush
+{
+	Gtk2->main_iteration while Gtk2->events_pending;
+	Gtk2->main_iteration while Gtk2->events_pending;
+	Gtk2->main_iteration while Gtk2->events_pending;
+}
+
 # Purpose: Work around limitations in older Gtk2 versions that don't have
 # 	->set_image on buttons
 # Usage: Gtk2_Button_SetImage(BUTTON, IMAGE, LABEL);
@@ -2418,9 +2427,7 @@ sub DPCreateProgressWin {
 	}
 	$ProgressHash{ProgressBar}->show();
 	$ProgressHash{Window}->show();
-	Gtk2->main_iteration while Gtk2->events_pending;
-	Gtk2->main_iteration while Gtk2->events_pending;
-	Gtk2->main_iteration while Gtk2->events_pending;
+	GTK_Flush();
 	return(\%ProgressHash);
 }
 
@@ -2433,7 +2440,7 @@ sub PulsateProgressbar {
 						# even when it doesn't
 		my $Bar = $ProgressHash->{ProgressBar};
 		$Bar->pulse();
-		Gtk2->main_iteration while Gtk2->events_pending;
+		GTK_Flush();
 	}
 	return(1);
 }
@@ -2455,9 +2462,7 @@ sub ProgressMade {
 	if($Text) {
 		$Bar->set_text($Text);
 	}
-	Gtk2->main_iteration while Gtk2->events_pending;
-	Gtk2->main_iteration while Gtk2->events_pending;
-	Gtk2->main_iteration while Gtk2->events_pending;
+	GTK_Flush();
 	return(1, $Result);
 }
 
@@ -2467,7 +2472,7 @@ sub ProgressFraction {
 	my($Progressbar, $fraction) = @_;
 	if($Gtk2Init and defined($Progressbar)) {
 		$Progressbar->set_fraction($fraction);
-		Gtk2->main_iteration while Gtk2->events_pending
+		GTK_Flush();
 	}
 }
 
@@ -2509,7 +2514,7 @@ sub DeleteEvent {
 		$ToolbarDeleteButton->set_sensitive(0);
 		$MenuEditEntry->set_sensitive(0);
 		$MenuDeleteEntry->set_sensitive(0);
-		Gtk2->main_iteration while Gtk2->events_pending;
+		GTK_Flush();
 		$iCalendar->delete($EventUID);
 
 		UpdatedData(0,1);
@@ -4431,9 +4436,14 @@ sub PreferencesWindow {
 # MAIN WINDOW
 
 # Purpose: Populate the event list for the currently selected date in the calendar
-# Usage: PopulateEventList();
+# Usage: PopulateEventList(true);
 sub PopulateEventList {
 	@{$EventlistWidget->{data}} = ();
+	if(shift)
+	{
+		DPIntWarn('PopulateEventList() called directly - this is deprecated. Call DrawEventlist() instead to ensure it is redrawn properly. Calling it for you now.');
+		return DrawEventlist();
+	}
 	my $Year = $CalendarWidget->year;
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
@@ -4474,6 +4484,12 @@ sub DrawEventlist {
 	$PopupWidget->append($edit);
 	$PopupWidget->append($delete);
 	$PopupWidget->show();
+	
+	# Destroy the widget if it already exists
+	if ($EventlistWidget)
+	{
+		$EventlistWidget->destroy();
+	}
 
 	# Create the widget and set up signal handlers
 	$EventlistWidget = Gtk2::SimpleList->new (
@@ -4644,7 +4660,7 @@ sub DrawMainWindow {
 				return;
 			}
 			$LastDay = Get_DateInfo($CalendarWidget);
-			PopulateEventList();
+			PopulateEventList(true);
 		});
 
 	# UPCOMING EVENTS
@@ -4803,7 +4819,7 @@ sub InitDPCore {
 	# Draw the main window
 	DrawMainWindow();
 	$MainWindow->show() if not $FirstStartup;
-	Gtk2->main_iteration while Gtk2->events_pending;
+	GTK_Flush();
 	# Load the config
 	LoadConfig();
 	# Import data as told on the commandline
