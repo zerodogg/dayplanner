@@ -1,6 +1,16 @@
 Day Planner version history
 **************************
 
+Version 0.9.1 (Unreleased)
+------------------------
+* Client (dayplanner)
+- Fixed a bug that caused scrollbars in the main event list to not disappear
+  when days were changed
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+
 Version 0.9 "Junior" (Released on the 1st of May 2008)
 ------------------------
 * Client (dayplanner)
