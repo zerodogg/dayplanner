@@ -591,7 +591,7 @@ sub get {
 	my $this = $_[0];
 	carp("Date::HolidayParser->get needs an parameter: The year to parse") and return(undef) unless(defined($_[1]));
 	my $Year = $_[1];
-	carp("Date::HolidayParser: The year must be a digit") and return(undef) if $Year =~ /\D/;
+	carp("Date::HolidayParser: The year must be a digit (was '$Year')") and return(undef) if $Year =~ /\D/;
 	carp("Date::HolidayParser: Can't parse years lower than 1971") and return(undef) if $Year < 1971;
 	carp("Date::HolidayParser: Can't parse years higher than 2037") and return(undef) if $Year > 2037;
 	if(not $this->{cache}{$Year}) {
