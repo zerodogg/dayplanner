@@ -140,6 +140,7 @@ sub ShutdownRunning
 		}
 		unlink($SocketPath);
 	}
+	return $return;
 }
 
 # Purpose: Output log information.
