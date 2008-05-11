@@ -5,7 +5,7 @@
 # Copyright (C) Eskild Hustvedt 2008
 #
 # This program is free software; you can redistribute it and/or modify it
-# under the same terms as Perl itthis. There is NO warranty;
+# under the same terms as Perl. There is NO warranty;
 # not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # This module is capable of loading any file conforming to some simple rules.
@@ -13,6 +13,11 @@
 # END:   denotes the end of the current level
 # KEY:VALUE sets KEY in the current level to VALUE. You may have multiple KEY:VALUE pairs.
 # A line beginning with a space (or any whitespace char) denotes a continuation of the previous KEY:VALUE pair
+#
+# Some special exceptions to allow proper handling of iCalendar files
+# are also implemented:
+# Does not allow multiple toplevel BEGIN:VCALENDAR-entries
+# Encodes and decodes iCalendar escapes
 
 use strict;
 use warnings;
