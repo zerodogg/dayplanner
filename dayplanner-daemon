@@ -58,6 +58,7 @@ my %DaemonState = (
 	HasNotified => '',
 	LastWritten => '',
 );
+my %HasNotified;
 
 my %NotifierLaunchLock;
 
@@ -251,7 +252,13 @@ sub WriteDaemonState
 		HasNotified => 'This is a list of UIDs that has already been notified',
 		LastWritten => 'The unix time of when this file was last written ('.scalar(localtime()).')',
 	);
-	if(not OnSameDate(time()),$DaemonState{LastWritten})
+	# TODO: DROP
+	if(OnSameDate(time()),$DaemonState{LastWritten})
+	{
+		# Generate HasNotified
+		$DaemonState{HasNotified} .= $_ .' ' foreach(keys(%HasNotified));
+	}
+	else
 	{
 		DaemonLog(4,'HasNotified= was not from today. Replacing with an empty string');
 		$DaemonState{HasNotified} = '';
@@ -274,6 +281,23 @@ sub LoadDaemonState
 	{
 		WriteDaemonState();
 	}
+	if (length($DaemonState{HasNotified}) and (OnSameDate(time()),$DaemonState{LastWritten}))
+	{
+		foreach(split(/\s+/,$DaemonState{HasNotified}))
+		{
+			$HasNotified{$_} = true;
+		}
+		delete($DaemonState{HasNotified});
+	}
+}
+
+# Purpose: Add a new UID that has been notified
+# Usage: AddNotifiedUID(UID);
+sub AddNotifiedUID
+{
+	my $UID = shift;
+	DaemonLog(5, 'Marking UID '.$UID.' as notified');
+	$HasNotified{$UID} = true;
 }
 
 # Purpose: Load the pre-notification values
@@ -644,7 +668,7 @@ sub StartNotifier
 			# Try to launch it, whine if it doesn't work
 			if(loggingSystem($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
 			{
-				$DaemonState{HasNotified} .= ' '.$UID;
+				AddNotifiedUID($UID);
 				return(true);
 			}
 			else
@@ -774,14 +798,10 @@ sub LaunchPrevNotifications
 	foreach my $UID(keys(%LaunchUids))
 	{
 		my $NoLaunch;
-		foreach my $NotUID (split(/\s+/,$DaemonState{HasNotified}))
+		if ($HasNotified{$UID})
 		{
-			if($UID eq $NotUID)
-			{
-				DaemonLog(5,'Setting NoLaunch flag for '.$NotUID);
-				$NoLaunch = true;
-				last;
-			}
+			DaemonLog(5,'Setting NoLaunch flag for '.$UID);
+			$NoLaunch = true;
 		}
 		if ($NoLaunch)
 		{
