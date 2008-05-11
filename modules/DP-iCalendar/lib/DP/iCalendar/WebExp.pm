@@ -163,6 +163,9 @@ sub _HTML_PHP_DayDetectFunc {
 	$Return .= "\t}\n}\n";
 	return($Return);
 }
+
+# Purpose: Write a list of years to HTML
+# Usage: this->_HTML_YearList();
 sub _HTML_YearList
 {
 	my $this = shift;
@@ -175,6 +178,8 @@ sub _HTML_YearList
 	return($HTML);
 }
 
+# Purpose: Write a year to HTML
+# Usage: this->_HTML_YearIndex(TargetDir,Year);
 sub _HTML_YearIndex
 {
 	my $this = shift;
@@ -188,6 +193,9 @@ sub _HTML_YearIndex
 	my $File = $this->_getFileName(false,$Year);
 	$this->_writeFile($File,$HTML);
 }
+
+# Purpose: Write a month to HTML
+# Usage: this->_HTML_MonthIndex(TargetDir,Year,Month);
 sub _HTML_MonthIndex
 {
 	my $this = shift;
@@ -202,6 +210,9 @@ sub _HTML_MonthIndex
 	my $File = $this->_getFileName(false,$Year,$Month);
 	$this->_writeFile($File,$HTML);
 }
+
+# Purpose: Write a day to HTML
+# Usage: this->_HTML_DayIndex(TargetDir,Year,Month,Day);
 sub _HTML_DayIndex
 {
 	my $this = shift;
