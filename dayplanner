@@ -5061,7 +5061,7 @@ Shut down the Day Planner daemon when closing Day Planner.
 
 =item B<--exportical> I<FILE>
 
-Export the iCalendar data to I<FILE>.
+Export Day Planner calendar data in the iCalendar format to I<FILE>.
 
 =item B<--importical> I<FILE>
 
@@ -5069,8 +5069,9 @@ Import iCalendar data from I<FILE>.
 
 =item B<--exporthtml> I<DIR>
 
-Export HTML to I<DIR>. I<DIR> should be empty before you issue this
-command.
+Export Day Planner data as HTML to I<DIR>. I<DIR> should be empty before you issue this
+command (although Day Planner will happily overwrite data in the directory
+if it isn't).
 
 =head1 HELP/SUPPORT
 
@@ -5085,7 +5086,7 @@ org>>
 
 =head1 FILES
 
-CONFDIR is XDG_CONFIG_PATH/dayplanner by default XDG_CONFIG_PATH is ~/.config
+CONFDIR is XDG_CONFIG_PATH/dayplanner by default. XDG_CONFIG_PATH is ~/.config
 by default. So on most installations CONFDIR is ~/.config/dayplanner/. See
 I<--debuginfo> to see which path this install is using.
 
