@@ -162,7 +162,7 @@ sub _appendToIndex
 	my $var = $this->{array}[$i]->{$this->{indexBy}}[0];
 	if(not defined($var) or not length($var))
 	{
-		my $rndString = 'DP-NIDX-'.time().rand(1000).rand(1000);
+		my $rndString = 'DP-NIDX-'.time().int(rand(1000)).int(rand(1000));
 		$var = $rndString;
 		$this->{array}[$i]->{$this->{indexBy}}[0] = $rndString;
 		# Uh oh. No value to index by. Now what do we do.
