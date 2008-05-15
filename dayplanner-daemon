@@ -390,6 +390,7 @@ sub LoadData
 	else
 	{
 		$iCalendar = DP::iCalendar->new($DataDir.'/'.$CalendarFile);
+		assert($iCalendar);
 		if ($iCalendar)
 		{
 			DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
@@ -397,6 +398,7 @@ sub LoadData
 		else
 		{
 			$iCalendar = DP::iCalendar->newfile($DataDir.'/'.$CalendarFile);
+			assert($iCalendar);
 			if ($iCalendar)
 			{
 				DaemonLog(3, 'Data file did not exist. Called ->newfile('.$DataDir.'/'.$CalendarFile.');');
