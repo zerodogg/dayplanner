@@ -249,7 +249,7 @@ sub WriteDaemonState
 {
 	DaemonLog(5,'Writing daemon state to '.$DataDir . '/daemon_state.conf');
 	my %Explenations = (
-		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually",
+		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually\n# If you do, and the daemon is running it will overwrite your changes.",
 		HasNotified => 'This is a list of UIDs that has already been notified',
 		LastWritten => 'The unix time of when this file was last written ('.scalar(localtime()).')',
 	);
