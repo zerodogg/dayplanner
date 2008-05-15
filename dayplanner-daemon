@@ -224,6 +224,24 @@ sub ParseNotifyPre {
 	return($Total);
 }
 
+# Purpose: Die with useful information if an assertion fails
+# Usage: assert(TRUE/FALSE EXPR, REASON);
+sub assert
+{
+	my $expr = shift;
+	return if $expr;
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
+	if(defined($_[0]))
+	{
+		die("Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line: $_[0]\n");
+	}
+	else
+	{
+		die("Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line\n");
+	}
+}
+
 # Purpose: Check if two unixtimes are on the same date
 # Usage: OnSameDate(TIME,TIME);
 # 	Returns bool
@@ -231,9 +249,11 @@ sub OnSameDate
 {
 	my $Time1 = shift;
 	my $Time2 = shift;
+	assert(defined $Time1, 'time1 is undef');
+	assert(defined $Time2, 'time2 is undef');
 	my ($first_sec,$first_min,$first_hour,$first_mday,$first_mon,$first_year,$first_wday,$first_yday,$first_isdst) = GetDate($Time1);
 	my ($second_sec,$second_min,$second_hour,$second_mday,$second_mon,$second_year,$second_wday,$second_yday,$second_isdst) = GetDate($Time2);
-	if ($first_year eq $second_year and $first_yday eq $second_yday)
+	if (($first_year eq $second_year) and ($first_yday eq $second_yday))
 	{
 		return(true);
 	}
@@ -254,7 +274,7 @@ sub WriteDaemonState
 		LastWritten => 'The unix time of when this file was last written ('.scalar(localtime()).')',
 	);
 	# TODO: DROP
-	if(OnSameDate(time()),$DaemonState{LastWritten})
+	if(OnSameDate(time(),$DaemonState{LastWritten}))
 	{
 		# Generate HasNotified
 		$DaemonState{HasNotified} .= $_ .' ' foreach(keys(%HasNotified));
@@ -276,20 +296,24 @@ sub LoadDaemonState
 	{
 		DaemonLog(5,'Loading daemon state from '.$DataDir . '/daemon_state.conf');
 		LoadConfigFile($DataDir . '/daemon_state.conf', \%DaemonState, undef, 0);
-		WriteDaemonState();
 	} 
 	else
 	{
-		WriteDaemonState();
 	}
-	if (length($DaemonState{HasNotified}) and (OnSameDate(time()),$DaemonState{LastWritten}))
+	if(OnSameDate(time(),$DaemonState{LastWritten}))
 	{
+		DaemonLog(5,'HasNotified was from today. Keeping it');
 		foreach(split(/\s+/,$DaemonState{HasNotified}))
 		{
 			$HasNotified{$_} = true;
 		}
-		delete($DaemonState{HasNotified});
 	}
+	else
+	{
+		DaemonLog(5,'HasNotified was not from today, so skipping it');
+	}
+	delete($DaemonState{HasNotified});
+	WriteDaemonState();
 }
 
 # Purpose: Add a new UID that has been notified
