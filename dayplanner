@@ -1880,86 +1880,6 @@ sub PlanConvert_ProcessFile {
 # GUI import/export dialogs and helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Purpose: Pop up a graphical dialog for importing data
-# Usage: ImportData();
-sub ImportData {
-	$MainWindow->set_sensitive(0);
-	# Create the window and VBox
-	my $ImportWindow = Gtk2::Window->new();
-	$ImportWindow->set_modal(1);
-	$ImportWindow->set_transient_for($MainWindow);
-	$ImportWindow->set_position('center-on-parent');
-	$ImportWindow->set_title($i18n->get('Import data'));
-	$ImportWindow->set_resizable(0);
-	$ImportWindow->set_border_width(12);
-	$ImportWindow->set_skip_taskbar_hint(1);
-	$ImportWindow->set_skip_pager_hint(1);
-	$ImportWindow->signal_connect('destroy' => sub {
-			$MainWindow->set_sensitive(1);
-		});
-	my $ImportVBox = Gtk2::VBox->new();
-	$ImportWindow->add($ImportVBox);
-
-	# Create the initial text
-	my $ImportLabel = Gtk2::Label->new($i18n->get('Import data from:'));
-	$ImportVBox->pack_start($ImportLabel,0,0,0);
-
-	# Create the radio buttons for selection and pack them onto the VBox
-	my %StateHash;
-	my $ActiveButton = 'dayplanner';
-	my $FromFileButton = Gtk2::RadioButton->new (undef, $i18n->get('A file'));
-	my $FromProgramButton = Gtk2::RadioButton->new ($FromFileButton, $i18n->get('Other applications'));
-	$ImportVBox->pack_start($FromFileButton,0,0,0);
-	$ImportVBox->pack_start($FromProgramButton,0,0,0);
-
-	# Add the buttons
-	my $ButtonHBox = Gtk2::HBox->new();
-	$ButtonHBox->show();
-	$ImportVBox->pack_end($ButtonHBox,0,0,0);
-
-	# Ok button
-	my $OKButton = Gtk2::Button->new_from_stock('gtk-ok');
-	$OKButton->show();
-	$OKButton->can_default(1);
-	$ImportWindow->set_default($OKButton);
-	# Signal callback (starts a function depending on the radio button selected)
-	$OKButton->signal_connect('clicked' => sub {
-			$ImportWindow->destroy();
-			if($FromFileButton->get_active) {
-				ImportDataFromFile();
-			} elsif ($FromProgramButton->get_active) {
-				ImportDataFromProgram();
-			} else {
-				DPIntWarn("Unknown active button!\n");
-			}
-		});
-	$ButtonHBox->pack_end($OKButton,0,0,0);
-
-	# Cancel button
-	my $CancelButton = Gtk2::Button->new_from_stock('gtk-cancel');
-	$CancelButton->show();
-	$ButtonHBox->pack_end($CancelButton,0,0,0);
-	# Signal callback (destroys the window)
-	$CancelButton->signal_connect('clicked' => sub {
-			$ImportWindow->destroy();
-		});
-
-	# Add tooltips
-	my $Tooltips = Gtk2::Tooltips->new();
-	$Tooltips->set_tip($FromFileButton, $i18n->get('Import data from a file'));
-	$Tooltips->set_tip($FromProgramButton, $i18n->get('Import data from various other applications'));
-	$Tooltips->set_tip($CancelButton, $i18n->get('Cancel importing and return to Day Planner'));
-	$Tooltips->set_tip($OKButton, $i18n->get('Continue'));
-
-	# Show it all
-	$Tooltips->enable();
-	$FromFileButton->show();
-	$FromProgramButton->show();
-	$ImportLabel->show();
-	$ImportVBox->show();
-	$ImportWindow->show();
-}
-
 # Purpose: Pop up a import dialog for importing from other programs
 # Usage: ImportDataFromProgram(IS_FIRST_TIME);
 sub ImportDataFromProgram {
@@ -2110,7 +2030,7 @@ sub ImportDataFromProgram {
 	$ImportVBox->pack_end($ButtonHBox,0,0,0);
 	
 	# Ok button
-	my $OKButton = Gtk2::Button->new($i18n->get('Import'));
+	my $OKButton = Gtk2::Button->new($i18n->get('_Import'));
 	my $OKImg = Gtk2::Image->new_from_stock('gtk-open','button');
 	$OKButton->set_image($OKImg);
 	$OKButton->show();
@@ -2128,7 +2048,7 @@ sub ImportDataFromProgram {
 
 	# Cancel button
 	my $CancelImg = Gtk2::Image->new_from_stock('gtk-cancel','button');
-	my $CancelButton = Gtk2::Button->new($i18n->get("Don't import"));
+	my $CancelButton = Gtk2::Button->new($i18n->get("_Don't import"));
 	$CancelButton->set_image($CancelImg);
 	$CancelButton->show();
 	$ButtonHBox->pack_end($CancelButton,0,0,0);
@@ -4644,7 +4564,8 @@ sub DrawMainWindow {
 	my @MenuItems = (
 		# Calendar menu
 		[ '/' . $i18n->get('_Calendar'),						undef,			undef,			0,	'<Branch>'],
-		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Import...'),		'',		\&ImportData,		1,	'<StockItem>',	'gtk-open'],
+		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
+		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Import from program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
 		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
 		[ "/" . $i18n->get("_Calendar") . '/sep',					undef,			undef,			2,	'<Separator>'],
 		[ "/" . $i18n->get("_Calendar") . "/$QuitStock",		'<control>Q',		\&QuitSub,		3,	'<StockItem>',	'gtk-quit'],
