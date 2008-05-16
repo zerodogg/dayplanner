@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2008-04-25 13:02+0200\n"
+"POT-Creation-Date: 2008-05-16 23:21+0200\n"
 "PO-Revision-Date: 2008-01-08 09:44+0100\n"
 "Last-Translator: Gaute Hvoslef Kvalnes <gaute@verdsveven.com>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -157,8 +157,8 @@ msgstr ""
 #. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 #. For instance "Dagsplanleggar" for Norwegian.
 #: dayplanner:852 dayplanner:1802 dayplanner:2334 dayplanner:2918
-#: dayplanner:2932 dayplanner:2967 dayplanner:2983 dayplanner:4344
-#: dayplanner:4837
+#: dayplanner:2932 dayplanner:2967 dayplanner:2983 dayplanner:4376
+#: dayplanner:4875
 msgid "Day Planner"
 msgstr "Dagsplanleggar"
 
@@ -171,7 +171,7 @@ msgstr "_Tving"
 msgid "Upgrading"
 msgstr "Oppgraderer"
 
-#: dayplanner:965 dayplanner:2103 dayplanner:4227 CoreModules.pm:711
+#: dayplanner:965 dayplanner:2103 dayplanner:4259 CoreModules.pm:711
 msgid "%(name)'s birthday"
 msgstr "%(name) sin bursdag"
 
@@ -249,7 +249,7 @@ msgid "Unable to open %(file) for writing: %(error)"
 msgstr "Klarte ikkje å opna %(file) for skriving: %(error)"
 
 #. TRANSLATORS: This is followed by the time of an event
-#: dayplanner:1821 dayplanner:4797
+#: dayplanner:1821 dayplanner:4835
 msgid "Time"
 msgstr "Klokka"
 
@@ -399,7 +399,7 @@ msgstr "«%(dir)» er ei mappe"
 msgid "\"%(file)\" already exists. Overwrite?"
 msgstr "«%(file)» finst allereie. Skriv over henne?"
 
-#: dayplanner:2864 dayplanner:3884
+#: dayplanner:2864 dayplanner:3916
 #, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -414,220 +414,220 @@ msgstr ""
 msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr "Nokre filer kunne ikkje lagrast. Er du sikker på at du vil avslutta?"
 
-#: dayplanner:3058 dayplanner:3067 dayplanner:3262 dayplanner:3271
+#: dayplanner:3058 dayplanner:3067 dayplanner:3294 dayplanner:3303
 msgid "Show advanced settings"
 msgstr "Vis avanserte val"
 
-#: dayplanner:3065 dayplanner:3269
+#: dayplanner:3065 dayplanner:3301
 msgid "Hide advanced settings"
 msgstr "Skjul avanserte val"
 
-#: dayplanner:3146
+#: dayplanner:3153
 msgid "Calendar"
 msgstr "Kalender"
 
-#: dayplanner:3284
+#: dayplanner:3316
 msgid "Repeat event every:"
 msgstr "Gjenta hending kvar(t):"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3291
+#: dayplanner:3323
 msgid "day"
 msgstr "dag"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3293
+#: dayplanner:3325
 msgid "week"
 msgstr "veke"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3295
+#: dayplanner:3327
 msgid "month"
 msgstr "månad"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3297
+#: dayplanner:3329
 msgid "year"
 msgstr "år"
 
 #. TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
-#: dayplanner:3323
+#: dayplanner:3355
 msgid "Until:"
 msgstr "Fram til:"
 
 #. TRANSLATORS: Don't recur the event on the dates specified next to this string
-#: dayplanner:3358
+#: dayplanner:3390
 msgid "But not on:"
 msgstr "Men ikkje på:"
 
-#: dayplanner:3428
+#: dayplanner:3460
 msgid "Detailed description"
 msgstr "Detaljert skildring"
 
-#: dayplanner:3738
+#: dayplanner:3770
 msgid "Add an Event"
 msgstr "Legg til ei hending"
 
-#: dayplanner:3744
+#: dayplanner:3776
 msgid "Event type:"
 msgstr "Hendingstype:"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3750
+#: dayplanner:3782
 msgid "Normal"
 msgstr "Normal"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3752
+#: dayplanner:3784
 msgid "All day"
 msgstr "Heildags"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3754
+#: dayplanner:3786
 msgid "Birthday"
 msgstr "Bursdag"
 
-#: dayplanner:3762
+#: dayplanner:3794
 msgid "Add this event"
 msgstr "Legg til denne hendinga"
 
-#: dayplanner:3763
+#: dayplanner:3795
 msgid "Discard this event"
 msgstr "Ikkje legg til denne hendinga"
 
-#: dayplanner:3853
+#: dayplanner:3885
 msgid "Editing an event"
 msgstr "Redigerer ei hending"
 
-#: dayplanner:3866
+#: dayplanner:3898
 msgid "Editing a birthday"
 msgstr "Redigerer ein bursdag"
 
-#: dayplanner:3879
+#: dayplanner:3911
 msgid "Editing an all day event"
 msgstr "Redigerer ei heildagshending"
 
-#: dayplanner:3893
+#: dayplanner:3925
 msgid "Discard changes"
 msgstr "Avvis endringane"
 
-#: dayplanner:3894
+#: dayplanner:3926
 msgid "Accept changes"
 msgstr "Godta endringane"
 
-#: dayplanner:3954
+#: dayplanner:3986
 msgid "Time:"
 msgstr "Tidspunkt:"
 
-#: dayplanner:3964 dayplanner:4131
+#: dayplanner:3996 dayplanner:4163
 msgid "Date:"
 msgstr "Dato:"
 
-#: dayplanner:3973 dayplanner:4140
+#: dayplanner:4005 dayplanner:4172
 msgid "Description:"
 msgstr "Skildring:"
 
-#: dayplanner:3985 dayplanner:4152
+#: dayplanner:4017 dayplanner:4184
 msgid "Enter a description of the event here"
 msgstr "Skriv inn ein skildring av hendinga her"
 
-#: dayplanner:4044 dayplanner:4209
+#: dayplanner:4076 dayplanner:4241
 msgid "There is no description of this event. Please enter a description."
 msgstr ""
 "Du har ikkje skrive inn ei skildring av denne hendinga. Skriv inn ei "
 "skildring."
 
-#: dayplanner:4048 dayplanner:4213
+#: dayplanner:4080 dayplanner:4245
 msgid "The date you have entered is invalid."
 msgstr "Datoen du skreiv inn er ikkje gyldig."
 
-#: dayplanner:4160
+#: dayplanner:4192
 msgid "Additional information"
 msgstr "Meir informasjon"
 
-#: dayplanner:4287
+#: dayplanner:4319
 msgid "Born:"
 msgstr "Fødd:"
 
 #. TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
-#: dayplanner:4297
+#: dayplanner:4329
 msgid "Name:"
 msgstr "Namn:"
 
-#: dayplanner:4310
+#: dayplanner:4342
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Skriv inn namnet til personen som har bursdag her"
 
 #. TRANSLATORS: Please write translator credits here, in the form:
 #. name <email>.
 #. Separate names with \n.
-#: dayplanner:4373 dayplanner:4375
+#: dayplanner:4405 dayplanner:4407
 msgid "translator-credits"
 msgstr ""
 "Eskild Hustvedt <zerodogg at skolelinux dot no>\n"
 "Gaute Hvoslef Kvalnes <gaute at verdsveven dot com>"
 
-#: dayplanner:4420
+#: dayplanner:4452
 msgid "Reminders"
 msgstr "Påminningar"
 
-#: dayplanner:4453
+#: dayplanner:4485
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "Start påminnaren automatisk under innlogging"
 
-#: dayplanner:4469
+#: dayplanner:4501
 msgid "When an event is coming up, remind me:"
 msgstr "Når ein hending nermar seg, påminn meg:"
 
-#: dayplanner:4476
+#: dayplanner:4508
 msgid "One day in advance"
 msgstr "Ein dag på førehand"
 
-#: dayplanner:4498 dayplanner:4499 dayplanner:4500 dayplanner:4501
+#: dayplanner:4530 dayplanner:4531 dayplanner:4532 dayplanner:4533
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minutt"
 
-#: dayplanner:4502
+#: dayplanner:4534
 #, perl-format
 msgid "%s hour"
 msgstr "%s time"
 
-#: dayplanner:4503 dayplanner:4504 dayplanner:4505
+#: dayplanner:4535 dayplanner:4536 dayplanner:4537
 #, perl-format
 msgid "%s hours"
 msgstr "%s timar"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4521
+#: dayplanner:4553
 msgid "before the event time"
 msgstr "før hendingstida"
 
-#: dayplanner:4561
+#: dayplanner:4593
 msgid "Synchronization"
 msgstr "Synkronisering"
 
-#: dayplanner:4606
+#: dayplanner:4638
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr "Synkroniser denne kalenderen via internett"
 
-#: dayplanner:4637
+#: dayplanner:4669
 msgid "Server:"
 msgstr "Tenar:"
 
-#: dayplanner:4650
+#: dayplanner:4682
 msgid "Port:"
 msgstr "Port:"
 
-#: dayplanner:4667
+#: dayplanner:4699
 msgid "Username:"
 msgstr "Brukarnamn:"
 
-#: dayplanner:4679
+#: dayplanner:4711
 msgid "Password:"
 msgstr "Passord:"
 
-#: dayplanner:4716
+#: dayplanner:4748
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
@@ -635,48 +635,48 @@ msgstr ""
 "Du har ikkje skrive inn alle opplysningane som er nødvendege for at "
 "synkronisering kan brukast, synkronisering har blitt slått av."
 
-#: dayplanner:4798
+#: dayplanner:4836
 msgid "Event"
 msgstr "Hending"
 
-#: dayplanner:4882 dayplanner:4883 dayplanner:4884 dayplanner:4885
-#: dayplanner:4886
+#: dayplanner:4920 dayplanner:4921 dayplanner:4922 dayplanner:4923
+#: dayplanner:4924
 msgid "_Calendar"
 msgstr "_Kalender"
 
-#: dayplanner:4883
+#: dayplanner:4921
 msgid "_Import..."
 msgstr "_Importer ..."
 
-#: dayplanner:4884
+#: dayplanner:4922
 msgid "_Export..."
 msgstr "_Eksporter ..."
 
-#: dayplanner:4889
+#: dayplanner:4927
 msgid "_Add an Event..."
 msgstr "_Legg til ei hending ..."
 
-#: dayplanner:4890 dayplanner:4912
+#: dayplanner:4928 dayplanner:4950
 msgid "_Edit This Event..."
 msgstr "_Rediger denne hendinga ..."
 
-#: dayplanner:4891 dayplanner:4916
+#: dayplanner:4929 dayplanner:4954
 msgid "_Delete this event..."
 msgstr "_Slett denne hendinga ..."
 
-#: dayplanner:4896
+#: dayplanner:4934
 msgid "_Report a bug"
 msgstr "_Rapporter feil"
 
-#: dayplanner:5012 dayplanner:5013
+#: dayplanner:5050 dayplanner:5051
 msgid "Delete the selected event"
 msgstr "Slett den valgte hendinga"
 
-#: dayplanner:5020 dayplanner:5021
+#: dayplanner:5058 dayplanner:5059
 msgid "Edit the selected event"
 msgstr "Rediger den valgte hendinga"
 
-#: dayplanner:5031 dayplanner:5032
+#: dayplanner:5069 dayplanner:5070
 msgid "Add a new event"
 msgstr "Legg til ei hending"
 
@@ -745,12 +745,60 @@ msgstr ""
 "Klarte ikkje oppretta mappa %(directory): %(error)\n"
 "Opprett denne mappa manuelt før du lukkar dette dialogvindauget."
 
+#: CoreModules.pm:468
+msgid "Sunday"
+msgstr "Sundag"
+
+#: CoreModules.pm:469
+msgid "Monday"
+msgstr "Måndag"
+
+#: CoreModules.pm:470
+msgid "Tuesday"
+msgstr "Tysdag"
+
+#: CoreModules.pm:471
+msgid "Wednesday"
+msgstr "Onsdag"
+
+#: CoreModules.pm:472
+msgid "Thursday"
+msgstr "Torsdag"
+
+#: CoreModules.pm:473
+msgid "Friday"
+msgstr "Fredag"
+
+#: CoreModules.pm:474
+msgid "Saturday"
+msgstr "Laurdag"
+
+#: CoreModules.pm:499
+msgid "Tomorrow"
+msgstr "I morgon"
+
 #. TRANSLATORS: String used in the list of upcoming events in the
 #. lower right hand corner of the UI. You should
 #. probably keep this short.
 #: CoreModules.pm:523
 msgid "At %(time)"
 msgstr "Kl. %(time)"
+
+#. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
+#. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
+#: CoreModules.pm:531 CoreModules.pm:602
+msgid "(nothing)"
+msgstr "(ingenting)"
+
+#: CoreModules.pm:539
+msgid "No upcoming events exist for the next seven days"
+msgstr "Ingen hendingar dei neste sju dagane"
+
+#. TRANSLATORS: This is used to bind together a list. It is a list of days
+#. such as: Friday, Saturday *and* Sunday.
+#: CoreModules.pm:594 CoreModules.pm:597
+msgid "and"
+msgstr "og"
 
 #: CoreModules.pm:629
 msgid ""
@@ -778,41 +826,11 @@ msgstr "%(name) blei fødd"
 msgid "%(name)'s birthday (%(year) years old)"
 msgstr "%(name) sin bursdag (%(year) år)"
 
-#~ msgid "Unknown"
-#~ msgstr "Ukjent"
-
-#~ msgid "Sunday"
-#~ msgstr "Sundag"
-
-#~ msgid "Monday"
-#~ msgstr "Måndag"
-
-#~ msgid "Tuesday"
-#~ msgstr "Tysdag"
-
-#~ msgid "Wednesday"
-#~ msgstr "Onsdag"
-
-#~ msgid "Thursday"
-#~ msgstr "Torsdag"
-
-#~ msgid "Friday"
-#~ msgstr "Fredag"
-
-#~ msgid "Saturday"
-#~ msgstr "Laurdag"
-
-#~ msgid "Tomorrow"
-#~ msgstr "I morgon"
-
-#~ msgid "(nothing)"
-#~ msgstr "(ingenting)"
-
-#~ msgid "No upcoming events exist for the next seven days"
-#~ msgstr "Ingen hendingar dei neste sju dagane"
-
-#~ msgid "and"
-#~ msgstr "og"
+#. TRANSLATORS: This string is used when there is some issue getting the description
+#. of an event. It is rarely used but kept just in case.
+#: CoreModules.pm:721
+msgid "Unknown"
+msgstr "Ukjent"
 
 #~ msgid "Special days this month:"
 #~ msgstr "Spesielle dagar denne månaden:"

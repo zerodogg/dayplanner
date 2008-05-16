@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Day Planner 0.6\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2008-04-25 13:02+0200\n"
+"POT-Creation-Date: 2008-05-16 23:21+0200\n"
 "PO-Revision-Date: 2008-04-35 11:45+0200\n"
 "Last-Translator: Reinout van Schouwen <reinout@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -162,8 +162,8 @@ msgstr ""
 #. TRANSLATORS: Feel free to localize the application name "Day Planner" to your language.
 #. For instance "Dagsplanleggar" for Norwegian.
 #: dayplanner:852 dayplanner:1802 dayplanner:2334 dayplanner:2918
-#: dayplanner:2932 dayplanner:2967 dayplanner:2983 dayplanner:4344
-#: dayplanner:4837
+#: dayplanner:2932 dayplanner:2967 dayplanner:2983 dayplanner:4376
+#: dayplanner:4875
 msgid "Day Planner"
 msgstr "Dagplanner"
 
@@ -176,7 +176,7 @@ msgstr "Af_dwingen"
 msgid "Upgrading"
 msgstr "Bijwerken"
 
-#: dayplanner:965 dayplanner:2103 dayplanner:4227 CoreModules.pm:711
+#: dayplanner:965 dayplanner:2103 dayplanner:4259 CoreModules.pm:711
 msgid "%(name)'s birthday"
 msgstr "Verjaardag van %(name)"
 
@@ -247,7 +247,7 @@ msgid "Unable to open %(file) for writing: %(error)"
 msgstr "Niet in staat %(file) te openen voor schrijven: %(error)"
 
 #. TRANSLATORS: This is followed by the time of an event
-#: dayplanner:1821 dayplanner:4797
+#: dayplanner:1821 dayplanner:4835
 msgid "Time"
 msgstr "Tijd"
 
@@ -398,7 +398,7 @@ msgstr "\"%(dir)\" is een map."
 msgid "\"%(file)\" already exists. Overwrite?"
 msgstr "\"%(file)\" bestaat al, overschrijven?"
 
-#: dayplanner:2864 dayplanner:3884
+#: dayplanner:2864 dayplanner:3916
 #, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event can not be edited "
@@ -414,217 +414,217 @@ msgid "Some files could not be saved correctly. Quit anyway?"
 msgstr ""
 "Sommige bestanden konden niet correct worden opgeslagen. Toch afsluiten?"
 
-#: dayplanner:3058 dayplanner:3067 dayplanner:3262 dayplanner:3271
+#: dayplanner:3058 dayplanner:3067 dayplanner:3294 dayplanner:3303
 msgid "Show advanced settings"
 msgstr "Geavanceerde instellingen tonen"
 
-#: dayplanner:3065 dayplanner:3269
+#: dayplanner:3065 dayplanner:3301
 msgid "Hide advanced settings"
 msgstr "Geavanceerde instellingen verbergen"
 
-#: dayplanner:3146
+#: dayplanner:3153
 msgid "Calendar"
 msgstr "Agenda"
 
-#: dayplanner:3284
+#: dayplanner:3316
 msgid "Repeat event every:"
 msgstr "Herhalingsfrequentie van de gebeurtenis: elk(e) "
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3291
+#: dayplanner:3323
 msgid "day"
 msgstr "dag"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3293
+#: dayplanner:3325
 msgid "week"
 msgstr "week"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3295
+#: dayplanner:3327
 msgid "month"
 msgstr "maand"
 
 #. TRANSLATORS: Context: Repeat event every: THIS STRING
-#: dayplanner:3297
+#: dayplanner:3329
 msgid "year"
 msgstr "jaar"
 
 #. TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
-#: dayplanner:3323
+#: dayplanner:3355
 msgid "Until:"
 msgstr "Tot:"
 
 #. TRANSLATORS: Don't recur the event on the dates specified next to this string
-#: dayplanner:3358
+#: dayplanner:3390
 msgid "But not on:"
 msgstr "Maar niet op:"
 
-#: dayplanner:3428
+#: dayplanner:3460
 msgid "Detailed description"
 msgstr "Gedetailleerde beschrijving"
 
-#: dayplanner:3738
+#: dayplanner:3770
 msgid "Add an Event"
 msgstr "Gebeurtenis toevoegen"
 
-#: dayplanner:3744
+#: dayplanner:3776
 msgid "Event type:"
 msgstr "Gebeurtenistype:"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3750
+#: dayplanner:3782
 msgid "Normal"
 msgstr "Normaal"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3752
+#: dayplanner:3784
 msgid "All day"
 msgstr "De hele dag"
 
 #. TRANSLATORS: Context: Event type: THIS STRING
-#: dayplanner:3754
+#: dayplanner:3786
 msgid "Birthday"
 msgstr "Geboortedatum"
 
-#: dayplanner:3762
+#: dayplanner:3794
 msgid "Add this event"
 msgstr "Deze gebeurtenis toevoegen"
 
-#: dayplanner:3763
+#: dayplanner:3795
 msgid "Discard this event"
 msgstr "Deze gebeurtenis weggooien"
 
-#: dayplanner:3853
+#: dayplanner:3885
 msgid "Editing an event"
 msgstr "Bewerken van een gebeurtenis"
 
-#: dayplanner:3866
+#: dayplanner:3898
 msgid "Editing a birthday"
 msgstr "Bewerken van een verjaardag"
 
-#: dayplanner:3879
+#: dayplanner:3911
 msgid "Editing an all day event"
 msgstr "Gebeurtenis voor de hele dag bewerken"
 
-#: dayplanner:3893
+#: dayplanner:3925
 msgid "Discard changes"
 msgstr "Wijzigingen verwerpen"
 
-#: dayplanner:3894
+#: dayplanner:3926
 msgid "Accept changes"
 msgstr "Wijzigingen bevestigen"
 
-#: dayplanner:3954
+#: dayplanner:3986
 msgid "Time:"
 msgstr "Tijd:"
 
-#: dayplanner:3964 dayplanner:4131
+#: dayplanner:3996 dayplanner:4163
 msgid "Date:"
 msgstr "Datum:"
 
-#: dayplanner:3973 dayplanner:4140
+#: dayplanner:4005 dayplanner:4172
 msgid "Description:"
 msgstr "Omschrijving:"
 
-#: dayplanner:3985 dayplanner:4152
+#: dayplanner:4017 dayplanner:4184
 msgid "Enter a description of the event here"
 msgstr "Voer hier een omschrijving van de gebeurtenis in"
 
-#: dayplanner:4044 dayplanner:4209
+#: dayplanner:4076 dayplanner:4241
 msgid "There is no description of this event. Please enter a description."
 msgstr ""
 "Er is geen beschrijving van deze gebeurtenis. Voer er één in alstublieft."
 
-#: dayplanner:4048 dayplanner:4213
+#: dayplanner:4080 dayplanner:4245
 msgid "The date you have entered is invalid."
 msgstr "De datum die u heeft ingevoerd is ongeldig."
 
-#: dayplanner:4160
+#: dayplanner:4192
 msgid "Additional information"
 msgstr "Extra Informatie"
 
-#: dayplanner:4287
+#: dayplanner:4319
 msgid "Born:"
 msgstr "Geboortedatum:"
 
 #. TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
-#: dayplanner:4297
+#: dayplanner:4329
 msgid "Name:"
 msgstr "Naam:"
 
-#: dayplanner:4310
+#: dayplanner:4342
 msgid "Enter the name of the person whose birthday it is here"
 msgstr "Voer hier de naam van de persoon in die jarig is"
 
 #. TRANSLATORS: Please write translator credits here, in the form:
 #. name <email>.
 #. Separate names with \n.
-#: dayplanner:4373 dayplanner:4375
+#: dayplanner:4405 dayplanner:4407
 msgid "translator-credits"
 msgstr "Reinout van Schouwen"
 
-#: dayplanner:4420
+#: dayplanner:4452
 msgid "Reminders"
 msgstr "Herinneringen"
 
-#: dayplanner:4453
+#: dayplanner:4485
 msgid "Start the Day Planner reminder automatically when logging in"
 msgstr "De Day Planner-herinnerfunctie automatisch starten bij aanmelden"
 
-#: dayplanner:4469
+#: dayplanner:4501
 msgid "When an event is coming up, remind me:"
 msgstr "Wanneer een gebeurtenis eraan komt, herinner me:"
 
-#: dayplanner:4476
+#: dayplanner:4508
 msgid "One day in advance"
 msgstr "Eén dag van tevoren"
 
-#: dayplanner:4498 dayplanner:4499 dayplanner:4500 dayplanner:4501
+#: dayplanner:4530 dayplanner:4531 dayplanner:4532 dayplanner:4533
 #, perl-format
 msgid "%s minutes"
 msgstr "%s minuten"
 
-#: dayplanner:4502
+#: dayplanner:4534
 #, perl-format
 msgid "%s hour"
 msgstr "%s uur"
 
-#: dayplanner:4503 dayplanner:4504 dayplanner:4505
+#: dayplanner:4535 dayplanner:4536 dayplanner:4537
 #, perl-format
 msgid "%s hours"
 msgstr "%s uren"
 
 #. TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
-#: dayplanner:4521
+#: dayplanner:4553
 msgid "before the event time"
 msgstr "voor de gebeurtenis"
 
-#: dayplanner:4561
+#: dayplanner:4593
 msgid "Synchronization"
 msgstr "Synchronisatie"
 
-#: dayplanner:4606
+#: dayplanner:4638
 msgid "Automatically synchronize an online copy of this calendar"
 msgstr "Automatisch synchroniseren met on-line versie van deze agenda"
 
-#: dayplanner:4637
+#: dayplanner:4669
 msgid "Server:"
 msgstr "Server:"
 
-#: dayplanner:4650
+#: dayplanner:4682
 msgid "Port:"
 msgstr "Poort:"
 
-#: dayplanner:4667
+#: dayplanner:4699
 msgid "Username:"
 msgstr "Gebruikersnaam:"
 
-#: dayplanner:4679
+#: dayplanner:4711
 msgid "Password:"
 msgstr "Wachtwoord:"
 
-#: dayplanner:4716
+#: dayplanner:4748
 msgid ""
 "You have not entered the information required for synchronization to be "
 "enabled, it has been disabled."
@@ -632,48 +632,48 @@ msgstr ""
 "U heeft de informatie die benodigd is voor synchronisatie niet ingevoerd, "
 "daarom is het uitgezet."
 
-#: dayplanner:4798
+#: dayplanner:4836
 msgid "Event"
 msgstr "Gebeurtenis"
 
-#: dayplanner:4882 dayplanner:4883 dayplanner:4884 dayplanner:4885
-#: dayplanner:4886
+#: dayplanner:4920 dayplanner:4921 dayplanner:4922 dayplanner:4923
+#: dayplanner:4924
 msgid "_Calendar"
 msgstr "_Agenda"
 
-#: dayplanner:4883
+#: dayplanner:4921
 msgid "_Import..."
 msgstr "_Importeren…"
 
-#: dayplanner:4884
+#: dayplanner:4922
 msgid "_Export..."
 msgstr "_Exporteren…"
 
-#: dayplanner:4889
+#: dayplanner:4927
 msgid "_Add an Event..."
 msgstr "Gebeurtenis _toevoegen…"
 
-#: dayplanner:4890 dayplanner:4912
+#: dayplanner:4928 dayplanner:4950
 msgid "_Edit This Event..."
 msgstr "Deze gebeurtenis be_werken…"
 
-#: dayplanner:4891 dayplanner:4916
+#: dayplanner:4929 dayplanner:4954
 msgid "_Delete this event..."
 msgstr "De_ze gebeurtenis verwijderen…"
 
-#: dayplanner:4896
+#: dayplanner:4934
 msgid "_Report a bug"
 msgstr "P_rogrammafout melden"
 
-#: dayplanner:5012 dayplanner:5013
+#: dayplanner:5050 dayplanner:5051
 msgid "Delete the selected event"
 msgstr "De geselecteerde gebeurtenis verwijderen"
 
-#: dayplanner:5020 dayplanner:5021
+#: dayplanner:5058 dayplanner:5059
 msgid "Edit the selected event"
 msgstr "De geselecteerde gebeurtenis bewerken"
 
-#: dayplanner:5031 dayplanner:5032
+#: dayplanner:5069 dayplanner:5070
 msgid "Add a new event"
 msgstr "Een nieuwe gebeurtenis toevoegen"
 
@@ -743,12 +743,60 @@ msgstr ""
 "Niet in staat de map %(directory) aan te maken: %(error)\n"
 "Maak deze map handmatig aan voordat u dit dialoogvenster sluit."
 
+#: CoreModules.pm:468
+msgid "Sunday"
+msgstr "Zondag"
+
+#: CoreModules.pm:469
+msgid "Monday"
+msgstr "Maandag"
+
+#: CoreModules.pm:470
+msgid "Tuesday"
+msgstr "Dinsdag"
+
+#: CoreModules.pm:471
+msgid "Wednesday"
+msgstr "Woensdag"
+
+#: CoreModules.pm:472
+msgid "Thursday"
+msgstr "Donderdag"
+
+#: CoreModules.pm:473
+msgid "Friday"
+msgstr "Vrijdag"
+
+#: CoreModules.pm:474
+msgid "Saturday"
+msgstr "Zaterdag"
+
+#: CoreModules.pm:499
+msgid "Tomorrow"
+msgstr "Morgen"
+
 #. TRANSLATORS: String used in the list of upcoming events in the
 #. lower right hand corner of the UI. You should
 #. probably keep this short.
 #: CoreModules.pm:523
 msgid "At %(time)"
 msgstr "Op %(time)"
+
+#. TRANSLATORS: This is used in the upcoming events widget. It is displayed for a day (or set of days)
+#. when no events are present. Ie: Tomorrow (24.02.2007): (nothing).
+#: CoreModules.pm:531 CoreModules.pm:602
+msgid "(nothing)"
+msgstr "(niets)"
+
+#: CoreModules.pm:539
+msgid "No upcoming events exist for the next seven days"
+msgstr "Er zijn geen gebeurtenissen de eerstkomende zeven dagen"
+
+#. TRANSLATORS: This is used to bind together a list. It is a list of days
+#. such as: Friday, Saturday *and* Sunday.
+#: CoreModules.pm:594 CoreModules.pm:597
+msgid "and"
+msgstr "en"
 
 #: CoreModules.pm:629
 msgid ""
@@ -776,41 +824,11 @@ msgstr "%(name) werd geboren"
 msgid "%(name)'s birthday (%(year) years old)"
 msgstr "Verjaardag van %(name) (%(year) jaar oud)"
 
-#~ msgid "Unknown"
-#~ msgstr "Onbekend"
-
-#~ msgid "Sunday"
-#~ msgstr "Zondag"
-
-#~ msgid "Monday"
-#~ msgstr "Maandag"
-
-#~ msgid "Tuesday"
-#~ msgstr "Dinsdag"
-
-#~ msgid "Wednesday"
-#~ msgstr "Woensdag"
-
-#~ msgid "Thursday"
-#~ msgstr "Donderdag"
-
-#~ msgid "Friday"
-#~ msgstr "Vrijdag"
-
-#~ msgid "Saturday"
-#~ msgstr "Zaterdag"
-
-#~ msgid "Tomorrow"
-#~ msgstr "Morgen"
-
-#~ msgid "(nothing)"
-#~ msgstr "(niets)"
-
-#~ msgid "No upcoming events exist for the next seven days"
-#~ msgstr "Er zijn geen gebeurtenissen de eerstkomende zeven dagen"
-
-#~ msgid "and"
-#~ msgstr "en"
+#. TRANSLATORS: This string is used when there is some issue getting the description
+#. of an event. It is rarely used but kept just in case.
+#: CoreModules.pm:721
+msgid "Unknown"
+msgstr "Onbekend"
 
 #~ msgid "Special days this month:"
 #~ msgstr "Speciale dagen deze maand:"
