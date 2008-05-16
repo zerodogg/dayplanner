@@ -6,6 +6,8 @@ Version 0.10 (Unreleased)
 
 * Client (dayplanner)
 - Added manpage
+- Dropped the "import data from ..." dialog, added menu items to
+  the calendar menu instead
 
 * Notifier (dayplanner-notifier)
 - Added manpage
