@@ -222,7 +222,7 @@ sub ParseNotifyPre {
 			DaemonLog(4,'Unable to parse number: '.$Number);
 		}
 	}
-	DaemonLog(4,'ParseNotifyPre: '.$Total);
+	DaemonLog(5,'ParseNotifyPre: '.$Total);
 	return($Total);
 }
 
@@ -356,7 +356,7 @@ sub LoadDPConfig
 	LoadConfigFile($DataDir . '/dayplanner.conf',\%Config,undef,false);
 	$PreNotValues{PreNotSeconds} = ParseNotifyPre($Config{Events_NotifyPre});
 	$PreNotValues{PreNotDay} = $Config{Events_DayNotify};
-	DaemonLog(4,"PreNotDay = $PreNotValues{PreNotDay} and PreNotSeconds = $PreNotValues{PreNotSeconds}");
+	DaemonLog(5,"PreNotDay = $PreNotValues{PreNotDay} and PreNotSeconds = $PreNotValues{PreNotSeconds}");
 }
 
 # Purpose: Print nicely formatted help output
