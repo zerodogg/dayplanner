@@ -182,6 +182,8 @@ sub DaemonLog
 	$lhour = "0$lhour" unless $lhour >= 10;
 	$lmin = "0$lmin" unless $lmin >= 10;
 	$lsec = "0$lsec" unless $lsec >= 10;
+	$lmon = "0$lmon" unless $lmon >= 10;
+	$lmday = "0$lmday" unless $lmday >= 10;
 	print "[$lmday/$lmon/$lyear $lhour:$lmin:$lsec ($$)] ";
 	print($MsgPrefix.$Message);
 	print "\n";
@@ -282,7 +284,7 @@ sub WriteDaemonState
 	DaemonLog(5,'Writing daemon state to '.$DataDir . '/daemon_state.conf');
 	my %Explenations = (
 		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually\n# If you do, and the daemon is running it will overwrite your changes.",
-		HasNotified => 'This is a list of UIDs that has already been notified',
+		HasNotified => 'This is a list of UIDs that has already been notified *today*',
 		LastWritten => 'The unix time of when this file was last written ('.scalar(localtime()).')',
 	);
 	# TODO: DROP
@@ -294,7 +296,7 @@ sub WriteDaemonState
 	else
 	{
 		DaemonLog(4,'HasNotified= was not from today. Replacing with an empty string');
-		$DaemonState{HasNotified} = '';
+		delete($DaemonState{HasNotified});
 	}
 	$DaemonState{LastWritten} = time();
 	WriteConfigFile($DataDir . '/daemon_state.conf',\%DaemonState, \%Explenations);
@@ -333,6 +335,15 @@ sub LoadDaemonState
 sub AddNotifiedUID
 {
 	my $UID = shift;
+	# Clear HasNotified if it's old
+	if(not OnSameDate(time(),$DaemonState{LastWritten}))
+	{
+		DaemonLog(5,'Clearing old HasNotified');
+		%HasNotified = ();
+		# Set LastWritten, so that we don't re-clear it again if more UIDs are added
+		# before the next state write.
+		$DaemonState{LastWritten} = time();
+	}
 	DaemonLog(5, 'Marking UID '.$UID.' as notified');
 	$HasNotified{$UID} = true;
 }
@@ -752,7 +763,7 @@ sub SigPipeHandler
 #    - to put it simply. Never run directly. Run DaemonInit();
 sub MainLoop
 {
-	DaemonLog(5,'Entering main loop');
+	DaemonLog(4,'Day Planner Daemon version '. $Version.' entering main loop');
 	while(true)
 	{
 		my $SleepTime = FindSleepDuration();
