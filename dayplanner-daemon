@@ -249,7 +249,7 @@ sub assert
 	# If not, then we output it and happily continue processing
 	else
 	{
-		DPIntWarn($msg);
+		DaemonLog(0,$msg);
 	}
 	return true;
 }
