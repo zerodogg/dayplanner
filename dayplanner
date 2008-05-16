@@ -112,6 +112,7 @@ sub DP_InitI18n {
 	else
 	{
 		$i18n = DP::GeneralHelpers::I18N->new();
+		Assert($i18n);
 	}
 }
 
@@ -119,6 +120,7 @@ sub DP_InitI18n {
 # Usage: i18nwrapper(SAME AS $I18n->get);
 sub i18nwrapper
 {
+	Assert(scalar(@_) > 0);
 	return($i18n->get(@_));
 }
 
@@ -126,6 +128,7 @@ sub i18nwrapper
 # Usage: i18nwrapper_advanced(SAME AS $I18n->get_advanced);
 sub i18nwrapper_advanced
 {
+	Assert(scalar(@_) > 0);
 	return($i18n->get_advanced(@_));
 }
 
@@ -133,6 +136,7 @@ sub i18nwrapper_advanced
 # Usage: i18nwrapper_AMPM_From24(SAME AS $I18n->AMPM_From24);
 sub i18nwrapper_AMPM_From24
 {
+	Assert(scalar(@_) > 0);
 	return($i18n->AMPM_From24(@_));
 }
 
@@ -212,6 +216,7 @@ sub Daemon_SendData {
 	if(not $DaemonSocket) {
 		return(undef);
 	}
+	Assert(scalar(@_) == 1);
 	$DaemonSocket->client_send("$$ $_[0]");
 }
 
@@ -226,6 +231,7 @@ sub Daemon_SendData {
 #	If no technical_error is supplied then User_error is used.
 sub DPS_Error {
 	my $user_error = shift;
+	Assert(defined($user_error));
 	# Tech_error is set to user_error when not supplied
 	my $tech_error = $_[0] ? $_[0] : $user_error;
 	DPIntWarn("DPS: $tech_error");
@@ -600,6 +606,7 @@ sub WriteStateFile {
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
+	Assert(scalar(@_) == 2);
 
 	my $NewWinState = 1;
 
@@ -838,10 +845,48 @@ sub PrintHelp {
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# Purpose: Die with useful information if an Assertion fails
+# Usage: Assert(TRUE/FALSE EXPR, REASON);
+sub Assert
+{
+	my $expr = shift;
+	return true if $expr;
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
+	my $msg;
+	if(defined($_[0]))
+	{
+		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line: $_[0]\n";
+	}
+	else
+	{
+		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line\n";
+	}
+	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
+	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
+	{
+		warn($msg);
+		if(defined $SaveToDir && -d $SaveToDir && defined $iCalendar)
+		{
+			my $bakFile = $SaveToDir.'/assertionFailureBackup.'.time().'.ics';
+			$iCalendar->write($bakFile);
+			die('Calendar backup written to: '.$SaveToDir.'/assertionFailureBackup.ics'."\n");
+		}
+		die("\n");
+	}
+	# If not, then we output it and happily continue processing
+	else
+	{
+		DPIntWarn($msg);
+	}
+	return true;
+}
+
 # Purpose: Display an error about an already running Day Planner session
 # Usage: AlreadyRunningDP(IPC_CLIENT);
 sub AlreadyRunningDP {
 	my $ClientConnection = shift;
+	Assert(defined $ClientConnection);
 	if($Gtk2Init) {
 		my $ErrorDialog = Gtk2::MessageDialog->new (undef,
 						'destroy-with-parent',
@@ -1718,6 +1763,7 @@ sub PHP_Export {
 # Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
 sub PlanConvert_PurgeBuffer {
 	my $PlanConvertHash = $_[0];
+	Assert(defined $PlanConvertHash);
 	my $ErrorMessage;
 	if(defined($PlanConvertHash->{Day})) {
 		if ($PlanConvertHash->{Type} eq 'normal') {
@@ -1767,6 +1813,7 @@ sub PlanConvert_PurgeBuffer {
 # Purpose: Convert the file supplied
 # Usage: PlanConvert_PurgeBuffer(/path/to/file,\%PlanConvertHash, $ProgressBar);
 sub PlanConvert_ProcessFile {
+	Assert(scalar(@_) > 1);
 	my $PlanConvertHash = $_[1]; 
 	$PlanConvertHash->{Type} = 'normal';
 
@@ -2367,6 +2414,7 @@ sub GTK_Flush
 # 	Sets LABEL if version is old
 sub Gtk2_Button_SetImage {
 	my($button,$image,$label) = @_;
+	Assert(scalar(@_) == 3);
 	if($Gtk2::VERSION <= 1.070) {
 		DPIntWarn("You're running Day Planner using an old version of Gtk2. This version contains certain limitations which will be worked around. This will cause the interface to look sub-optimal, you are encouraged to upgrade to a later version of Gtk2/Gtk2-perl");
 		return $button->set_label($i18n->get($label));
@@ -2480,6 +2528,7 @@ sub ProgressFraction {
 # Usage: PopulateUpcomingEvents();
 sub PopulateUpcomingEvents {
 	my $NewUpcoming = GetUpcomingEventsString($iCalendar);
+	Assert(defined $NewUpcoming);
 	# Don't update the widget if the text hasn't changed
 	if(not $UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
@@ -2700,6 +2749,7 @@ sub CalendarChange {
 # Purpose: Get the day, month and year in a single string from a calendar
 # Usage: my $Date = Get_DateInfo($CALWIDGET);
 sub Get_DateInfo {
+	Assert(defined $CalendarWidget);
 	my ($year, $month, $day) = $CalendarWidget->get_date();
 	return("$year$month$day");
 }
@@ -2731,6 +2781,7 @@ sub CreateDetailsWidget {
 # Purpose: Add a date to a text field
 # Usage: AddToField(ENTRY, YEAR, MONTH, DAY);
 sub AddToField {
+	Assert(scalar(@_) == 4);
 	my($Entry,$Year,$Month,$Day) = @_;
 
 	$Month = AppendZero($Month);
@@ -2786,6 +2837,7 @@ sub PopupDateSel
 	my $CalButton = shift;
 	$CalButton->set_sensitive(0);
 	my $Mode = shift;
+	Assert(scalar(@_) > 2);
 	my $Default_Date = shift;
 
 	# This is used to indicate when we are changing months,
@@ -3121,12 +3173,10 @@ sub CreateAdvancedWidget {
 }
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
-# Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner, $AMPM);
+# Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner, $AMPM?);
 sub GetTimeFromWidgets {
-	# In the future this sub will take a third argument, which is either an AM/PM
-	# selection box, or undef - so that seamless AM/PM support is needed.
-	
 	my ($HourSpinner, $MinuteSpinner, $AMPM) = @_;	
+	Assert(scalar(@_) > 1);
 	my $Hour = $HourSpinner->get_value_as_int();
 	my $Minute = $MinuteSpinner->get_value_as_int();
 	if ($Hour <= 9) {
@@ -3151,6 +3201,7 @@ sub GetTimeFromWidgets {
 # Usage: my $RRULE = GetRRULEFromCombo(WIDGET_HASH);
 sub GetRRULEFromCombo {
 	my $Hash = shift;
+	Assert(defined $Hash);
 	my $combo = $Hash->{RecurCombo};
 	if(not $combo->is_sensitive) {
 		return(undef);
@@ -3182,6 +3233,7 @@ sub GetRRULEFromCombo {
 # Usage: my $List = GetExceptionsFromEntry(ENTRY WIDGET);
 sub GetExceptionsFromEntry {
 	my $Entry = shift;
+	Assert(defined $Entry);
 	if (not $Entry->is_sensitive) {
 		return([]);
 	}
@@ -3200,6 +3252,7 @@ sub GetExceptionsFromEntry {
 # Usage: my $UntilEntry = GetDateFromEntry(ENTRY WIDGET);
 sub GetDateFromEntry {
 	my $Entry = shift;
+	Assert(defined $Entry);
 	if (not $Entry->is_sensitive) {
 		return(undef);
 	}
@@ -3222,6 +3275,7 @@ sub GetDateFromEntry {
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
 sub TimeSelection {
 	my $Time = shift;
+	Assert(defined $Time);
 	my($HourAdjustment,$MinuteAdjustment, $HourSpinner,$MinuteSpinner,$AMPM);
 
 	if($i18n->get_clocktype() == 24) {
@@ -3336,6 +3390,7 @@ sub DateSelection {
 sub CreateEventContainerWin {
 	# Get the options passed to the sub
 	my ($WindowTitle, $OkButtonType, $UID) = @_;
+	Assert(scalar(@_) < 4);
 	
 	# Get the date
 	my ($EventYear, $EventMonth, $EventDay);
@@ -3415,6 +3470,7 @@ sub CreateEventContainerWin {
 # Purpose: Add a event. Creates the main window and calls the proper event functions
 # Usage: AddEvent();
 sub AddEvent {
+	Assert(scalar(@_) == 0);
 	$MainWindow->set_sensitive(0);
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my $OKSignal;
@@ -3496,6 +3552,7 @@ sub AddEvent {
 # Purpose: Edit the event currently selected in the eventlist
 # Usage: EditEvent ();
 sub EditEvent {
+	Assert(scalar(@_) == 0);
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
@@ -3601,6 +3658,7 @@ sub NormalEventWindow {
 	# INITIALIZE
 	# ==================================================================
 	my ($EventUID, $OKButton, $ParentVBox, $MyWindow) = @_;
+	Assert(scalar(@_) == 4);
 
 	my $IsEditing = 0;
 	
@@ -3784,6 +3842,7 @@ sub AllDayEventWindow {
 	# INITIALIZE
 	# ==================================================================
 	my ($EventUID, $ParentVBox, $MyWindow) = @_;
+	Assert(scalar(@_) > 2);
 
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE,$EventEXDATE);
@@ -3955,6 +4014,7 @@ sub BirthdayEventWindow {
 	# INITIALIZE
 	# ==================================================================
 	my ($UID, $ParentVBox, $MyWindow) = @_;
+	Assert(scalar(@_) == 3);
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	
 	# Create our main vbox
@@ -4436,8 +4496,9 @@ sub PreferencesWindow {
 # MAIN WINDOW
 
 # Purpose: Populate the event list for the currently selected date in the calendar
-# Usage: PopulateEventList(true);
+# Usage: PopulateEventList();
 sub PopulateEventList {
+	Assert(scalar(@_) == 0);
 	@{$EventlistWidget->{data}} = ();
 	if(shift)
 	{
@@ -4473,6 +4534,7 @@ sub PopulateEventList {
 # Purpose: Draw the eventlist on the currently selected date in the calendar
 # Usage: DrawEventlist();
 sub DrawEventlist {
+	Assert(scalar(@_) == 0);
 	# Greate the pop-up on right-click
 	my $PopupWidget = Gtk2::Menu->new();
 	my $delete = Gtk2::ImageMenuItem->new_from_stock('gtk-delete');
@@ -4530,6 +4592,7 @@ sub DrawEventlist {
 # Purpose: Draw the main window
 # Usage: DrawMainWindow();
 sub DrawMainWindow {
+	Assert(scalar(@_) == 0);
 	# ==================================================================
 	# BUILD THE MAIN WINDOW
 	# ==================================================================
@@ -4745,8 +4808,9 @@ sub DrawMainWindow {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Purpose: Call the main data initialization functions
-# Usage: MainInit();
+# Usage: MainInit(NoGui?);
 sub MainInit {
+	Assert(scalar(@_) < 2);
 	my $NoGui = shift;
 	my $FirstStartup;
 	# Set SaveToDir if it isn't already set
