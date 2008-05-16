@@ -27,7 +27,7 @@ INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice
 prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
 
-VERSION=0.9
+VERSION=0.9.1
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
