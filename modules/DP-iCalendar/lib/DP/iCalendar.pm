@@ -411,8 +411,11 @@ sub addfile {
 # Purpose: Remove all loaded data
 # Usage: $object->clean()
 sub clean {
-	carp("DP::iCalendar->clean(): Deprecated. Create a new object instead.");
 	my $this = shift;
+	if (not $_[0])
+	{
+		carp("DP::iCalendar->clean(): Deprecated. Create a new object instead.");
+	}
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->_ClearCalculated();
 	return(true);
@@ -448,11 +451,12 @@ sub disable {
 # Usage: $object->reload();
 sub reload {
 	my $this = shift;
+	carp("DP::iCalendar->reload(): Deprecated. Create a new object instead.");
 	if($this->{FILETYPE} eq 'ref') {
 		carp('reload called on object created from array ref');
 		return(false);
 	}
-	$this->clean();
+	$this->clean(true);
 	return($this->addfile($this->{FILE}));
 }
 
