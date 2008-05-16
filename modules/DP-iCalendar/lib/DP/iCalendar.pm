@@ -96,6 +96,9 @@ sub newfile {
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH);
 sub get_monthinfo {
 	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
+	return if _nf_assert($this,'invalid method call');
+	return if _nf_assert(defined $Year,'Year missing');
+	return if _nf_assert(defined $Month, 'Month missing');
 	$this->_GenerateCalendar($Year);
 	my @DAYS;
 	if(defined($this->{OrderedCalendar}{$Year}{$Month})) {
@@ -110,6 +113,10 @@ sub get_monthinfo {
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
 sub get_dateinfo {
 	my($this, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
+	return if _nf_assert($this,'invalid method call');
+	return if _nf_assert(defined $Year,'Year missing');
+	return if _nf_assert(defined $Month, 'Month missing');
+	return if _nf_assert(defined $Day, 'Day missing');
 	
 	$this->_GenerateCalendar($Year);
 	
@@ -126,6 +133,13 @@ sub get_dateinfo {
 # Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
 sub get_timeinfo {
 	my($this, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $Year,  'Year missing');
+	return if _nf_assert(defined $Month, 'Month missing');
+	return if _nf_assert(defined $Day,   'Day missing');
+	return if _nf_assert(defined $Time,  'Time missing');
+
 	$this->_GenerateCalendar($Year);
 	my @UIDs;
 	if(defined($this->{OrderedCalendar}{$Year}{$Month}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time})) {
@@ -140,6 +154,7 @@ sub get_timeinfo {
 # Usage: my $ArrayRef = $object->get_years();
 sub get_years {
 	my $this = shift;
+	return if _nf_assert($this,          'invalid method call');
 	my @Years = sort keys(%{$this->{OrderedCalendar}});
 	# Yes this will call _GenerateCalendar when it is not needed (that is,
 	# when there are NO events) - but still, that will be very rare.
@@ -157,6 +172,8 @@ sub get_years {
 # Usage: my $ArrayRef = $object->get_months();
 sub get_months {
 	my ($this, $Year) = @_;
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $Year,  'Year missing');
 	$this->_GenerateCalendar($Year);
 	my @Months = sort keys(%{$this->{OrderedCalendar}{$Year}});
 	return(\@Months);
@@ -166,6 +183,8 @@ sub get_months {
 # Usage: my $Info = $object->get_info(UID);
 sub get_info {
 	my($this,$UID) = @_;
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $UID,   'UID missing');
 	if ($this->exists($UID))
 	{
 		return $this->_GetUIDEntry($UID);
@@ -178,6 +197,8 @@ sub get_info {
 # Usage: my $Info = $object->get_RRULE(UID);
 sub get_RRULE {
 	my ($this, $UID) = @_;
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $UID,   'UID missing');
 	if ($this->exists($UID))
 	{
 		my $contents = $this->_GetUIDEntry($UID);
@@ -204,6 +225,11 @@ sub UID_exists_at
 	my $month = shift;
 	my $day = shift;
 	my $time = shift;
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $year,  'Year missing');
+	return if _nf_assert(defined $month, 'Month missing');
+	return if _nf_assert(defined $day,   'Day missing');
 
 	my $TimeRef;
 
@@ -233,6 +259,10 @@ sub UID_exists_at
 # Usage: my $List = $object->get_exceptions(UID);
 sub get_exceptions {
 	my ($this, $UID) = @_;
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $UID,   'UID missing');
+
 	if ($this->exists($UID))
 	{
 		my $contents = $this->_GetUIDEntry($UID);
@@ -262,6 +292,10 @@ sub set_exceptions {
 	my $this = shift;
 	my $UID = shift;
 	my $Exceptions = shift;
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $UID,   'UID missing');
+
 	if ($this->exists($UID))
 	{
 		my $contents = $this->_GetUIDEntry($UID);
@@ -291,6 +325,9 @@ sub set_exceptions {
 # Usage: $object->write(FILE?);
 sub write {
 	my ($this, $file) = @_;
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
+
 	if(not defined($file)) {
 		if($this->{FILETYPE} eq 'ref') {
 			carp('write called on object created from array ref');
@@ -313,6 +350,8 @@ sub write {
 # Usage: my $Data = $object->get_rawdata();
 sub get_rawdata {
 	my ($this) = @_;
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
 	return $this->{dataSource}->getRaw($this->{FILE});
 }
 
@@ -320,6 +359,11 @@ sub get_rawdata {
 # Usage: $object->delete(UID);
 sub delete {
 	my ($this, $UID) = @_;	# TODO verify UID
+	# Verify parameters
+	return if _nf_assert($this,          'invalid method call');
+	return if _nf_assert(defined $UID,   'UID missing');
+	return if _nf_assert($this->exists($UID), 'attempted to delete non-existant UID');
+
 	$this->_ClearCalculated();
 	return $this->{dataManager}->deleteEntry($UID);
 }
@@ -328,6 +372,7 @@ sub delete {
 # Usage: $object->add(%EntryHash);
 sub add {
 	my ($this, %Hash) = @_;
+	return if _nf_assert($this,          'invalid method call');
 	unless(defined($Hash{DTSTART})) {
 		carp('Refusing to add a iCalendar entry without a DTSTART.');
 		return(false);
@@ -756,6 +801,27 @@ sub iCal_ParseDateTime {
 # 	If there is a feature provided below that you need in your program,
 # 	submit a bug report requesting a function with similar functionality to
 # 	be added to the public methods.
+
+# Purpose: Internal assertion
+# Usage: _nf_assert(EXPR,message);
+# Returns false if expr is true.
+# So that it is possible to: return if _nf_assert(EXPR);
+sub _nf_assert
+{
+	my $expr = shift;
+	return false if $expr;
+	my $message = shift;
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	if (defined $message)
+	{
+		carp('Invalid usage of '.$subroutine.': '.$message);
+	}
+	else
+	{
+		carp('Check usage of '.$subroutine);
+	}
+	return true;
+}
 
 # Purpose: Create a new object.
 # Usage: my $object = _NewObj(FILE?);
