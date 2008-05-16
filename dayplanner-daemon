@@ -404,33 +404,32 @@ sub HumanTimeToSeconds
 # Usage: LoadData();
 sub LoadData
 {
+	my $isReload = false;
 	if($iCalendar)
 	{
-		DaemonLog(5,'Data reloaded');
-		$iCalendar->reload();
-		CalculateNotifications();
+		# If the object already exists we just overwrite it
+		# with a new one.
+		$isReload = true;
+		undef $iCalendar;
+		DaemonLog(5,'Data reload requested');
+	}
+	$iCalendar = DP::iCalendar->new($DataDir.'/'.$CalendarFile);
+	if ($iCalendar)
+	{
+		DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
 	}
 	else
 	{
-		$iCalendar = DP::iCalendar->new($DataDir.'/'.$CalendarFile);
+		$iCalendar = DP::iCalendar->newfile($DataDir.'/'.$CalendarFile);
 		assert($iCalendar);
-		if ($iCalendar)
-		{
-			DaemonLog(5,'Data loaded from ' .$DataDir.'/'.$CalendarFile);
-		}
-		else
-		{
-			$iCalendar = DP::iCalendar->newfile($DataDir.'/'.$CalendarFile);
-			assert($iCalendar);
-			if ($iCalendar)
-			{
-				DaemonLog(3, 'Data file did not exist. Called ->newfile('.$DataDir.'/'.$CalendarFile.');');
-			}
-			else
-			{
-				die("FATAL: Unable to create a ->new() or a ->newfile() DP::iCalendar object!\n");
-			}
-		}
+		DaemonLog(3, 'Data file did not exist. Called ->newfile('.$DataDir.'/'.$CalendarFile.');');
+	}
+	# If we're in reload mode we need to calculate the notifications.
+	# If we're not in reload mode then the required info for calculation
+	# has not yet been loaded, so it will be called later.
+	if ($isReload)
+	{
+		CalculateNotifications();
 	}
 }
 
