@@ -58,6 +58,7 @@ my %DaemonState = (
 	HasNotified => '',
 	LastWritten => '',
 );
+my %HasNotified;
 
 my %NotifierLaunchLock;
 
@@ -68,9 +69,9 @@ $0 = 'dayplanner-daemon';
 # The name of the notifier
 my $NotifierName = 'dayplanner-notifier';
 # Our version number
-my $Version = 0.9;
+my $Version = '0.9.1';
 # The version name. Used for SVN detection
-my $VersionName = 'Junior';
+my $VersionName = 'SVN';
 # Our RCS revision
 my $RCSRev = '$Id$';
 # The iCalendar object
@@ -139,6 +140,7 @@ sub ShutdownRunning
 		}
 		unlink($SocketPath);
 	}
+	return $return;
 }
 
 # Purpose: Output log information.
@@ -180,6 +182,8 @@ sub DaemonLog
 	$lhour = "0$lhour" unless $lhour >= 10;
 	$lmin = "0$lmin" unless $lmin >= 10;
 	$lsec = "0$lsec" unless $lsec >= 10;
+	$lmon = "0$lmon" unless $lmon >= 10;
+	$lmday = "0$lmday" unless $lmday >= 10;
 	print "[$lmday/$lmon/$lyear $lhour:$lmin:$lsec ($$)] ";
 	print($MsgPrefix.$Message);
 	print "\n";
@@ -218,7 +222,7 @@ sub ParseNotifyPre {
 			DaemonLog(4,'Unable to parse number: '.$Number);
 		}
 	}
-	DaemonLog(4,'ParseNotifyPre: '.$Total);
+	DaemonLog(5,'ParseNotifyPre: '.$Total);
 	return($Total);
 }
 
@@ -231,7 +235,7 @@ sub OnSameDate
 	my $Time2 = shift;
 	my ($first_sec,$first_min,$first_hour,$first_mday,$first_mon,$first_year,$first_wday,$first_yday,$first_isdst) = GetDate($Time1);
 	my ($second_sec,$second_min,$second_hour,$second_mday,$second_mon,$second_year,$second_wday,$second_yday,$second_isdst) = GetDate($Time2);
-	if ($first_year eq $second_year and $first_yday eq $second_yday)
+	if (($first_year eq $second_year) and ($first_yday eq $second_yday))
 	{
 		return(true);
 	}
@@ -247,14 +251,20 @@ sub WriteDaemonState
 {
 	DaemonLog(5,'Writing daemon state to '.$DataDir . '/daemon_state.conf');
 	my %Explenations = (
-		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually",
-		HasNotified => 'This is a list of UIDs that has already been notified',
+		HEADER => "This file contains internal configuration used by the Day Planner Daemon (reminder)\n# You really don't want to edit this file manually\n# If you do, and the daemon is running it will overwrite your changes.",
+		HasNotified => 'This is a list of UIDs that has already been notified *today*',
 		LastWritten => 'The unix time of when this file was last written ('.scalar(localtime()).')',
 	);
-	if(not OnSameDate(time()),$DaemonState{LastWritten})
+	# TODO: DROP
+	if(OnSameDate(time(),$DaemonState{LastWritten}))
+	{
+		# Generate HasNotified
+		$DaemonState{HasNotified} .= $_ .' ' foreach(keys(%HasNotified));
+	}
+	else
 	{
 		DaemonLog(4,'HasNotified= was not from today. Replacing with an empty string');
-		$DaemonState{HasNotified} = '';
+		delete($DaemonState{HasNotified});
 	}
 	$DaemonState{LastWritten} = time();
 	WriteConfigFile($DataDir . '/daemon_state.conf',\%DaemonState, \%Explenations);
@@ -268,12 +278,42 @@ sub LoadDaemonState
 	{
 		DaemonLog(5,'Loading daemon state from '.$DataDir . '/daemon_state.conf');
 		LoadConfigFile($DataDir . '/daemon_state.conf', \%DaemonState, undef, 0);
-		WriteDaemonState();
 	} 
 	else
 	{
-		WriteDaemonState();
 	}
+	if(OnSameDate(time(),$DaemonState{LastWritten}))
+	{
+		DaemonLog(5,'HasNotified was from today. Keeping it');
+		foreach(split(/\s+/,$DaemonState{HasNotified}))
+		{
+			$HasNotified{$_} = true;
+		}
+	}
+	else
+	{
+		DaemonLog(5,'HasNotified was not from today, so skipping it');
+	}
+	delete($DaemonState{HasNotified});
+	WriteDaemonState();
+}
+
+# Purpose: Add a new UID that has been notified
+# Usage: AddNotifiedUID(UID);
+sub AddNotifiedUID
+{
+	my $UID = shift;
+	# Clear HasNotified if it's old
+	if(not OnSameDate(time(),$DaemonState{LastWritten}))
+	{
+		DaemonLog(5,'Clearing old HasNotified');
+		%HasNotified = ();
+		# Set LastWritten, so that we don't re-clear it again if more UIDs are added
+		# before the next state write.
+		$DaemonState{LastWritten} = time();
+	}
+	DaemonLog(5, 'Marking UID '.$UID.' as notified');
+	$HasNotified{$UID} = true;
 }
 
 # Purpose: Load the pre-notification values
@@ -284,7 +324,7 @@ sub LoadDPConfig
 	LoadConfigFile($DataDir . '/dayplanner.conf',\%Config,undef,false);
 	$PreNotValues{PreNotSeconds} = ParseNotifyPre($Config{Events_NotifyPre});
 	$PreNotValues{PreNotDay} = $Config{Events_DayNotify};
-	DaemonLog(4,"PreNotDay = $PreNotValues{PreNotDay} and PreNotSeconds = $PreNotValues{PreNotSeconds}");
+	DaemonLog(5,"PreNotDay = $PreNotValues{PreNotDay} and PreNotSeconds = $PreNotValues{PreNotSeconds}");
 }
 
 # Purpose: Print nicely formatted help output
@@ -644,7 +684,7 @@ sub StartNotifier
 			# Try to launch it, whine if it doesn't work
 			if(loggingSystem($_.'/'.$NotifierName, '--calendar', $DataDir .'/'.$CalendarFile, '--uid', $UID)  == 0)
 			{
-				$DaemonState{HasNotified} .= ' '.$UID;
+				AddNotifiedUID($UID);
 				return(true);
 			}
 			else
@@ -678,6 +718,7 @@ sub Daemonize
 }
 
 # Purpose: Handler of SIGPIPE
+# Usage: SIG{PIPE} = \&SigPipeHandler;
 sub SigPipeHandler
 {
 	DaemonLog(5,'Recieved SIGPIPE');
@@ -689,7 +730,7 @@ sub SigPipeHandler
 #    - to put it simply. Never run directly. Run DaemonInit();
 sub MainLoop
 {
-	DaemonLog(5,'Entering main loop');
+	DaemonLog(4,'Day Planner Daemon version '. $Version.' entering main loop');
 	while(true)
 	{
 		my $SleepTime = FindSleepDuration();
@@ -774,14 +815,10 @@ sub LaunchPrevNotifications
 	foreach my $UID(keys(%LaunchUids))
 	{
 		my $NoLaunch;
-		foreach my $NotUID (split(/\s+/,$DaemonState{HasNotified}))
+		if ($HasNotified{$UID})
 		{
-			if($UID eq $NotUID)
-			{
-				DaemonLog(5,'Setting NoLaunch flag for '.$NotUID);
-				$NoLaunch = true;
-				last;
-			}
+			DaemonLog(5,'Setting NoLaunch flag for '.$UID);
+			$NoLaunch = true;
 		}
 		if ($NoLaunch)
 		{
@@ -849,7 +886,7 @@ sub InitDaemon
 	# Okay, all initialiation has been done. Just rest in the main loop.
 	MainLoop();
 	# This should never happen
-	die('FATAL ERROR: MainLoop() returned');
+	die('Bug: MainLoop() returned');
 }
 
 GetOptions (
