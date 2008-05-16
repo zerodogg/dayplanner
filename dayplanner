@@ -4930,7 +4930,8 @@ GetOptions (
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
-	'debuginfo' => sub {
+	'debuginfo' => sub
+	{
 		$| = 1;
 		$SaveToDir = DetectConfDir();
 		print "Day Planner version $Version - $RCSRev\n";
@@ -4939,25 +4940,6 @@ GetOptions (
 		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
 		print 'OS: ', GetDistVer(), "\n";
 		my $Prev;
-		print 'I18n: ';
-		foreach (sort keys(%ENV))
-		{
-			if (/^(LC_|LANG)/)
-			{
-				print " || " if $Prev;
-				$Prev = true;
-				print "$_=$ENV{$_}";
-			}
-		}
-		if ($Prev)
-		{
-			print "\n";
-		}
-		else
-		{
-			print "(none detected)\n";
-		}
-		$Prev = undef;
 		# Display module information (also includes daemon and notifier deps)
 		my @AvailModules;
 		my @UnavailModules;
@@ -4998,6 +4980,28 @@ GetOptions (
 			}
 			print " '".$i."'";
 		}
+		print "\n";
+		$Prev = undef;
+		print 'I18n: ';
+		foreach (sort keys(%ENV))
+		{
+			if (/^(LC_|LANG)/)
+			{
+				print " || " if $Prev;
+				$Prev = true;
+				print "$_=$ENV{$_}";
+			}
+		}
+		if ($Prev)
+		{
+			print "\n";
+		}
+		else
+		{
+			print "(none detected)\n";
+		}
+		DP_InitI18n();
+		print 'I18n workaround: '. ($i18n->{workaround} ? 'on' : 'off');
 		print "\n";
 		exit(0);
 	},
