@@ -193,6 +193,7 @@ sub DaemonLog
 # Usage: $seconds = ParseNotifyPre($Events_NotifyPre);
 sub ParseNotifyPre {
 	my $Events_NotifyPre = shift;
+	assert(defined $Events_NotifyPre);
 
 	my $Number = $Events_NotifyPre;
 	my $Type = $Events_NotifyPre;
@@ -335,6 +336,7 @@ sub LoadDaemonState
 sub AddNotifiedUID
 {
 	my $UID = shift;
+	assert(defined $UID);
 	# Clear HasNotified if it's old
 	if(not OnSameDate(time(),$DaemonState{LastWritten}))
 	{
@@ -369,6 +371,7 @@ sub PrintHelp {
 # Usage: loggingSystem(SAME_AS_system());
 sub loggingSystem
 {
+	assert(scalar(@_) > 0);
 	DaemonLog(5,join(' ',@_));
 	return(system(@_));
 }
@@ -383,6 +386,8 @@ sub loggingSystem
 sub HumanTimeToSeconds
 {
 	my $time = shift;
+	assert(defined $time);
+	assert($time =~ /:/);
 	my $hour = $time;
 	my $minute = $time;
 	# The value can be returned as zero if value is 00:00
@@ -601,12 +606,14 @@ sub OpenSocket {
 					Type	=> SOCK_STREAM,
 					Listen	=> 5,
 			) or die "Unable to create a new socket: $@\n";
+	assert(defined $ServerSocket);
 	# Enforce strict permissions
 	chmod(oct(600),$SocketPath);
 	# Trap SIGPIPE
 	$SIG{PIPE} = \&SigPipeHandler;
 	# Create a new select handle for reading
 	$ConnectionSelector = IO::Select->new();
+	assert(defined $ConnectionSelector);
 	# Add the main server
 	$ConnectionSelector->add($ServerSocket);
 
@@ -677,6 +684,7 @@ sub CommandHandler
 sub EventNotification
 {
 	my $time = shift;
+	assert(defined $time);
 	DaemonLog(4,'EventNotification processing');
 	foreach my $UID(@{$Notifications{$time}})
 	{
@@ -690,6 +698,7 @@ sub EventNotification
 sub StartNotifier
 {
 	my $UID = shift;
+	assert(defined $UID);
 	# The current time, used for launch locking
 	my $time = time();
 	# Check for a launch lock
@@ -751,6 +760,7 @@ sub Daemonize
 }
 
 # Purpose: Handler of SIGPIPE
+# Usage: SIG{PIPE} = \&SigPipeHandler;
 sub SigPipeHandler
 {
 	DaemonLog(5,'Recieved SIGPIPE');
@@ -918,7 +928,7 @@ sub InitDaemon
 	# Okay, all initialiation has been done. Just rest in the main loop.
 	MainLoop();
 	# This should never happen
-	die('FATAL ERROR: MainLoop() returned');
+	assert(true, 'MainLoop() returned');
 }
 
 GetOptions (
