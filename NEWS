@@ -6,10 +6,13 @@ Version 0.9.1 (Unreleased)
 * Client (dayplanner)
 - Fixed a bug that caused scrollbars in the main event list to not disappear
   when days were changed
+- Fixed a bug in the i18n build scripts that caused some strings not to be
+  translated
 
 * Notifier (dayplanner-notifier)
 
 * Daemon (dayplanner-daemon)
+- Fixed a bug that caused daemon_state.conf to fill up with UIDs
 
 Version 0.9 "Junior" (Released on the 1st of May 2008)
 ------------------------
