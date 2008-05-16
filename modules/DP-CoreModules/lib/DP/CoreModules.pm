@@ -387,10 +387,10 @@ sub P_LoadConfig {
 	my $Dir = shift;
 	my $File = shift;
 	my %UserConfig;
-	# If it doesn't exist then we just let WriteConfig handle it
-	unless (-e "$Dir/$File") {
+	# If it doesn't exist then we call WriteConfig first
+	if(not -e "$Dir/$File")
+	{
 		WriteConfig($Dir, $File);
-		return({});
 	}
 	
 	my %OptionRegexHash = (
