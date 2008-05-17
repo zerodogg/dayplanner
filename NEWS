@@ -8,6 +8,8 @@ Version 0.9.1 (Unreleased)
   when days were changed
 - Fixed a bug in the i18n build scripts that caused some strings not to be
   translated
+- Fixed a bug that caused the edit/delete event buttons some times to stay
+  active, even when there was nothing selected.
 
 * Notifier (dayplanner-notifier)
 
