@@ -3389,8 +3389,8 @@ sub CreateEventContainerWin {
 
 # Purpose: Add a event. Creates the main window and calls the proper event functions
 # Usage: AddEvent();
-sub AddEvent {
-	Assert(scalar(@_) == 0);
+sub AddEvent
+{
 	$MainWindow->set_sensitive(0);
         my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my $OKSignal;
