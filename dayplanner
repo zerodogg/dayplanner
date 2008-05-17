@@ -711,6 +711,8 @@ sub UpdatedData {
 		# Redraw the calendar
 		CalendarChange();
 	}
+	# Make buttons active/inactive
+	EventListToggle();
 	# Lastly, save the main data if needed.
 	# We do this last because that speeds up redrawing the calendar
 	if(not $DontSave) {
@@ -2679,6 +2681,26 @@ sub Get_DateInfo {
 
 # HELPER FUNCTIONS
 
+# Purpose: Make buttons for add/edit active or inactive
+# Usage: EventListToggle();
+sub EventListToggle
+{
+	if(defined [$EventlistWidget->get_selected_indices]->[0])
+	{
+		$ToolbarEditButton->set_sensitive(1);
+		$ToolbarDeleteButton->set_sensitive(1);
+		$MenuEditEntry->set_sensitive(1);
+		$MenuDeleteEntry->set_sensitive(1);
+	}
+	else
+	{
+		$ToolbarEditButton->set_sensitive(0);
+		$ToolbarDeleteButton->set_sensitive(0);
+		$MenuEditEntry->set_sensitive(0);
+		$MenuDeleteEntry->set_sensitive(0);
+	}
+}
+
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
 sub CreateDetailsWidget {
@@ -4448,6 +4470,7 @@ sub PopulateEventList {
 		}
 	}
 	$EventlistWidget->show();
+	EventListToggle();
 }
 
 # Purpose: Draw the eventlist on the currently selected date in the calendar
@@ -4483,15 +4506,8 @@ sub DrawEventlist {
 	$EventlistWidget->signal_connect('row_activated' => \&EditEvent);
 	$EventlistWin->add($EventlistWidget);
 	# Handle making the toolbar edit button sensitive
-	$EventlistWidget->signal_connect('focus-in-event' => sub {
-		# If there is something in that data array then there is something selected on focus-in-event
-		if(@{$EventlistWidget->{data}}) {
-			$ToolbarEditButton->set_sensitive(1);
-			$ToolbarDeleteButton->set_sensitive(1);
-			$MenuEditEntry->set_sensitive(1);
-			$MenuDeleteEntry->set_sensitive(1);
-		}
-	});
+	$EventlistWidget->signal_connect('focus-in-event' => \&EventListToggle);
+	$EventlistWidget->signal_connect('focus-out-event' => \&EventListToggle);
 	$EventlistWidget->signal_connect('button-release-event' => sub {
 			my($widget,$event) = @_;
 			my $button = $event->button;
@@ -4504,7 +4520,9 @@ sub DrawEventlist {
 					}
 				}
 			}
-		});
+		EventListToggle();
+		}
+	);
 	PopulateEventList();
 }
 
