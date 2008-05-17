@@ -1303,7 +1303,7 @@ sub AddAutostart {
 			last;
 		}
 	}
-	die('Unable to detect the daemon') unless(defined($DaemonExec));
+	Assert(defined $DaemonExec,'Daemon detection failed');
 
 	# KDE - this is easy
 	if(-d "$ENV{HOME}/.kde/") {
@@ -1721,7 +1721,7 @@ sub CLI_Import {
 	die("$Source: is not readable by me\n") unless(-r $Source);
 	die("$Source: is a directory\n") if (-d $Source);
 	# Initialize the daemon (we need it)
-	DaemonInit() or die();
+	Assert(DaemonInit());
 	if($Type =~ /ical/) {
 		if($iCalendar->addfile($Source)) {
 			print "Imported iCalendar data from $Source\n";
@@ -4815,7 +4815,7 @@ sub InitDPCore {
 	# Connect to a DPS server and sync the local data with it if it's enabled
 	DPS_Perform('SYNC');
 	# Initialize the daemon
-	DaemonInit() or die();
+	Assert(DaemonInit());
 	# Finally, initialize HTTP subscriptions if needed
 	LoadHTTPSubscriptions();
 	# Add autostart if needed
