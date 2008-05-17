@@ -32,7 +32,7 @@ use constant {
 };
 
 # Exported functions
-our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero InPath);
+our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero InPath PrefixZero);
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
@@ -138,8 +138,18 @@ sub LoadConfigFile {
 # Purpose: Append a "0" to a number if it is only one digit.
 # Usage: my $NewNumber = AppendZero(NUMBER);
 sub AppendZero {
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	warn("Deprecated call to AppendZero() from $filename:$line. Use PrefixZero()\n");
+	return DP::GeneralHelpers::PrefixZero(@_);
+}
+
+# Purpose: Prefix a number with 0 if it is only one digit
+# Usage: $NewNo = PrefixZero(NUMBER);
+sub PrefixZero
+{
 	my $Number = shift;
-	if ($Number =~ /^\d$/) {
+	if(length($Number) == 1)
+	{
 		return("0$Number");
 	}
 	return($Number);
