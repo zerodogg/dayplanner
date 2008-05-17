@@ -865,14 +865,13 @@ sub Assert
 	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
 	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
 	{
-		warn($msg);
 		if(defined $SaveToDir && -d $SaveToDir && defined $iCalendar)
 		{
 			my $bakFile = $SaveToDir.'/assertionFailureBackup.'.time().'.ics';
 			$iCalendar->write($bakFile);
-			die('Calendar backup written to: '.$SaveToDir.'/assertionFailureBackup.ics'."\n");
+			die($msg.'Calendar backup written to: '.$SaveToDir.'/assertionFailureBackup.ics'."\n");
 		}
-		die("\n");
+		die($msg);
 	}
 	# If not, then we output it and happily continue processing
 	else
@@ -3471,8 +3470,8 @@ sub AddEvent
 
 # Purpose: Edit the event currently selected in the eventlist
 # Usage: EditEvent ();
-sub EditEvent {
-	Assert(scalar(@_) == 0);
+sub EditEvent
+{
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	unless(defined($Selected)) {
