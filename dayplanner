@@ -871,7 +871,7 @@ sub Assert
 		{
 			my $bakFile = $SaveToDir.'/assertionFailureBackup.'.time().'.ics';
 			$iCalendar->write($bakFile);
-			die($msg.'Calendar backup written to: '.$SaveToDir.'/assertionFailureBackup.ics'."\n");
+			die($msg.'Calendar backup written to: '.$bakFile."\n");
 		}
 		die($msg);
 	}
