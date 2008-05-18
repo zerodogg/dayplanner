@@ -1582,6 +1582,7 @@ sub EvoCompat_Enable
 		{
 			next if not /evolution-data-server/;
 			$EDSExists = true;
+			last;
 		}
 		if(not $EDSExists)
 		{
@@ -2722,7 +2723,7 @@ sub CreateDetailsWidget {
 # Purpose: Add a date to a text field
 # Usage: AddToField(ENTRY, YEAR, MONTH, DAY);
 sub AddToField {
-	Assert(scalar(@_) == 4);
+	Assert(scalar(@_) >= 4);
 	my($Entry,$Year,$Month,$Day) = @_;
 
 	$Month = AppendZero($Month);
