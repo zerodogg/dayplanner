@@ -4786,11 +4786,18 @@ sub InitDPCore {
 		my $Exception =  Glib->install_exception_handler(sub {
 			my $Exception = shift;
 			my $Chomped = $Exception;
-			chomp($Chomped);
+			$Chomped =~ s/\n/ || /;
 			# This is the DP perl exception handler
 			DPIntWarn("An exception occurred: $Chomped");
 			# Display an error
-			DPError("An exception occurred. This reflects a bug in the application.\nPlease save the following exception text and report this problem to the Day Planner developers.\nNow some things may not work as expected\n\nException:\n$Exception");
+			if ($i18n)
+			{
+				DPError($i18n->get_advanced("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: %(exception)", { exception => $Exception }));
+			}
+			else
+			{
+				DPError("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: $Exception");
+			}
 			# Make the main window sensitive - this so that the program is at least
 			# partially usable after the exception occurred.
 			$MainWindow->set_sensitive(1);
