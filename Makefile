@@ -199,7 +199,7 @@ debonly:
 	(cd dp_deb_tmp; tar -jxvf ../packages/dayplanner-$(VERSION).tar.bz2)
 	(cd dp_deb_tmp; cp ../packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner_$(VERSION).orig.tar.bz2)
 	(cd dp_deb_tmp; bunzip2 ./dayplanner_$(VERSION).orig.tar.bz2 && gzip ./dayplanner_$(VERSION).orig.tar)
-	(if ! grep $(VERSION) ./devel-tools/debian/changelog; then $$EDITOR ./devel-tools/debian/changelog;fi)
+	(if ! grep -F '($(VERSION)-1)' ./devel-tools/debian/changelog 2>&1 >/dev/null; then $$EDITOR ./devel-tools/debian/changelog;fi)
 	cp -r ./devel-tools/debian ./dp_deb_tmp/dayplanner-$(VERSION)/debian
 	(cd dp_deb_tmp/dayplanner-$(VERSION); debuild -i -us -uc -b)
 	mv dp_deb_tmp/*deb packages/
