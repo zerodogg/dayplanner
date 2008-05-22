@@ -27,6 +27,9 @@ INSTALLRULES=maininstall moduleinstall artinstall holidayinstall DHPinstall nice
 prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
 
+# The package to build with distrib
+PKG=$(shell if which debuild 2>&1 >/dev/null; then echo deb; else echo rpm;fi)
+
 VERSION=0.9.1
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
@@ -166,7 +169,7 @@ gendistribdesktop:
 	./devel-tools/GenDesktop .
 ./doc/dayplanner.desktop: gendistribdesktop
 # --- DISTRIB TARGETS ---
-distrib: prepdistrib tarball rpm installer
+distrib: prepdistrib tarball $(PKG) installer
 prepdistrib: gendistribdesktop test clean
 	mkdir -p packages
 tarball: prepdistrib
@@ -176,7 +179,9 @@ tarball: prepdistrib
 	rm -rf `find dayplanner-$(VERSION) -name \\.svn`
 	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
 	rm -rf dayplanner-$(VERSION)
-rpm: prepdistrib tarball
+rpm: prepdistrib tarball rpmonly
+rpmonly:
+	[ -e ./packages/dayplanner-$(VERSION).tar.bz2 ]
 	mkdir -p $$HOME/rpm/SOURCES/ $$HOME/rpm/RPMS/noarch/ $$HOME/rpm/BUILD/ $$HOME/rpm/SRPMS
 	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
 	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
@@ -186,6 +191,19 @@ rpm: prepdistrib tarball
 	rm -f ./dayplanner.spec
 	mv $$HOME/rpm/RPMS/noarch/dayplanner*.rpm $$HOME/rpm/SRPMS/dayplanner*.rpm ./packages/
 	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+deb: prepdistrib tarball debonly
+debonly:
+	[ -e ./packages/dayplanner-$(VERSION).tar.bz2 ]
+	rm -rf ./dp_deb_tmp
+	mkdir -p ./dp_deb_tmp
+	(cd dp_deb_tmp; tar -jxvf ../packages/dayplanner-$(VERSION).tar.bz2)
+	(cd dp_deb_tmp; cp ../packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner_$(VERSION).orig.tar.bz2)
+	(cd dp_deb_tmp; bunzip2 ./dayplanner_$(VERSION).orig.tar.bz2 && gzip ./dayplanner_$(VERSION).orig.tar)
+	(if ! grep $(VERSION) ./devel-tools/debian/changelog; then $$EDITOR ./devel-tools/debian/changelog;fi)
+	cp -r ./devel-tools/debian ./dp_deb_tmp/dayplanner-$(VERSION)/debian
+	(cd dp_deb_tmp/dayplanner-$(VERSION); debuild -i -us -uc -b)
+	mv dp_deb_tmp/*deb packages/
+	rm -rf dp_deb_tmp
 installer: prepdistrib tarball
 	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
 	mkdir -p installer
