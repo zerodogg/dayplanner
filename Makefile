@@ -77,6 +77,7 @@ uninstall:
 
 clean:
 	rm -f `find|egrep '(~|\.swp)$$'`
+	rm -rf ./dp_deb_tmp
 	rm -f po/*.mo po/*.pot
 	rm -rf po/locale packages locale dayplanner-$(VERSION) installer
 	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
