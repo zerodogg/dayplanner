@@ -27,6 +27,9 @@ INSTALLRULES=maininstall maninstall moduleinstall artinstall holidayinstall DHPi
 prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "$$ENV{HOME}/.local"}')
 endif
 
+# The package to build with distrib
+PKG=$(shell if which debuild 2>&1 >/dev/null; then echo deb; else echo rpm;fi)
+
 # If this file does not exist it means manpages aren't built. So build them.
 MANPAGES=$(shell [ ! -e ./dayplanner.1 ] && echo man)
 
@@ -77,6 +80,7 @@ uninstall:
 
 clean:
 	rm -f `find|egrep '(~|\.swp)$$'`
+	rm -rf ./dp_deb_tmp
 	rm -f po/*.mo po/*.pot
 	rm -rf po/locale packages locale dayplanner-$(VERSION) installer
 	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
@@ -94,8 +98,8 @@ man:
 	pod2man --name "Day Planner" --center "" --release "Day Planner Notifier $(VERSION)" ./dayplanner-notifier ./dayplanner-notifier.1
 # Install manpages
 maninstall:
-	mkdir -p "$(DATADIR)/man/man1"
-	cp -f dayplanner.1 dayplanner-daemon.1 dayplanner-notifier.1 "$(DATADIR)/man/man1" 
+	mkdir -p "$(DESTDIR)$(DATADIR)/man/man1"
+	cp -f dayplanner.1 dayplanner-daemon.1 dayplanner-notifier.1 "$(DESTDIR)$(DATADIR)/man/man1" 
 
 # Date::HolidayParser installation
 DHPinstall:
@@ -172,24 +176,27 @@ desktoplocal:
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Distrib .desktop file installation
-distribdesktop:
+distribdesktop: gendistribdesktop
 	mkdir -p $(DESTDIR)$(DATADIR)/applications
 	install -m644 ./doc/dayplanner.desktop $(DESTDIR)$(DATADIR)/applications
 # Gen distrib desktop file
 gendistribdesktop:
 	./devel-tools/GenDesktop .
 # --- DISTRIB TARGETS ---
-distrib: prepdistrib tarball rpm installer
+distrib: prepdistrib tarball $(PKG) installer
 prepdistrib: gendistribdesktop test clean
 	mkdir -p packages
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
 	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.svn ./dayplanner-$(VERSION)
 	make -C ./dayplanner-$(VERSION) distclean
+	rm -rf ./dayplanner-$(VERSION)/devel-tools/rpm ./dayplanner-$(VERSION)/devel-tools/debian
 	rm -rf `find dayplanner-$(VERSION) -name \\.svn`
 	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
 	rm -rf dayplanner-$(VERSION)
-rpm: prepdistrib tarball
+rpm: prepdistrib tarball rpmonly
+rpmonly:
+	[ -e ./packages/dayplanner-$(VERSION).tar.bz2 ]
 	mkdir -p $$HOME/rpm/SOURCES/ $$HOME/rpm/RPMS/noarch/ $$HOME/rpm/BUILD/ $$HOME/rpm/SRPMS
 	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
 	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
@@ -199,6 +206,19 @@ rpm: prepdistrib tarball
 	rm -f ./dayplanner.spec
 	mv $$HOME/rpm/RPMS/noarch/dayplanner*.rpm $$HOME/rpm/SRPMS/dayplanner*.rpm ./packages/
 	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
+deb: prepdistrib tarball debonly
+debonly:
+	[ -e ./packages/dayplanner-$(VERSION).tar.bz2 ]
+	rm -rf ./dp_deb_tmp
+	mkdir -p ./dp_deb_tmp
+	(cd dp_deb_tmp; tar -jxvf ../packages/dayplanner-$(VERSION).tar.bz2)
+	(cd dp_deb_tmp; cp ../packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner_$(VERSION).orig.tar.bz2)
+	(cd dp_deb_tmp; bunzip2 ./dayplanner_$(VERSION).orig.tar.bz2 && gzip ./dayplanner_$(VERSION).orig.tar)
+	(if ! grep $(VERSION) ./devel-tools/debian/changelog; then $$EDITOR ./devel-tools/debian/changelog;fi)
+	cp -r ./devel-tools/debian ./dp_deb_tmp/dayplanner-$(VERSION)/debian
+	(cd dp_deb_tmp/dayplanner-$(VERSION); debuild -i -us -uc -b)
+	mv dp_deb_tmp/*deb packages/
+	rm -rf dp_deb_tmp
 installer: prepdistrib tarball
 	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
 	mkdir -p installer
