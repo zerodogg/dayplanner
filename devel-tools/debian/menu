@@ -1,0 +1,2 @@
+?package(dayplanner):needs="X11|wm" section="Apps"\
+  title="dayplanner" command="/usr/bin/dayplanner"

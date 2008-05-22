@@ -1,0 +1,18 @@
+Source: dayplanner
+Section: gnome
+Priority: extra
+Maintainer: Eskild Hustvedt <eskild@zerodogg.org>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: dayplanner
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk2-perl, perl
+Description: An easy and clean Day Planner
+ Day Planner is a simple time management program.
+ .
+ Day Planner is designed to help you easily manage your time.
+ It can manage appointments, birthdays and more. It makes sure you
+ remember your appointments by popping up a dialog box reminding you about it.
+ .
+ http://www.day-planner.org/
