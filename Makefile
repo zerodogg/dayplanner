@@ -202,7 +202,7 @@ debonly:
 	(if ! grep -F '($(VERSION)-1)' ./devel-tools/debian/changelog 2>&1 >/dev/null; then $$EDITOR ./devel-tools/debian/changelog;fi)
 	cp -r ./devel-tools/debian ./dp_deb_tmp/dayplanner-$(VERSION)/debian
 	(cd dp_deb_tmp/dayplanner-$(VERSION); debuild -i -us -uc -b)
-	mv dp_deb_tmp/*deb packages/
+	mv dp_deb_tmp/*$(VERSION)*deb packages/
 	rm -rf dp_deb_tmp
 installer: prepdistrib tarball
 	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
