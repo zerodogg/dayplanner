@@ -2786,15 +2786,7 @@ sub PopupDateSel
 	# so that changing month doesn't inadvertedly change the date too.
 	my $ChangingNow;
 
-	if(not $Mode) {
-		DPIntWarn('PopupDateSel() called without a mode. Defaulting to MULTI.');
-		$Mode = 'MULTI';
-	}
-	elsif(not $Mode eq 'MULTI' && not $Mode eq 'SINGLE')
-	{
-		DPIntWarn('PopupDateSel() called with invalid mode: "'.$Mode.'". Defaulting to MULTI.');
-		$Mode = 'MULTI';
-	}
+	Assert($Mode eq 'MULTI' || $Mode eq 'SINGLE');
 
 	# Create the window and stuff inside the window
 	my $Window = Gtk2::Window->new();
