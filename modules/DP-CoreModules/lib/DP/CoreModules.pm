@@ -22,7 +22,7 @@ use warnings;
 use constant { true => 1, false => 0 };
 
 our $Version = '0.9.1';
-my $VersionName = 'SVN';
+my $VersionName = 'Senior';
 my %RuntimeModules;		# Keeps track of modules loaded during runtime
 
 # NOTE:

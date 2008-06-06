@@ -71,7 +71,7 @@ my $NotifierName = 'dayplanner-notifier';
 # Our version number
 my $Version = '0.9.1';
 # The version name. Used for SVN detection
-my $VersionName = 'SVN';
+my $VersionName = 'Senior';
 # Our RCS revision
 my $RCSRev = '$Id$';
 # The iCalendar object
