@@ -28,7 +28,7 @@ prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "
 endif
 
 # The package to build with distrib
-PKG=$(shell if which debuild 2>&1 >/dev/null; then echo deb; else echo rpm;fi)
+PKG=$(shell if which debuild 2>/dev/null >/dev/null; then echo deb; else echo rpm;fi)
 
 # If this file does not exist it means manpages aren't built. So build them.
 MANPAGES=$(shell [ ! -e ./dayplanner.1 ] && echo man)
