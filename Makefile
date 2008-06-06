@@ -28,7 +28,7 @@ prefix=$(shell perl -e 'if($$< == 0 or $$> == 0) { print "/usr" } else { print "
 endif
 
 # The package to build with distrib
-PKG=$(shell if which debuild 2>&1 >/dev/null; then echo deb; else echo rpm;fi)
+PKG=$(shell if which debuild 2>/dev/null >/dev/null; then echo deb; else echo rpm;fi)
 
 VERSION=0.9.1
 DP_DATADIR ?= dayplanner
