@@ -48,7 +48,7 @@ use DP::GeneralHelpers::I18N;
 
 # Scalars
 our $Version = '0.9.1';
-my $VersionName = 'SVN';
+my $VersionName = 'Senior';
 my $RCSRev = '$Id$';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
