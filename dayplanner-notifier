@@ -41,6 +41,8 @@ my $RealZero = $0;
 $0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
 my $Version = '0.10';
+# The version name. Used for SVN detection
+my $VersionName = 'SVN';
 my $RCSRev = '$Id$';
 
 my $CalendarPath;		# The source iCalendar file
@@ -59,6 +61,36 @@ my $LaunchTime = time();
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # HELPER FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Die with useful information if an Assertion fails
+# Usage: assert(TRUE/FALSE EXPR, REASON);
+sub Assert
+{
+	my $expr = shift;
+	return true if $expr;
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
+	my $msg;
+	if(defined($_[0]))
+	{
+		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line: $_[0]\n";
+	}
+	else
+	{
+		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line\n";
+	}
+	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
+	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
+	{
+		die($msg);
+	}
+	# If not, then we output it and happily continue processing
+	else
+	{
+		DaemonLog(0,$msg);
+	}
+	return true;
+}
 
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
@@ -96,19 +128,16 @@ sub X_Available {
 	if(Gtk2->CHECK_VERSION(2,10,0)) {
 		# Use the Gtk2->init_check function
 		if(Gtk2->init_check()) {
-			return(1);
+			return(true);
 		} else {
-			return(0);
+			return(false);
 		}
 	} else {
 		# Fall back to using the ugly system()-based test.
-
-		# This statement might look a bit weird, but remember that for commandline
-		# programs 0 is true and anything else is false.
-		if(system('perl', '-e', 'use Gtk2; open(STDERR, \'>/dev/null\'); Gtk2->init;')) {
-			return(0);
+		if(system('perl', '-e', 'use Gtk2; open(STDERR, \'>/dev/null\'); Gtk2->init;') <= 0) {
+			return(false);
 		} else {
-			return(1);
+			return(true);
 		}
 	}
 }
@@ -119,6 +148,8 @@ sub GetMessagesFromCalendar
 {
 	my $calendar = shift;
 	my $UID = shift;
+	Assert($calendar);
+	Assert($UID);
 	my $iCalendar = DP::iCalendar->new($calendar);
 	my $UIDInf = $iCalendar->get_info($UID);
 	$Message = $UIDInf->{'SUMMARY'};
