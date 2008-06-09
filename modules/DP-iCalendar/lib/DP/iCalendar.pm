@@ -761,6 +761,7 @@ sub iCal_ConvertToUnixTime {
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
 sub iCal_ParseDateTime {
 	my $Value = shift;
+	return if _nf_assert(defined $Value,'Undef parameter to iCal_ParseDateTime()');
 
 	# Handling of VALUE=DATE:YYYYMMDD
 	if($Value =~ /^VALUE/) {
@@ -1027,6 +1028,19 @@ sub _GenerateCalendar {
 	$this->{OrderedCalendar}{$EventYear} = {};
 	foreach my $UID ($this->_GetAllUIDS()) {
 		my $Current = $this->_GetUIDEntry($UID);
+		if(not defined $Current->{'DTSTART'})
+		{
+			if(defined $Current->{'DTEND'})
+			{
+				_WarnOut('UID '.$UID.' is missing a DTSTART entry, but had DTEND. Setting DTSTART to DTEND');
+				$Current->{'DTSTART'}  = $Current->{'DTEND'};
+			}
+			else
+			{
+				_WarnOut('UID '.$UID.' is missing a DTSTART entry. Skipping this UID.');
+				next;
+			}
+		}
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Current->{'DTSTART'});
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
