@@ -15,7 +15,22 @@ Version 0.10 (Unreleased)
 * Daemon (dayplanner-daemon)
 - Added manpage
 
-Version 0.9 (Unreleased)
+Version 0.9.1 "Senior" (Released on the 5th of June 2008)
+------------------------
+* Client (dayplanner)
+- Fixed a bug that caused scrollbars in the main event list to not disappear
+  when days were changed
+- Fixed a bug in the i18n build scripts that caused some strings not to be
+  translated
+- Fixed a bug that caused the edit/delete event buttons some times to stay
+  active, even when there was nothing selected.
+
+* Notifier (dayplanner-notifier)
+
+* Daemon (dayplanner-daemon)
+- Fixed a bug that caused daemon_state.conf to fill up with UIDs
+
+Version 0.9 "Junior" (Released on the 1st of May 2008)
 ------------------------
 * Client (dayplanner)
 - Now requires perl 5.8.0 or later
@@ -30,6 +45,11 @@ Version 0.9 (Unreleased)
 - Fixed a bug that caused DP to crash on some distributions using Gtk+ 2.14
 - Fixed a bug that caused LAST-MODIFIED and CREATED entries to be wrong
 	(zero-indexed month instead of one-indexed)
+- Added a whitelist of distros that does not need the i18n workaround for
+	certain versions of perl-gtk2.
+- The popup-calendar can now handle "ESC" to close it
+- The popup-calendar now handles month and year changes in a saner way
+	(changes the date in the entry field as expected).
 
 * Notifier (dayplanner-notifier)
 
