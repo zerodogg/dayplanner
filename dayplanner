@@ -1950,6 +1950,7 @@ sub ImportDataFromProgram {
 	$ImportWindow->set_transient_for($MainWindow) if $MainWindow;
 	$ImportWindow->set_position('center-on-parent');
 	$ImportWindow->set_default_size(120,50);
+	$ImportWindow->set_type_hint('dialog');
 	$ImportWindow->resize(120,50);
 	# Do some extra things if it is the first time
 	if($FirstTime) {
