@@ -30,7 +30,7 @@ endif
 # The package to build with distrib
 PKG=$(shell if which debuild 2>/dev/null >/dev/null; then echo deb; else echo rpm;fi)
 
-VERSION=0.9.1
+VERSION=0.9.2
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
