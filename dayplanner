@@ -2374,6 +2374,7 @@ sub DPCreateProgressWin {
 	$ProgressHash{Window} = Gtk2::Window->new();
 	$ProgressHash{Window}->set_skip_taskbar_hint(1);
 	$ProgressHash{Window}->set_skip_pager_hint(1);
+	$ProgressHash{Window}->set_type_hint('dialog');
 	if(defined($Name)) {
 		$ProgressHash{Window}->set_title($Name);
 	}
@@ -4079,6 +4080,7 @@ sub PreferencesWindow {
 	$PreferencesWindow->set_border_width(12);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
 	$PreferencesWindow->set_skip_pager_hint(1);
+	$PreferencesWindow->set_type_hint('dialog');
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
 	
