@@ -2196,6 +2196,7 @@ sub ImportData {
 	$ImportWindow->set_border_width(12);
 	$ImportWindow->set_skip_taskbar_hint(1);
 	$ImportWindow->set_skip_pager_hint(1);
+	$ImportWindow->set_type_hint('dialog');
 	$ImportWindow->signal_connect('destroy' => sub {
 			$MainWindow->set_sensitive(1);
 		});
@@ -2344,6 +2345,7 @@ sub ImportDataFromProgram {
 		$ImportWindow->set_skip_taskbar_hint(1);
 		$ImportWindow->set_skip_pager_hint(1);
 	}
+	$ImportWindow->set_type_hint('dialog');
 	$ImportWindow->set_resizable(0);
 	$ImportWindow->set_border_width(12);
 	my $ImportVBox = Gtk2::VBox->new();
@@ -2744,6 +2746,7 @@ sub DPCreateProgressWin {
 	$ProgressHash{Window} = Gtk2::Window->new();
 	$ProgressHash{Window}->set_skip_taskbar_hint(1);
 	$ProgressHash{Window}->set_skip_pager_hint(1);
+	$ProgressHash{Window}->set_type_hint('dialog');
 	if(defined($Name)) {
 		$ProgressHash{Window}->set_title($Name);
 	}
@@ -4449,6 +4452,7 @@ sub PreferencesWindow {
 	$PreferencesWindow->set_border_width(12);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
 	$PreferencesWindow->set_skip_pager_hint(1);
+	$PreferencesWindow->set_type_hint('dialog');
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
 	
