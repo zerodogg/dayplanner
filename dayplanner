@@ -42,7 +42,7 @@ use Date::HolidayParser 0.4;	# Parsing of .holiday files
 use DP::CoreModules;
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::iCalendar::Manager;		# Support for multiple iCalendars using a single object
-use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile PrefixZero);
 use DP::GeneralHelpers::IPC;
 use DP::GeneralHelpers::I18N;
 
@@ -2757,8 +2757,8 @@ sub AddToField {
 	Assert(scalar(@_) >= 4);
 	my($Entry,$Year,$Month,$Day) = @_;
 
-	$Month = AppendZero($Month);
-	$Day = AppendZero($Day);
+	$Month = PrefixZero($Month);
+	$Day = PrefixZero($Day);
 	# First get the text
 	my $FieldText = $Entry->get_text();
 	# Then add to the text
@@ -2806,11 +2806,11 @@ sub RemoveFromField {
 # 		CURRENT - Use todays date
 sub PopupDateSel
 {
+	Assert(scalar(@_) > 2);
 	my $TextEntry = shift;
 	my $CalButton = shift;
 	$CalButton->set_sensitive(0);
 	my $Mode = shift;
-	Assert(scalar(@_) > 2);
 	my $Default_Date = shift;
 
 	# This is used to indicate when we are changing months,
@@ -2892,8 +2892,8 @@ sub PopupDateSel
 					$Calendar->mark_day($Day);
 				}
 			}
-			# If we're in single mode, then make our day-selected handler do some work aswell
-			if($Mode eq 'SINGLE')
+			# If we're in single mode, then make our day-selected handler do some work aswell (but only when $ChangingNow)
+			if($Mode eq 'SINGLE' and $ChangingNow)
 			{
 				$Calendar->signal_emit('day-selected');
 			}
@@ -2924,7 +2924,7 @@ sub PopupDateSel
 			my $Selected = $Calendar->selected_day();
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
-			if($SelHash{$Selected} && !$Mode eq 'SINGLE') {
+			if($SelHash{$Selected} && $Mode eq 'MULTI') {
 				$Calendar->unmark_day($Selected);
 				delete($SelHash{$Selected});
 				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
@@ -2935,7 +2935,7 @@ sub PopupDateSel
 					$TextEntry->set_text('');
 				}
 				$Calendar->mark_day($Selected);
-				$SelHash{$Selected} = 1;
+				$SelHash{$Selected} = true;
 				AddToField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
 			}
 		});
@@ -3206,8 +3206,8 @@ sub GetExceptionsFromEntry {
 	my @ReturnArray;
 	foreach my $Date (@{$EntryArray}) {
 		my($Year,$Month,$Day) = ParseDateString($Date);
-		$Month = AppendZero($Month);
-		$Day = AppendZero($Day);
+		$Month = PrefixZero($Month);
+		$Day = PrefixZero($Day);
 		push(@ReturnArray,"$Year$Month$Day");
 	}
 	return(\@ReturnArray);
@@ -3225,8 +3225,8 @@ sub GetDateFromEntry {
 	my @ReturnArray;
 	foreach my $Date (@{$EntryArray}) {
 		my($Year,$Month,$Day) = ParseDateString($Date);
-		$Month = AppendZero($Month);
-		$Day = AppendZero($Day);
+		$Month = PrefixZero($Month);
+		$Day = PrefixZero($Day);
 		if(wantarray()) {
 			return($Year,$Month,$Day);
 		} else {
