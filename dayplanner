@@ -3159,16 +3159,6 @@ sub PopupDateSel
 	# so that changing month doesn't inadvertedly change the date too.
 	my $ChangingNow;
 
-	if(not $Mode) {
-		DPIntWarn('PopupDateSel() called without a mode. Defaulting to MULTI.');
-		$Mode = 'MULTI';
-	}
-	elsif(not $Mode eq 'MULTI' and not $Mode eq 'SINGLE')
-	{
-		DPIntWarn('PopupDateSel() called with invalid mode: "'.$Mode.'". Defaulting to MULTI.');
-		$Mode = 'MULTI';
-	}
-
 	# Create the window and stuff inside the window
 	my $Window = Gtk2::Window->new();
 	$Window->set_deletable(0);
@@ -3242,8 +3232,8 @@ sub PopupDateSel
 					$Calendar->mark_day($Day);
 				}
 			}
-			# If we're in single mode, then make our day-selected handler do some work aswell
-			if($Mode eq 'SINGLE')
+			# If we're in single mode, then make our day-selected handler do some work aswell (but only when $ChangingNow)
+			if($Mode eq 'SINGLE' and $ChangingNow)
 			{
 				$Calendar->signal_emit('day-selected');
 			}
@@ -3274,7 +3264,7 @@ sub PopupDateSel
 			my $Selected = $Calendar->selected_day();
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
-			if($SelHash{$Selected} && !$Mode eq 'SINGLE') {
+			if($SelHash{$Selected} && $Mode eq 'MULTI') {
 				$Calendar->unmark_day($Selected);
 				delete($SelHash{$Selected});
 				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
@@ -3285,7 +3275,7 @@ sub PopupDateSel
 					$TextEntry->set_text('');
 				}
 				$Calendar->mark_day($Selected);
-				$SelHash{$Selected} = 1;
+				$SelHash{$Selected} = true;
 				AddToField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
 			}
 		});
