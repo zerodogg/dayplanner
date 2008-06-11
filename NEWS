@@ -4,9 +4,11 @@ Day Planner version history
 Version 0.9.2 (Unreleased)
 ------------------------
 * Client (dayplanner)
-- Properly set the window type hint for several windows
+- Properly set the window type hint for several windows.
 - Fixed a bug that could cause the currently used date to be changed
 	when opening the calendar that selects a date.
+- Now provides Window managers with differently sized icons, should fix icons
+	in various pagers.
 
 * Notifier (dayplanner-notifier)
 
