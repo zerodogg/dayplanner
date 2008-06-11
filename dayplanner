@@ -2335,11 +2335,12 @@ sub ImportDataFromProgram {
 	# Do some extra things if it is the first time
 	if($FirstTime) {
 		$ImportWindow->set_title($i18n->get('Day Planner') . ' - ' . $i18n->get('Import data'));
-		# Set the icon
-		my $WindowIcon = DetectImage('dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
-		if ($WindowIcon) {
-			$ImportWindow->set_default_icon_from_file($WindowIcon);
-		}	
+		# Set the icons
+		my @WindowIcons = GetAppIcons();
+		if (@WindowIcons)
+		{
+			$ImportWindow->set_icon_list(@WindowIcons);
+		}
 	} else {
 		$ImportWindow->set_title($i18n->get("Import data"));
 		$ImportWindow->set_skip_taskbar_hint(1);
@@ -3056,6 +3057,34 @@ sub Get_DateInfo {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # HELPER FUNCTIONS
+
+# Purpose: Get a Gtk2::Pixbuf array of icons
+# Usage: array = GetAppIcons();
+# TODO: Make the the array global so that we don't have to re-create this multiple times for other windows.
+sub GetAppIcons
+{
+	my $maxImages = 4;
+	my $totalImages = 0;
+	my @ret;
+	foreach my $img (qw(dayplanner-48x48.png dayplanner-32x32.png dayplanner-24x24.png dayplanner-16x16.png dayplanner.png dayplanner_HC48.png dayplanner_HC24.png dayplanner_HC16.png dayplanner-about.png))
+	{
+		my $path = DetectImage($img);
+		next if not $path;
+		my $pbuf = Gtk2::Gdk::Pixbuf->new_from_file($path);
+		next if not $pbuf;
+		$totalImages++;
+		push(@ret,$pbuf);
+		if ($totalImages <= $maxImages)
+		{
+			last;
+		}
+	}
+	if(not @ret)
+	{
+		DPIntWarn('Failed to detect any images or icons. Strange or broken install?');
+	}
+	return(@ret);
+}
 
 # Purpose: Make buttons for add/edit active or inactive
 # Usage: EventListToggle();
@@ -4890,9 +4919,10 @@ sub DrawMainWindow {
 	}
 
 	# Set the icon
-	my $MainWindowIcon = DetectImage('dayplanner-16x16.png', 'dayplanner-24x24.png', 'dayplanner-32x32.png', 'dayplanner-48x48.png', 'dayplanner.png', 'dayplanner_HC16.png', 'dayplanner_HC24.png','dayplanner_HC48.png',);
-	if ($MainWindowIcon) {
-		$MainWindow->set_default_icon_from_file($MainWindowIcon);
+	my @MainWindowIcons = GetAppIcons();
+	if (@MainWindowIcons)
+	{
+		$MainWindow->set_icon_list(@MainWindowIcons);
 	}
 
 	# Make it handle closing
