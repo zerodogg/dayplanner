@@ -22,6 +22,8 @@
 # along with this program in a file named COPYING.gpl. 
 # If not, see <http://www.gnu.org/licenses/>.
 package DP::GeneralHelpers::IPC;
+use strict;
+use warnings;
 use IO::Socket::UNIX;
 use Glib;
 use constant {
@@ -121,6 +123,20 @@ sub client_send {
 	my $data = shift;
 	my $Socket = $self->{Socket};
 	print $Socket $data,"\n";
+}
+
+# Purpose: Send data to the server and wait for a reply (blocking version of client_send that bypasses handler)
+# Usage: ret = obj->client_send_blocking(DATA);
+#	TODO: Need to set a very short timeout here
+sub client_send_blocking
+{
+	my $self = shift;
+	$self->client_send(@_);
+
+	my $sock = $self->{Socket};
+	my $ret = <$sock>;
+	chomp($ret);
+	return $ret;
 }
 
 # -- INTERNAL IPC HANDLER FUNCTIONS --
