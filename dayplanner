@@ -843,6 +843,102 @@ sub PrintHelp {
 	printf "%-4s %-16s %s\n", $_[0], $_[1], $_[2];
 }
 
+# Purpose: Get debugging info
+# Usage: GetDebugInfo(SCALAR?);
+# 	If SCALAR is true then returns a scalar, if not prints to STDOUT.
+sub GetDebugInfo
+{
+	my $scalar = shift;
+
+	my $target;
+	if ($scalar)
+	{
+		$scalar = '';
+		open($target, '>',\$scalar);
+	}
+	else
+	{
+		open($target, '>&', \*STDOUT);
+		my $orig_fh = select($target);
+		$| = 1;
+		select($orig_fh);
+	}
+	$SaveToDir = DetectConfDir();
+	print {$target} "Day Planner version $Version - $RCSRev\n";
+	print {$target} "Using config dir: $SaveToDir\n";
+	printf {$target} "Perl version %vd\n", $^V;
+	print {$target} 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
+	print {$target} 'OS: ', GetDistVer(), "\n";
+	my $Prev;
+	# Display module information (also includes daemon and notifier deps)
+	my @AvailModules;
+	my @UnavailModules;
+	print {$target} "Available modules:";
+	foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/) {
+		if(eval("use $Module; 1")) {
+			if($Prev) {
+				print {$target} ',';
+			} else {
+				$Prev = 1;
+			}
+			my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}else { return undef;}");
+			if($ModVer and $ModVer =~ /\S/ and length($ModVer) > 1 and $ModVer =~ /\d/) {
+				$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
+				# printf() doesn't like it so we remove it.
+				print {$target} " $Module $ModVer";
+			} else {
+				print {$target} " $Module";
+			}
+		} else {
+			push(@UnavailModules, $Module);
+		}
+	}
+	print {$target} "\nUnavailable modules:";
+	print {$target} " $_" foreach(@UnavailModules);
+	print {$target} ' (none)' unless(@UnavailModules);
+	print {$target} "\n";
+	print {$target} '@INC:';
+	$Prev = false;
+	foreach my $i (@INC) {
+		if ($Prev)
+		{
+			print {$target} ',';
+		}
+		else
+		{
+			$Prev = true;
+		}
+		print {$target} " '".$i."'";
+	}
+	print {$target} "\n";
+	$Prev = undef;
+	print {$target} 'I18n: ';
+	foreach (sort keys(%ENV))
+	{
+		if (/^(LC_|LANG)/)
+		{
+			print {$target} " || " if $Prev;
+			$Prev = true;
+			print {$target} "$_=$ENV{$_}";
+		}
+	}
+	if ($Prev)
+	{
+		print {$target} "\n";
+	}
+	else
+	{
+		print {$target} "(none detected)\n";
+	}
+	if(not $i18n)
+	{
+		DP_InitI18n();
+	}
+	print {$target} 'I18n workaround: '. ($i18n->{workaround} ? 'on' : 'off');
+	print {$target} "\n";
+	return $scalar;
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Core helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2034,6 +2130,7 @@ sub ImportDataFromProgram {
 	$ImportVBox->pack_end($ButtonHBox,0,0,0);
 	
 	# Ok button
+	# TRANSLATORS: Button in the "import from program" window
 	my $OKButton = Gtk2::Button->new($i18n->get('_Import'));
 	my $OKImg = Gtk2::Image->new_from_stock('gtk-open','button');
 	$OKButton->set_image($OKImg);
@@ -2052,6 +2149,7 @@ sub ImportDataFromProgram {
 
 	# Cancel button
 	my $CancelImg = Gtk2::Image->new_from_stock('gtk-cancel','button');
+	# TRANSLATORS: Button in the "import from program" window
 	my $CancelButton = Gtk2::Button->new($i18n->get("_Don't import"));
 	$CancelButton->set_image($CancelImg);
 	$CancelButton->show();
@@ -2322,6 +2420,14 @@ sub PromptOverwrite {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Display debugging info in a window
+# Usage: DisplayDebugWindow();
+sub DisplayDebugWindow
+{
+	my $info = GetDebugInfo(true);
+	DPInfo($info);
+}
 
 # Purpose: Flush the UI buffer
 # Usage: GTK_Flush();
@@ -4607,9 +4713,15 @@ sub DrawMainWindow {
 	my @MenuItems = (
 		# Calendar menu
 		[ '/' . $i18n->get('_Calendar'),						undef,			undef,			0,	'<Branch>'],
-		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
-		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Import from program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
-		[ '/' . $i18n->get('_Calendar') . '/' . $i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
+		[ '/' . $i18n->get('_Calendar') . '/' . 
+			# TRANSLATORS: Menu selection in the Calendar menu
+			$i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
+		[ '/' . $i18n->get('_Calendar') . '/' . 
+			# TRANSLATORS: Menu selection in the Calendar menu
+			$i18n->get('Import from _program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
+		[ '/' . $i18n->get('_Calendar') . '/' . 
+			# TRANSLATORS: Menu selection in the Calendar menu. Exports calendar data.
+			$i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
 		[ "/" . $i18n->get("_Calendar") . '/sep',					undef,			undef,			2,	'<Separator>'],
 		[ "/" . $i18n->get("_Calendar") . "/$QuitStock",		'<control>Q',		\&QuitSub,		3,	'<StockItem>',	'gtk-quit'],
 		# Edit menu
@@ -4635,6 +4747,7 @@ sub DrawMainWindow {
 	$PrimaryWindowVBox->pack_start($Menu_ItemFactory->get_widget('<main>'), 0, 0, 0);
 	# Show it
 	$Menu_ItemFactory->get_widget('<main>')->show();
+
 	
 	# Create two widget objects for the edit/delete menu entries
 	my $Get = "/$EditStock/" . $i18n->get('_Edit This Event...');
@@ -4817,6 +4930,9 @@ sub InitDPCore {
 			# Display an error
 			if ($i18n)
 			{
+				# TRANSLATORS: An exception here is always a bug in Day Planner. This message is displayed when an exception
+				# 	occurs and the i18n subsystem was successfully initialized beforehand (which it should be in all cases unless
+				# 	the bug resides in the i18n subsystem). %(exception) is the exception text, which is not localized.
 				DPError($i18n->get_advanced("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: %(exception)", { exception => $Exception }));
 			}
 			else
@@ -4903,77 +5019,7 @@ GetOptions (
 	},
 	'debuginfo' => sub
 	{
-		$| = 1;
-		$SaveToDir = DetectConfDir();
-		print "Day Planner version $Version - $RCSRev\n";
-		print "Using config dir: $SaveToDir\n";
-		printf "Perl version %vd\n", $^V;
-		print 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
-		print 'OS: ', GetDistVer(), "\n";
-		my $Prev;
-		# Display module information (also includes daemon and notifier deps)
-		my @AvailModules;
-		my @UnavailModules;
-		print "Available modules:";
-		foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/) {
-			if(eval("use $Module; 1")) {
-				if($Prev) {
-					print ',';
-				} else {
-					$Prev = 1;
-				}
-				my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}else { return undef;}");
-				if($ModVer and $ModVer =~ /\S/ and length($ModVer) > 1 and $ModVer =~ /\d/) {
-					$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
-								# printf() doesn't like it so we remove it.
-					print " $Module $ModVer";
-				} else {
-					print " $Module";
-				}
-			} else {
-				push(@UnavailModules, $Module);
-			}
-		}
-		print "\nUnavailable modules:";
-		print " $_" foreach(@UnavailModules);
-		print ' (none)' unless(@UnavailModules);
-		print "\n";
-		print '@INC:';
-		$Prev = false;
-		foreach my $i (@INC) {
-			if ($Prev)
-			{
-				print ',';
-			}
-			else
-			{
-				$Prev = true;
-			}
-			print " '".$i."'";
-		}
-		print "\n";
-		$Prev = undef;
-		print 'I18n: ';
-		foreach (sort keys(%ENV))
-		{
-			if (/^(LC_|LANG)/)
-			{
-				print " || " if $Prev;
-				$Prev = true;
-				print "$_=$ENV{$_}";
-			}
-		}
-		if ($Prev)
-		{
-			print "\n";
-		}
-		else
-		{
-			print "(none detected)\n";
-		}
-		DP_InitI18n();
-		print 'I18n workaround: '. ($i18n->{workaround} ? 'on' : 'off');
-		print "\n";
+		GetDebugInfo(false);
 		exit(0);
 	},
 	'test|t:i' => sub {
