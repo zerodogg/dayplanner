@@ -105,15 +105,9 @@ $SIG{TERM} = \&DP_SigHandler;
 # Purpose: Initialize the i18n subsystem
 # Usage: DP_InitI18n();
 sub DP_InitI18n {
-	if ($i18n)
-	{
-		DPIntWarn("Second call to DP_InitI18n(). This is bad.");
-	}
-	else
-	{
-		$i18n = DP::GeneralHelpers::I18N->new();
-		Assert($i18n);
-	}
+	Assert(!$i18n);
+	$i18n = DP::GeneralHelpers::I18N->new();
+	Assert($i18n);
 }
 
 # Purpose: i18n wrapper for CoreModules
@@ -427,6 +421,7 @@ sub DPS_Perform {
 	runtime_use('Digest::MD5 qw(md5_base64 md5_hex)');
 	# The function we are going to perform
 	my $Function = shift;
+	Assert($Function =~ /^(SYNC)$/);
 	# A coderef to the code which we need to run to close the GUI
 	# dialogues used.
 	my $GuiEnded = sub {
@@ -475,10 +470,9 @@ sub DPS_Perform {
 	}
 	DPS_Status($i18n->get('Connected'),0.1);
 	# Connection established, process $Function
-	if($Function eq 'SYNC') {
+	if($Function eq 'SYNC')
+	{
 		DPS_DataSync();
-	} else {
-		DPIntWarn("DPS_Perform($Function) called, but the function \"$Function\" is unknown.");
 	}
 	DPS_Status($i18n->get('Complete'),1);
 	# Disconnect and return
@@ -974,7 +968,12 @@ sub Assert
 	# If not, then we output it and happily continue processing
 	else
 	{
+		# TODO: This should probably get displayed in a GUI dialog aswell,
+		# if possible.
 		DPIntWarn($msg);
+		# Attempt to make the main window usable again, in case
+		# this screws things up.
+		$MainWindow->set_sensitive(1);
 	}
 	return true;
 }
@@ -1531,7 +1530,8 @@ sub DP_AddAutostart {
 	}
 
 	my $Result = AddAutostart($Old_GNOME);
-	return(1) if $Result eq 'okay';
+	Assert($Result =~ /^(okay|gnome-fail)$/);
+	return(true) if $Result eq 'okay';
 
 	if($Result eq 'gnome-fail') {
 		# GNOME failed, check if GNOME_DESKTOP_SESSION_ID is set.
@@ -1546,8 +1546,6 @@ sub DP_AddAutostart {
 			# 	not running GNOME at all will not see this.
 			DPError($i18n->get("A problem occurred while setting up automatic startup of the Day Planner reminder.\n\nSet it up manually by selecting: menu -> desktop -> settings -> sessions. From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-daemon\" in the \"Startup Command\" field and press the \"OK\" button."));
 		}
-	} else {
-		DPIntWarn("Unknown return value from AddAutostart(): $Result");
 	}
 	return(1);
 }
@@ -1864,6 +1862,7 @@ sub PlanConvert_PurgeBuffer {
 	Assert(defined $PlanConvertHash);
 	my $ErrorMessage;
 	if(defined($PlanConvertHash->{Day})) {
+		Assert($$PlanConvertHash->{Type} =~ /^(normal|bday)$/);
 		if ($PlanConvertHash->{Type} eq 'normal') {
 			my %TargetEvent;
 			$TargetEvent{DTSTART} = iCal_GenDateTime($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time});
@@ -1901,8 +1900,6 @@ sub PlanConvert_PurgeBuffer {
 			delete($PlanConvertHash->{Fulltext});
 			delete($PlanConvertHash->{Summary});
 			$iCalendar->add(%TargetEvent);
-		} else {
-			DPIntWarn("BUG!!! Invalid type: $PlanConvertHash->{Type}. This could result in dangerous errors.");
 		}
 		$PlanConvertHash->{Type} = 'normal';
 	}
@@ -2345,6 +2342,7 @@ sub ExportData {
 		my $Response = $ExportWindow->run();
 		my $Filename = $ExportWindow->get_filename();
 		if($Response eq 'accept') {
+			Assert($ActiveIndex == 0 || $ActiveIndex == 1);
 			#my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
 			if ($ActiveIndex == 0) {
 				if(PromptOverwrite("$Filename.ics")) {
@@ -2356,8 +2354,6 @@ sub ExportData {
 					HTML_Export($Filename);
 					last;
 				}
-			} else {
-				DPIntWarn("Unknown activeindex: $ActiveIndex");
 			}
 		} else {
 			last;
@@ -2571,13 +2567,11 @@ sub PopulateUpcomingEvents {
 sub DeleteEvent {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
-	unless(defined($Selected)) {
-		DPIntWarn('DeletEvent() called without any event selected');
-		return(0);
-	}
+	Assert($Selected);
 	my $Type = GetEventListType();
 
 	my @StandardTypes = ( 'normal', 'allday','bday' );
+	Assert(grep($Type, @StandardTypes) || $Type eq 'holiday');
 
 	if(grep($Type, @StandardTypes)) {
 		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
@@ -2600,8 +2594,6 @@ sub DeleteEvent {
 		UpdatedData(0,1);
 	} elsif ($Type eq 'holiday') {
 		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
-	} else {
-		DPIntWarn("DeleteEvent: Attempted to handle unsupported \$Type: $Type");
 	}
 }
 
@@ -3626,10 +3618,7 @@ sub EditEvent
 {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
-	unless(defined($Selected)) {
-		DPIntWarn('EditEvent() called with no event selected');
-		return(0);
-	}
+	Assert($Selected);
 	
 	$MainWindow->set_sensitive(0);
 
@@ -3662,6 +3651,8 @@ sub EditEvent
 	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton);
 
 	my $Type = GetEventListType();
+
+	Assert($Type =~ /^(normal|bday|allday|holiday)$/);
 
 	if ($Type eq 'normal') {
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3702,11 +3693,7 @@ sub EditEvent
 		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
 		return(1);
-	} else {
-		DPIntWarn("BUG!: EditEvent: \$Type contained invalid value: $Type");
-		$MainWindow->set_sensitive(1);
-		return(0);
-	}
+	} 
 	
 	$Tooltips->set_tip($CancelButton, $i18n->get('Discard changes'));
 	$Tooltips->set_tip($OKButton, $i18n->get('Accept changes'));
