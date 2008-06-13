@@ -1004,10 +1004,30 @@ sub AlreadyRunningDP {
 			exit(0)
 		} else {
 			$ErrorDialog->destroy;
+			my $pid = $ClientConnection->client_send_blocking('GETPID');
 			$ClientConnection->client_send('QUIT');
+			# Use this for nanosleep so that we don't sleep any longer than
+			# we absolutely have to.
+			runtime_use('Time::HiRes');
+			# Wait max 4 seconds, and only 1 second if we don't have a PID
+			my $waitsec = 16;
+			if (not defined $pid or $pid =~ /\D/)
+			{
+				$waitsec = 4;
+			}
+			for(my $l = 0; $l <= $waitsec; $l++)
+			{
+				if (defined $pid and $pid =~ /^\d+$/)
+				{
+					if(kill(0,$pid) == 0)
+					{
+						last;
+					}
+				}
+				Time::HiRes::nanosleep(250);
+				sleep(1);
+			}
 			$ClientConnection->destroy();
-			# Sleep for one second to allow the other instance to quit
-			sleep(1);
 			# Unlink the IPC socket
 			unlink("$SaveToDir/ipcsocket");
 			$iCalendar->reload();
@@ -1024,14 +1044,28 @@ sub AlreadyRunningDP {
 sub IPC_Handler {
 	my $Message = shift;
 	chomp($Message);
-	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/) {
+	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/)
+	{
 		$iCalendar->addfile($Message);
 		print "Imported $Message\n";
 		UpdatedData();
-	} elsif ($Message =~ /^QUIT/) {
+	}
+	elsif ($Message =~ /^QUIT/) {
 		# This is the same as ctrl+c
 		DP_SigHandler('IPC_QUIT_REQUEST');
-	} else {
+	} 
+	elsif ($Message =~ /^GETPID/)
+	{
+		return($$);
+	}
+	# This isn't used anywhere yet, but is added in case it is needed
+	# in future versions that needs to be able to talk to this one.
+	elsif ($Message =~ /^GETVERSION/)
+	{
+		return($Version);
+	}
+	else
+	{
 		return('UNKNOWN_CMD');
 	}
 }
