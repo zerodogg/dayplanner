@@ -163,8 +163,9 @@ sub DaemonConnect
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		my $daemonConnErr;
 		($DaemonSocket,$daemonConnErr) = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
+		# TODO: Check daemon version.
+		#my $DaemonVersion = $DaemonSocket->client_send_blocking('VERSION');
 		return($DaemonSocket);
-		# TODO: Implement a IPC->blocking_client_send() and use that to check daemon VERSION
 	}
 	return(false);
 }
@@ -945,14 +946,10 @@ sub Assert
 	return true if $expr;
 	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
 	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
-	my $msg;
+	my $msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line";;
 	if(defined($_[0]))
 	{
-		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line: $_[0]\n";
-	}
-	else
-	{
-		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line\n";
+		$msg .= ': '.$_[0]."\n";
 	}
 	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
 	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
@@ -3652,7 +3649,7 @@ sub EditEvent
 {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
-	Assert($Selected);
+	Assert(defined $Selected);
 	
 	$MainWindow->set_sensitive(0);
 
