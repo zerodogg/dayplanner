@@ -19,7 +19,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk 
-import hildon
+# This so that we can run without the hildon toolkit
+# (ie. on non-maemo platforms that doesn't have or use hildon)
+try:
+	import hildon
+	HasHildon = True
+except ImportError:
+	HasHildon = False
 import re
 import sys
 import socket
@@ -28,7 +34,7 @@ import time
 from posix import getpid
 
 comSocket = file('/dev/null')
-confDir = os.environ['HOME']+"/.config/dayplanner.maemo/"
+confDir = os.environ['HOME']+"/.config/dayplanner.mobile/"
 socketPath = confDir+"Data_Servant"
 pid = str(getpid())
 UpcomingEventsBuffer = gtk.TextBuffer()
@@ -382,7 +388,10 @@ def DPInfo(message):
 # Purpose: Draw the main window
 # Returns: Nothing
 def DrawMainWindow():
-	window = hildon.Window()
+	if HasHildon:
+		window = hildon.Window()
+	else:
+		window = gtk.Window()
 	window.set_title(gettext("Day Planner"))
 	# TODO: More signal handlers
 	window.connect("destroy", Exit)
@@ -485,6 +494,8 @@ def DrawMainWindow():
 # Returns: Never
 def main():
 	try:
+		# TODO: Commandline arguments
+		# TODO: Put this into its own sub that can look for other files too (OpenMoko?)
 		if not os.path.exists(confDir) and not os.path.exists("/usr/bin/ossofilemanager"):
 			DPInfo("You're running the Day Planner maemo port on a desktop machine. This is completely unsupported. You REALLY should use the proper client instead, as they differ in significant ways, this one being tailored for use on the Maemo-based tablets.")
 		OpenSocket()
