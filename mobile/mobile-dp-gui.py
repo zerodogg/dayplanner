@@ -263,6 +263,20 @@ def NormalEventWindow ( UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET):
 
 # -- Main --
 
+# Purpose: Get the UID of the currently selected calendar entry
+# Returns: UID (string) or False
+def GetSelectedUID():
+	iter = EventlistWidget.get_selection().get_selected()[1]
+	if not iter:
+		return False
+	model = EventlistWidget.get_model()
+	if not model:
+		return False
+	UID = model.get_value(iter,0)
+	if not UID:
+		return False
+	return UID
+
 # Purpose: Mark the days with events in the calendar
 # Returns: Nothing
 def SetActiveMonth():
@@ -299,7 +313,7 @@ def addevent(arg):
 # Purpose: Edit an event
 # Returns: Undecided.
 def EditEvent(treeview,two,treeviewcolumn):
-	print "EditEvent(): STUBBED"
+	print "EditEvent() called on "+GetSelectedUID()+": IS STUBBED"
 
 # Purpose: Delete an event
 # Returns: Undecided.
@@ -317,6 +331,7 @@ def gettext(string):
 def DrawEventlist(EventlistWin):
 	# NOTE: Difference from perl implementation: No SimpleList, using raw TreeView
 	# create a liststore with one string column to use as the model
+	global EventlistWidget
 	EventlistWidget = gtk.TreeView(liststore)
 	# create the TreeViewColumns to display the data
 	tvcolumn = gtk.TreeViewColumn(gettext('Time'))
