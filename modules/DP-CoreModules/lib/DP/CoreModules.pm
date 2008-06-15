@@ -75,19 +75,19 @@ sub GetXDGDir
 # Purpose: Detect the user config  directory
 # Usage: DetectConfDir(MAEMO?);
 sub DetectConfDir {
-	my $Maemo = shift;
+	my $Mobile = shift;
 
 	my $XDG_CONFIG_HOME = GetXDGDir();
-	if(not $Maemo)
+	if(not $Mobile)
 	{
 		# Compatibility mode, using the old conf dir
 		if(-d "$ENV{HOME}/.dayplanner") {
 			return("$ENV{HOME}/.dayplanner");
 		}
 	}
-	if ($Maemo)
+	if ($Mobile)
 	{
-		return("$XDG_CONFIG_HOME/dayplanner.maemo");
+		return("$XDG_CONFIG_HOME/dayplanner.mobile");
 	}
 	else
 	{
