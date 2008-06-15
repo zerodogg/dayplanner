@@ -1,15 +1,25 @@
 Day Planner Maemo port scratchbook.
-Random thoughts, plans and notes on the Day Planner port to the maemo platform
+Random thoughts, plans and notes on the Day Planner port to mobile platforms
 $Id$
 
 -----
 NOTE: THIS IS NOT READY FOR USE. RUN ANY FILES HERE ON YOUR OWN RISK.
 -----
 
+Platform targets:
+- Maemo
+
+Future targets:
+- OpenMoko
+- Ubuntu Mobile
+
+Possible targets:
+- Google Android
+
 Note also that this is not definite. Each and every single part of this
 file is subject to change at any time.
 
-This is the beginning of the Maemo port of Day Planner.
+This is the beginning of the mobile port of Day Planner.
 Due to the lack of a Perl gtk2 port to the platform this will be done in
 the form of a stupid python client interface that simply spews commands to
 a specially created daemon which actually handles all the real work.
@@ -28,7 +38,6 @@ The daemon should do everything back-end related:
 
 Items of interest:
 - Integration with Maemo clock.
-
 
 Required python work:
 - Dumb front-end
