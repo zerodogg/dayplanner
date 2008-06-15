@@ -117,7 +117,7 @@ def GetComArray(array):
 # Returns: String, dictionary or array depending on what data was recieved
 def ParseRecieved(data):
 	if data == "":
-		print "ParseRecieved(): got ''"
+		DPIntWarn("ParseRecieved(): got ''")
 		return str()
 	hash = re.compile("^HASH")
 	array = re.compile("^ARRAY")
@@ -139,7 +139,7 @@ def OpenSocket(loopa=False, loopb=False, loopc=False):
 		mySocket.connect(socketPath)
 		comSocket = mySocket.makefile()
 		if not SocketIO("PING") == "PONG":
-			print "SocketIO failure: Did not reply to PING request"
+			DPIntWarn("SocketIO failure: Did not reply to PING request")
 	else:
 		if loopc:
 			print "FATAL ERROR: Failed to connect to servant."
@@ -180,14 +180,14 @@ def LocateServant():
 # Returns: Nothing
 def StartServant():
 	if os.system(LocateServant()+" --force-fork") != 0:
-		print "Servant startup failure?"
+		DPIntWarn("Servant startup failure?")
 
 # Purpose: Send some data on our communication socket
 # Returns: Empty str()
 def SocketSend(data):
 	global comSocket
 	if data == "":
-		print "SocketSend(): got '' - not sending"
+		DPIntWarn("SocketSend(): got '' - not sending")
 		return str()
 	try:
 		encdata = data.encode('utf-8')
@@ -218,7 +218,7 @@ def SocketIO(data):
 	recieveddata = ParseRecieved(SocketRecv())
 	if type(recieveddata) == str:
 		if recieveddata.startswith("ERR "):
-			print "Recieved error on request '"+data+"': "+recieveddata
+			DPIntWarn("Recieved error on request '"+data+"': "+recieveddata)
 	return recieveddata
 
 # -- Various data methods. Fetches and sends data --
@@ -228,7 +228,7 @@ def SocketIO(data):
 def SendIcalData(list):
 	netsend = GetComHash(list)
 	if SocketIO("SEND_ICAL "+netsend) != "OK":
-		print "ERROR: FAILED TO SEND ICALENDAR DATA, SocketIO DID NOT RETURN OK"
+		DPIntWarn("ERROR: FAILED TO SEND ICALENDAR DATA, SocketIO DID NOT RETURN OK")
 
 # Purpose: Get events on the current day
 # Returns: Array of UIDs
