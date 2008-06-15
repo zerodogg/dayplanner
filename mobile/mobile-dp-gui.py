@@ -192,6 +192,7 @@ def SocketSend(data):
 	try:
 		encdata = data.encode('utf-8')
 	except UnicodeEncodeError:
+		DPIntWarn("UnicodeEncodeError occurred during SocketSend()")
 		encdata = data
 	comSocket.write(pid+" "+encdata+"\n")
 	comSocket.flush()
@@ -205,6 +206,7 @@ def SocketRecv():
 	try:
 		myreply = reply.decode('utf-8')
 	except UnicodeDecodeError:
+		DPIntWarn("UnicodeDecodeError occurred during SocketRecv()")
 		myreply = reply
 	return myreply
 
@@ -391,6 +393,11 @@ def DPError(message):
 	Dialog.set_title(gettext("Day Planner"))
 	Dialog.run()
 	Dialog.destroy()
+
+# Purpose: Internal warning
+# Returns: Nothing
+def DPIntWarn(message):
+	print " *** (Day Planner mobile) Warning: "+message
 
 # Purpose: Display an information dialog
 # Returns: Nothing
