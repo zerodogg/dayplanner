@@ -64,7 +64,7 @@ my $ConnectionSelector;
 # The socket filename
 my $OrigSocketName = 'Data_Servant';
 my $SocketName = $OrigSocketName;
-my $ConfigFile = 'dayplanner.maemo.conf';
+my $ConfigFile = 'dayplanner.mobile.conf';
 
 my %UserConfig;
 
