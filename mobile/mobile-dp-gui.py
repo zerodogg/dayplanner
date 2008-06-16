@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__version__ = "0.10"
+
 import gtk 
 # This so that we can run without the hildon toolkit
 # (ie. on non-maemo platforms that doesn't have or use hildon)
@@ -257,11 +259,55 @@ def Exit(argA=False, argB=False,retval = 0):
 	gtk.main_quit()
 	sys.exit(retval)
 
+# Purpose: Get a Gtk2 Window object. This takes care of hildon checking
+# Returns: gtk2 or hildon window object with some default settings
+def getGtk2Window(Type = gtk.WINDOW_POPUP):
+	if HasHildon:
+		window = hildon.Window()
+	else:
+		window = gtk.Window(Type)
+	# Have a window title by default, this can be changed later if needed
+	window.set_title(gettext("Day Planner"))
+	# TODO: Set icon
+	return window
+
 # ----
 # Add and edit functions
 # ----
 def NormalEventWindow ( UID, OK_BUTTON, VBOX_WIDGET, MAIN_WINDOW_WIDGET):
 	print "NormalEventWindow(): STUB"
+
+# Purpose: Open up an event editor on UID. In the case of UID = None it will assume you are creating one.
+# Returns: Nothing
+def EditNormalEvent(UID = None, UIDInfo = None):
+	window = getGtk2Window()
+	# FIXME: Badly phrased. Should probably be something like "Edit event"
+	window.set_title(gettext("Editing a normal event"))
+
+	PrimaryVBox = gtk.VBox()
+	PrimaryVBox.show()
+	window.add(PrimaryVBox)
+
+	# description field
+	descriptionHBox = gtk.HBox()
+	descriptionHBox.show()
+	PrimaryVBox.pack_start(descriptionHBox)
+	descriptionField = gtk.Entry()
+	descriptionField.show()
+	descriptionHBox.pack_end(descriptionField)
+	descriptionLabel = gtk.Label()
+	descriptionLabel.set_text(gettext("Description: "))
+	descriptionLabel.show()
+	descriptionHBox.pack_start(descriptionLabel)
+
+	# Populate fields
+	if UIDInfo:
+		descriptionField.set_text(UIDInfo['SUMMARY'])
+	if UID:
+		print "EditNormalEvent("+UID+")"
+	else:
+		print "EditNormalEvent(None)"
+	window.show()
 
 # -- Main --
 
@@ -315,7 +361,13 @@ def addevent(arg):
 # Purpose: Edit an event
 # Returns: Undecided.
 def EditEvent(treeview,two,treeviewcolumn):
-	print "EditEvent() called on "+GetSelectedUID()+": IS STUBBED"
+	UID = GetSelectedUID()
+	UIDInfo = GetIcalData(UID)
+	Type = GetEtype(UIDInfo)
+	if Type == "norm":
+		EditNormalEvent(UID,UIDInfo)
+	else:
+		DPIntWarn("Unhandled type in EditEvent() for UID "+UID+": "+Type)
 
 # Purpose: Delete an event
 # Returns: Undecided.
@@ -397,7 +449,7 @@ def DPError(message):
 # Purpose: Internal warning
 # Returns: Nothing
 def DPIntWarn(message):
-	print " *** (Day Planner mobile) Warning: "+message
+	print "*** (Day Planner "+__version__+") Warning: "+message
 
 # Purpose: Display an information dialog
 # Returns: Nothing
@@ -410,11 +462,7 @@ def DPInfo(message):
 # Purpose: Draw the main window
 # Returns: Nothing
 def DrawMainWindow():
-	if HasHildon:
-		window = hildon.Window()
-	else:
-		window = gtk.Window()
-	window.set_title(gettext("Day Planner"))
+	window = getGtk2Window(gtk.WINDOW_TOPLEVEL)
 	# TODO: More signal handlers
 	window.connect("destroy", Exit)
 	window.connect("delete-event", Exit)
@@ -428,7 +476,6 @@ def DrawMainWindow():
 		print "         desktop version."
 		window.set_default_size(600,365)
 
-	# TODO: Set icon
 	PrimaryWindowVBox = gtk.VBox()
 	PrimaryWindowVBox.show()
 	window.add(PrimaryWindowVBox)
