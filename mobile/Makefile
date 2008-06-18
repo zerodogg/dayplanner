@@ -19,6 +19,7 @@ VERSION=0.10
 
 clean:
 	rm -f *~
+	rm -rf packages dayplanner-mobile-$(VERSION)
 test:
 	make -C .. test
 mo:
