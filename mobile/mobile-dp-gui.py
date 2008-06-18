@@ -35,15 +35,6 @@ import os
 import time
 from posix import getpid
 
-comSocket = file('/dev/null')
-confDir = os.environ['HOME']+"/.config/dayplanner.mobile/"
-socketPath = confDir+"Data_Servant"
-pid = str(getpid())
-UpcomingEventsBuffer = gtk.TextBuffer()
-CalendarWidget = gtk.Calendar();
-EventlistWin = gtk.ScrolledWindow()
-liststore = gtk.ListStore(str, str, str)
-
 if not os.environ['HOME']:
 	print "HOME environment variable missing. Attempting stupid detection."
 	if os.path.exists('/home/user') and os.path.exists('/usr/bin/ossofilemanager'):
@@ -52,6 +43,15 @@ if not os.environ['HOME']:
 	else:
 		print "Stupid detection failed. HOME missing. Refusing to continue."
 		sys.exit(1)
+
+comSocket = file('/dev/null')
+confDir = os.environ['HOME']+"/.config/dayplanner.mobile/"
+socketPath = confDir+"Data_Servant"
+pid = str(getpid())
+UpcomingEventsBuffer = gtk.TextBuffer()
+CalendarWidget = gtk.Calendar();
+EventlistWin = gtk.ScrolledWindow()
+liststore = gtk.ListStore(str, str, str)
 
 # -- Communication conversion methods --
 # Purpose: Extract a quoted communication string.
@@ -168,7 +168,7 @@ def LocateServant():
 	directories = [os.path.dirname(os.path.abspath(sys.argv[0])),"./","/usr/bin/"]
 	strinc = str()
 	for part in ['modules/','modules/DP-iCalendar/lib/','modules/DP-GeneralHelpers/lib/','modules/DP-CoreModules/lib/']:
-		strinc = strinc+' -I./'+part+' -I../'+part+' '
+		strinc = strinc+' -I'+os.path.realpath('./'+part)+' -I../'+part+' '
 	# Construct include list
 	for dir in directories:
 		if os.path.exists(dir+'/dayplanner-data-servant'):
@@ -303,10 +303,6 @@ def EditNormalEvent(UID = None, UIDInfo = None):
 	# Populate fields
 	if UIDInfo:
 		descriptionField.set_text(UIDInfo['SUMMARY'])
-	if UID:
-		print "EditNormalEvent("+UID+")"
-	else:
-		print "EditNormalEvent(None)"
 	window.show()
 
 # -- Main --
