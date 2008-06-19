@@ -20,6 +20,7 @@ use strict;
 use warnings;
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
+use FindBin;
 
 our $Version = '0.10';
 my $VersionName = 'SVN';
