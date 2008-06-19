@@ -37,6 +37,7 @@ VERSION=0.10
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
+LOCALMODULES=-I./modules/DP-GeneralHelpers/lib/ -I./modules/DP-iCalendar/lib/ -I./modules/DP-CoreModules/lib/ -I./modules/Date-HolidayParser/lib/
 
 # So I have to type less
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
@@ -241,18 +242,20 @@ test: sanity dpi_test date_holiday
 
 # Verify sanity
 sanity:
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/HTTPSubscription.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/WebExp.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -I ./modules/DP-iCalendar/lib/ -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner-daemon
-	@perl -I./modules/DP-GeneralHelpers/lib/ -c ./dayplanner-notifier
+	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar/HTTPSubscription.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar/WebExp.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules.pm
+	@perl $(LOCALMODULES) -c ./dayplanner
+	@perl $(LOCALMODULES) -c ./dayplanner-daemon
+	@perl $(LOCALMODULES) -c ./dayplanner-notifier
+	@perl $(LOCALMODULES) -c ./mobile/dayplanner-data-servant
 	@perl -c ./devel-tools/installer/MainInstallerPart
 	@perl -c ./devel-tools/installer/InstallLocal
 	@perl -c ./devel-tools/GenDesktop
