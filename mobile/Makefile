@@ -1,6 +1,6 @@
 # Makefile for Day Planner, mobile version
 # Copyright (C) Eskild Hustvedt 2008
-# $Id: Makefile 2247 2008-06-06 11:30:32Z zero_dogg $
+# $Id$
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
