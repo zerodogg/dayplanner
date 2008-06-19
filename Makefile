@@ -183,9 +183,14 @@ distribdesktop: gendistribdesktop
 gendistribdesktop:
 	./devel-tools/GenDesktop .
 # --- DISTRIB TARGETS ---
-distrib: prepdistrib tarball $(PKG) installer
+distrib: prepdistrib tarball $(PKG) installer mobiledistrib
+simpledistrib: prepdistrib tarball installer mobiledistrib
 prepdistrib: gendistribdesktop test clean
 	mkdir -p packages
+mobiledistrib:
+	make -C mobile distrib
+	mv mobile/packages/* packages/
+	make -C mobile clean
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
 	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.svn ./dayplanner-$(VERSION)
