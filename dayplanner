@@ -946,10 +946,14 @@ sub Assert
 	return true if $expr;
 	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
 	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
-	my $msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line";;
+	my $msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line";
 	if(defined($_[0]))
 	{
 		$msg .= ': '.$_[0]."\n";
+	}
+	else
+	{
+		$msg .= "\n";
 	}
 	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
 	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
