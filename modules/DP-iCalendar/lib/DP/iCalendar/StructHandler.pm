@@ -24,6 +24,7 @@ use warnings;
 package DP::iCalendar::StructHandler;
 use constant { true => 1, false => 0 };
 use Carp;
+use Encode;
 
 our $VERSION;
 $VERSION = 0.1;
@@ -57,7 +58,7 @@ sub loadFile
 		return false;
 	}
 	$this->{loadFileMode} = true;
-	open(my $infile, '<',$file);
+	open(my $infile, '<:encoding(utf-8)',$file);
 	$this->_loadFH($infile);
 	close($infile);
 }
@@ -78,7 +79,7 @@ sub loadDataString
 		carp("DP::iCalendar::StructHandler: Cowardly refusing to load empty string\n");
 		return;
 	}
-	open(my $infile, '<',\$string);
+	open(my $infile, '<:encoding(utf-8)',\$string);
 	$this->_loadFH($infile);
 	close($infile);
 }
@@ -90,7 +91,7 @@ sub writeFile
 	my $this = shift;
 	my $file = shift;
 	# Checking SHOULD be done by parent
-	open($this->{FH},'>',$file)
+	open($this->{FH},'>:encoding(utf-8)',$file)
 		or do {
 		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
 		return(false);

@@ -2598,7 +2598,7 @@ sub PopulateUpcomingEvents {
 sub DeleteEvent {
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
-	Assert($Selected);
+	Assert(defined $Selected);
 	my $Type = GetEventListType();
 
 	my @StandardTypes = ( 'normal', 'allday','bday' );
