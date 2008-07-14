@@ -402,6 +402,7 @@ sub DPS_DataSync {
 # Purpose: Log DPS info
 # Usage: DPS_Log(INFO);
 sub DPS_Log {
+	Assert(defined $_[0]);
 	if(defined($DPServices{Log_FH})) {
 		my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
 		$lhour = "0$lhour" unless $lhour >= 10;
