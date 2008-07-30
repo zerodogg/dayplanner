@@ -611,7 +611,7 @@ sub WriteStateFile {
 		MainWin_Width => 'The width of the main window',
 		MainWin_Height => 'The height of the main window',
 		MainWin_X => 'The X-axis position of the main window',
-		MainWin_Y => 'The Y-axist position of the main window',
+		MainWin_Y => 'The Y-axis position of the main window',
 		AutostartOn => 'If the preferences setting for autostarting the daemon on login is on or not',
 		AddedAutostart => "If Day Planner has (automatically) set the daemon to start on login\n# (this ONLY sets if it has been automatically added or not.\n# It doesn't say anything about IF it is currently added. AutostartOn sets that.)",
 		Holiday_Attempted => 'The last Day Planner version the holiday file was attempted set up (but failed)',
@@ -961,6 +961,7 @@ sub Assert
 	{
 		if(defined $SaveToDir && -d $SaveToDir && defined $iCalendar)
 		{
+			(my $loctime = scalar localtime) =~ s/\s+/_/g;
 			my $bakFile = $SaveToDir.'/assertionFailureBackup.'.time().'.ics';
 			$iCalendar->write($bakFile);
 			die($msg.'Calendar backup written to: '.$bakFile."\n");
