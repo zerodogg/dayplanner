@@ -835,8 +835,59 @@ sub LoadCalendar {
 
 # Purpose: Print formatted --help output
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
+#  Description will be reformatted to fit within a normal terminal
 sub PrintHelp {
-	printf "%-4s %-16s %s\n", $_[0], $_[1], $_[2];
+	# The short option
+	my $short = shift,
+	# The long option
+	my $long = shift;
+	# The description
+	my $desc = shift;
+	# The generated description that will be printed in the end
+	my $GeneratedDesc;
+	# The current line of the description
+	my $currdesc = '';
+	# The maximum length any line can be
+	my $maxlen = 80;
+	# The length the options take up
+	my $optionlen = 20;
+	# Check if the short/long are LONGER than optionlen, if so, we need
+	# to do some additional magic to take up only $maxlen.
+	# The +1 here is because we always add a space between them, no matter what
+	if ((length($short) + length($long) + 1) > $optionlen)
+	{
+		$optionlen = length($short) + length($long) + 1;
+	}
+	# Split the description into lines
+	foreach my $part (split(/ /,$desc))
+	{
+		if(defined $GeneratedDesc)
+		{
+			if ((length($currdesc) + length($part) + 1 + 20) > $maxlen)
+			{
+				$GeneratedDesc .= "\n";
+				$currdesc = '';
+			}
+			else
+			{
+				$currdesc .= ' ';
+				$GeneratedDesc .= ' ';
+			}
+		}
+		$currdesc .= $part;
+		$GeneratedDesc .= $part;
+	}
+	# Something went wrong
+	die("Option mismatch") if not $GeneratedDesc;
+	# Print it all
+	foreach my $description (split(/\n/,$GeneratedDesc))
+	{
+		printf "%-4s %-15s %s\n", $short,$long,$description;
+		# Set short and long to '' to ensure we don't print the options twice
+		$short = '';$long = '';
+	}
+	# Succeed
+	return true;
 }
 
 # Purpose: Get debugging info
@@ -5028,10 +5079,8 @@ GetOptions (
 		PrintHelp('-t','--test','Use a seperate debug/ configuration directory');
 		PrintHelp('', '--confdir', 'Use the directory supplied as configuration directory');
 		PrintHelp('-s', '--shutdaemon', 'Shutdown the daemon when Day Planner is closed');
-		PrintHelp('', '--exportical', 'Export the Day Planner data in the iCalendar format');
-		PrintHelp('', '', 'to the filename supplied');
-		PrintHelp('', '--exporthtml', 'Export the Day Planner data in the HTML format to the');
-		PrintHelp('', '', 'directory supplied');
+		PrintHelp('', '--exportical', 'Export the Day Planner data in the iCalendar format to the filename supplied.');
+		PrintHelp('', '--exporthtml', 'Export the Day Planner data in the HTML format to the directory supplied.');
 		PrintHelp('', '--importical', 'Import data from the iCalendar file specified');
 		PrintHelp('','--debuginfo', 'Display information useful for debugging and exit');
 		exit(0);
