@@ -108,7 +108,7 @@ my $ForceFork;
 # ForceFork overrides it.
 my $NoFork;
 
-# The current log level - increased for SVN
+# The default log level - increased for SVN
 my $LogLevel = 2;
 if ($VersionName eq 'SVN')
 {
@@ -538,6 +538,11 @@ sub Shutdown
 	unlink($SocketPath);
 	# Write the state one last time to ensure it is up to date
 	WriteDaemonState();
+	# Purge messages
+	$| = 1;
+	$| = 0;
+	# Close STDOUT (which is the log target, an additional precaution to ensure purging)
+	close(STDOUT);
 	# Okay, we're all done
 	exit(0);
 }
@@ -632,9 +637,14 @@ sub CommandHandler
 	DaemonLog(DLOG_CALLTRACE,$_);
 	my $PID = $_;
 	$PID =~ s/^(\d+)\s+(.*)/$1/;
-	unless ($PID) {
+	if(not $PID or $PID =~ /\D/)
+	{
 		DaemonLog(DLOG_NOTIFICATION,"Malformed request: $_");
 		return('ERR MALFORMED_REQUEST');
+	}
+	if ($PID == $$)
+	{
+		DaemonLog(DLOG_DEBUG,"Strange, I seem to have sent myself a command ($_). This shouldn't happen, but letting it proceed");
 	}
 	study();
 	s/^(\d+)\s+//;
@@ -664,6 +674,7 @@ sub CommandHandler
 	{
 		s/\s//g;
 		if (/\D/) {
+			DaemonLog(DLOG_NOTIFICATION,"Got request to set loglevel to an invalid value ('$_' from $PID)");
 			return('ERR # SYNTAX ERROR');
 		}
 		$LogLevel = $_;
@@ -678,6 +689,7 @@ sub CommandHandler
 	}
 	else
 	{
+		DaemonLog(DLOG_DEBUG,"Invalid command ($_) recieved from $PID");
 		return('ERR INVALID_COMMAND');
 	}
 	
