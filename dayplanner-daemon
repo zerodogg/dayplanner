@@ -365,10 +365,61 @@ sub LoadDPConfig
 	DaemonLog(DLOG_CALLTRACE,"PreNotDay = $PreNotValues{PreNotDay} and PreNotSeconds = $PreNotValues{PreNotSeconds}");
 }
 
-# Purpose: Print nicely formatted help output
-# Usage: PrintHelp("-shortoption","--longoption","Description");
+# Purpose: Print formatted --help output
+# Usage: PrintHelp("-shortoption", "--longoption", "description");
+#  Description will be reformatted to fit within a normal terminal
 sub PrintHelp {
-	printf "%-4s %-16s %s\n", "$_[0]", "$_[1]", "$_[2]";
+	# The short option
+	my $short = shift,
+	# The long option
+	my $long = shift;
+	# The description
+	my $desc = shift;
+	# The generated description that will be printed in the end
+	my $GeneratedDesc;
+	# The current line of the description
+	my $currdesc = '';
+	# The maximum length any line can be
+	my $maxlen = 80;
+	# The length the options take up
+	my $optionlen = 20;
+	# Check if the short/long are LONGER than optionlen, if so, we need
+	# to do some additional magic to take up only $maxlen.
+	# The +1 here is because we always add a space between them, no matter what
+	if ((length($short) + length($long) + 1) > $optionlen)
+	{
+		$optionlen = length($short) + length($long) + 1;
+	}
+	# Split the description into lines
+	foreach my $part (split(/ /,$desc))
+	{
+		if(defined $GeneratedDesc)
+		{
+			if ((length($currdesc) + length($part) + 1 + 20) > $maxlen)
+			{
+				$GeneratedDesc .= "\n";
+				$currdesc = '';
+			}
+			else
+			{
+				$currdesc .= ' ';
+				$GeneratedDesc .= ' ';
+			}
+		}
+		$currdesc .= $part;
+		$GeneratedDesc .= $part;
+	}
+	# Something went wrong
+	die("Option mismatch") if not $GeneratedDesc;
+	# Print it all
+	foreach my $description (split(/\n/,$GeneratedDesc))
+	{
+		printf "%-4s %-15s %s\n", $short,$long,$description;
+		# Set short and long to '' to ensure we don't print the options twice
+		$short = '';$long = '';
+	}
+	# Succeed
+	return true;
 }
 
 # Purpose: system() replacement that logs the command run
@@ -950,10 +1001,8 @@ sub InitDaemon
 GetOptions (
 	'help|h' => sub {
 		print "Day Planner daemon version $Version\n\n";
-		PrintHelp('-d', '--dayplannerdir', 'Which directory to use as the dayplanner config dir');
-		PrintHelp('','',' (autdetected if not present)');
-		PrintHelp('','--socketname','Sets the name of the socket in --dayplannerdir to');
-		PrintHelp('','',' listen on. Default: '.$OrigSocketName);
+		PrintHelp('-d', '--dayplannerdir', 'Which directory to use as the dayplanner config dir (autodetected if not present).');
+		PrintHelp('','--socketname','Sets the name of the socket in --dayplannerdir to listen on. Default: '.$OrigSocketName);
 		PrintHelp('','--replace','Replace the running daemon (if any) with this one');
 		PrintHelp('-k','--kill','Shut down a currently running daemon');
 		PrintHelp('-n','--nofork',"Don't fork, stay in the foreground");
