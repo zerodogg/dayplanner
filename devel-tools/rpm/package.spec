@@ -1,6 +1,7 @@
-%define include_holidayparser	0
+%define include_holidayparser	1
 %{?_with_holidayparser: %{expand: %%global include_holidayparser 1}}
 
+%define _requires_exceptions perl\(DP::CoreModules\)
 %define	name	dayplanner
 %define	version [DAYPLANNER_VERSION]
 %define rel	1
@@ -10,11 +11,11 @@ Name:		%{name}
 Summary:	An easy and clean Day Planner
 Version:	%{version} 
 Release:	%{release} 
-Source0:	%{name}-%{version}.tar.bz2
+Source0:	http://download.gna.org/dayplanner/%{name}-%{version}.tar.bz2
 URL:		http://www.day-planner.org/
 Group:		Office
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
-License:	GPL
+License:	GPLv3+
 BuildRequires:	perl
 BuildArch:	noarch
 
@@ -32,9 +33,9 @@ remember your appointments by popping up a dialog box reminding you about it.
 rm -rf $RPM_BUILD_ROOT
 
 %if include_holidayparser
-%makeinstall DHPinstall
+%makeinstall_std DHPinstall prefix=/usr
 %else
-%makeinstall
+%makeinstall_std prefix=/sur
 %endif
 
 # Install the icons
@@ -49,11 +50,15 @@ install -m644 ./art/dayplanner_HC48.png -D $RPM_BUILD_ROOT%{_liconsdir}/dayplann
 # Find the localization
 %find_lang %{name}
 
+%if %mdkversion < 200900
 %post 
 %{update_menus}
+%endif
 
+%if %mdkversion < 200900
 %postun
 %{clean_menus}
+%endif
 
 %clean 
 rm -rf $RPM_BUILD_ROOT 
