@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# maemo-dp-gui.py
+# mobile-dp-gui.py
 # Maemo Day Planner GUI
 # Copyright (C) Eskild Hustvedt 2008
 #
@@ -467,7 +467,7 @@ def DrawMainWindow():
 	# won't be present, and the maemo WM will force the size of our main window
 	# to fit the screen anyway
 	if os.path.exists("/usr/bin/gnome-about-me"):
-		print "WARNING: You are running the maemo port of Day Planner on a desktop"
+		print "WARNING: You are running the mobile port of Day Planner on a desktop"
 		print "         This is NOT supported and NOT recommended. You should go use the"
 		print "         desktop version."
 		window.set_default_size(600,365)
@@ -562,7 +562,7 @@ def main():
 		# TODO: Commandline arguments
 		# TODO: Put this into its own sub that can look for other files too (OpenMoko?)
 		if not os.path.exists(confDir) and not os.path.exists("/usr/bin/ossofilemanager"):
-			DPInfo("You're running the Day Planner maemo port on a desktop machine. This is completely unsupported. You REALLY should use the proper client instead, as they differ in significant ways, this one being tailored for use on the Maemo-based tablets.")
+			DPInfo("You're running the Day Planner mobile port on a desktop machine. This is completely unsupported. You REALLY should use the proper client instead, as they differ in significant ways, this one being tailored for use on the Maemo-based tablets.")
 		OpenSocket()
 		DrawMainWindow()
 		gtk.main()

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # dayplanner-data-servant
-# Data servant for the Day Planner maemo client
+# Data servant for the Day Planner mobile client
 #
 # This is a sort of dayplanner-daemon meets dayplanner
 # Copyright (C) Eskild Hustvedt 2008
@@ -561,7 +561,7 @@ GetOptions (
 	'f|force-fork' => \$ForceFork,
 	'n|nofork' => \$NoFork,
 	'version' => sub {
-		print "Day Planner maemo data servant daemon version $Version\n";
+		print "Day Planner mobile data servant daemon version $Version\n";
 		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
