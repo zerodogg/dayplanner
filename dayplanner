@@ -1753,6 +1753,7 @@ sub EvoCompat_Enable
 	if(not EvoCompat_GetMode())
 	{
 		# Check for e-d-s
+		# FIXME: use open2 or open3
 		open(my $PS, 'ps uxw|');
 		my $oldslash = $/;
 		undef $/;
@@ -2344,6 +2345,7 @@ sub ImportDataFromFile {
 	# the only case would be a file named *.ics which should be *.dpf or the other
 	# way around.
 	# Create the main window
+	# FIXME
 	my $ImportWindow = Gtk2::FileChooserDialog->new('Import data from file', $MainWindow, 'open',
 	'gtk-cancel' => 'reject',
 	'gtk-open' => 'accept',);
@@ -5068,6 +5070,8 @@ sub InitDPCore {
 	# Set the redraw timer and populate the upcoming events widget
 	PopulateUpcomingEvents();
 	Set_DayChangeTimer();
+
+	return true;
 }
 
 # Get commandline options
