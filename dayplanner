@@ -5092,6 +5092,7 @@ GetOptions (
 		PrintHelp('-t','--test','Use a seperate debug/ configuration directory');
 		PrintHelp('', '--confdir', 'Use the directory supplied as configuration directory');
 		PrintHelp('-s', '--shutdaemon', 'Shutdown the daemon when Day Planner is closed');
+		PrintHelp('','--nodaemon','Run without the Day Planner daemon. Useful on embedded systems.');
 		PrintHelp('', '--exportical', 'Export the Day Planner data in the iCalendar format to the filename supplied.');
 		PrintHelp('', '--exporthtml', 'Export the Day Planner data in the HTML format to the directory supplied.');
 		PrintHelp('', '--importical', 'Import data from the iCalendar file specified');
@@ -5230,6 +5231,14 @@ directory. See also I<--test>.
 =item B<-s, --shutdaemon>
 
 Shut down the Day Planner daemon when closing Day Planner.
+
+=item B<--nodaemon>
+
+Run Day Planner without the Day Planner daemon. This is useful on systems
+where memory is low, primarily embedded systems. You should be somewhat
+careful with running in this mode because the daemon is the component
+that launches the notifier, if it isn't running then you won't recieve
+any notifications.
 
 =item B<--exportical> I<FILE>
 
