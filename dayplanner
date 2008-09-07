@@ -86,6 +86,8 @@ my (
 my $HolidayParser;	# The Date::HolidayParser object
 my $Gtk2Init;		# Info about if gtk2 is initialized or not
 my $ShutdownDaemon;	# If we should shut down the daemon on exit
+my $NoDaemon;		# True if we should dsable all use of the daemon. Useful on embedded systems
+					# as the daemon keeps its own copy of the data and config files in memory.
 
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
@@ -141,6 +143,7 @@ sub i18nwrapper_AMPM_From24
 # Purpose: Initialize and connect to the daemon
 # Usage: DaemonInit();
 sub DaemonInit {
+	return if $NoDaemon; # Don't do anything if the daemon is disabled
 	$DaemonInitialized = 1;
 	DaemonConnect();
 	if (not $DaemonSocket) {
@@ -160,6 +163,7 @@ sub DaemonInit {
 # Usage: DaemonConnect();
 sub DaemonConnect
 {
+	return if $NoDaemon; # Don't do anything if the daemon is disabled
 	if (-e "$SaveToDir/$DaemonSocketName") {
 		my $daemonConnErr;
 		($DaemonSocket,$daemonConnErr) = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
@@ -173,6 +177,7 @@ sub DaemonConnect
 # Purpose: Start the Day Planner daemon
 # Usage: StartDaemon();
 sub StartDaemon {
+	return if $NoDaemon; # Don't do anything if the daemon is disabled
 	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
 		if (-x "$_/$DaemonName") {
 			# Yes this is a bit weird statement. But remember that commands return 0 on true
@@ -193,7 +198,7 @@ sub StartDaemon {
 # Purpose: Close the connection to the daemon (shutdown if $ShutdownDaemon) and close the IPC socket
 # Usage: CloseIPC();
 sub CloseIPC {
-	if($ShutdownDaemon) {
+	if($ShutdownDaemon && !$NoDaemon) {
 		$DaemonSocket->client_send($$.' SHUTDOWN');
 	}
 	if($IPC_Socket) {
@@ -208,6 +213,7 @@ sub CloseIPC {
 # Purpose: Send a message to the daemon
 # Usage: Daemon_SendData(DATA);
 sub Daemon_SendData {
+	return if $NoDaemon; # Don't do anything if the daemon is disabled
 	if(not $DaemonSocket) {
 		return(undef);
 	}
@@ -5059,7 +5065,10 @@ sub InitDPCore {
 	# Connect to a DPS server and sync the local data with it if it's enabled
 	DPS_Perform('SYNC');
 	# Initialize the daemon
-	Assert(DaemonInit());
+	if (!$NoDaemon)
+	{
+		Assert(DaemonInit());
+	}
 	# Finally, initialize HTTP subscriptions if needed
 	LoadHTTPSubscriptions();
 	# Add autostart if needed
@@ -5119,6 +5128,7 @@ GetOptions (
 		$SaveToDir = $_[1];
 	},
 	's|shutdaemon' => \$ShutdownDaemon,
+	'nodaemon' => \$NoDaemon,
 	# The export functions that call CLI_Export() needs to be seperate because
 	# CLI_Export does some magic on the commandline parameter name and gets
 	# confused when it gets all the options available.
