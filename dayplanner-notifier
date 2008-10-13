@@ -187,7 +187,7 @@ sub GetMessagesFromCalendar
 # Purpose: Find out how to notify the user and do it
 # Usage: NotifyUser();
 sub NotifyUser {
-	$i18n = DP::GeneralHelpers::I18N->new();
+	$i18n = DP::GeneralHelpers::I18N->new('dayplanner');
 	$Time = $i18n->AMPM_From24($Time);	# Convert to AM/PM if needed
 	if(defined($ENV{DISPLAY}) and length($ENV{DISPLAY}) and X_Available()) {
 		# We have DISPLAY, use GTK

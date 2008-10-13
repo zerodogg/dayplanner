@@ -108,7 +108,7 @@ $SIG{TERM} = \&DP_SigHandler;
 # Usage: DP_InitI18n();
 sub DP_InitI18n {
 	Assert(!$i18n);
-	$i18n = DP::GeneralHelpers::I18N->new();
+	$i18n = DP::GeneralHelpers::I18N->new('dayplanner');
 	Assert($i18n);
 }
 
