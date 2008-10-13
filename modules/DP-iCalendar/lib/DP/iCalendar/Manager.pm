@@ -587,7 +587,7 @@ public interface. For information about the public end-user API. See DP::iCalend
 
 =head2 Essentials
 
-First of all your objhect must be able to generate iCalendar events.
+First of all your object must be able to generate iCalendar events.
 It does NOT have to generate full iCalendar files, nor be able to read
 iCalendar information (although the manager can handle that aswell).
 
@@ -607,7 +607,7 @@ section for more information.
 =head2 Capabilities
 
 DP::iCalendar::Manager works on a set of capabilities which defines
-what each of the managed modules support. And attempts to emulate
+what each of the managed modules support, and attempts to emulate
 functionality not available.
 
 The essential functionality which MUST be available is the get_uid() and
