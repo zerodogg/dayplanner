@@ -79,14 +79,19 @@ sub get_month {
 }
 
 # Purpose: Create a new I18N object
-# Usage: new();
+# Usage: new(DOMAIN, LOCALE);
+# DOMAIN is the textdomain and mo filename, ie. dayplanner
+# LOCALE is the locale, this is not needed in most cases and will
+# 	be autodetected if not supplied.
 sub new {
 	my $Package = shift;
 	my $self = {};
 	bless($self,$Package);
 	$self->{'workaround'} = 0;
+	$self->{'domain'} = shift;
+	$self->{'hasLocale'} = shift;
 	
-	setlocale(LC_ALL, '' );
+	$self->{'setlocale_said'} = setlocale(LC_ALL, $self->{'hasLocale'});
 	if(eval('use Locale::gettext;1')) {
 		my $BindTo;
 		my $Legacy;
@@ -100,17 +105,10 @@ sub new {
 		}
 		# Find out if we have a locale directory in our main dir
 		if (-d "$FindBin::RealBin/locale/") {
-			if(defined($ENV{LC_ALL}) or defined($ENV{LANG})) {
-				my $I18N;
-				if(defined($ENV{LC_ALL}) and length($ENV{LC_ALL})) {
-					$I18N = $ENV{LC_ALL};
-				} else {
-					$I18N = $ENV{LANG};
-				}
-				if($I18N =~ /:/) {
-					$I18N =~ s/^(.+):.*$/$1/;
-				}
-				if (-e "$FindBin::RealBin/locale/$I18N/LC_MESSAGES/dayplanner.mo") {
+			if(my $I18N = $self->_getLocale())
+			{
+				if (-e "$FindBin::RealBin/locale/$I18N/LC_MESSAGES/".$self->{'domain'}.'.mo')
+				{
 					$BindTo = "$FindBin::RealBin/locale";
 				}
 			}
@@ -120,9 +118,9 @@ sub new {
 			warn("Using legacy Locale::gettext. This will work, but is not officially supported and you may have some issues with certain accented characters\n");
 			$self->{I18N_Mode} = 1;
 			if($BindTo) {
-				bindtextdomain('dayplanner', $BindTo);
+				bindtextdomain($self->{domain}, $BindTo);
 			}
-			textdomain('dayplanner');
+			textdomain($self->{domain});
 		} else {
 			$self->{I18N_Mode} = 2;
 			$self->{'workaround'} = $self->_detectWorkaraound();
@@ -132,11 +130,11 @@ sub new {
 				# it can also be forced on by the user.
 
 				# Set the raw gettext domain and enforce an UTF-8 codeset
-				$self->{Gettext} = Locale::gettext->domain_raw('dayplanner');
+				$self->{Gettext} = Locale::gettext->domain_raw($self->{domain});
 				$self->{Gettext}->codeset('UTF-8');
 			} else {
 				# Standard (no workaround applied)
-				$self->{Gettext} = Locale::gettext->domain('dayplanner');
+				$self->{Gettext} = Locale::gettext->domain($self->{domain});
 			}
 			if($BindTo) {
 				$self->{Gettext}->dir($BindTo);
@@ -250,6 +248,48 @@ sub AMPM_From24 {
 	return("$Hour:$Minutes $Suffix");
 }
 
+# Purpose: Get locale
+# Usage: this->_getLocale();
+sub _getLocale
+{
+	my $this = shift;
+	my $I18N;
+	if ($this->{hasLocale})
+	{
+		return $this->{hasLocale};
+	}
+	elsif(defined($ENV{LC_ALL}) or defined($ENV{LANG}))
+	{
+		if(defined($ENV{LC_ALL}) and length($ENV{LC_ALL})) {
+			$I18N = $ENV{LC_ALL};
+		} else {
+			$I18N = $ENV{LANG};
+		}
+	}
+	elsif(defined ($this->{'setlocale_said'}) and length ($this->{'setlocale_said'}))
+	{
+		$I18N = $this->{'setlocale_said'};
+	}
+	else
+	{
+		warn("Warning: Using fallback locale detection\n");
+		foreach my $k (sort keys(%ENV))
+		{
+			next if not $k =~ /^(LC_|LANG)/;
+			if (length $ENV{$k})
+			{
+				$I18N = $ENV{$k};
+				last;
+			}
+		}
+	}
+	if($I18N =~ /:/) {
+		$I18N =~ s/^(.+):.*$/$1/;
+	}
+	$this->{hasLocale} = $I18N;
+	return $I18N;
+}
+
 # Purpose: Detect if we should use the workaround or not
 # Usage: workaround = this->_detectWorkaraound();
 sub _detectWorkaraound
@@ -266,6 +306,11 @@ sub _detectWorkaraound
 		{
 			return 0;
 		}
+	}
+	# Ignore if we're not running under Gtk2
+	if(not defined($Gtk2::VERSION))
+	{
+		return 0;
 	}
 	# Workaround detection. Appears to be a bug
 	# in versions somewhere between 1.144 and 1.160.
