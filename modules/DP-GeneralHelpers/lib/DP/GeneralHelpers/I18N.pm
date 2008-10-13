@@ -91,7 +91,7 @@ sub new {
 	$self->{'domain'} = shift;
 	$self->{'hasLocale'} = shift;
 	
-	$self->{'setlocale_said'} = setlocale(LC_ALL, $self->{'hasLocale'});
+	$self->{'setlocale_said'} = setlocale(LC_ALL, $self->{'hasLocale'} ? $self->{'hasLocale'} : '');
 	if(eval('use Locale::gettext;1')) {
 		my $BindTo;
 		my $Legacy;
