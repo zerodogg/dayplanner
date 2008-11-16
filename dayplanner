@@ -39,6 +39,7 @@ use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
 use lib "$FindBin::RealBin/modules/";
 # Day Planner-specific libs
 use Date::HolidayParser 0.4;	# Parsing of .holiday files
+use DP::CoreModules::Plugin;
 use DP::CoreModules;
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
 use DP::iCalendar::Manager;		# Support for multiple iCalendars using a single object
@@ -62,6 +63,7 @@ my $i18n;
 my $DPS_APILevel = '06';			# The DPS API level used/supported
 my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
+my $plugin;
 
 # FIXME: Unused
 # Arrays
@@ -91,6 +93,7 @@ my $NoDaemon;		# True if we should dsable all use of the daemon. Useful on embed
 
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
+$InternalConfig{plugins_enabled} = '';
 
 # Set up signal handlers
 $SIG{INT} = \&DP_SigHandler;
@@ -598,6 +601,53 @@ sub DPS_DataSegment {
 	return($Data);
 }
 
+# FIXME
+# Plugins
+sub init_plugins
+{
+	$plugin = DP::CoreModules::Plugin->new();
+	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA));
+	$plugin->set_data('calendar',$iCalendar);
+	$plugin->set_data('MainWindow',$MainWindow);
+	$plugin->set_data('state',\%InternalConfig);
+	$plugin->set_data('config',\%UserConfig);
+	foreach my $pName (split(/\s+/,$InternalConfig{plugins_enabled}))
+	{
+		my $pluginPath;
+		foreach my $path (@{[$SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/']})
+		{
+			if (-e $path.'/'.$pName.'.pm')
+			{
+				$pluginPath = $path.'/'.$pName.'.pm';
+				last;
+			}
+		}
+		if(not $pluginPath)
+		{
+			DPIntWarn("Failed to locate plugin '$pName': ignoring");
+			next;
+		}
+		eval {
+			package DP::Plugin;
+			do($pluginPath);
+			package main;
+		};
+		my $e = $@;
+		if ($e)
+		{
+			DPIntWarN("Loading of plugin '$pName' failed: $e");
+			next;
+		}
+		eval('DP::Plugin::'.$pName.'->new_instance($plugin);');
+		if ($e)
+		{
+			DPIntWarN("Init of plugin '$pName' failed: $e");
+			next;
+		}
+	}
+	$plugin->signal_emit('INIT');
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Data and configuration file functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -693,6 +743,7 @@ sub FirstStartup {
 # Purpose: Save the main data files
 # Usage: SaveMainData();
 sub SaveMainData {
+	$plugin->signal_emit('SAVEDATA');
 	$iCalendar->write();	# TODO: Check return value
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	Daemon_SendData('RELOAD_DATA');
@@ -2819,6 +2870,7 @@ sub DPQuestion {
 # Purpose: Call save functions on exit
 # Usage: QuitSub();
 sub QuitSub {
+	$plugin->signal_emit('SHUTDOWN');
 	$MainWindow->set_sensitive(0);
 	DPS_Perform('SYNC');
 	my $SaveData = SaveMainData();
@@ -5080,6 +5132,9 @@ sub InitDPCore {
 	PopulateUpcomingEvents();
 	Set_DayChangeTimer();
 
+	# Init plugins
+	init_plugins();
+
 	return true;
 }
 
@@ -5253,6 +5308,8 @@ Import iCalendar data from I<FILE>.
 Export Day Planner data as HTML to I<DIR>. I<DIR> should be empty before you issue this
 command (although Day Planner will happily overwrite data in the directory
 if it isn't).
+
+=back
 
 =head1 HELP/SUPPORT
 
