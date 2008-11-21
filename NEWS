@@ -8,6 +8,8 @@ Version 0.10 (Unreleased)
 - Added manpage
 - Dropped the "import data from ..." dialog, added menu items to
   the calendar menu instead
+- Added a plugin system
+- Split DPS into a plugin
 
 * Notifier (dayplanner-notifier)
 - Added manpage
