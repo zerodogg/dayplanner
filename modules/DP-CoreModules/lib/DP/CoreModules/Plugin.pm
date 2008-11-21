@@ -50,6 +50,10 @@ sub set_data
 	my $name = shift;
 	my $content = shift;
 	$this->{stash}{$name} = $content;
+	if(not defined $content)
+	{
+		$this->warn('set_data('.$name.',undef) called, did you mean to delete the data entry?');
+	}
 	return true;
 }
 
@@ -68,6 +72,7 @@ sub signal_connect
 	my $handlerMethod = shift;
 	if(not $this->{signals}{$signal})
 	{
+		$this->_warn('Plugin '.ref($handlerModule).' connected to unregistered signal: '.$signal);
 		$this->{signals}{$signal} = [];
 	}
 	push(@{$this->{signals}{$signal}}, { module => $handlerModule, method => $handlerMethod });
@@ -86,9 +91,14 @@ sub signal_emit
 			my $e = $@;
 			if ($e)
 			{
-				main::DPIntWarn("Failure when emitting signal $signal: $e: ignoring");
+				chomp($e);
+				$this->_warn("Failure when emitting signal $signal: $e: ignoring");
 			}
 		}
+	}
+	else
+	{
+		$this->_warn('Emitted unregistered signal: '.$signal);
 	}
 	return true;
 }
@@ -106,5 +116,11 @@ sub STUB
     my ($stub_package, $stub_filename, $stub_line, $stub_subroutine, $stub_hasargs,
         $stub_wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
     warn "STUB: $stub_subroutine\n";
+}
+
+sub _warn
+{
+	shift;
+	warn('*** Day Planner Plugins: '.shift(@_)."\n");
 }
 1;
