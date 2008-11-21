@@ -34,15 +34,17 @@ sub new_instance
 	bless($this);
 	my $plugin = shift;
 	$this->{plugin} = $plugin;
-	my $UserConfig = $this->{plugin}->get_data('config');
 
 	# Make sure that DPS is enabled in the config
-	if(not (defined($UserConfig->{DPS_enable}) and $UserConfig->{DPS_enable} eq "1"))
+	if(not (defined($this->{plugin}->get_confval('DPS_enable')) and $this->{plugin}->get_confval('DPS_enable') eq "1"))
 	{
 		return;
 	}
 	# Check if the user wants to temporarily disable DPS
-	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
+	if(defined $ENV{DP_DISABLE_SERVICES} and $ENV{DP_DISABLE_SERVICES} eq '1')
+	{
+		return;
+	}
 
 	$plugin->signal_connect('SAVEDATA',$this,'synchronize');
 	$plugin->signal_connect('INIT',$this,'synchronize');
@@ -65,7 +67,7 @@ sub prefsWindow
 # Purpose: Output an error occurring with DPS
 # Usage: DPS_Error(User_Error, Technical_Error)
 #	User_Error is displayed as a pop-up error dialog.
-#	Technical_Error is DPIntWarn()ed, it is optional.
+#	Technical_Error is main::DPIntWarn()ed, it is optional.
 #	If no technical_error is supplied then User_error is used.
 sub DPS_Error {
 	my $this = shift;
@@ -73,7 +75,7 @@ sub DPS_Error {
 	main::Assert(defined($user_error));
 	# Tech_error is set to user_error when not supplied
 	my $tech_error = $_[0] ? $_[0] : $user_error;
-	DPIntWarn("DPS: $tech_error");
+	main::DPIntWarn("DPS: $tech_error");
 	$this->DPS_Log($tech_error);
 	if(defined($user_error)) {
 		$this->{Error} = $user_error;
@@ -109,12 +111,12 @@ sub DPS_Upload {
 	if(not $Reply eq 'OK') {
 		# TODO: These need cleaning
 		if($Reply =~ s/^ERR\s+(.*)$/$1/) {
-			DPS_Error($this->{i18n}->get('An error ocurred while uploading the data'), 'An error ocurred during upload of the data: ' . $Reply);
+			$this->DPS_Error($this->{i18n}->get('An error ocurred while uploading the data'), 'An error ocurred during upload of the data: ' . $Reply);
 		} elsif($Reply =~ /^EXPIRED/) {
-			DPS_Error($this->{i18n}->get('Your account has expired. If you are using a paid service this may be because you have not paid for the current period. If not, you should contact your service provider to get information on why your account has expired.'), 'Account expired');
+			$this->DPS_Error($this->{i18n}->get('Your account has expired. If you are using a paid service this may be because you have not paid for the current period. If not, you should contact your service provider to get information on why your account has expired.'), 'Account expired');
 		} else {
 			# Sending the data failed
-			DPS_Error($this->{i18n}->get_advanced('The server did not accept the uploaded data and replied with an unknown value: %(value)', { value => $Reply }));
+			$this->DPS_Error($this->{i18n}->get_advanced('The server did not accept the uploaded data and replied with an unknown value: %(value)', { value => $Reply }));
 		}
 		return(undef);
 	}
@@ -145,12 +147,12 @@ sub DPS_Download {
 		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/)
 		{
 			# FIXME: Rewrite this
-			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
+			$this->DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
 		}
 		elsif(not md5_base64($MainData) eq $MD5)
 		{
 			# FIXME: Rewrite this
-			DPS_Error($this->{i18n}->get('The data became corrupted during download. You may want to attempt to synchronize again.'),'MD5 mismatch during download: got ' . md5_base64($MainData) . ' expected ' . $MD5);
+			$this->DPS_Error($this->{i18n}->get('The data became corrupted during download. You may want to attempt to synchronize again.'),'MD5 mismatch during download: got ' . md5_base64($MainData) . ' expected ' . $MD5);
 		} 
 		else
 		{
@@ -273,7 +275,6 @@ sub DPS_Log {
 #	...
 sub DPS_Perform {
 	my $this = shift;
-	my $UserConfig = $this->{plugin}->get_data('config');
 	my $MainWindow = $this->{plugin}->get_data('MainWindow');
 	# The function we are going to perform
 	my $Function = shift;
@@ -284,7 +285,7 @@ sub DPS_Perform {
 		return unless($this->{plugin}->get_data('Gtk2Init'));
 		main::DP_DestroyProgressWin($this->{ProgressWin});
 		if(defined($this->{Error})) {
-			DPError($this->{i18n}->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $this->{Error}}));
+			main::DPError($this->{i18n}->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $this->{Error}}));
 			delete($this->{Error});
 		}
 		delete($this->{ProgressWin});
@@ -293,12 +294,13 @@ sub DPS_Perform {
 
 	# Verify that all required options are set in the config
 	foreach my $Option (qw(host port user pass)) {
-		unless(defined($UserConfig->{"DPS_$Option"}) and length($UserConfig->{"DPS_$Option"})) {
-			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
-			$UserConfig->{DPS_enable} = 0;
+		unless(defined($this->{plugin}->get_confval("DPS_$Option")))
+		{
+			main::DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
+			$this->{plugin}->set_confval("DPS_$Option",0);
 			return(undef);
 		} else {
-			$this->{$Option} = $UserConfig->{"DPS_$Option"};
+			$this->{$Option} = $this->{plugin}->get_confval("DPS_$Option");
 		}
 	}
 	return if not DPS_SSLSocketTest();
@@ -341,7 +343,7 @@ sub DPS_SSLSocketTest {
 	# Make sure the IO::Socket::SSL module is available and loaded
 	if(not main::runtime_use('IO::Socket::SSL',true)) {
 		if (not $this->{IO_SOCKET_SSL_ERR_DISPLAYED}) {
-			DPError($this->{i18n}->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
+			main::DPError($this->{i18n}->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
 			$this->{IO_SOCKET_SSL_ERR_DISPLAYED} = true;
 		}
 		return(false);
@@ -357,7 +359,7 @@ sub DPS_Connect {
 	my $Host = $this->{host};
 	my $Port = $this->{port};
 	my $User = $this->{user};
-	my $Password = $this->{pass};
+	my $Password = decode_base64(decode_base64($this->{pass}));
 	my $Error;
 	# Connect
 	$this->{socket} = IO::Socket::SSL->new(
@@ -370,7 +372,7 @@ sub DPS_Connect {
 	if($Error) {
 		# If we have already displayed an error to the user this session, don't do it again
 		if(defined($this->{Offline}) and $this->{Offline} == 1) {
-			DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
+			$this->DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
 			return(undef);
 		}
 
@@ -379,16 +381,16 @@ sub DPS_Connect {
 			# Process network unreachable and bad hostname
 		if($Error eq 'OFFLINE' or $Error eq 'BADHOST') {
 			$this->{Offline} = 1;
-			DPS_Error(sprintf($this->{i18n}->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port",) . " " . $this->{i18n}->get("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
+			$this->DPS_Error(sprintf($this->{i18n}->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port",) . " " . $this->{i18n}->get("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		}
 			# Process connection refused
 		elsif($Error eq 'REFUSED') {
 			$this->{Offline} = 1;
-			DPS_Error(sprintf($this->{i18n}->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port") . ' ' . $this->{i18n}->get('The connection was refused by the server. Please verify your Day Planner services settings.') . "\n\n" . $this->{i18n}->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@ ($Error)");
+			$this->DPS_Error(sprintf($this->{i18n}->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port") . ' ' . $this->{i18n}->get('The connection was refused by the server. Please verify your Day Planner services settings.') . "\n\n" . $this->{i18n}->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@ ($Error)");
 		} 
 			# Process unknown errors
 		else {
-			DPS_Error(sprintf($this->{i18n}->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . $this->{i18n}->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@");
+			$this->DPS_Error(sprintf($this->{i18n}->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . $this->{i18n}->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@");
 		}
 		return(undef);
 	}
@@ -399,11 +401,11 @@ sub DPS_Connect {
 	# Authentication
 	# First verify the API level
 	my $APIREPLY = $this->DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if $this->DPS_ErrorIfNeeded('OK', $APIREPLY, sub { $this->DPS_Disconnect();  DPS_Error($this->{i18n}->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version => $this->{plugin}->get_data('version')}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
+	return(undef) if $this->DPS_ErrorIfNeeded('OK', $APIREPLY, sub { $this->DPS_Disconnect();  $this->DPS_Error($this->{i18n}->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version => $this->{plugin}->get_data('version')}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
 	# Send AUTH
 	my $AUTHREPLY = $this->DPS_DataSegment("AUTH $User $Password");
 	# If AUTH did not return OK then it failed and we just return undef.
-	return(undef) if $this->DPS_ErrorIfNeeded('OK', $AUTHREPLY, sub { $this->DPS_Disconnect(); DPS_Error($this->{i18n}->get('The username and/or password is incorrect.'),'Authentication error');});
+	return(undef) if $this->DPS_ErrorIfNeeded('OK', $AUTHREPLY, sub { $this->DPS_Disconnect(); $this->DPS_Error($this->{i18n}->get('The username and/or password is incorrect.'),'Authentication error');});
 	$this->DPS_Log("Connected to $Host on port $Port as user $User");
 	return('OK');
 }
