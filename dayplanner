@@ -75,7 +75,6 @@ my @SaveFallbackDirs = (				# The directories to use for fallback saving if we c
 my %Holidays;			# The holidays
 my %InternalConfig;		# Internal configuration values
 my %UserConfig;			# User-selected configuration values
-my %DPServices;			# Day Planner services hash
 
 # Gtk2 objects
 my (
@@ -228,7 +227,7 @@ sub Daemon_SendData {
 # Plugins
 sub init_plugins
 {
-	$plugin = DP::CoreModules::Plugin->new();
+	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
 	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA));
 	$plugin->set_data('calendar',$iCalendar);
 	$plugin->set_data('MainWindow',$MainWindow);
@@ -262,13 +261,14 @@ sub init_plugins
 		my $e = $@;
 		if ($e)
 		{
-			DPIntWarN("Loading of plugin '$pName' failed: $e");
+			DPIntWarn("Loading of plugin '$pName' failed: $e");
 			next;
 		}
 		eval('DP::Plugin::'.$pName.'->new_instance($plugin);');
+		$e = $@;
 		if ($e)
 		{
-			DPIntWarN("Init of plugin '$pName' failed: $e");
+			DPIntWarn("Init of plugin '$pName' failed: $e");
 			next;
 		}
 	}
