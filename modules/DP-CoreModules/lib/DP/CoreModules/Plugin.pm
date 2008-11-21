@@ -22,14 +22,16 @@ use warnings;
 use constant { true => 1, false => 0 };
 
 # Purpose: Create a new plugin instance
-# Usage: my $object = DP::iCalendar->new();
+# Usage: my $object = DP::iCalendar->new(\%ConfRef);
 sub new
 {
 	my $name = shift;
 	my $this = {};
 	bless($this,$name);
+	$this->{config} = shift;
 	$this->{stash} = {};
 	$this->{signals} = {};
+	$this->{currPlugin} = undef;
 	return $this;
 }
 
@@ -64,6 +66,23 @@ sub get_data
 	return $this->{stash}{$name};
 }
 
+sub set_confval
+{
+	my $this = shift;
+	my $name = shift;
+	my $value = shift;
+	$name = $this->_get_currName().'_'.$name;
+	return $this->{config}{$name} = $value;
+}
+
+sub get_confval
+{
+	my $this = shift;
+	my $name = shift;
+	$name = $this->_get_currName().'_'.$name;
+	return $this->{config}->{$name};
+}
+
 sub signal_connect
 {
 	my $this = shift;
@@ -87,6 +106,7 @@ sub signal_emit
 	{
 		foreach my $i (@{$this->{signals}{$signal}})
 		{
+			$this->{currPlugin} = $i->{module};
 			eval('$i->{module}->'.$i->{method}.'();');
 			my $e = $@;
 			if ($e)
@@ -94,6 +114,7 @@ sub signal_emit
 				chomp($e);
 				$this->_warn("Failure when emitting signal $signal: $e: ignoring");
 			}
+			$this->{currPlugin} = undef;
 		}
 	}
 	else
@@ -122,5 +143,28 @@ sub _warn
 {
 	shift;
 	warn('*** Day Planner Plugins: '.shift(@_)."\n");
+}
+
+sub _get_currName
+{
+	my $this = shift;
+	my $base;
+	if(ref($this->{currPlugin}))
+	{
+		$base = ref($this->{currPlugin});
+	}
+	elsif ($this->{currPlugin})
+	{
+		$base = $this->{currPlugin};
+	}
+	else
+	{
+		my ($name_package, $name_filename, $name_line, $name_subroutine, $name_hasargs,
+			$name_wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+		$base = $name_package;
+	}
+	$base =~ s/DP::Plugin:://g;
+	$base =~ s/::/_/g;
+	return $base;
 }
 1;
