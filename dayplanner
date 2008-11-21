@@ -813,7 +813,7 @@ sub IPC_Handler {
 sub UpgradeVersion {
 	my $ProgressWin = DPCreateProgressWin($i18n->get('Upgrading'), '', 1);
 	$InternalConfig{LastVersion} = $Version;
-	my $Total = 9;
+	my $Total = 10;
 	# Upgrade the holiday file if needed
 	if(-e $HolidayFile) {
 		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
@@ -909,6 +909,18 @@ sub UpgradeVersion {
 		DP_AddAutostart();
 	}
 	ProgressMade(9, $Total, $ProgressWin) if($Gtk2Init);
+	foreach my $val(qw(DPS_enable DPS_host DPS_pass DPS_port DPS_user))
+	{
+		if ($UserConfig{$val})
+		{
+			if(not $InternalConfig{'ServicesSync_'.$val})
+			{
+				$InternalConfig{'ServicesSync_'.$val} = $UserConfig{$val};
+			}
+			delete($UserConfig{$val});
+		}
+	}
+	ProgressMade(10, $Total, $ProgressWin) if($Gtk2Init);
 	DP_DestroyProgressWin($ProgressWin);
 }
 
