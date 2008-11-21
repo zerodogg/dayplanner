@@ -224,383 +224,6 @@ sub Daemon_SendData {
 	$DaemonSocket->client_send("$$ $_[0]");
 }
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Services layer
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Output an error occurring with DPS
-# Usage: DPS_Error(User_Error, Technical_Error)
-#	User_Error is displayed as a pop-up error dialog.
-#	Technical_Error is DPIntWarn()ed, it is optional.
-#	If no technical_error is supplied then User_error is used.
-sub DPS_Error {
-	my $user_error = shift;
-	Assert(defined($user_error));
-	# Tech_error is set to user_error when not supplied
-	my $tech_error = $_[0] ? $_[0] : $user_error;
-	DPIntWarn("DPS: $tech_error");
-	DPS_Log($tech_error);
-	if(defined($user_error)) {
-		$DPServices{Error} = $user_error;
-	}
-}
-
-# Purpose: Set the status in the DPS GUI Window
-# Usage: DPS_Status(TEXT, COMPLETED);
-#	COMPLETED is a number between 0 and 1 (such as 0.1, 0.5)
-#	0 = 0%
-#	1 = 100%
-sub DPS_Status {
-	my ($Text, $Completed) = @_;
-	return unless($Gtk2Init);
-	if(defined($DPServices{ProgressWin})) {
-		$DPServices{ProgressWin}->{ProgressBar}->set_fraction($Completed);
-		$DPServices{ProgressWin}->{ProgressBar}->set_text($Text);
-		GTK_Flush();
-	}
-}
-
-# Purpose: Upload data to a Day Planner services server
-# Usage: DPS_Upload();
-sub DPS_Upload {
-	my $LastMD5 = $InternalConfig{DPS_LastMD5} ? $InternalConfig{DPS_LastMD5} : "undef";
-	my $SendData = encode_base64($iCalendar->get_rawdata(),'');
-	chomp($SendData);
-	my $MD5 = md5_base64($SendData);
-	my $Reply = DPS_DataSegment("SENDDATA $MD5 $LastMD5 $SendData 0");
-	if(not $Reply eq 'OK') {
-		# TODO: These need cleaning
-		if($Reply =~ s/^ERR\s+(.*)$/$1/) {
-			DPS_Error($i18n->get('An error ocurred while uploading the data'), 'An error ocurred during upload of the data: ' . $Reply);
-		} elsif($Reply =~ /^EXPIRED/) {
-			DPS_Error($i18n->get('Your account has expired. If you are using a paid service this may be because you have not paid for the current period. If not, you should contact your service provider to get information on why your account has expired.'), 'Account expired');
-		} else {
-			# Sending the data failed
-			DPS_Error($i18n->get_advanced('The server did not accept the uploaded data and replied with an unknown value: %(value)', { value => $Reply }));
-		}
-		return(undef);
-	}
-	# We successfully uploaded the data. So set DPS_LastMD5 and return true
-	$InternalConfig{DPS_LastMD5} = $MD5;
-	return(1);
-}
-
-# Purpose: Download data from a Day Planner services server
-# Usage: DPS_Download(MERGE?);
-#	If MERGE is true then it will not overwrite the current data
-#	with the downloaded data, but rather use the DP::iCalendar merge
-#	function to merge it into place.
-# This function itself is stupid, it doesn't know about MD5 sums of local data
-# or anything. It will download the data no matter what, it is up to the caller
-# to check if we actually need to download data or not.
-sub DPS_Download {
-	my $Merge = shift;
-	my $Data = DPS_DataSegment('GETDATA');
-	if($Data =~ /^OK/) {
-		DPS_Log('Downloaded data');
-		my $Initial = $Data;
-		my $MD5 = $Data;
-		my $MainData = $Data;
-		$Initial =~ s/^(\S+)\s+.*$/$1/;
-		$MD5 =~ s/^(\S+)\s+(\S+)\s+.*/$2/;
-		if(not $MainData =~ s/^(\S+)\s+(\S+)\s+(\S+)\s*$/$3/)
-		{
-			# FIXME: Rewrite this
-			DPS_Error("FATAL: UNABLE TO GRAB DATA. DUMPING DATA:\nData recieved: $Initial");
-		}
-		elsif(not md5_base64($MainData) eq $MD5)
-		{
-			# FIXME: Rewrite this
-			DPS_Error($i18n->get('The data became corrupted during download. You may want to attempt to synchronize again.'),'MD5 mismatch during download: got ' . md5_base64($MainData) . ' expected ' . $MD5);
-		} 
-		else
-		{
-			# Decode the base64 encoded data
-			$MainData = decode_base64($MainData);
-			# Remove junk and populate @DataArray
-			my @DataArray;
-			$MainData =~ s/\r//g;
-			push(@DataArray, $_) foreach(split(/\n/,$MainData));
-			$MainData = undef;
-			# If we're in merge mode then enable SMART MERGE and then add
-			# the file, if not then clean and add the file
-			my $iCalendarMain = $iCalendar->get_primary();
-			if($Merge)
-			{
-				$iCalendarMain->enable('SMART_MERGE');
-				$iCalendarMain->addfile(\@DataArray);
-				$iCalendarMain->disable('SMART_MERGE');
-			} 
-			else 
-			{
-				$iCalendarMain->clean();
-				$iCalendarMain->addfile(\@DataArray);
-			}
-			# Download succesful. Set DPS_LastMD5
-			$InternalConfig{DPS_LastMD5} = $MD5;
-			UpdatedData();
-			return(1);
-		}
-	} else {
-		DPS_Log("Unable to download data. Server replied: $Data");
-	}
-	# If we got this far then it means we failed.
-	return(undef);
-}
-
-# Purpose: Synchronize our local data with the server data
-# Usage: DPS_DataSync();
-sub DPS_DataSync {
-	DPS_Status($i18n->get('Synchronizing'),0.2);
-	# Get information we need
-	#	The server's data MD5 sum
-	my $ServerMD5 = DPS_DataSegment('GET_MD5');
-	#	The MD5 sum of our current local data
-	my $LocalMD5 = md5_base64(encode_base64($iCalendar->get_rawdata(),""));
-	#	The MD5 sum of the data we last uploaded
-	my $LastUpMD5 = $InternalConfig{DPS_LastMD5};
-
-	# Okay, the required information is available.
-	# First check if our current local MD5 sum matches the one on the server.
-	# If it does then we return without doing anything at all.
-	if(defined($LocalMD5) and defined($ServerMD5) and $ServerMD5 eq $LocalMD5) {
-		DPS_Log("ServerMD5[$ServerMD5] matched our LocalMD5[$LocalMD5]. Not doing anything");
-		return(1);
-	} 
-	# It didn't match. So now we check if our last uploaded MD5 matches the servers MD5.
-	# If it does then we just upload.
-	elsif ($ServerMD5 eq $LastUpMD5 or $ServerMD5 eq '[NONE]') {
-		DPS_Log("Local data changed, uploading to DPS (local MD5 is $LocalMD5 and the servers MD5 is $ServerMD5)");
-		DPS_Status($i18n->get('Synchronizing'),0.4);
-		my $Return = DPS_Upload();
-		DPS_Status($i18n->get('Synchronizing'),0.8);
-		UpdatedData();
-		DPS_Status($i18n->get('Synchronizing'),0.9);
-		return($Return);
-	}
-	# That didn't match either. So we check if our local MD5 is identical to the
-	# last uploaded MD5. If that is the case then we just need to download the
-	# data from the server.
-	elsif ($LastUpMD5 eq $LocalMD5) {
-		DPS_Log('Remote data changed, downloading from DPS');
-		DPS_Status($i18n->get('Synchronizing'),0.5);
-		my $Return = DPS_Download();
-		DPS_Status($i18n->get('Synchronizing'),0.8);
-		UpdatedData();
-		DPS_Status($i18n->get('Synchronizing'),0.9);
-		return($Return);
-	}
-	# Okay, nothing matched. This means that we have one local MD5 sum,
-	# one remote MD5 sum and one "local last uploaded" MD5 sum - and they all differ.
-	# We must here download the data from the server, merge it with our own and then
-	# upload the new data.
-	else {
-		DPS_Log('Both remote and local data has changed. Downloading, merging and reuploading');
-		DPS_Status($i18n->get('Synchronizing'),0.3);
-		if(DPS_Download(1)) {
-			DPS_Status($i18n->get('Synchronizing'),0.6);
-			my $Return = DPS_Upload();
-			DPS_Status($i18n->get('Synchronizing'),0.8);
-			UpdatedData();
-			DPS_Status($i18n->get('Synchronizing'),0.9);
-			return($Return);
-		}
-	}
-}
-
-# Purpose: Log DPS info
-# Usage: DPS_Log(INFO);
-sub DPS_Log {
-	Assert(defined $_[0]);
-	if(defined($DPServices{Log_FH})) {
-		my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
-		$lhour = "0$lhour" unless $lhour >= 10;
-		$lmin = "0$lmin" unless $lmin >= 10;
-		$lsec = "0$lsec" unless $lsec >= 10;
-		my $FH = $DPServices{Log_FH};
-		print $FH "[$lhour:$lmin:$lsec] $_[0]\n";
-	}
-	return(1);
-}
-
-# Purpose: High-level API to DPS
-# Usage: DPS_Perform(FUNCTION);
-#	FUNCTION can be one of:
-#	SYNC
-#	...
-sub DPS_Perform {
-	runtime_use('Digest::MD5 qw(md5_base64 md5_hex)');
-	# The function we are going to perform
-	my $Function = shift;
-	Assert($Function =~ /^(SYNC)$/);
-	# A coderef to the code which we need to run to close the GUI
-	# dialogues used.
-	my $GuiEnded = sub {
-		return unless($Gtk2Init);
-		DP_DestroyProgressWin($DPServices{ProgressWin});
-		if(defined($DPServices{Error})) {
-			DPError($i18n->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $DPServices{Error}}));
-			delete($DPServices{Error});
-		}
-		delete($DPServices{ProgressWin});
-		$MainWindow->set_sensitive(1);
-	};
-
-	# Make sure that DPS is enabled in the config
-	return unless(defined($UserConfig{DPS_enable}) and $UserConfig{DPS_enable} eq "1");
-	# Check if the user wants to temporarily disable DPS
-	return if(defined($ENV{DP_DISABLE_SERVICES}) and $ENV{DP_DISABLE_SERVICES} eq "1");
-	# Verify that all required options are set in the config
-	foreach my $Option (qw(host port user pass)) {
-		unless(defined($UserConfig{"DPS_$Option"}) and length($UserConfig{"DPS_$Option"})) {
-			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
-			$UserConfig{DPS_enable} = 0;
-			return(undef);
-		} else {
-			$DPServices{$Option} = $UserConfig{"DPS_$Option"};
-		}
-	}
-	return if not DPS_SSLSocketTest();
-	# Create the progress window
-	if($Gtk2Init) {
-		$MainWindow->set_sensitive(0);
-		$DPServices{ProgressWin} = DPCreateProgressWin($i18n->get('Services'), $i18n->get('Initializing'));
-	}
-	# Open up the logfile if it isn't open. This should be left open for the
-	# entirety of the DPS session.
-	if(not defined($DPServices{Log_FH})) {
-		open($DPServices{Log_FH}, '>', "$SaveToDir/services.log");
-		chmod(oct(600),"$SaveToDir/services.log");
-		DPS_Log('DPS initialized');
-	}
-	DPS_Status($i18n->get('Connecting'),0);
-	# Connect to the server, if this fails then we return undef without doing anything
-	if(not DPS_Connect()) {
-		$GuiEnded->();
-		return(undef);
-	}
-	DPS_Status($i18n->get('Connected'),0.1);
-	# Connection established, process $Function
-	if($Function eq 'SYNC')
-	{
-		DPS_DataSync();
-	}
-	DPS_Status($i18n->get('Complete'),1);
-	# Disconnect and return
-	DPS_Disconnect();
-	$GuiEnded->();
-	return(1);
-}
-
-# Purpose: Test for IO::Socket::SSL
-# Usage: DPS_SSLSocketTest();
-sub DPS_SSLSocketTest {
-	# Make sure the IO::Socket::SSL module is available and loaded
-	if(not runtime_use('IO::Socket::SSL',true)) {
-		if (not $DPServices{IO_SOCKET_SSL_ERR_DISPLAYED}) {
-			DPError($i18n->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
-			$DPServices{IO_SOCKET_SSL_ERR_DISPLAYED} = true;
-		}
-		return(false);
-	}
-	return(true);
-}
-
-# Purpose: Connect to a Day Planner services server.
-# Usage: my $Return = DPS_Connect();
-#		The arguments are optional and will be read from %DPServices if not supplied
-sub DPS_Connect {
-	my $Host = $DPServices{host};
-	my $Port = $DPServices{port};
-	my $User = $DPServices{user};
-	my $Password = $DPServices{pass};
-	my $Error;
-	# Connect
-	$DPServices{socket} = IO::Socket::SSL->new(
-					PeerAddr => $Host,
-					PeerPort => $Port,
-					Timeout => 10,
-			) or do { $Error = IO::Socket::SSL::errstr(); };
-			
-	# Process errors if any occurred
-	if($Error) {
-		# If we have already displayed an error to the user this session, don't do it again
-		if(defined($DPServices{Offline}) and $DPServices{Offline} == 1) {
-			DPS_Error(undef, "Unable to connect to $Host on port $Port: $@");
-			return(undef);
-		}
-
-		$Error = IO_Socket_INET_Errors($Error);	# Get errors that are easier to process
-
-			# Process network unreachable and bad hostname
-		if($Error eq 'OFFLINE' or $Error eq 'BADHOST') {
-			$DPServices{Offline} = 1;
-			DPS_Error(sprintf($i18n->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port",) . " " . $i18n->get("You're probably not connected to the internet"), "Unable to connect to $Host on port $Port: $@ ($Error)");
-		}
-			# Process connection refused
-		elsif($Error eq 'REFUSED') {
-			$DPServices{Offline} = 1;
-			DPS_Error(sprintf($i18n->get('Unable to connect to the Day Planner services server (%s).'), "$Host:$Port") . ' ' . $i18n->get('The connection was refused by the server. Please verify your Day Planner services settings.') . "\n\n" . $i18n->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@ ($Error)");
-		} 
-			# Process unknown errors
-		else {
-			DPS_Error(sprintf($i18n->get("Unable to connect to the Day Planner services server (%s)."), "$Host:$Port") . " " . $i18n->get('If this problem persists, please contact your service provider'), "Unable to connect to $Host on port $Port: $@");
-		}
-		return(undef);
-	}
-
-	# The connection didn't fail, so delete $DPServices{Offline} if it exists
-	delete($DPServices{Offline});
-
-	# Authentication
-	# First verify the API level
-	my $APIREPLY = DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if DPS_ErrorIfNeeded('OK', $APIREPLY, sub { DPS_Disconnect();  DPS_Error($i18n->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version =>  $Version}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
-	# Send AUTH
-	my $AUTHREPLY = DPS_DataSegment("AUTH $User $Password");
-	# If AUTH did not return OK then it failed and we just return undef.
-	return(undef) if DPS_ErrorIfNeeded('OK', $AUTHREPLY, sub { DPS_Disconnect(); DPS_Error($i18n->get('The username and/or password is incorrect.'),'Authentication error');});
-	DPS_Log("Connected to $Host on port $Port as user $User");
-	return('OK');
-}
-
-# Purpose: Disconnect from a Day Planner services daemon
-# Usage: DPS_Disconnect();
-sub DPS_Disconnect {
-	my $Socket = $DPServices{socket};
-	close($Socket);
-	delete($DPServices{socket});
-	DPS_Log('Disconnected');
-	return(1);
-}
-
-# Purpose: Do something when an error has occurred
-# Usage: my $Return = DPS_ErrorIfNeeded(EXPECTED_REPLY, RECIEVED_REPLY, CODEREF);
-#	The CODEREF will be run if EXPECTED_REPLY does not eq RECIEVED_REPLY
-sub DPS_ErrorIfNeeded {
-	my ($Expected, $Recieved, $ErrorSub) = @_;
-	unless($Expected eq $Recieved) {
-		$ErrorSub->($Recieved);
-		return(1);
-	} else {
-		return(0);
-	}
-}
-
-# Purpose: Send data to a Day Planner services daemon and get the reply
-# Usage: my $Reply = DPS_DataSegment(DATA_TO_SEND);
-sub DPS_DataSegment {
-	my $Socket = $DPServices{socket};
-	print $Socket "$_[0]\n";
-	my $Data = <$Socket>;
-	if(not defined($Data)) {
-		$Data = '';
-	} else {
-		chomp($Data);
-	}
-	return($Data);
-}
-
 # FIXME
 # Plugins
 sub init_plugins
@@ -611,6 +234,10 @@ sub init_plugins
 	$plugin->set_data('MainWindow',$MainWindow);
 	$plugin->set_data('state',\%InternalConfig);
 	$plugin->set_data('config',\%UserConfig);
+	$plugin->set_data('Gtk2Init',$Gtk2Init);
+	$plugin->set_data('i18n',$i18n);
+	$plugin->set_data('version',$Version);
+	$plugin->set_data('confdir',$SaveToDir);
 	foreach my $pName (split(/\s+/,$InternalConfig{plugins_enabled}))
 	{
 		my $pluginPath;
@@ -2870,9 +2497,8 @@ sub DPQuestion {
 # Purpose: Call save functions on exit
 # Usage: QuitSub();
 sub QuitSub {
-	$plugin->signal_emit('SHUTDOWN');
 	$MainWindow->set_sensitive(0);
-	DPS_Perform('SYNC');
+	$plugin->signal_emit('SHUTDOWN');
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED') {
 		unless(DPQuestion($i18n->get('Some files could not be saved correctly. Quit anyway?'))) {
@@ -4564,7 +4190,7 @@ sub PreferencesWindow {
 	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
 	$EnableDisableCButton->signal_connect('toggled' => sub {
 			if($EnableDisableCButton->get_active) {
-				if(DPS_SSLSocketTest()) {
+				if(DP::Plugin::ServicesSync::DPS_SSLSocketTest()) {
 					$UserConfig{DPS_enable} = 1;
 					$Config_Table->set_sensitive(1);
 				}
@@ -4676,10 +4302,7 @@ sub PreferencesWindow {
 			}
 			WriteConfig();
 			$PreferencesWindow->hide();
-			# Synchronize if DPS settings have been changed and it is enabled
-			if($UserConfig{DPS_enable} and not $DPSWasStatus) {
-				DPS_Perform('SYNC');
-			}
+			$plugin->signal_emit('CLOSE_PREFS');
 			$PreferencesWindow->destroy();
 			$MainWindow->set_sensitive(1);
 		};
@@ -5114,8 +4737,6 @@ sub InitDPCore {
 			IPC_Handler("IMPORT_DATA $_");
 		}
 	}
-	# Connect to a DPS server and sync the local data with it if it's enabled
-	DPS_Perform('SYNC');
 	# Initialize the daemon
 	if (!$NoDaemon)
 	{
