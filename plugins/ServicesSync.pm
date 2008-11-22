@@ -23,6 +23,7 @@ use warnings;
 use IO::Socket::SSL;
 use MIME::Base64;
 use Digest::MD5 qw(md5_base64);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use);
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 my $DPS_APILevel = '06';			# The DPS API level used/supported
@@ -291,7 +292,7 @@ sub DPS_Error {
 	main::Assert(defined($user_error));
 	# Tech_error is set to user_error when not supplied
 	my $tech_error = $_[0] ? $_[0] : $user_error;
-	main::DPIntWarn("DPS: $tech_error");
+	DPIntWarn("DPS: $tech_error");
 	$this->DPS_Log($tech_error);
 	if(defined($user_error)) {
 		$this->{Error} = $user_error;
@@ -310,7 +311,7 @@ sub DPS_Status {
 	if(defined($this->{ProgressWin})) {
 		$this->{ProgressWin}->{ProgressBar}->set_fraction($Completed);
 		$this->{ProgressWin}->{ProgressBar}->set_text($Text);
-		main::GTK_Flush();
+		GTK_Flush();
 	}
 }
 
@@ -499,9 +500,9 @@ sub DPS_Perform {
 	# dialogues used.
 	my $GuiEnded = sub {
 		return unless($this->{plugin}->get_var('Gtk2Init'));
-		main::DP_DestroyProgressWin($this->{ProgressWin});
+		DP_DestroyProgressWin($this->{ProgressWin});
 		if(defined($this->{Error})) {
-			main::DPError($this->{i18n}->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $this->{Error}}));
+			DPError($this->{i18n}->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $this->{Error}}));
 			delete($this->{Error});
 		}
 		delete($this->{ProgressWin});
@@ -512,7 +513,7 @@ sub DPS_Perform {
 	foreach my $Option (qw(host port user pass)) {
 		unless(defined($this->{plugin}->get_confval("DPS_$Option")))
 		{
-			main::DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
+			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
 			$this->{plugin}->set_confval("DPS_$Option",0);
 			return(undef);
 		} else {
@@ -523,7 +524,7 @@ sub DPS_Perform {
 	# Create the progress window
 	if($this->{plugin}->get_var('Gtk2Init')) {
 		$MainWindow->set_sensitive(0);
-		$this->{ProgressWin} = main::DPCreateProgressWin($this->{i18n}->get('Services'), $this->{i18n}->get('Initializing'));
+		$this->{ProgressWin} = DPCreateProgressWin($this->{i18n}->get('Services'), $this->{i18n}->get('Initializing'));
 	}
 	# Open up the logfile if it isn't open. This should be left open for the
 	# entirety of the DPS session.
@@ -557,9 +558,9 @@ sub DPS_Perform {
 sub DPS_SSLSocketTest {
 	my $this = shift;
 	# Make sure the IO::Socket::SSL module is available and loaded
-	if(not main::runtime_use('IO::Socket::SSL',true)) {
+	if(not runtime_use('IO::Socket::SSL',true)) {
 		if (not $this->{IO_SOCKET_SSL_ERR_DISPLAYED}) {
-			main::DPError($this->{i18n}->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
+			DPError($this->{i18n}->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
 			$this->{IO_SOCKET_SSL_ERR_DISPLAYED} = true;
 		}
 		return(false);
