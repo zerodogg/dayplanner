@@ -48,8 +48,7 @@ sub new_instance
 
 	$plugin->signal_connect('SAVEDATA',$this,'synchronize');
 	$plugin->signal_connect('INIT',$this,'synchronize');
-	$plugin->signal_connect('MK_PREFS_WINDOW',$this,'prefsWindow');
-	$this->{i18n} = $plugin->get_data('i18n');
+	$this->{i18n} = $plugin->get_var('i18n');
 	return $this;
 }
 
@@ -59,9 +58,207 @@ sub synchronize
 	$this->DPS_Perform('SYNC');
 }
 
-sub prefsWindow
+sub PreferencesWindow
 {
 	my $this = shift;
+	my $plugin = shift;
+	my $i18n = $plugin->get_var('i18n');
+	my $MainWindow = $plugin->get_var('MainWindow');
+	$MainWindow->set_sensitive(0);
+	my $PreferencesWindow = Gtk2::Window->new();
+	$PreferencesWindow->set_modal(1);
+	$PreferencesWindow->set_transient_for($MainWindow);
+	$PreferencesWindow->set_position('center-on-parent');
+	$PreferencesWindow->set_title($i18n->get('Synchronization preferences'));
+	$PreferencesWindow->set_resizable(0);
+	$PreferencesWindow->set_border_width(12);
+	$PreferencesWindow->set_skip_taskbar_hint(1);
+	$PreferencesWindow->set_skip_pager_hint(1);
+	$PreferencesWindow->set_type_hint('dialog');
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+
+	# ==================================================================
+	# ==================================================================
+	# SYNCHRONIZATION TAB
+	# ==================================================================
+	# ==================================================================
+	
+	# Get and set the values we're going to use
+	my $Host = $plugin->get_confval('DPS_host') ? $plugin->get_confval('DPS_host') : '';
+	my $Port = $plugin->get_confval('DPS_port') ? $plugin->get_confval('DPS_port') : 4435;
+	my $Username = $plugin->get_confval('DPS_user') ? $plugin->get_confval('DPS_user') : '';
+	my $Password = $plugin->get_confval('DPS_pass') ? $plugin->get_confval('DPS_pass') : '';
+	my $DPSWasStatus = $plugin->get_confval('DPS_enable');
+
+	# Create the vbox
+	my $Sync_VBox = Gtk2::VBox->new();
+	$Sync_VBox->show();
+	$Sync_VBox->set_border_width(12);
+	$PreferencesWindow->add($Sync_VBox);
+
+	# Create the table
+	my $Config_Table = Gtk2::Table->new(3,4);
+	$Config_Table->show();
+
+	# Enable/disable evolution checkbox
+#	my $EnableDisableEButton = Gtk2::CheckButton->new($i18n->get('Enable GNOME integration'));
+#	$Sync_VBox->pack_start($EnableDisableEButton,0,0,0);
+#	if(EvoCompat_GetMode())
+#	{
+#		$EnableDisableEButton->set_active(true);
+#	}
+#	else
+#	{
+#		$EnableDisableEButton->set_active(false);
+#	}
+#	$EnableDisableEButton->signal_connect('toggled' => sub 
+#		{
+#			if ($EnableDisableEButton->get_active())
+#			{
+#				if(DPQuestion(
+#						$i18n->get("This will enable GNOME integration mode. When enabled you will be able to view Day Planner events in the calendar in the GNOME panel.\n\nIt is not recommended that you enable this if you use Evolution because Day Planner will override certain evolution functions.\n\nAre you sure you want to enable GNOME integration?")
+#				))
+#				{
+#					EvoCompat_Enable();
+#					DPInfo("Evolution integration mode has been enabled. You may need to log out and in again for it to take effect.");
+#				}
+#			}
+#			else
+#			{
+#				EvoCompat_Disable();
+#			}
+#			if (EvoCompat_GetMode())
+#			{
+#				$EnableDisableEButton->set_active(true);
+#			}
+#			else
+#			{
+#				$EnableDisableEButton->set_active(false);
+#			}
+#		});
+#	$EnableDisableEButton->show();
+
+	# Enable/disable checkbox
+	my $EnableDisableCButton = Gtk2::CheckButton->new($i18n->get('Automatically synchronize an online copy of this calendar'));
+	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
+	$EnableDisableCButton->signal_connect('toggled' => sub {
+			if($EnableDisableCButton->get_active) {
+				if(DP::Plugin::ServicesSync::DPS_SSLSocketTest()) {
+					$plugin->set_confval('DPS_enable',1);
+					$Config_Table->set_sensitive(1);
+				}
+			} else {
+				$plugin->set_confval('DPS_enable',0);
+				$Config_Table->set_sensitive(0);
+			}});
+	if($plugin->get_confval('DPS_enable')) {
+		$EnableDisableCButton->set_active(1);
+		$EnableDisableCButton->signal_emit('toggled');
+	} else {
+		$EnableDisableCButton->set_active(0);
+		$EnableDisableCButton->signal_emit('toggled');
+	}
+	$EnableDisableCButton->show();
+
+	# Add the table to the UI
+	$Sync_VBox->pack_start($Config_Table,0,0,0);
+	
+	# ==================================================================
+	# HOST/PORT
+	# ==================================================================
+	
+	# Host
+
+	#  Label
+	my $UseHost = Gtk2::Label->new($i18n->get('Server:'));
+	$UseHost->show();
+	$Config_Table->attach_defaults($UseHost, 0,1,0,1);
+	
+	#  Entry
+	my $HostEntry = Gtk2::Entry->new();
+	$HostEntry->set_text($Host);
+	$HostEntry->show();
+	$Config_Table->attach_defaults($HostEntry, 1,2,0,1);
+	
+	# Port
+	
+	#  Label
+	my $UsePort = Gtk2::Label->new(' ' . $i18n->get('Port:'));
+	$UsePort->show();
+	$Config_Table->attach_defaults($UsePort, 2,3,0,1);
+	
+	#  Spinner
+	my $PortAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 65000.0, 1.0, 5.0, 0.0);
+	my $PortSpinner = Gtk2::SpinButton->new($PortAdjustment,0,0);
+	$PortSpinner->set_value($Port);
+	$PortSpinner->show();
+	$Config_Table->attach_defaults($PortSpinner, 3,4,0,1);
+	
+	# ==================================================================
+	# USERNAME/PASSWORD
+	# ==================================================================
+	
+	# Username
+	#  Label
+	my $UsernameLabel = Gtk2::Label->new($i18n->get('Username:'));
+	$UsernameLabel->show();
+	$Config_Table->attach_defaults($UsernameLabel, 0,1,1,2);
+	
+	#  Entry
+	my $UserEntry = Gtk2::Entry->new();
+	$UserEntry->set_text($Username);
+	$UserEntry->show();
+	$Config_Table->attach_defaults($UserEntry, 1,4,1,2);
+	
+	# Password
+	#  Label
+	my $PasswordLabel = Gtk2::Label->new($i18n->get('Password:'));
+	$PasswordLabel->show();
+	$Config_Table->attach_defaults($PasswordLabel, 0,1,2,3);
+	
+	#  Entry
+	my $PasswordEntry = Gtk2::Entry->new();
+	$PasswordEntry->set_text($Password);
+	$PasswordEntry->show();
+	$PasswordEntry->set_visibility(0);
+	$Config_Table->attach_defaults($PasswordEntry, 1,4,2,3);
+	
+	# ==================================================================
+	# FINALIZE WINDOW
+	# ==================================================================
+	my $ClosePerform = sub {
+			$plugin->set_confval('DPS_user',$UserEntry->get_text());
+			$plugin->set_confval('DPS_pass',$PasswordEntry->get_text());
+			$plugin->set_confval('DPS_host',$HostEntry->get_text());
+			$plugin->set_confval('DPS_port',$PortSpinner->get_value());
+			# Make sure that the proper DPS settings are in place
+			if($plugin->get_confval('DPS_enable')) {
+				if(not $plugin->get_confval('DPS_user') or not $plugin->get_confval('DPS_pass') or not $plugin->get_confval('DPS_host') or not $plugin->get_confval('DPS_port')) {
+					DPError($i18n->get('You have not entered the information required for synchronization to be enabled, it has been disabled.'));
+					$plugin->set_confval('DPS_enable',0);
+				}
+			}
+			WriteConfig();
+			$PreferencesWindow->hide();
+			$PreferencesWindow->destroy();
+			#$MainWindow->set_sensitive(1);
+		};
+	# Handle closing
+	$PreferencesWindow->signal_connect('delete-event' => $ClosePerform);
+	
+	# Add the buttons
+	my $ButtonHBox = Gtk2::HBox->new();
+	$ButtonHBox->show();
+	$Sync_VBox->pack_start($ButtonHBox,0,0,0);
+
+	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
+	$CloseButton->signal_connect('clicked' => $ClosePerform);
+	$CloseButton->show();
+	$ButtonHBox->pack_end($CloseButton,0,0,0);
+
+	# Show the config window
+	$PreferencesWindow->show();
 }
 
 # Purpose: Output an error occurring with DPS
@@ -90,7 +287,7 @@ sub DPS_Error {
 sub DPS_Status {
 	my $this = shift;
 	my ($Text, $Completed) = @_;
-	return unless($this->{plugin}->get_data('Gtk2Init'));
+	return unless($this->{plugin}->get_var('Gtk2Init'));
 	if(defined($this->{ProgressWin})) {
 		$this->{ProgressWin}->{ProgressBar}->set_fraction($Completed);
 		$this->{ProgressWin}->{ProgressBar}->set_text($Text);
@@ -102,8 +299,8 @@ sub DPS_Status {
 # Usage: DPS_Upload();
 sub DPS_Upload {
 	my $this = shift;
-	my $iCalendar = $this->{plugin}->get_data('calendar');
-	my $LastMD5 = $this->{plugin}->get_data('state')->{DPS_LastMD5} ? $this->{plugin}->get_data('state')->{DPS_LastMD5} : "undef";
+	my $iCalendar = $this->{plugin}->get_var('calendar');
+	my $LastMD5 = $this->{plugin}->get_var('state')->{DPS_LastMD5} ? $this->{plugin}->get_var('state')->{DPS_LastMD5} : "undef";
 	my $SendData = encode_base64($iCalendar->get_rawdata(),'');
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
@@ -121,7 +318,7 @@ sub DPS_Upload {
 		return(undef);
 	}
 	# We successfully uploaded the data. So set DPS_LastMD5 and return true
-	$this->{plugin}->get_data('state')->{DPS_LastMD5} = $MD5;
+	$this->{plugin}->get_var('state')->{DPS_LastMD5} = $MD5;
 	return(1);
 }
 
@@ -163,7 +360,7 @@ sub DPS_Download {
 			$MainData =~ s/\r//g;
 			push(@DataArray, $_) foreach(split(/\n/,$MainData));
 			$MainData = undef;
-			my $iCalendar = $this->{plugin}->get_data('calendar');
+			my $iCalendar = $this->{plugin}->get_var('calendar');
 			# If we're in merge mode then enable SMART MERGE and then add
 			# the file, if not then clean and add the file
 			my $iCalendarMain = $iCalendar->get_primary();
@@ -179,7 +376,7 @@ sub DPS_Download {
 				$iCalendarMain->addfile(\@DataArray);
 			}
 			# Download succesful. Set DPS_LastMD5
-			$this->{plugin}->get_data('state')->{DPS_LastMD5} = $MD5;
+			$this->{plugin}->get_var('state')->{DPS_LastMD5} = $MD5;
 			UpdatedData();
 			return(1);
 		}
@@ -195,14 +392,14 @@ sub DPS_Download {
 sub DPS_DataSync {
 	my $this = shift;
 	$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.2);
-	my $iCalendar = $this->{plugin}->get_data('calendar');
+	my $iCalendar = $this->{plugin}->get_var('calendar');
 	# Get information we need
 	#	The server's data MD5 sum
 	my $ServerMD5 = $this->DPS_DataSegment('GET_MD5');
 	#	The MD5 sum of our current local data
 	my $LocalMD5 = md5_base64(encode_base64($iCalendar->get_rawdata(),""));
 	#	The MD5 sum of the data we last uploaded
-	my $LastUpMD5 = $this->{plugin}->get_data('state')->{DPS_LastMD5};
+	my $LastUpMD5 = $this->{plugin}->get_var('state')->{DPS_LastMD5};
 
 	# Okay, the required information is available.
 	# First check if our current local MD5 sum matches the one on the server.
@@ -275,14 +472,14 @@ sub DPS_Log {
 #	...
 sub DPS_Perform {
 	my $this = shift;
-	my $MainWindow = $this->{plugin}->get_data('MainWindow');
+	my $MainWindow = $this->{plugin}->get_var('MainWindow');
 	# The function we are going to perform
 	my $Function = shift;
 	main::Assert($Function =~ /^(SYNC)$/);
 	# A coderef to the code which we need to run to close the GUI
 	# dialogues used.
 	my $GuiEnded = sub {
-		return unless($this->{plugin}->get_data('Gtk2Init'));
+		return unless($this->{plugin}->get_var('Gtk2Init'));
 		main::DP_DestroyProgressWin($this->{ProgressWin});
 		if(defined($this->{Error})) {
 			main::DPError($this->{i18n}->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $this->{Error}}));
@@ -305,13 +502,13 @@ sub DPS_Perform {
 	}
 	return if not DPS_SSLSocketTest();
 	# Create the progress window
-	if($this->{plugin}->get_data('Gtk2Init')) {
+	if($this->{plugin}->get_var('Gtk2Init')) {
 		$MainWindow->set_sensitive(0);
 		$this->{ProgressWin} = main::DPCreateProgressWin($this->{i18n}->get('Services'), $this->{i18n}->get('Initializing'));
 	}
 	# Open up the logfile if it isn't open. This should be left open for the
 	# entirety of the DPS session.
-	my $SaveToDir = $this->{plugin}->get_data('confdir');
+	my $SaveToDir = $this->{plugin}->get_var('confdir');
 	if(not defined($this->{Log_FH})) {
 		open($this->{Log_FH}, '>', "$SaveToDir/services.log");
 		chmod(oct(600),"$SaveToDir/services.log");
@@ -401,7 +598,7 @@ sub DPS_Connect {
 	# Authentication
 	# First verify the API level
 	my $APIREPLY = $this->DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if $this->DPS_ErrorIfNeeded('OK', $APIREPLY, sub { $this->DPS_Disconnect();  $this->DPS_Error($this->{i18n}->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version => $this->{plugin}->get_data('version')}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
+	return(undef) if $this->DPS_ErrorIfNeeded('OK', $APIREPLY, sub { $this->DPS_Disconnect();  $this->DPS_Error($this->{i18n}->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version => $this->{plugin}->get_var('version')}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
 	# Send AUTH
 	my $AUTHREPLY = $this->DPS_DataSegment("AUTH $User $Password");
 	# If AUTH did not return OK then it failed and we just return undef.

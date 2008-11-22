@@ -253,12 +253,12 @@ sub init_plugins
 			DPIntWarn("Failed to locate plugin '$pName': ignoring");
 			next;
 		}
+		my $e;
 		eval {
 			package DP::Plugin;
-			do($pluginPath);
+			do($pluginPath) or $e = $@;
 			package main;
 		};
-		my $e = $@;
 		if ($e)
 		{
 			DPIntWarn("Loading of plugin '$pName' failed: $e");
@@ -3998,11 +3998,6 @@ sub PreferencesWindow {
 	$MainVBox->show();
 	$PreferencesWindow->add($MainVBox);
 	
-	# Create the notebook
-	my $Notebook = Gtk2::Notebook->new();
-	$Notebook->show();
-	$MainVBox->pack_start($Notebook,0,0,0);
-	
 	# ==================================================================
 	# ==================================================================
 	# REMINDERS TAB
@@ -4010,9 +4005,7 @@ sub PreferencesWindow {
 	# ==================================================================
 	
 	# Create the vbox
-	my $Config_VBox = Gtk2::VBox->new();
-	$Config_VBox->show();
-	$Notebook->append_page($Config_VBox,$i18n->get('Reminders'));
+	my $Config_VBox = $MainVBox; # FIXME
 	$Config_VBox->set_border_width(12);
 	
 	# A simple hash we use to parse back and forth between the PreNotification
@@ -4135,183 +4128,10 @@ sub PreferencesWindow {
 		$EnableDisablePreNotCB->signal_emit('toggled');
 	}
 	
-	
-	# ==================================================================
-	# ==================================================================
-	# SYNCHRONIZATION TAB
-	# ==================================================================
-	# ==================================================================
-	
-	# Get and set the values we're going to use
-	my $Host = $UserConfig{DPS_host} ? $UserConfig{DPS_host} : '';
-	my $Port = $UserConfig{DPS_port} ? $UserConfig{DPS_port} : 4435;
-	my $Username = $UserConfig{DPS_user} ? $UserConfig{DPS_user} : '';
-	my $Password = $UserConfig{DPS_pass} ? $UserConfig{DPS_pass} : '';
-	my $DPSWasStatus = $UserConfig{DPS_enable};
-
-	# Create the vbox
-	my $Sync_VBox = Gtk2::VBox->new();
-	$Sync_VBox->show();
-	$Sync_VBox->set_border_width(12);
-	$Notebook->append_page($Sync_VBox,$i18n->get('Synchronization'));
-
-	# Create the table
-	my $Config_Table = Gtk2::Table->new(3,4);
-	$Config_Table->show();
-
-	# Enable/disable evolution checkbox
-#	my $EnableDisableEButton = Gtk2::CheckButton->new($i18n->get('Enable GNOME integration'));
-#	$Sync_VBox->pack_start($EnableDisableEButton,0,0,0);
-#	if(EvoCompat_GetMode())
-#	{
-#		$EnableDisableEButton->set_active(true);
-#	}
-#	else
-#	{
-#		$EnableDisableEButton->set_active(false);
-#	}
-#	$EnableDisableEButton->signal_connect('toggled' => sub 
-#		{
-#			if ($EnableDisableEButton->get_active())
-#			{
-#				if(DPQuestion(
-#						$i18n->get("This will enable GNOME integration mode. When enabled you will be able to view Day Planner events in the calendar in the GNOME panel.\n\nIt is not recommended that you enable this if you use Evolution because Day Planner will override certain evolution functions.\n\nAre you sure you want to enable GNOME integration?")
-#				))
-#				{
-#					EvoCompat_Enable();
-#					DPInfo("Evolution integration mode has been enabled. You may need to log out and in again for it to take effect.");
-#				}
-#			}
-#			else
-#			{
-#				EvoCompat_Disable();
-#			}
-#			if (EvoCompat_GetMode())
-#			{
-#				$EnableDisableEButton->set_active(true);
-#			}
-#			else
-#			{
-#				$EnableDisableEButton->set_active(false);
-#			}
-#		});
-#	$EnableDisableEButton->show();
-
-	# Enable/disable checkbox
-	my $EnableDisableCButton = Gtk2::CheckButton->new($i18n->get('Automatically synchronize an online copy of this calendar'));
-	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
-	$EnableDisableCButton->signal_connect('toggled' => sub {
-			if($EnableDisableCButton->get_active) {
-				if(DP::Plugin::ServicesSync::DPS_SSLSocketTest()) {
-					$UserConfig{DPS_enable} = 1;
-					$Config_Table->set_sensitive(1);
-				}
-			} else {
-				$UserConfig{DPS_enable} = 0;
-				$Config_Table->set_sensitive(0);
-			}});
-	if($UserConfig{DPS_enable}) {
-		$EnableDisableCButton->set_active(1);
-		$EnableDisableCButton->signal_emit('toggled');
-	} else {
-		$EnableDisableCButton->set_active(0);
-		$EnableDisableCButton->signal_emit('toggled');
-	}
-	$EnableDisableCButton->show();
-
-	# Add the table to the UI
-	$Sync_VBox->pack_start($Config_Table,0,0,0);
-	
-	# ==================================================================
-	# HOST/PORT
-	# ==================================================================
-	
-	# Host
-
-	#  Label
-	my $UseHost = Gtk2::Label->new($i18n->get('Server:'));
-	$UseHost->show();
-	$Config_Table->attach_defaults($UseHost, 0,1,0,1);
-	
-	#  Entry
-	my $HostEntry = Gtk2::Entry->new();
-	$HostEntry->set_text($Host);
-	$HostEntry->show();
-	$Config_Table->attach_defaults($HostEntry, 1,2,0,1);
-	
-	# Port
-	
-	#  Label
-	my $UsePort = Gtk2::Label->new(' ' . $i18n->get('Port:'));
-	$UsePort->show();
-	$Config_Table->attach_defaults($UsePort, 2,3,0,1);
-	
-	#  Spinner
-	my $PortAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 65000.0, 1.0, 5.0, 0.0);
-	my $PortSpinner = Gtk2::SpinButton->new($PortAdjustment,0,0);
-	$PortSpinner->set_value($Port);
-	$PortSpinner->show();
-	$Config_Table->attach_defaults($PortSpinner, 3,4,0,1);
-	
-	# ==================================================================
-	# USERNAME/PASSWORD
-	# ==================================================================
-	
-	# Username
-	#  Label
-	my $UsernameLabel = Gtk2::Label->new($i18n->get('Username:'));
-	$UsernameLabel->show();
-	$Config_Table->attach_defaults($UsernameLabel, 0,1,1,2);
-	
-	#  Entry
-	my $UserEntry = Gtk2::Entry->new();
-	$UserEntry->set_text($Username);
-	$UserEntry->show();
-	$Config_Table->attach_defaults($UserEntry, 1,4,1,2);
-	
-	# Password
-	#  Label
-	my $PasswordLabel = Gtk2::Label->new($i18n->get('Password:'));
-	$PasswordLabel->show();
-	$Config_Table->attach_defaults($PasswordLabel, 0,1,2,3);
-	
-	#  Entry
-	my $PasswordEntry = Gtk2::Entry->new();
-	$PasswordEntry->set_text($Password);
-	$PasswordEntry->show();
-	$PasswordEntry->set_visibility(0);
-	$Config_Table->attach_defaults($PasswordEntry, 1,4,2,3);
-	
 	# ==================================================================
 	# FINALIZE WINDOW
 	# ==================================================================
 	my $ClosePerform = sub {
-			if(not defined($UserConfig{DPS_user}) or (not($UserConfig{DPS_user} eq $UserEntry->get_text()))) {
-				$UserConfig{DPS_user} = $UserEntry->get_text();
-				$DPSWasStatus = 0;
-			}
-			if(not defined($UserConfig{DPS_pass}) or (not($UserConfig{DPS_pass} eq $PasswordEntry->get_text()))) {
-				$UserConfig{DPS_pass} = $PasswordEntry->get_text();
-				$DPSWasStatus = 0;
-			}
-			if(not defined($UserConfig{DPS_host}) or (not($UserConfig{DPS_host} eq $HostEntry->get_text()))) {
-				$UserConfig{DPS_host} = $HostEntry->get_text();
-				$DPSWasStatus = 0;
-			}
-			if(not defined($UserConfig{DPS_port}) or not($UserConfig{DPS_port} eq $PortSpinner->get_value())) {
-				# Don't write the port if it is currently empty and DPS isn't enabled
-				if (defined($UserConfig{DPS_port}) or ($UserConfig{DPS_enable})) {
-					$UserConfig{DPS_port} = $PortSpinner->get_value();
-					$DPSWasStatus = 0;
-				}
-			}
-			# Make sure that the proper DPS settings are in place
-			if($UserConfig{DPS_enable}) {
-				if(not $UserConfig{DPS_user} or not $UserConfig{DPS_pass} or not $UserConfig{DPS_host} or not $UserConfig{DPS_port}) {
-					DPError($i18n->get('You have not entered the information required for synchronization to be enabled, it has been disabled.'));
-					$UserConfig{DPS_enable} = 0;
-				}
-			}
 			WriteConfig();
 			$PreferencesWindow->hide();
 			$plugin->signal_emit('CLOSE_PREFS');
