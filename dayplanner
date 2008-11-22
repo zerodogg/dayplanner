@@ -3984,7 +3984,7 @@ sub PreferencesWindow {
 	$PreferencesWindow->set_position('center-on-parent');
 	$PreferencesWindow->set_title($Name);
 	$PreferencesWindow->set_resizable(0);
-	$PreferencesWindow->set_border_width(12);
+	$PreferencesWindow->set_border_width(5);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
 	$PreferencesWindow->set_skip_pager_hint(1);
 	$PreferencesWindow->set_type_hint('dialog');
@@ -4001,10 +4001,6 @@ sub PreferencesWindow {
 	# REMINDERS TAB
 	# ==================================================================
 	# ==================================================================
-	
-	# Create the vbox
-	my $Config_VBox = $MainVBox; # FIXME
-	$Config_VBox->set_border_width(12);
 	
 	# A simple hash we use to parse back and forth between the PreNotification
 	# combo box and the config option itself
@@ -4038,7 +4034,7 @@ sub PreferencesWindow {
 	# If the reminder (daemon) should autostart on login or not
 	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label($i18n->get('Start the Day Planner reminder automatically when logging in'));
 	$AutostartReminder_Checkbox->show();
-	$Config_VBox->pack_start($AutostartReminder_Checkbox,0,0,0);
+	$MainVBox->pack_start($AutostartReminder_Checkbox,0,0,0);
 	$AutostartReminder_Checkbox->set_active(1) if $InternalConfig{AddedAutostart};
 	$AutostartReminder_Checkbox->signal_connect('toggled' => sub {
 			if($AutostartReminder_Checkbox->get_active) {
@@ -4056,12 +4052,12 @@ sub PreferencesWindow {
 	$NotificationLabel->show();
 	$NotificationLabel->set_justify('left');
 	$NotificationLabel->set_alignment(0,0);
-	$Config_VBox->pack_start($NotificationLabel,0,0,0);
+	$MainVBox->pack_start($NotificationLabel,0,0,0);
 	
 	# If the user wants to be notified in advance
 	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label($i18n->get('One day in advance'));
 	$NotifyAdvance_CheckBox->show();
-	$Config_VBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
+	$MainVBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
 	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
 			$UserConfig{Events_DayNotify} = $NotifyAdvance_CheckBox->get_active();
 		});
@@ -4072,7 +4068,7 @@ sub PreferencesWindow {
 	# The widgets that selects when the user wants to be notified
 	# The HBox
 	my $TimeSel_HBox = Gtk2::HBox->new();
-	$Config_VBox->pack_start($TimeSel_HBox,0,0,0);
+	$MainVBox->pack_start($TimeSel_HBox,0,0,0);
 	$TimeSel_HBox->show();
 	# The checkbutton
 	my $EnableDisablePreNotCB = Gtk2::CheckButton->new();
@@ -4297,6 +4293,7 @@ sub DrawMainWindow {
 	my $DeleteStock = Gtk2::Stock->lookup('gtk-delete')->{label};
 
 	# The menu items
+	# NOTE: Some items where their location is important aren't added until later, after the signal
 	my @MenuItems = (
 		# Calendar menu
 		[ '/' . $i18n->get('_Calendar'),						undef,			undef,			0,	'<Branch>'],
@@ -4310,18 +4307,15 @@ sub DrawMainWindow {
 			# TRANSLATORS: Menu selection in the Calendar menu. Exports calendar data.
 			$i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
 		[ "/" . $i18n->get("_Calendar") . '/sep',					undef,			undef,			2,	'<Separator>'],
-		[ "/" . $i18n->get("_Calendar") . "/$QuitStock",		'<control>Q',		\&QuitSub,		3,	'<StockItem>',	'gtk-quit'],
 		# Edit menu
 		[ "/$EditStock", undef,			undef,			0,	'<Branch>'],
 		[ "/$EditStock/" . $i18n->get('_Add an Event...'),		'<control>A',		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
 		[ "/$EditStock/" . $i18n->get('_Edit This Event...'),	'<control>E',		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
 		[ "/$EditStock/" . $i18n->get('_Delete this event...'),	'<control>D',		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
-		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
 		# Help menu
 		[ "/$HelpStock",						undef,			undef,			0,	'<Branch>' ],
 		[ "/$HelpStock/" . $i18n->get('_Report a bug'), undef, \&ReportBug, 0, '<StockItem>', 'gtk-dialog-warning'],
-		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
 	);
 	# The accelgroup to use for the menuitems
 	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
@@ -4334,6 +4328,15 @@ sub DrawMainWindow {
 	$plugin->set_tempvar('HelpName', $HelpStock);
 	$plugin->set_tempvar('EditName', $EditStock);
 	$plugin->signal_emit('CREATE_MENUITEMS');
+
+	# The items that should be the last ones in the menu
+	my @AdditionalItems = (
+		[ "/" . $i18n->get("_Calendar") . "/$QuitStock",		'<control>Q',		\&QuitSub,		3,	'<StockItem>',	'gtk-quit'],
+		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
+		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
+	);
+
+	push(@MenuItems,@AdditionalItems);
 
 	# Tell the item factory to use the items defined in @MenuItems
 	$Menu_ItemFactory->create_items (undef, @MenuItems);
