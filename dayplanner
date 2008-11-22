@@ -26,7 +26,6 @@ use POSIX;				# Uses the various time/date functions from POSIX
 use Gtk2;				# Use Gtk2 :)
 use Gtk2::SimpleList;	# We use Gtk2::SimpleList to create the eventlist
 use Gtk2::Gdk::Keysyms;	# Easier keybindings
-use MIME::Base64;		# Used for DPS-related functions. Needed even when DPS is diasbled. 
 use Getopt::Long;		# Commandline options
 use FindBin;			# So that we can detect module dirs during runtime
 # Useful constants for prettier code
@@ -60,7 +59,6 @@ my $DaemonInitialized = 0;			# Has the daemon been initialized?
 my $DaemonSocketName = 'Daemon_Socket';# The name of the daemon socket
 my $DaemonSocket;					# The variable to connect to
 my $i18n;
-my $DPS_APILevel = '06';			# The DPS API level used/supported
 my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
 my $plugin;
@@ -298,8 +296,6 @@ sub WriteStateFile {
 		Holiday_Attempted => 'The last Day Planner version the holiday file was attempted set up (but failed)',
 		Holiday_Setup => 'If the holiday file has been properly set up or not (ie. not a dummy file)',
 		LastVersion => 'The last Day Planner version used',
-		DPS_LastMD5 => 'The MD5 sum of the last data downloaded from the DPS server (base64 encoded)',
-		DPS_ParanoidBackups => "Writes a backup of the internal data to $Dir every time DPS is used.\n# This is useful when DPS is being debugged, in order to avoid data loss",
 		HEADER => "This file contains internal configuration used by Day Planner\n# In most cases you really don't want to edit this file manually",
 	);
 
