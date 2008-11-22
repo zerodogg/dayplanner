@@ -33,6 +33,7 @@ sub new
 	$this->{signals} = {};
 	$this->{currPlugin} = undef;
 	$this->{abortCurrent} = false;
+	$this->{tempVars} = [];
 	return $this;
 }
 
@@ -47,6 +48,15 @@ sub register_signals
 	return true;
 }
 
+sub set_tempvar
+{
+	my $this = shift;
+	my $name = shift;
+	my $content = shift;
+	push(@{$this->{tempVars}},$name);
+	return $this->set_var($name,$content);
+}
+
 sub set_var
 {
 	my $this = shift;
@@ -55,9 +65,16 @@ sub set_var
 	$this->{stash}{$name} = $content;
 	if(not defined $content)
 	{
-		$this->warn('set_var('.$name.',undef) called, did you mean to delete the data entry?');
+		$this->_warn('set_var('.$name.',undef) called, did you mean to use ->delete_var()?');
 	}
 	return true;
+}
+
+sub delete_var
+{
+	my $this = shift;
+	my $name = shift;
+	delete($this->{stash}->{$name});
 }
 
 sub get_var
@@ -122,6 +139,12 @@ sub signal_emit
 	{
 		$this->_warn('Emitted unregistered signal: '.$signal);
 	}
+	# Delete temporary variables
+	foreach my $var(@{$this->{tempVars}})
+	{
+		$this->delete_var($var);
+	}
+
 	if ($this->{abortCurrent})
 	{
 		$this->{abortCurrent} = false;
