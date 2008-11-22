@@ -19,39 +19,11 @@ package DP::CoreModules::PluginFunctions;
 use strict;
 use warnings;
 use Exporter qw(import);
-# Useful constants for prettier code
-use constant { true => 1, false => 0 };
 
-our @EXPORT_OK = qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use);
+our @EXPORT_OK = qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use);
 
-sub DPIntWarn
+foreach my $sub (@EXPORT_OK)
 {
-	return main::DPIntWarn(@_);
+	eval('sub '.$sub.' { return main::'.$sub.'(@_); }');
 }
-
-sub GTK_Flush
-{
-	return main::GTK_Flush(@_);
-}
-
-sub DP_DestroyProgressWin
-{
-	return main::DP_DestroyProgressWin(@_);
-}
-
-sub DPError
-{
-	return main::DPError(@_);
-}
-
-sub DPCreateProgressWin
-{
-	return main::DPCreateProgressWin(@_);
-}
-
-sub runtime_use
-{
-	return main::runtime_use(@_);
-}
-
 1;
