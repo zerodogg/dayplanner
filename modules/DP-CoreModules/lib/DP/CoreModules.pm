@@ -378,6 +378,12 @@ sub P_LoadConfig {
 			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
 			Events_DayNotify => '^\d+$',
 			HTTP_Calendars => '.?',
+			# Kept for backwards compatibility
+			DPS_enable => '^(1|0)$',
+			DPS_port => '^\d+$',
+			DPS_user => '^.+$',
+			DPS_host => '^.+$',
+			DPS_pass => '^.+$',
 		);
 
 	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash,1);
