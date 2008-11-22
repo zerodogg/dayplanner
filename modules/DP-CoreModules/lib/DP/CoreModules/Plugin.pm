@@ -32,6 +32,7 @@ sub new
 	$this->{stash} = {};
 	$this->{signals} = {};
 	$this->{currPlugin} = undef;
+	$this->{abortCurrent} = false;
 	return $this;
 }
 
@@ -46,7 +47,7 @@ sub register_signals
 	return true;
 }
 
-sub set_data
+sub set_var
 {
 	my $this = shift;
 	my $name = shift;
@@ -54,12 +55,12 @@ sub set_data
 	$this->{stash}{$name} = $content;
 	if(not defined $content)
 	{
-		$this->warn('set_data('.$name.',undef) called, did you mean to delete the data entry?');
+		$this->warn('set_var('.$name.',undef) called, did you mean to delete the data entry?');
 	}
 	return true;
 }
 
-sub get_data
+sub get_var
 {
 	my $this = shift;
 	my $name = shift;
@@ -107,7 +108,7 @@ sub signal_emit
 		foreach my $i (@{$this->{signals}{$signal}})
 		{
 			$this->{currPlugin} = $i->{module};
-			eval('$i->{module}->'.$i->{method}.'();');
+			eval('$i->{module}->'.$i->{method}.'($this);');
 			my $e = $@;
 			if ($e)
 			{
@@ -121,13 +122,19 @@ sub signal_emit
 	{
 		$this->_warn('Emitted unregistered signal: '.$signal);
 	}
-	return true;
+	if ($this->{abortCurrent})
+	{
+		$this->{abortCurrent} = false;
+		return true;
+	}
+	return false;
 }
 
 sub abort
 {
 	my $this = shift;
-	STUB();
+	$this->{abortCurrent} = true;
+	return true;
 }
 
 # Summary: Mark something as a stub
