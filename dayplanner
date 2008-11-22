@@ -228,15 +228,14 @@ sub Daemon_SendData {
 sub init_plugins
 {
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA));
-	$plugin->set_data('calendar',$iCalendar);
-	$plugin->set_data('MainWindow',$MainWindow);
-	$plugin->set_data('state',\%InternalConfig);
-	$plugin->set_data('config',\%UserConfig);
-	$plugin->set_data('Gtk2Init',$Gtk2Init);
-	$plugin->set_data('i18n',$i18n);
-	$plugin->set_data('version',$Version);
-	$plugin->set_data('confdir',$SaveToDir);
+	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS));
+	$plugin->set_var('calendar',$iCalendar);
+	$plugin->set_var('state',\%InternalConfig);
+	$plugin->set_var('config',\%UserConfig);
+	$plugin->set_var('Gtk2Init',$Gtk2Init);
+	$plugin->set_var('i18n',$i18n);
+	$plugin->set_var('version',$Version);
+	$plugin->set_var('confdir',$SaveToDir);
 	foreach my $pName (split(/\s+/,$InternalConfig{plugins_enabled}))
 	{
 		my $pluginPath;
@@ -272,7 +271,6 @@ sub init_plugins
 			next;
 		}
 	}
-	$plugin->signal_emit('INIT');
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4134,7 +4132,6 @@ sub PreferencesWindow {
 	my $ClosePerform = sub {
 			WriteConfig();
 			$PreferencesWindow->hide();
-			$plugin->signal_emit('CLOSE_PREFS');
 			$PreferencesWindow->destroy();
 			$MainWindow->set_sensitive(1);
 		};
@@ -4331,6 +4328,13 @@ sub DrawMainWindow {
 	$MainWindow->add_accel_group($Menu_AccelGroup);
 	# The item factory (menubar) itself
 	my $Menu_ItemFactory = Gtk2::ItemFactory->new('Gtk2::MenuBar', '<main>', $Menu_AccelGroup);
+
+	# Let plugins edit it
+	$plugin->set_tempvar('MenuItems', \@MenuItems);
+	$plugin->set_tempvar('HelpName', $HelpStock);
+	$plugin->set_tempvar('EditName', $EditStock);
+	$plugin->signal_emit('CREATE_MENUITEMS');
+
 	# Tell the item factory to use the items defined in @MenuItems
 	$Menu_ItemFactory->create_items (undef, @MenuItems);
 	# Pack it onto the vbox
@@ -4557,6 +4561,8 @@ sub InitDPCore {
 		AlreadyRunningDP($Client);
 		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	}
+	# Init plugins
+	init_plugins();
 	# Draw the main window
 	DrawMainWindow();
 	$MainWindow->show() if not $FirstStartup;
@@ -4585,9 +4591,8 @@ sub InitDPCore {
 	PopulateUpcomingEvents();
 	Set_DayChangeTimer();
 
-	# Init plugins
-	init_plugins();
-
+	$plugin->set_var('MainWindow',$MainWindow);
+	$plugin->signal_emit('INIT');
 	return true;
 }
 
