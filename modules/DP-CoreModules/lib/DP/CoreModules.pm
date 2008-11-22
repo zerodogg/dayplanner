@@ -340,27 +340,11 @@ sub P_WriteConfig {
 	unless(defined($UserConfig{Events_DayNotify}) and length($UserConfig{Events_DayNotify})) {
 		$UserConfig{Events_DayNotify} = 0;
 	}
-	if(not defined($UserConfig{DPS_enable}) or not length($UserConfig{DPS_enable})) {
-		$UserConfig{DPS_enable} = 0;
-	}
-	if(not defined($UserConfig{HTTP_Calendars}) or not length($UserConfig{HTTP_Calendars}))
-	{
-		$UserConfig{HTTP_Calendars} = ' ';
-	}
-	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
-		$UserConfig{DPS_pass} = encode_base64(encode_base64($UserConfig{DPS_pass}));
-		chomp($UserConfig{DPS_pass});
-	}
 
 	my %Explanations = (
 		Events_NotifyPre => "If Day Planner should notify about an event ahead of time.\n#  0 = Don't notify\n# Other valid values: 10min, 20min, 30min, 45min, 1hr, 2hrs, 4hrs, 6hrs",
 		Events_DayNotify => "If Day Planner should notify about an event one day before it occurs.\n#  0 - Don't notify one day in advance\n#  1 - Do notify one day in advance",
 		HTTP_Calendars => 'The space-seperated list of http calendar subscriptions',
-		DPS_host => 'The DPS host to connect to',
-		DPS_pass => 'The password',
-		DPS_port => 'The port to connect to on the DPS server',
-		DPS_user => 'The username',
-		DPS_enable => 'If DPS (Day Planner services) is enabled or not (1/0)',
 		HEADER => "Day Planner $Version configuration file",
 	);
 	
@@ -372,10 +356,6 @@ sub P_WriteConfig {
 #	if($DaemonInitialized) {
 #		Daemon_SendData('RELOAD_CONFIG');
 #	}
-	# Reset DPS_pass
-	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
-		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
-	}
 	# Enforce perms
 	chmod(oct(600),"$Dir/$File");
 	return(%UserConfig);
@@ -397,18 +377,10 @@ sub P_LoadConfig {
 	my %OptionRegexHash = (
 			Events_NotifyPre => '^(\d+(min|hrs?){1}|0){1}$',
 			Events_DayNotify => '^\d+$',
-			DPS_enable => '^(1|0)$',
-			DPS_port => '^\d+$',
-			DPS_user => '^.+$',
-			DPS_host => '^.+$',
-			DPS_pass => '^.+$',
 			HTTP_Calendars => '.?',
 		);
 
 	LoadConfigFile("$Dir/$File", \%UserConfig, \%OptionRegexHash,1);
-	if(defined($UserConfig{DPS_pass}) and length($UserConfig{DPS_pass})) {
-		$UserConfig{DPS_pass} = decode_base64(decode_base64($UserConfig{DPS_pass}));
-	}
 	return(%UserConfig);
 }
 
