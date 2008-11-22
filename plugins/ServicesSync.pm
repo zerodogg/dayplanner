@@ -35,26 +35,46 @@ sub new_instance
 	my $plugin = shift;
 	$this->{plugin} = $plugin;
 
-	# Make sure that DPS is enabled in the config
-	if(not (defined($this->{plugin}->get_confval('DPS_enable')) and $this->{plugin}->get_confval('DPS_enable') eq "1"))
-	{
-		return;
-	}
 	# Check if the user wants to temporarily disable DPS
 	if(defined $ENV{DP_DISABLE_SERVICES} and $ENV{DP_DISABLE_SERVICES} eq '1')
 	{
+		warn('Day Planner plugin ServicesSync has been disabled by the DP_DISABLE_SERVICES environment variable'."\n");
 		return;
 	}
 
+	# Register the one signal we have
+	$plugin->register_signals(qw(DPS_ENTERPREFS));
+	# Connect to signals
 	$plugin->signal_connect('SAVEDATA',$this,'synchronize');
 	$plugin->signal_connect('INIT',$this,'synchronize');
+	$plugin->signal_connect('CREATE_MENUITEMS',$this,'mkmenu');
+	$plugin->signal_connect('DPS_ENTERPREFS',$this,'PreferencesWindow');
+
 	$this->{i18n} = $plugin->get_var('i18n');
 	return $this;
+}
+
+sub mkmenu
+{
+	my $this = shift;
+	my $plugin = shift;
+	my $MenuItems = $plugin->get_var('MenuItems');
+	my $EditName = $plugin->get_var('EditName');
+	# This is our menu item
+	my $menu =  [ "/$EditName/Synchronization preferences" ,undef, sub { $plugin->signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-'];
+	# Add the menu
+	push(@{$MenuItems},$menu);
+	return;
 }
 
 sub synchronize
 {
 	my $this = shift;
+	# Make sure that DPS is enabled in the config
+	if(not (defined($this->{plugin}->get_confval('DPS_enable')) and $this->{plugin}->get_confval('DPS_enable') eq "1"))
+	{
+		return;
+	}
 	$this->DPS_Perform('SYNC');
 }
 
@@ -239,10 +259,9 @@ sub PreferencesWindow
 					$plugin->set_confval('DPS_enable',0);
 				}
 			}
-			WriteConfig();
 			$PreferencesWindow->hide();
 			$PreferencesWindow->destroy();
-			#$MainWindow->set_sensitive(1);
+			$MainWindow->set_sensitive(1);
 		};
 	# Handle closing
 	$PreferencesWindow->signal_connect('delete-event' => $ClosePerform);
