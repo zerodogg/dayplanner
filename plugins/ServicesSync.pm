@@ -60,8 +60,9 @@ sub mkmenu
 	my $plugin = shift;
 	my $MenuItems = $plugin->get_var('MenuItems');
 	my $EditName = $plugin->get_var('EditName');
+	my $i18n = $plugin->get_var('i18n');
 	# This is our menu item
-	my $menu =  [ "/$EditName/Synchronization preferences" ,undef, sub { $plugin->signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-'];
+	my $menu =  [ '/'.$EditName.'/'.$i18n->get('Synchronization') ,undef, sub { $plugin->signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;
@@ -89,9 +90,9 @@ sub PreferencesWindow
 	$PreferencesWindow->set_modal(1);
 	$PreferencesWindow->set_transient_for($MainWindow);
 	$PreferencesWindow->set_position('center-on-parent');
-	$PreferencesWindow->set_title($i18n->get('Synchronization preferences'));
+	$PreferencesWindow->set_title($i18n->get('Synchronization'));
 	$PreferencesWindow->set_resizable(0);
-	$PreferencesWindow->set_border_width(12);
+	$PreferencesWindow->set_border_width(5);
 	$PreferencesWindow->set_skip_taskbar_hint(1);
 	$PreferencesWindow->set_skip_pager_hint(1);
 	$PreferencesWindow->set_type_hint('dialog');
@@ -114,7 +115,6 @@ sub PreferencesWindow
 	# Create the vbox
 	my $Sync_VBox = Gtk2::VBox->new();
 	$Sync_VBox->show();
-	$Sync_VBox->set_border_width(12);
 	$PreferencesWindow->add($Sync_VBox);
 
 	# Create the table
