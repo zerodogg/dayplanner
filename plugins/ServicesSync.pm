@@ -23,7 +23,7 @@ use warnings;
 use IO::Socket::SSL;
 use MIME::Base64;
 use Digest::MD5 qw(md5_base64);
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use Assert);
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 my $DPS_APILevel = '06';			# The DPS API level used/supported
@@ -284,12 +284,12 @@ sub PreferencesWindow
 # Purpose: Output an error occurring with DPS
 # Usage: DPS_Error(User_Error, Technical_Error)
 #	User_Error is displayed as a pop-up error dialog.
-#	Technical_Error is main::DPIntWarn()ed, it is optional.
+#	Technical_Error is DPIntWarn()ed, it is optional.
 #	If no technical_error is supplied then User_error is used.
 sub DPS_Error {
 	my $this = shift;
 	my $user_error = shift;
-	main::Assert(defined($user_error));
+	Assert(defined($user_error));
 	# Tech_error is set to user_error when not supplied
 	my $tech_error = $_[0] ? $_[0] : $user_error;
 	DPIntWarn("DPS: $tech_error");
@@ -473,7 +473,7 @@ sub DPS_DataSync {
 # Usage: DPS_Log(INFO);
 sub DPS_Log {
 	my $this = shift;
-	main::Assert(defined $_[0]);
+	Assert(defined $_[0]);
 	if(defined($this->{Log_FH})) {
 		my ($lsec,$lmin,$lhour,$lmday,$lmon,$lyear,$lwday,$lyday,$lisdst) = localtime(time);
 		$lhour = "0$lhour" unless $lhour >= 10;
@@ -495,7 +495,7 @@ sub DPS_Perform {
 	my $MainWindow = $this->{plugin}->get_var('MainWindow');
 	# The function we are going to perform
 	my $Function = shift;
-	main::Assert($Function =~ /^(SYNC)$/);
+	Assert($Function =~ /^(SYNC)$/);
 	# A coderef to the code which we need to run to close the GUI
 	# dialogues used.
 	my $GuiEnded = sub {
