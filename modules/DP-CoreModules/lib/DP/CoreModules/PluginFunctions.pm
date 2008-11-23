@@ -20,10 +20,36 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-our @EXPORT_OK = qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use);
+our @EXPORT_OK = qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use Assert);
 
-foreach my $sub (@EXPORT_OK)
+foreach my $sub (qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use))
 {
 	eval('sub '.$sub.' { return main::'.$sub.'(@_); }');
+}
+
+# Purpose: Provide useful information if an assertion fails
+# Usage: Assert(TRUE/FALSE EXPR, REASON);
+# NOTE: This is for use in PLUGINS, not inside Day Planner itself. Use the internal
+# Assert there, this one in modules.
+sub Assert
+{
+	my $expr = shift;
+	return 1 if $expr;
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
+	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
+	my $msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line";
+	if(defined($_[0]))
+	{
+		$msg .= ': '.$_[0]."\n";
+	}
+	else
+	{
+		$msg .= "\n";
+	}
+	DPIntWarn($msg);
+	# Attempt to make the main window usable again, in case
+	# this screws things up.
+	$main::MainWindow->set_sensitive(1);
+	return 1;
 }
 1;
