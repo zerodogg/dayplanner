@@ -362,7 +362,7 @@ sub InitDaemon
 sub OpenSocket {
 	if (-e $SocketPath) {
 		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $SocketPath,
-							Type	=> SOCK_STREAM
+							Type	=> SOCK_STREAM,
 							Timeout => 2);
 		if (defined($TestSocket)) {
 			# We could connect

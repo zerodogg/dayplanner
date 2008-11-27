@@ -657,7 +657,7 @@ sub OpenLocalSocket {
 	my $Path = shift;
 	if (-e $Path) {
 		my $TestSocket = IO::Socket::UNIX->new(Peer	=> $Path,
-							Type	=> SOCK_STREAM
+							Type	=> SOCK_STREAM,
 							Timeout => 2);
 		if (defined($TestSocket)) {
 			close($TestSocket);
