@@ -319,6 +319,7 @@ sub DPS_Status {
 # Usage: DPS_Upload();
 sub DPS_Upload {
 	my $this = shift;
+	my $plugin = shift;
 	my $iCalendar = $this->{plugin}->get_var('calendar');
 	my $LastMD5 = $this->{plugin}->get_var('state')->{DPS_LastMD5} ? $this->{plugin}->get_var('state')->{DPS_LastMD5} : "undef";
 	my $SendData = encode_base64($iCalendar->get_rawdata(),'');
@@ -433,7 +434,7 @@ sub DPS_DataSync {
 	elsif ($ServerMD5 eq $LastUpMD5 or $ServerMD5 eq '[NONE]') {
 		$this->DPS_Log("Local data changed, uploading to DPS (local MD5 is $LocalMD5 and the servers MD5 is $ServerMD5)");
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.4);
-		my $Return = DPS_Upload();
+		my $Return = $this->DPS_Upload();
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.8);
 		UpdatedData();
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.9);
@@ -445,7 +446,7 @@ sub DPS_DataSync {
 	elsif ($LastUpMD5 eq $LocalMD5) {
 		$this->DPS_Log('Remote data changed, downloading from DPS');
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.5);
-		my $Return = DPS_Download();
+		my $Return = $this->DPS_Download();
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.8);
 		UpdatedData();
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.9);
@@ -458,9 +459,9 @@ sub DPS_DataSync {
 	else {
 		$this->DPS_Log('Both remote and local data has changed. Downloading, merging and reuploading');
 		$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.3);
-		if(DPS_Download(1)) {
+		if($this->DPS_Download(1)) {
 			$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.6);
-			my $Return = DPS_Upload();
+			my $Return = $this->DPS_Upload();
 			$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.8);
 			UpdatedData();
 			$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.9);
