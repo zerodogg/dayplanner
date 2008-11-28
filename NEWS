@@ -10,6 +10,7 @@ Version 0.10 (Unreleased)
   the calendar menu instead
 - Added a plugin system
 - Split DPS into a plugin
+- UTF-8 is now enforced as the default encoding (fixes #12636)
 
 * Notifier (dayplanner-notifier)
 - Added manpage
