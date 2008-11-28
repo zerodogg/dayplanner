@@ -38,6 +38,9 @@ sub new
 	# The data structure will be saved here
 	$this->{data} = {};
 	$this->{loadFileMode} = false;
+	$this->{lastFileLineRead} = 0;
+	$this->{lastStruct} = undef;
+	$this->{skipToLine} = undef;
 
 	# WARNING: NEVER SET THIS TO true UNLESS YOU KNOW FOR CERTAIN YOUR PROGRAM WON'T GENERATE INVALID ARRAYS/HASHES
 	$this->{ignoreAssertions} = false;
@@ -51,15 +54,45 @@ sub loadFile
 {
 	my $this = shift;
 	my $file = shift;
+	my $not_utf8 = shift;
 	if (not -r $file)
 	{
 		carp("DP::iCalendar::StructHandler: Cowardly refusing to load nonexistant or nonreadable file: $file\n");
 		return false;
 	}
-	$this->{loadFileMode} = true;
-	open(my $infile, '<',$file);
-	$this->_loadFH($infile);
-	close($infile);
+	# Eval is used to trap fatal errors while loading the FH.
+	# This to let us always assume UTF-8 input data, but not crash the entire app if the
+	# file turns out to be broken.
+	# 
+	# die()s not related to utf-8 are propagated out.
+	eval
+	{
+		$this->{loadFileMode} = true;
+		open(my $infile, '<',$file);
+		if(not $not_utf8)
+		{
+			binmode($infile, ':utf8');
+			$this->_loadFH($infile);
+		}
+		else
+		{
+			$this->_loadFH($infile,$this->{lastStruct});
+		}
+		close($infile);
+	};
+	my $e = $@;
+	if ($e && not $not_utf8 && $e =~ /utf\S*8/i)
+	{
+		warn('WARNING: The iCalendar file was not valid UTF-8, falling back to autodetection of encoding'."\n");
+		$this->{skipToLine} = $this->{lastFileLineRead};
+		my $ret = $this->loadFile($file,1);
+		$this->{skipToLine} = undef;
+		return $ret;
+	}
+	elsif ($e)
+	{
+		die($e);
+	}
 }
 
 # Purpose: Load data from a scalar
@@ -95,6 +128,7 @@ sub writeFile
 		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
 		return(false);
 	};
+	binmode($this->{FH}, ':utf8');
 	$this->_HandleWriteHash($this->{data},undef,undef,false,true);
 	close($this->{FH});
 	$this->{FH} = undef;
@@ -118,17 +152,29 @@ sub _loadFH
 {
 	my $this = shift;
 	my $infile = shift;
-	my $sLevel = 0;
-	my %Struct;
-	my @Nest;
+	my $s = {
+		Struct => {},
+		Nest => [],
+		CurrRef => $this->{data},
+		PrevValue => undef,
+	};
+	if (@_)
+	{
+		$s = shift;
+	}
+	$this->{lastStruct} = $s;
 	my $CurrRef = $this->{data};
-	push(@Nest,$CurrRef);
-	my $PrevValue;
+	push(@{$s->{Nest}},$s->{CurrRef});
 	my $lineNo;
-	$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true,"start _loadFH");
+	$this->_assertMustBeRef('HASH',$s->{CurrRef},'CurrRef',true,'start _loadFH');
 	while($_ = <$infile>)
 	{
 		$lineNo++;
+		$this->{lastFileLineRead} = $lineNo;
+		if ($this->{skipToLine} && $lineNo < $this->{skipToLine})
+		{
+			next;
+		}
 		s/[\r\n]+//;
 		# If it's only whitespace, ignore it
 		next if not /\S/;
@@ -146,29 +192,29 @@ sub _loadFH
 		if (s/^\s//)
 		{
 			# Append to PrevValue
-			my $prevLen = scalar(@{$PrevValue});
+			my $prevLen = scalar(@{$s->{PrevValue}});
 			$prevLen--;
 			$_ = _UnSafe($_);
-			$PrevValue->[$prevLen] .= $_;
+			$s->{PrevValue}->[$prevLen] .= $_;
 		}
 		elsif ($key eq 'BEGIN')
 		{
 			# Check that it is a hash
-			$this->_assertMustBeRef('HASH',$CurrRef,'CurrRef',true,"$key:$value line $lineNo");
+			$this->_assertMustBeRef('HASH',$s->{CurrRef},'CurrRef',true,"$key:$value line $lineNo");
 
-			if (not defined $CurrRef->{$value})
+			if (not defined $s->{CurrRef}->{$value})
 			{
-				$CurrRef->{$value} = [];
+				$s->{CurrRef}->{$value} = [];
 			}
 			else
 			{
-				$this->_assertMustBeRef('ARRAY',$CurrRef->{$value},'CurrRef->{value}',true,"$key:$value");
+				$this->_assertMustBeRef('ARRAY',$s->{CurrRef}->{$value},'CurrRef->{value}',true,"$key:$value");
 			}
 			# This check is only useful in iCalendar files,
 			# but should be safe when run on others.
-			if (scalar(@Nest) == 1 && $value eq 'VCALENDAR' && defined($CurrRef->{'VCALENDAR'}) && scalar(@{$CurrRef->{'VCALENDAR'}}) > 0)
+			if (scalar(@{$s->{Nest}}) == 1 && $value eq 'VCALENDAR' && defined($s->{CurrRef}->{'VCALENDAR'}) && scalar(@{$s->{CurrRef}->{'VCALENDAR'}}) > 0)
 			{
-				$CurrRef = $CurrRef->{$value}[0];
+				$s->{CurrRef} = $s->{CurrRef}->{$value}[0];
 				if(not $this->{loadFileMode})
 				{
 					_parseWarn("Line $lineNo: Multiple BEGIN:VCALENDAR detected (on line $lineNo)! The file is broken, ignoring request to restart BEGIN:VCALENDAR, basing new block on the old one to attempt to fix this mess");
@@ -176,44 +222,45 @@ sub _loadFH
 			}
 			else
 			{
-				my $pushNo = push(@{$CurrRef->{$value}}, {});
+				my $pushNo = push(@{$s->{CurrRef}->{$value}}, {});
 				$pushNo--;
-				$CurrRef = $CurrRef->{$value}[$pushNo];
+				$s->{CurrRef} = $s->{CurrRef}->{$value}[$pushNo];
 			}
-			push(@Nest,$CurrRef);
+			push(@{$s->{Nest}},$s->{CurrRef});
 		}
 		elsif ($key eq 'END')
 		{
-			pop(@Nest);
-			my $nestSize = @Nest;
+			pop(@{$s->{Nest}});
+			my $nestSize = @{$s->{Nest}};
 			$nestSize--;
-			$CurrRef = $Nest[$nestSize];
+			$s->{CurrRef} = $s->{Nest}[$nestSize];
 		}
 		elsif (defined($key) and defined($value))
 		{
 			if($this->{loadFileMode})
 			{
 				# Disallow multiple keys in the first level in loadFileMode.
-				if (scalar(@Nest) == 2)
+				if (scalar(@{$s->{Nest}}) == 2)
 				{
-					if (defined $CurrRef->{$key})
+					if (defined $s->{CurrRef}->{$key})
 					{
 						next;
 					}
 				}
 			}
-			if(not defined($CurrRef->{$key}))
+			if(not defined($s->{CurrRef}->{$key}))
 			{
-				$CurrRef->{$key} = [];
+				$s->{CurrRef}->{$key} = [];
 			}
-			push(@{$CurrRef->{$key}},$value);
-			$PrevValue = $CurrRef->{$key};
+			push(@{$s->{CurrRef}->{$key}},$value);
+			$s->{PrevValue} = $s->{CurrRef}->{$key};
 		}
 		else
 		{
 			_parseWarn("Line $lineNo unparseable: $_");
 		}
 	}
+	$this->{lastStruct} = undef;
 }
 
 # Purpose: Handle a new hash in writeFile();
