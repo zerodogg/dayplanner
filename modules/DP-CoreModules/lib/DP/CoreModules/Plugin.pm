@@ -116,6 +116,49 @@ sub signal_connect
 	return true;
 }
 
+sub load_plugin
+{
+	my $this = shift;
+	my $pluginName = shift;
+	my $paths = shift;
+	my $pluginPath;
+	foreach my $path (@{$paths})
+	{
+		if (-e $path.'/'.$pluginName.'.pm')
+		{
+			$pluginPath = $path.'/'.$pluginName.'.pm';
+			last;
+		}
+	}
+	if(not $pluginPath)
+	{
+		$this->_warn('Failed to locate the plugin "'.$pluginName.'": ignoring');
+		return;
+	}
+
+	my $e;
+	eval
+	{
+		package DP::Plugin::Loader;
+		do($pluginPath) or $e = $@;
+	};
+	if ($e)
+	{
+		$e =~ s/\n$//;
+		$this->_warn('Failed to load the plugin "'.$pluginName.'": '.$e);
+		return;
+	}
+	eval('DP::Plugin::'.$pluginName.'->new_instance($this);');
+	$e = $@;
+	if ($e)
+	{
+		$e =~ s/\n$//;
+		$this->_warn('Init of plugin "'.$pluginName.'" failed: '.$e);
+		return;
+	}
+	return true;
+}
+
 sub signal_emit
 {
 	my $this = shift;
