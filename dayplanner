@@ -225,6 +225,7 @@ sub Daemon_SendData {
 # Usage: init_plugins();
 sub init_plugins
 {
+	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
 	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS));
 	$plugin->set_var('calendar',$iCalendar);
@@ -234,7 +235,7 @@ sub init_plugins
 	$plugin->set_var('i18n',$i18n);
 	$plugin->set_var('version',$Version);
 	$plugin->set_var('confdir',$SaveToDir);
-	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
+	$plugin->set_var('pluginPaths',$paths);
 	foreach my $pName (split(/\s+/,$InternalConfig{plugins_enabled}))
 	{
 		$plugin->load_plugin($pName,$paths);
