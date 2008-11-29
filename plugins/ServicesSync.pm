@@ -321,7 +321,7 @@ sub DPS_Upload {
 	my $this = shift;
 	my $plugin = shift;
 	my $iCalendar = $this->{plugin}->get_var('calendar');
-	my $LastMD5 = $this->{plugin}->get_var('state')->{DPS_LastMD5} ? $this->{plugin}->get_var('state')->{DPS_LastMD5} : "undef";
+	my $LastMD5 = $plugin->get_confval('DPS_LastMD5') ? $plugin->get_confval('DPS_LastMD5') : 'undef';
 	my $SendData = encode_base64($iCalendar->get_rawdata(),'');
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
@@ -339,7 +339,7 @@ sub DPS_Upload {
 		return(undef);
 	}
 	# We successfully uploaded the data. So set DPS_LastMD5 and return true
-	$this->{plugin}->get_var('state')->{DPS_LastMD5} = $MD5;
+	$plugin->set_confval('DPS_LastMD5',$MD5);
 	return(1);
 }
 
@@ -397,7 +397,7 @@ sub DPS_Download {
 				$iCalendarMain->addfile(\@DataArray);
 			}
 			# Download succesful. Set DPS_LastMD5
-			$this->{plugin}->get_var('state')->{DPS_LastMD5} = $MD5;
+			$this->{plugin}->set_confval('DPS_LastMD5',$MD5);
 			UpdatedData();
 			return(1);
 		}
