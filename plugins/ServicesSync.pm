@@ -668,4 +668,27 @@ sub DPS_DataSegment {
 	return($Data);
 }
 
+# Purpose: Return better errors than IO::Socket::SSL does.
+# Usage: my $ERROR = IO_Socket_INET_Errors($@);
+#	Errors:
+#		OFFLINE = Network is unreachable
+#		REFUSED = Connection refused
+#		BADHOST = Bad hostname (should often be handled as OFFLINE)
+#		TIMEOUT = The connection timed out
+#		* = Anything else simply returns $@
+sub IO_Socket_INET_Errors {
+	my $Error = shift;
+	if($Error =~ /Network is unreachable/i) {
+		return('OFFLINE');
+	} elsif ($Error =~ /Bad hostname/i) {
+		return('BADHOST');
+	} elsif ($Error =~ /Connection refused/i) {
+		return('REFUSED');
+	} elsif ($Error =~ /timeout/i) {
+		return('TIMEOUT');
+	} else {
+		DPIntWarn("Unknown IO::Socket::SSL error: $Error");
+		return($Error);
+	}
+}
 1;
