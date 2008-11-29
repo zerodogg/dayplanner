@@ -1,0 +1,6 @@
+VERSION=0.1
+AUTHOR=Eskild Hustvedt
+NAME=ServicesSync
+TITLE=Day Planner services synchronization
+DESCRIPTION=Synchronizes your Day Planner calendar with a Day Planner services synchronization server.
+APIVERSION=1
