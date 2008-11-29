@@ -221,8 +221,8 @@ sub Daemon_SendData {
 	$DaemonSocket->client_send("$$ $_[0]");
 }
 
-# FIXME
-# Plugins
+# Purpose: Create the plugin object and load plugins
+# Usage: init_plugins();
 sub init_plugins
 {
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
@@ -234,39 +234,16 @@ sub init_plugins
 	$plugin->set_var('i18n',$i18n);
 	$plugin->set_var('version',$Version);
 	$plugin->set_var('confdir',$SaveToDir);
+	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	foreach my $pName (split(/\s+/,$InternalConfig{plugins_enabled}))
 	{
-		my $pluginPath;
-		foreach my $path (@{[$SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/']})
+		$plugin->load_plugin($pName,$paths);
+	}
+	if ($ENV{DP_LOAD_PLUGINS})
+	{
+		foreach my $pName (split(/\s+/,$ENV{DP_LOAD_PLUGINS}))
 		{
-			if (-e $path.'/'.$pName.'.pm')
-			{
-				$pluginPath = $path.'/'.$pName.'.pm';
-				last;
-			}
-		}
-		if(not $pluginPath)
-		{
-			DPIntWarn("Failed to locate plugin '$pName': ignoring");
-			next;
-		}
-		my $e;
-		eval {
-			package DP::Plugin;
-			do($pluginPath) or $e = $@;
-			package main;
-		};
-		if ($e)
-		{
-			DPIntWarn("Loading of plugin '$pName' failed: $e");
-			next;
-		}
-		eval('DP::Plugin::'.$pName.'->new_instance($plugin);');
-		$e = $@;
-		if ($e)
-		{
-			DPIntWarn("Init of plugin '$pName' failed: $e");
-			next;
+			$plugin->load_plugin($pName,$paths);
 		}
 	}
 }
@@ -903,7 +880,7 @@ sub UpgradeVersion {
 		DP_AddAutostart();
 	}
 	ProgressMade(9, $Total, $ProgressWin) if($Gtk2Init);
-	foreach my $val(qw(DPS_enable DPS_host DPS_pass DPS_port DPS_user))
+	foreach my $val(qw(DPS_enable DPS_host DPS_pass DPS_port DPS_user DPS_LastMD5))
 	{
 		if ($UserConfig{$val})
 		{
