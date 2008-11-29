@@ -63,7 +63,7 @@ sub mkmenu
 	my $EditName = $plugin->get_var('EditName');
 	my $i18n = $plugin->get_var('i18n');
 	# This is our menu item
-	my $menu =  [ '/'.$EditName.'/'.$i18n->get('Synchronization') ,undef, sub { $plugin->signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
+	my $menu =  [ '/'.$EditName.'/'.$i18n->get('_Synchronization') ,undef, sub { $plugin->signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;
