@@ -1,0 +1,62 @@
+#!/usr/bin/perl
+# devel-tools/plugin_mkmetafile
+# Copyright (C) Eskild Hustvedt 2008
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict;
+use warnings;
+use FindBin;			# So that we can detect module dirs during runtime
+use File::Basename qw(basename dirname);
+# Useful constants for prettier code
+use constant { true => 1, false => 0 };
+# This here is done so that we can use local versions of our libs
+use lib "$FindBin::RealBin/../modules/Date-HolidayParser/lib/";
+use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/../modules/DP-CoreModules/lib/";
+use lib "$FindBin::RealBin/../modules/";
+
+use DP::GeneralHelpers qw(WriteConfigFile);
+use DP::CoreModules::Plugin;
+
+my $name = shift or die;
+my $plugin;
+
+my $pobj = DP::CoreModules::Plugin->new({});
+my $base = basename($name);
+$base =~ s/\.pm$//g;
+my $fatal = 0;
+{
+	# The plugin module will whine because we're not actually inside of Day Planner
+	# so essential things might be missing, it'll load though.
+	local *STDOUT;
+	local *STDERR;
+	open(STDOUT,'>','/dev/null');
+	open(STDERR,'>','/dev/null');
+	$plugin = $pobj->load_plugin(basename($base), [ dirname($name) ]) or $fatal = 0;
+}
+die("Failed to load plugin\n") if $fatal;
+
+WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->{meta}, {
+		HEADER => 'Day Planner plugin metadata file',
+		name => 'The short system name of the plugin',
+		title => 'The proper name/title of the plugin',
+		description => 'A short description of what the plugin does',
+		version => 'The version number of the plugin',
+		apiversion => 'The Day Planner plugin API version requied',
+		author => 'The author of the plugin',
+		license => 'The plugin license',
+	}) or die("Failed to write: $!");
+print "Wrote ".dirname($name).'/'.$base.'.dpi'."\n";
