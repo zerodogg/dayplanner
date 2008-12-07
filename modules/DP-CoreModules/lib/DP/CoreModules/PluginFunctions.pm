@@ -20,11 +20,12 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-our @EXPORT_OK = qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use Assert);
+our @EXPORT_OK = qw(Assert);
 
-foreach my $sub (qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use))
+foreach my $sub (qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use UpdatedData))
 {
 	eval('sub '.$sub.' { return main::'.$sub.'(@_); }');
+	push(@EXPORT_OK,$sub);
 }
 
 # Purpose: Provide useful information if an assertion fails

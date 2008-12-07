@@ -23,7 +23,7 @@ use warnings;
 use IO::Socket::SSL;
 use MIME::Base64;
 use Digest::MD5 qw(md5_base64);
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use Assert);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use Assert UpdatedData);
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 my $DPS_APILevel = '06';			# The DPS API level used/supported
@@ -46,12 +46,25 @@ sub new_instance
 	# Register the one signal we have
 	$plugin->register_signals(qw(DPS_ENTERPREFS));
 	# Connect to signals
-	$plugin->signal_connect('SAVEDATA',$this,'synchronize');
+	#$plugin->signal_connect('SAVEDATA',$this,'synchronize');
 	$plugin->signal_connect('INIT',$this,'synchronize');
+	$plugin->signal_connect('SHUTDOWN',$this,'synchronize');
 	$plugin->signal_connect('CREATE_MENUITEMS',$this,'mkmenu');
 	$plugin->signal_connect('DPS_ENTERPREFS',$this,'PreferencesWindow');
 
 	$this->{i18n} = $plugin->get_var('i18n');
+
+	# Metadata
+	$this->{meta} =
+	{
+		name => 'ServicesSync',
+		title => 'Calendar synchronization through Day Planner services',
+		description => 'Synchronizes your Day Planner calendar with a Day Planner services synchronization server',
+		version => 0.1,
+		apiversion => 1,
+		author => 'Eskild Hustvedt',
+		license => 'GNU General Public License version 3 or later',
+	};
 	return $this;
 }
 
@@ -319,7 +332,7 @@ sub DPS_Status {
 # Usage: DPS_Upload();
 sub DPS_Upload {
 	my $this = shift;
-	my $plugin = shift;
+	my $plugin = $this->{plugin};
 	my $iCalendar = $this->{plugin}->get_var('calendar');
 	my $LastMD5 = $plugin->get_confval('DPS_LastMD5') ? $plugin->get_confval('DPS_LastMD5') : 'undef';
 	my $SendData = encode_base64($iCalendar->get_rawdata(),'');
