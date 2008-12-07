@@ -165,6 +165,7 @@ sub signal_emit
 	my $signal = shift;
 	if ($this->{signals}{$signal})
 	{
+		my $repairIt = false;
 		foreach my $i (@{$this->{signals}{$signal}})
 		{
 			$this->{currPlugin} = $i->{module};
@@ -173,9 +174,21 @@ sub signal_emit
 			if ($e)
 			{
 				chomp($e);
-				$this->_warn("Failure when emitting signal $signal: $e: ignoring");
+				$this->_warn("Failure when emitting signal $signal: $e: ignoring and attempting to repair main app state");
+				$repairIt = true;
 			}
 			$this->{currPlugin} = undef;
+		}
+
+		# Try to make sure the app itself is in a usable state
+		if ($repairIt)
+		{
+			my $w = $this->get_var('MainWindow');
+			if ($w)
+			{
+				$w->set_modal(false);
+				$w->set_sensitive(true);
+			}
 		}
 	}
 	else
