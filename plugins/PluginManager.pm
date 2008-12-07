@@ -110,9 +110,9 @@ sub PopulateList
 			next if $p =~ m{/\*dpi$};
 			my $info = $this->LoadPluginMetadataFromFile($p);
 			next if not $info;
-			$this->{metadata}{$info->{NAME}} = $info;
+			$this->{metadata}{$info->{name}} = $info;
 			# TODO: Some way to do i18n
-			push(@{$listData},[$info->{NAME},false,$info->{TITLE}]);
+			push(@{$listData},[$info->{name},false,$info->{title}]);
 		}
 	}
 }

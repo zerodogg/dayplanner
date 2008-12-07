@@ -1,6 +1,22 @@
-VERSION=0.1
-AUTHOR=Eskild Hustvedt
-NAME=ServicesSync
-TITLE=Day Planner services synchronization
-DESCRIPTION=Synchronizes your Day Planner calendar with a Day Planner services synchronization server.
-APIVERSION=1
+# Day Planner plugin metadata file
+
+# The Day Planner plugin API version requied
+apiversion=1
+
+# The author of the plugin
+author=Eskild Hustvedt
+
+# A short description of what the plugin does
+description=Synchronizes your Day Planner calendar with a Day Planner services synchronization server
+
+# The plugin license
+license=GNU General Public License version 3 or later
+
+# The short system name of the plugin
+name=ServicesSync
+
+# The proper name/title of the plugin
+title=Calendar synchronization through Day Planner services
+
+# The version number of the plugin
+version=0.1
