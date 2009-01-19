@@ -34,6 +34,7 @@ sub new
 		die("DP::iCalendar::ArrayHasManager: FATAL, I don't have a reference");
 	}
 	$this->{indexBy} = shift;
+	$this->{settings} = {};
 	$this->reindex();
 	return($this);
 }
@@ -189,7 +190,11 @@ sub _appendToIndex
 			if ($IsEQ)
 			{
 				# If so, dupe. Don't bother doing anything more.
-				if(defined($ENV{DP_AHM_DeleteDupes}) and $ENV{DP_AHM_DeleteDupes} eq '1')
+				if ($this->{settings}->{'SMART_MERGE'})
+				{
+					$this->{array}[$i] = undef;
+				}
+				elsif(defined($ENV{DP_AHM_DeleteDupes}) and $ENV{DP_AHM_DeleteDupes} eq '1')
 				{
 					warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it. Duplicates. Deleting $i as requested in the environment variable DP_AHM_DeleteDupes\n");
 					$this->{array}[$i] = undef;
@@ -208,8 +213,11 @@ sub _appendToIndex
 				{
 					$newIdx.= int(rand(10000));
 				}
-				# Warn about the condition, the file is cleary broken (even though we have now fixed it)
-				warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it and is not a duplicate. Renamed $i\'s ".$this->{indexBy}." to '$newIdx'.\n");
+				if (not $this->{settings}->{'SMART_MERGE'})
+				{
+					# Warn about the condition, the file is cleary broken (even though we have now fixed it)
+					warn("DP::iCalendar::ArrayHashManager: ".$this->{indexBy}." '$var' belongs to ".$this->{index}{$var}." but $i also wants it and is not a duplicate. Renamed $i\'s ".$this->{indexBy}." to '$newIdx'.\n");
+				}
 				# Set the new index value
 				$this->{array}[$i]{$this->{indexBy}}[0] = $newIdx;
 				# And finally, append this to our index. Our job is done.

@@ -473,6 +473,10 @@ sub enable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$this->{FEATURE}{$_} = 1;
+		if ($_ eq 'SMART_MERGE' && defined $this->{dataManger})
+		{
+			$this->{dataManager}->{settings}->{SMART_MERGE} = 1;
+		}
 		return(true);
 	}
 	carp("Attempted to enable unknown feature: $feature");
@@ -486,6 +490,10 @@ sub disable {
 	foreach(qw(SMART_MERGE)) {
 		next unless($feature eq $_);
 		$this->{FEATURE}{$_} = 0;
+		if ($_ eq 'SMART_MERGE' && defined $this->{dataManger})
+		{
+			$this->{dataManager}->{settings}->{SMART_MERGE} = 0;
+		}
 		return(true);
 	}
 	carp("Attempted to disable unknown feature: $feature");
@@ -936,6 +944,10 @@ sub _ArrayHashSetup
 		}
 	}
 	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT},'UID');
+	if ($this->{FEATURE}{SMART_MERGE})
+	{
+		$this->{dataManager}->{settings}->{SMART_MERGE} = 1;
+	}
 }
 
 # Purpose: Loads iCalendar data
