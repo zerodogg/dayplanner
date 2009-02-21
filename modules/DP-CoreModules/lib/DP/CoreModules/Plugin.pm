@@ -20,6 +20,10 @@ use strict;
 use warnings;
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
+use File::Temp qw(tempdir);
+use File::Copy qw(copy);
+use Cwd qw(getcwd realpath);
+use DP::GeneralHelpers qw(LoadConfigFile);
 
 # Purpose: Create a new plugin instance
 # Usage: my $object = DP::iCalendar->new(\%ConfRef);
@@ -257,6 +261,40 @@ sub abort
 {
 	my $this = shift;
 	$this->{abortCurrent} = true;
+	return true;
+}
+
+sub install_plugin
+{
+	my $this = shift;
+	my $file = shift;
+
+	if(not -e $file)
+	{
+		$this->_warn($file.': does not exist');
+	}
+
+	my $currDir = getcwd();
+	my $tempDir = tempdir( 'dayplannerPluginInstall-XXXXXX', CLEANUP => 1);
+
+	chdir($tempDir);
+	if(not -e $file)
+	{
+		$file = $currDir.'/'.$file;
+	}
+	$file = realpath($file);
+	system('tar','-jxf','--',$file);
+	chdir('DP_pluginData');
+	die if not -e './pluginInfo.conf';
+	my %conf;
+	LoadConfigFile('./pluginInfo.conf',\%conf);
+	my $name = $conf{pluginName};
+	die if not -e './'.$name.'.pm';
+	die if not -e './'.$name.'.dpi';
+	my $target = $this->get_var('confdir').'/plugins';
+	copy('./'.$name.'.pm',$target);
+	copy('./'.$name.'.dpi',$target);
+	chdir($currDir);
 	return true;
 }
 
