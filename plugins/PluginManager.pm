@@ -75,10 +75,6 @@ sub ShowManager
 	$window->set_position('center-on-parent');
 	$window->set_type_hint('dialog');
 
-	my $ClosePerform = sub {
-		$window->destroy();
-	};
-
 	my $containerWindow = Gtk2::ScrolledWindow->new();
 	$containerWindow->set_policy('automatic', 'automatic');
 
@@ -139,11 +135,30 @@ sub ShowManager
 	$mainVBox->pack_end($ButtonHBox,0,0,0);
 
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
-	$CloseButton->signal_connect('clicked' => $ClosePerform);
 	$CloseButton->show();
 	$ButtonHBox->pack_end($CloseButton,0,0,0);
 
+	my $ClosePerform = sub {
+		$window->destroy();
+		my %plugins = (
+			PluginManager => 1,
+		);
+		foreach my $i (@{$pluginList->{data}})
+		{
+			if ($i->[1])
+			{
+				$plugins{$i->[0]} = 1;
+				$this->{plugin}->load_plugin_if_missing($i->[0]);
+			}
+		}
+		my $newPlugins = join(' ',keys %plugins);
+		my $InternalConfig = $this->{plugin}->get_var('state');
+		$InternalConfig->{plugins_enabled} = $newPlugins;
+	};
 
+	$CloseButton->signal_connect('clicked' => $ClosePerform);
+	$window->signal_connect('destroy' => $ClosePerform);
+	$window->signal_connect('delete-event' => $ClosePerform);
 	$window->show_all();
 }
 
@@ -152,11 +167,14 @@ sub PopulateList
 	my $this = shift;
 	my $listData = shift;
 	my $pluginPath = $this->{plugin}->get_var('pluginPaths');
+	my %plugins;
 	foreach my $d (@{$pluginPath})
 	{
 		foreach my $p (glob($d.'/*dpi'))
 		{
 			next if $p =~ m{/\*dpi$};
+			next if $plugins{$p};
+			$plugins{$p} = 1;
 			my $info = $this->LoadPluginMetadataFromFile($p);
 			next if not $info;
 			$this->{metadata}{$info->{name}} = $info;
