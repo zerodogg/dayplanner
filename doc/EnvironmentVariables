@@ -55,4 +55,10 @@ DP_AHM_DeleteDupes
 			backup of your calendar. It is possible that it can delete
 			an event you wanted (though unlikely).
 
+DP_LOAD_PLUGINS
+			This is a space separated list of plugins that you want
+			Day Planner to load, in addition to those present in the
+			config file. Its syntax is the same as the plugins_enabled
+			config setting in state.conf
+
 vim: set tw=70 autoindent :
