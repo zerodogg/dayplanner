@@ -117,11 +117,26 @@ sub signal_connect
 	return true;
 }
 
+sub set_searchpath
+{
+	my $this = shift;
+	my $searchPath = shift;
+	$this->{searchPaths} = $searchPath;
+}
+
 sub load_plugin
 {
 	my $this = shift;
 	my $pluginName = shift;
 	my $paths = shift;
+	if (not $paths)
+	{
+		$paths = $this->{searchPaths};
+	}
+	else
+	{
+		push(@{$paths},@{$this->{searchPaths}});
+	}
 	my $pluginPath;
 	if ($this->{loadedPlugins}->{$pluginName})
 	{
