@@ -112,7 +112,8 @@ sub PopulateList
 			next if not $info;
 			$this->{metadata}{$info->{name}} = $info;
 			# TODO: Some way to do i18n
-			push(@{$listData},[$info->{name},false,$info->{title}]);
+			my $active = $this->{plugin}->plugin_loaded($info->{name}) ? true : false;
+			push(@{$listData},[$info->{name},$active,$info->{title}]);
 		}
 	}
 }
