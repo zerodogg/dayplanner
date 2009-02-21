@@ -64,6 +64,7 @@ sub ShowManager
 {
 	my $this = shift;
 	my $plugin = shift;
+
 	my $i18n = $plugin->get_var('i18n');
 	my $MainWindow = $plugin->get_var('MainWindow');
 	my $window = Gtk2::Window->new();
@@ -73,6 +74,10 @@ sub ShowManager
 	$window->set_transient_for($MainWindow) if $MainWindow;
 	$window->set_position('center-on-parent');
 	$window->set_type_hint('dialog');
+
+	my $ClosePerform = sub {
+		$window->destroy();
+	};
 
 	my $containerWindow = Gtk2::ScrolledWindow->new();
 	$containerWindow->set_policy('automatic', 'automatic');
@@ -102,7 +107,7 @@ sub ShowManager
 	my $infoText = Gtk2::TextBuffer->new();
 	$info->set_buffer($infoText);
 	$scroll->add($info);
-	$mainVBox->pack_end($scroll,0,0,0);
+	$mainVBox->pack_start($scroll,0,0,0);
 
 	# Handler for a user selecting an entry
 	$pluginList->signal_connect('cursor-changed' => sub {
@@ -128,6 +133,16 @@ sub ShowManager
 			}
 		}
 	);
+	# Add the buttons
+	my $ButtonHBox = Gtk2::HBox->new();
+	$ButtonHBox->show();
+	$mainVBox->pack_end($ButtonHBox,0,0,0);
+
+	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
+	$CloseButton->signal_connect('clicked' => $ClosePerform);
+	$CloseButton->show();
+	$ButtonHBox->pack_end($CloseButton,0,0,0);
+
 
 	$window->show_all();
 }
