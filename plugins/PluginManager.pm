@@ -34,6 +34,7 @@ sub new_instance
 	my $plugin = shift;
 	$this->{plugin} = $plugin;
 	$this->{metadata} = {};
+	$this->{pluginInfo} = {};
 
 	# Register the one signal we have
 	$plugin->register_signals(qw(SHOW_PLUGINMANAGER));
@@ -91,10 +92,43 @@ sub ShowManager
 	$mainVBox->pack_start($containerWindow,1,1,0);
 
 	# The info field
+	my $scroll = Gtk2::ScrolledWindow->new();
+	$scroll->set_policy('automatic','automatic');
 	my $info = Gtk2::TextView->new();
 	$info->set_editable(false);
+	$info->set_cursor_visible(false);
 	$info->set_wrap_mode('word');
-	$mainVBox->pack_end($info,1,1,0);
+	$info->set_size_request(-1,90);
+	my $infoText = Gtk2::TextBuffer->new();
+	$info->set_buffer($infoText);
+	$scroll->add($info);
+	$mainVBox->pack_end($scroll,0,0,0);
+
+	# Handler for a user selecting an entry
+	$pluginList->signal_connect('cursor-changed' => sub {
+			my $Selected = [$pluginList->get_selected_indices]->[0];
+			if(defined $Selected)
+			{
+				my $selectedPlugin = $pluginList->{data}[$Selected][0];
+				my $string;
+				if ($this->{pluginInfo}->{$selectedPlugin})
+				{
+					$string = $this->{pluginInfo}->{$selectedPlugin};
+				}
+				else
+				{
+					my $meta = $this->{metadata}->{$selectedPlugin};
+					$string = 'Author: '.$meta->{author}."\n";
+					$string .= 'Version: '.$meta->{version}."\n";
+					$string .= 'License: '.$meta->{license}."\n";
+					$string .= 'Description: '.$meta->{description};
+					$this->{pluginInfo}->{$selectedPlugin} = $string;
+				}
+				$infoText->set_text($string);
+			}
+		}
+	);
+
 	$window->show_all();
 }
 
