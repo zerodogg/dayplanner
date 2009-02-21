@@ -31,7 +31,7 @@ use lib "$FindBin::RealBin/../modules/";
 use DP::GeneralHelpers qw(WriteConfigFile);
 use DP::CoreModules::Plugin;
 
-my $name = shift or die;
+my $name = shift or die("Needs a single param: path to the file to create info file from\n");
 my $plugin;
 
 my $pobj = DP::CoreModules::Plugin->new({});
