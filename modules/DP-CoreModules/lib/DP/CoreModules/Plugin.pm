@@ -33,6 +33,7 @@ sub new
 	$this->{signals} = {};
 	$this->{currPlugin} = undef;
 	$this->{abortCurrent} = false;
+	$this->{loadedPlugins} = {};
 	$this->{tempVars} = [];
 	return $this;
 }
@@ -122,6 +123,10 @@ sub load_plugin
 	my $pluginName = shift;
 	my $paths = shift;
 	my $pluginPath;
+	if ($this->{loadedPlugins}->{$pluginName})
+	{
+		$this->_warn('Plugin '.$pluginName.' is being reloaded');
+	}
 	foreach my $path (@{$paths})
 	{
 		if (-e $path.'/'.$pluginName.'.pm')
@@ -156,7 +161,31 @@ sub load_plugin
 		$this->_warn('Init of plugin "'.$pluginName.'" failed: '.$e);
 		return;
 	}
+	$this->{loadedPlugins}->{$pluginName} = 1;
 	return true;
+}
+
+sub load_plugin_if_missing
+{
+	my $this = shift;
+	my $pluginName = shift;
+	my $paths = shift;
+	if (not $this->plugin_loaded($pluginName))
+	{
+		return $this->load_plugin($pluginName,$paths);
+	}
+	return true;
+}
+
+sub plugin_loaded
+{
+	my $this = shift;
+	my $pluginName = shift;
+	if ($this->{loadedPlugins}->{$pluginName})
+	{
+		return true;
+	}
+	return false;
 }
 
 sub signal_emit
