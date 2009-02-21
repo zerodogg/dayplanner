@@ -238,13 +238,13 @@ sub init_plugins
 	$plugin->set_var('pluginPaths',$paths);
 	foreach my $pName (split(/\s+/,$InternalConfig{plugins_enabled}))
 	{
-		$plugin->load_plugin($pName,$paths);
+		$plugin->load_plugin_if_missing($pName,$paths);
 	}
 	if ($ENV{DP_LOAD_PLUGINS})
 	{
 		foreach my $pName (split(/\s+/,$ENV{DP_LOAD_PLUGINS}))
 		{
-			$plugin->load_plugin($pName,$paths);
+			$plugin->load_plugin_if_missing($pName,$paths);
 		}
 	}
 }
