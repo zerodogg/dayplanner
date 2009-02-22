@@ -101,7 +101,7 @@ sub ShowManager
 	$info->set_editable(false);
 	$info->set_cursor_visible(false);
 	$info->set_wrap_mode('word');
-	$info->set_size_request(-1,90);
+	$info->set_size_request(-1,100);
 	my $infoText = Gtk2::TextBuffer->new();
 	$info->set_buffer($infoText);
 	$scroll->add($info);
