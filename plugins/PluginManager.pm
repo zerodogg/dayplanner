@@ -238,7 +238,7 @@ sub InstallPlugin
 			else
 			{
 				my $string = $this->generateInfoString($meta);
-				if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, nsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
+				if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, unsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
 				{
 					$this->{plugin}->install_plugin($Filename);
 					$return = false;
