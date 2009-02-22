@@ -900,6 +900,10 @@ sub UpgradeVersion {
 	{
 		$InternalConfig{plugins_enabled} .= ' ServicesSync';
 	}
+	if(not $InternalConfig{plugins_enabled} =~ /PluginManager/)
+	{
+		$InternalConfig{plugins_enabled} .= ' PluginManager';
+	}
 	WriteConfig();
 	ProgressMade(10, $Total, $ProgressWin) if($Gtk2Init);
 	DP_DestroyProgressWin($ProgressWin);
