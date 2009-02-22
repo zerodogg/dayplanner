@@ -286,7 +286,7 @@ sub install_plugin
 	}
 
 	my $currDir = getcwd();
-	my $tempDir = tempdir( 'dayplannerPluginInstall-XXXXXX', CLEANUP => 1);
+	my $tempDir = tempdir( 'dayplannerPluginInstall-XXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 	chdir($tempDir);
 	if(not -e $file)
@@ -294,7 +294,7 @@ sub install_plugin
 		$file = $currDir.'/'.$file;
 	}
 	$file = realpath($file);
-	system('tar','-jxf','--',$file);
+	system('tar','-jxf',$file);
 	chdir('DP_pluginData');
 	die if not -e './pluginInfo.conf';
 	my %conf;
@@ -302,9 +302,14 @@ sub install_plugin
 	my $name = $conf{pluginName};
 	die if not -e './'.$name.'.pm';
 	die if not -e './'.$name.'.dpi';
-	my $target = $this->get_var('confdir').'/plugins';
-	copy('./'.$name.'.pm',$target);
-	copy('./'.$name.'.dpi',$target);
+	my $target = $this->get_var('confdir').'/plugins/';
+	print $target."\n";
+	if(not -e $target)
+	{
+		mkdir($target) or $this->_warn('FATAL: failed to mkdir('.$target.'): '.$!);
+	}
+	copy('./'.$name.'.pm',$target) or $this->_warn('FATAL: Failed to copy(./'.$name.'.pm,'.$target.'): '.$!);
+	copy('./'.$name.'.dpi',$target) or $this->_warn('FATAL: Failed to copy(./'.$name.'.dpi,'.$target.'): '.$!);
 	chdir($currDir);
 	return true;
 }
