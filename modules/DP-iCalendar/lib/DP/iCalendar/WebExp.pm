@@ -172,7 +172,7 @@ sub _HTML_YearList
 	my $HTML =  $this->_HTML_GetHeader("", "Day Planner", "M");
 	$HTML .=  _HTML_Encode($i18n->get("Select the year to view:")) . "<br />\n";
 	foreach(@{$this->{DPI}->get_years()}) {
-		$HTML .=  "<a href='$_.html'>" . _HTML_Encode($_) . "</a><br />\n";
+		$HTML .=  "<a href='dp_$_.html'>" . _HTML_Encode($_) . "</a><br />\n";
 	}
 	$HTML .=  $this->_HTML_GetFooter();
 	return($HTML);
@@ -280,18 +280,18 @@ sub _HTML_GetMenu
 	my $Month = shift;
 	# HTML-style links
 	my %Links = (
-		1 => $this->_getFileName($Year,1),
-		2 => $this->_getFileName($Year,2),
-		3 => $this->_getFileName($Year,3),
-		4 => $this->_getFileName($Year,4),
-		5 => $this->_getFileName($Year,5),
-		6 => $this->_getFileName($Year,6),
-		7 => $this->_getFileName($Year,7),
-		8 => $this->_getFileName($Year,8),
-		9 => $this->_getFileName($Year,9),
-		10 => $this->_getFileName($Year,10),
-		11 => $this->_getFileName($Year,11),
-		12 => $this->_getFileName($Year,12),
+		1 => $this->_getFileName(true,$Year,1),
+		2 => $this->_getFileName(true,$Year,2),
+		3 => $this->_getFileName(true,$Year,3),
+		4 => $this->_getFileName(true,$Year,4),
+		5 => $this->_getFileName(true,$Year,5),
+		6 => $this->_getFileName(true,$Year,6),
+		7 => $this->_getFileName(true,$Year,7),
+		8 => $this->_getFileName(true,$Year,8),
+		9 => $this->_getFileName(true,$Year,9),
+		10 => $this->_getFileName(true,$Year,10),
+		11 => $this->_getFileName(true,$Year,11),
+		12 => $this->_getFileName(true,$Year,12),
 		yearindex => 'index.html',
 	);
 	my $Menu .= _HTML_Encode($i18n->get("Tools")) . ": <a href='$Links{yearindex}'>" . _HTML_Encode($i18n->get("Change to another year")) . "</a> (" . _HTML_Encode($i18n->get_advanced("current: %(year)", { year => $Year })) . ") - </a><br />\n";
@@ -345,7 +345,7 @@ sub _getMonth
 	my $HTML;
 	foreach my $Day (sort @{$MonthInfo}) {
 		$HadContent = 1;
-		$HTML .= "<a href='dp_$Year$Month$Day.html'>" . _HTML_Encode("$Day. " . $i18n->get_month($Month) ." $Year") . "</a><br/>\n";
+		$HTML .= "<a href='".$this->_getFileName(true,$Year,$Month,$Day)."'>" . _HTML_Encode("$Day. " . $i18n->get_month($Month) ." $Year") . "</a><br/>\n";
 	}
 	unless($HadContent) {
 		# FIXME: Ises i18n
@@ -435,15 +435,15 @@ sub _getFileName
 	my $Month = shift;
 	my $Day = shift;
 	my $fname = 'dp_';
-	if ($Day)
+	if (defined $Day)
 	{
 		#$fname .= $Day.$Month.$Year;
-		$fname .= $Year._prefixZero($Month)._prefixZero($Day);
+		$fname .= $Year . _prefixZero($Month) ._prefixZero($Day);
 	}
-	elsif($Month)
+	elsif(defined $Month)
 	{
 		#$fname .= $Month.$Year;
-		$fname .= $Year._prefixZero($Month);
+		$fname .= $Year . _prefixZero($Month);
 	}
 	else
 	{
