@@ -22,7 +22,7 @@ use strict;
 use warnings;
 use Gtk2;
 use Gtk2::SimpleList;
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use Assert);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use Assert Gtk2_Button_SetImage);
 use DP::GeneralHelpers qw(LoadConfigFile);
 use constant { true => 1, false => 0 };
 
@@ -137,6 +137,11 @@ sub ShowManager
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
 	$CloseButton->show();
 	$ButtonHBox->pack_end($CloseButton,0,0,0);
+	my $InstallButton = Gtk2::Button->new($i18n->get('_Install a plugin'));
+	my $icon = Gtk2::Image->new_from_stock('gtk-harddisk','button');
+	Gtk2_Button_SetImage($InstallButton,$icon,'_Install a new plugin');
+	$InstallButton->show();
+	$ButtonHBox->pack_end($InstallButton,0,0,0);
 
 	my $ClosePerform = sub {
 		$window->destroy();
@@ -157,9 +162,45 @@ sub ShowManager
 	};
 
 	$CloseButton->signal_connect('clicked' => $ClosePerform);
+	$InstallButton->signal_connect('clicked' => sub {
+			my $r = $this->InstallPlugin;
+			if (not $r)
+			{
+				$window->destroy();
+				$this->ShowManager($this->{plugin});
+			}
+		});
 	$window->signal_connect('destroy' => $ClosePerform);
 	$window->signal_connect('delete-event' => $ClosePerform);
 	$window->show_all();
+}
+
+sub InstallPlugin
+{
+	my $this = shift;
+	my $i18n = $this->{plugin}->get_var('i18n');
+	my $InstallWindow = Gtk2::FileChooserDialog->new($i18n->get('Install Day Planner plugin package'), undef, 'open',
+	'gtk-cancel' => 'reject',
+	'gtk-open' => 'accept',);
+	$InstallWindow->set_local_only(1);
+	$InstallWindow->set_default_response('accept');
+	my $filter = Gtk2::FileFilter->new;
+	$filter->add_pattern('*.dpp');
+	$filter->set_name($i18n->get('Day Planner plugin packages'));
+	$InstallWindow->add_filter($filter);
+	my $Response = $InstallWindow->run();
+	my $return = true;
+	if($Response eq 'accept') {
+		my $Filename = $InstallWindow->get_filename();
+		if($Filename =~ /\.(dpp)$/i) {
+			$this->{plugin}->install_plugin($Filename);
+			$return = false;
+		} else {
+			DPIntWarn("Unknown filetype: $Filename");
+		}
+	}
+	$InstallWindow->destroy();
+	return $return;
 }
 
 sub PopulateList
