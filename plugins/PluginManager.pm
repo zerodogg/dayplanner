@@ -22,7 +22,7 @@ use strict;
 use warnings;
 use Gtk2;
 use Gtk2::SimpleList;
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use Assert Gtk2_Button_SetImage);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin runtime_use Assert Gtk2_Button_SetImage);
 use DP::GeneralHelpers qw(LoadConfigFile);
 use constant { true => 1, false => 0 };
 
@@ -43,6 +43,8 @@ sub new_instance
 	$plugin->signal_connect('SHOW_PLUGINMANAGER',$this,'ShowManager');
 
 	$this->{i18n} = $plugin->get_var('i18n');
+	# NOTE: Although this is a plugin, it does not have any ->{meta} info, because
+	# 	it isn't suppose to be displayed in itself.
 	return $this;
 }
 
@@ -105,30 +107,6 @@ sub ShowManager
 	$scroll->add($info);
 	$mainVBox->pack_start($scroll,0,0,0);
 
-	# Handler for a user selecting an entry
-	$pluginList->signal_connect('cursor-changed' => sub {
-			my $Selected = [$pluginList->get_selected_indices]->[0];
-			if(defined $Selected)
-			{
-				my $selectedPlugin = $pluginList->{data}[$Selected][0];
-				my $string;
-				if ($this->{pluginInfo}->{$selectedPlugin})
-				{
-					$string = $this->{pluginInfo}->{$selectedPlugin};
-				}
-				else
-				{
-					my $meta = $this->{metadata}->{$selectedPlugin};
-					$string = 'Author: '.$meta->{author}."\n";
-					$string .= 'Version: '.$meta->{version}."\n";
-					$string .= 'License: '.$meta->{license}."\n";
-					$string .= 'Description: '.$meta->{description};
-					$this->{pluginInfo}->{$selectedPlugin} = $string;
-				}
-				$infoText->set_text($string);
-			}
-		}
-	);
 	# Add the buttons
 	my $ButtonHBox = Gtk2::HBox->new();
 	$ButtonHBox->show();
@@ -142,6 +120,12 @@ sub ShowManager
 	Gtk2_Button_SetImage($InstallButton,$icon,'_Install a new plugin');
 	$InstallButton->show();
 	$ButtonHBox->pack_end($InstallButton,0,0,0);
+	my $RemoveButton = Gtk2::Button->new($i18n->get('_Uninstall plugin'));
+	my $removeIcon = Gtk2::Image->new_from_stock('gtk-remove','button');
+	Gtk2_Button_SetImage($RemoveButton,$removeIcon,'_Uninstall plugin');
+	$RemoveButton->set_sensitive(false);
+	$RemoveButton->show();
+	$ButtonHBox->pack_end($RemoveButton,0,0,0);
 
 	my $ClosePerform = sub {
 		$window->destroy();
@@ -170,6 +154,61 @@ sub ShowManager
 				$this->ShowManager($this->{plugin});
 			}
 		});
+	$RemoveButton->signal_connect('clicked' => sub {
+			my $Selected = [$pluginList->get_selected_indices]->[0];
+			if(defined $Selected)
+			{
+				my $selectedPlugin = $pluginList->{data}[$Selected][0];
+				if(DPQuestion($i18n->get('Are you sure you want to uninstall the plugin "'.$selectedPlugin.'"?')))
+				{
+					my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
+					if(not -e $ppath.$selectedPlugin.'.pm')
+					{
+						DPError("Failed to locate plugin");
+					}
+					else
+					{
+						unlink($ppath.$selectedPlugin.'.pm');
+						unlink($ppath.$selectedPlugin.'.dpi');
+					}
+					$window->destroy();
+					$this->ShowManager($this->{plugin});
+				}
+			}
+		});
+
+	# Handler for a user selecting an entry
+	$pluginList->signal_connect('cursor-changed' => sub {
+			my $Selected = [$pluginList->get_selected_indices]->[0];
+			if(defined $Selected)
+			{
+				my $selectedPlugin = $pluginList->{data}[$Selected][0];
+				my $string;
+				if ($this->{pluginInfo}->{$selectedPlugin})
+				{
+					$string = $this->{pluginInfo}->{$selectedPlugin};
+				}
+				else
+				{
+					my $meta = $this->{metadata}->{$selectedPlugin};
+					$string = 'Author: '.$meta->{author}."\n";
+					$string .= 'Version: '.$meta->{version}."\n";
+					$string .= 'License: '.$meta->{license}."\n";
+					$string .= 'Description: '.$meta->{description};
+					$this->{pluginInfo}->{$selectedPlugin} = $string;
+				}
+				$infoText->set_text($string);
+				if (-e $this->{plugin}->get_var('confdir').'/plugins/'.$selectedPlugin.'.pm')
+				{
+					$RemoveButton->set_sensitive(true);
+				}
+				else
+				{
+					$RemoveButton->set_sensitive(false);
+				}
+			}
+		}
+	);
 	$window->signal_connect('destroy' => $ClosePerform);
 	$window->signal_connect('delete-event' => $ClosePerform);
 	$window->show_all();
