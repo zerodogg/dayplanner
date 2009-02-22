@@ -9,16 +9,19 @@ may be subject to change.
 * Version 0.10
 - - - - - - -
 - Move HTML exporting to module
-- Move GUI add/edit events to OO-code
-- Add a GUI for calendar subscriptions
 
 * Version 0.11
 - - - - - - -
-- Add proper support for maemo (see maemo/)
 - Investigate moving to intltool
-- Left align labels
+- Move GUI add/edit events to OO-code
+- Add a GUI for calendar subscriptions
 
 * Version 0.12
+- - - - - - -
+- Add proper support for mobile Day Planner (see mobile/)
+- Left align labels
+
+* Version 0.13
 - - - - - - -
 - Use Conduit for synchronization of Calendars (except when using
 	DPServices). Offer:
@@ -27,9 +30,6 @@ may be subject to change.
 			interface
 	- Sync with device
 		- Calendar -> Synchronize with device ?
-
-* Version 0.13
-- - - - - - -
 - Support for viewing read-only calendars
 - Add a prompt when started with a iCalendar file on the commandline
 	that asks if you want to view it (ro-mode) or import it.
