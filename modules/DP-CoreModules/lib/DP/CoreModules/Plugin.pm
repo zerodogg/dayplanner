@@ -135,9 +135,14 @@ sub load_plugin
 	my $paths = shift;
 	if (not $paths)
 	{
+		if(not $this->{searchPaths})
+		{
+			$this->_warn("load_plugin($pluginName): failed: no search path set anywhere");
+			return;
+		}
 		$paths = $this->{searchPaths};
 	}
-	else
+	elsif ($this->{searchPaths})
 	{
 		push(@{$paths},@{$this->{searchPaths}});
 	}
@@ -172,7 +177,8 @@ sub load_plugin
 		$this->_warn('Failed to load the plugin "'.$pluginName.'": '.$e);
 		return;
 	}
-	eval('DP::Plugin::'.$pluginName.'->new_instance($this);');
+	my $plugin;
+	eval('$plugin = DP::Plugin::'.$pluginName.'->new_instance($this);');
 	$e = $@;
 	if ($e)
 	{
@@ -181,7 +187,12 @@ sub load_plugin
 		return;
 	}
 	$this->{loadedPlugins}->{$pluginName} = 1;
-	return true;
+	if(not $plugin)
+	{
+		$this->_warn("Plugin $pluginName appears not to have returned itself");
+		return true;
+	}
+	return $plugin;
 }
 
 sub load_plugin_if_missing
