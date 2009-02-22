@@ -314,6 +314,39 @@ sub install_plugin
 	return true;
 }
 
+sub get_info_from_package
+{
+	my $this = shift;
+	my $file = shift;
+
+	if(not -e $file)
+	{
+		$this->_warn($file.': does not exist');
+	}
+
+	my $currDir = getcwd();
+	my $tempDir = tempdir( 'dayplannerPluginInfo-XXXXXX', CLEANUP => 1, TMPDIR => 1);
+
+	chdir($tempDir);
+	if(not -e $file)
+	{
+		$file = $currDir.'/'.$file;
+	}
+	$file = realpath($file);
+	system('tar','-jxf',$file);
+	chdir('DP_pluginData');
+	die if not -e './pluginInfo.conf';
+	my %conf;
+	LoadConfigFile('./pluginInfo.conf',\%conf);
+	my $name = $conf{pluginName};
+	die if not -e './'.$name.'.dpi';
+	%conf = ();
+	my $meta = LoadConfigFile('./'.$name.'.dpi',\%conf);
+	$conf{shortPluginName} = $name;
+	chdir($currDir);
+	return \%conf;
+}
+
 # Summary: Mark something as a stub
 # Usage: STUB();
 sub STUB
