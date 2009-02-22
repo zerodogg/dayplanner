@@ -191,10 +191,7 @@ sub ShowManager
 				else
 				{
 					my $meta = $this->{metadata}->{$selectedPlugin};
-					$string = 'Author: '.$meta->{author}."\n";
-					$string .= 'Version: '.$meta->{version}."\n";
-					$string .= 'License: '.$meta->{license}."\n";
-					$string .= 'Description: '.$meta->{description};
+					$string = $this->generateInfoString($meta);
 					$this->{pluginInfo}->{$selectedPlugin} = $string;
 				}
 				$infoText->set_text($string);
@@ -232,8 +229,21 @@ sub InstallPlugin
 	if($Response eq 'accept') {
 		my $Filename = $InstallWindow->get_filename();
 		if($Filename =~ /\.(dpp)$/i) {
-			$this->{plugin}->install_plugin($Filename);
-			$return = false;
+			my $meta = $this->{plugin}->get_info_from_package($Filename);
+			my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
+			if (-e $ppath.'/'.$meta->{shortPluginName}.'.pm')
+			{
+				DPInfo($i18n->get('This plugin is already installed, if you want to re-install or upgrade it you will need to uninstall the one that is already installed first'));
+			}
+			else
+			{
+				my $string = $this->generateInfoString($meta);
+				if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, nsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
+				{
+					$this->{plugin}->install_plugin($Filename);
+					$return = false;
+				}
+			}
 		} else {
 			DPIntWarn("Unknown filetype: $Filename");
 		}
@@ -279,6 +289,17 @@ sub LoadPluginMetadataFromFile
 	{
 		return;
 	}
+}
+
+sub generateInfoString
+{
+	my $this = shift;
+	my $meta = shift;
+	my $string = 'Author: '.$meta->{author}."\n";
+	$string .= 'Version: '.$meta->{version}."\n";
+	$string .= 'License: '.$meta->{license}."\n";
+	$string .= 'Description: '.$meta->{description};
+	return $string;
 }
 
 1;
