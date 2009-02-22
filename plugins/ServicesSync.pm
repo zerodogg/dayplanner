@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # Day Planner
 # A graphical Day Planner written in perl that uses Gtk2
-# Copyright (C) Eskild Hustvedt 2008
+# Copyright (C) Eskild Hustvedt 2008, 2009
 # $Id: dayplanner 2315 2008-11-16 15:32:45Z zero_dogg $
 #
 # This program is free software: you can redistribute it and/or modify

@@ -1,5 +1,5 @@
 # Day Planner plugin system
-# Copyright (C) Eskild Hustvedt 2006, 2007, 2008
+# Copyright (C) Eskild Hustvedt 2008, 2009
 # $Id: dayplanner 1985 2008-02-03 12:48:43Z zero_dogg $
 #
 # This program is free software: you can redistribute it and/or modify
