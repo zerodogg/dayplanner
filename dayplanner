@@ -90,7 +90,7 @@ my $NoDaemon;		# True if we should dsable all use of the daemon. Useful on embed
 
 # Window state
 ($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = (600,365);	# Default size is 600x365 - overridden by state.conf
-$InternalConfig{plugins_enabled} = '';
+$InternalConfig{plugins_enabled} = 'PluginManager';
 
 # Set up signal handlers
 $SIG{INT} = \&DP_SigHandler;
@@ -882,16 +882,23 @@ sub UpgradeVersion {
 		DP_AddAutostart();
 	}
 	ProgressMade(9, $Total, $ProgressWin) if($Gtk2Init);
+	my $hadDPS = 0;
+	# Upgrade DPS values (0.9 and older) to plugin ones
 	foreach my $val(qw(DPS_enable DPS_host DPS_pass DPS_port DPS_user DPS_LastMD5))
 	{
 		if ($UserConfig{$val})
 		{
 			if(not $InternalConfig{'ServicesSync_'.$val})
 			{
+				$hadDPS = 1;
 				$InternalConfig{'ServicesSync_'.$val} = $UserConfig{$val};
 			}
 			delete($UserConfig{$val});
 		}
+	}
+	if ($hadDPS)
+	{
+		$InternalConfig{plugins_enabled} .= ' ServicesSync';
 	}
 	WriteConfig();
 	ProgressMade(10, $Total, $ProgressWin) if($Gtk2Init);
