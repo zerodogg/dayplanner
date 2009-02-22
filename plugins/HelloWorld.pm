@@ -24,6 +24,16 @@ sub new_instance
 	my $plugin = shift;
 	$this->{plugin} = $plugin;
 	$this->{plugin}->signal_connect('INIT',$this,'helloWorld');
+	$this->{meta} =
+	{
+		name => 'HelloWorld',
+		title => '"Hello World" plugin example',
+		description => 'This is an example plugin, it is meant as a short example on how to write an extremely simple plugin for Day Planner. When active it will simply display a Hello World message each time Day Planner is started.',
+		version => 0.1,
+		apiversion => 1,
+		author => 'Eskild Hustvedt',
+		license => 'GNU General Public License version 3 or later',
+	};
 	return $this;
 }
 
