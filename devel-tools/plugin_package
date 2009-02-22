@@ -1,0 +1,68 @@
+#!/usr/bin/perl
+# devel-tools/plugin_mkmetafile
+# Copyright (C) Eskild Hustvedt 2008
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict;
+use warnings;
+use FindBin;			# So that we can detect module dirs during runtime
+use File::Basename qw(basename dirname);
+use File::Temp qw(tempdir);
+use Cwd qw(getcwd realpath);
+use File::Copy qw(copy);
+use Fatal qw(chdir open close mkdir copy);
+# Useful constants for prettier code
+use constant { true => 1, false => 0 };
+# This here is done so that we can use local versions of our libs
+use lib "$FindBin::RealBin/../modules/Date-HolidayParser/lib/";
+use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/../modules/DP-CoreModules/lib/";
+use lib "$FindBin::RealBin/../modules/";
+use DP::GeneralHelpers qw(WriteConfigFile);
+
+my $orig = getcwd;
+if(not -w $orig)
+{
+	die("$orig: is not writable to me\n");
+}
+my $name = shift or die("Needs a single param: path to the file to package from\n");
+my $base = basename($name);
+$base =~ s/\.pm$//g;
+$name = realpath($name);
+
+die("$name: does not exist\n") if not -r $name;
+my $tempDir = tempdir( 'dayplannerPluginPackage-XXXXXX', CLEANUP => 1, TMPDIR => 1);
+chdir($tempDir);
+mkdir('DP_pluginData');
+chdir('DP_pluginData');
+copy($name,'./');
+$ENV{PLUGIN_MKMETAFILE_SILENCE} = 1;
+system($FindBin::RealBin.'/plugin_mkmetafile','./'.basename($name));
+chdir('/');
+WriteConfigFile($tempDir.'/pluginInfo.conf',{
+		pluginName => $base,
+	},
+	{
+		HEADER => 'Day Planner plugin package data information',
+		pluginName => 'The name of the plugin',
+	}
+) or die("Failed to write: $!");
+
+chdir($tempDir);
+system('tar','-jcf',$orig.'/'.$base.'.dpp','./DP_pluginData');
+chdir('/');
+print "Wrote Day Planner plugin package: $base.dpp\n";
+exit(0);
