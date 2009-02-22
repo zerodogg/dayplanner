@@ -52,7 +52,7 @@ copy($name,'./');
 $ENV{PLUGIN_MKMETAFILE_SILENCE} = 1;
 system($FindBin::RealBin.'/plugin_mkmetafile','./'.basename($name));
 chdir('/');
-WriteConfigFile($tempDir.'/pluginInfo.conf',{
+WriteConfigFile($tempDir.'/DP_pluginData/pluginInfo.conf',{
 		pluginName => $base,
 	},
 	{
