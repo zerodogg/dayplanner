@@ -303,7 +303,6 @@ sub install_plugin
 	die if not -e './'.$name.'.pm';
 	die if not -e './'.$name.'.dpi';
 	my $target = $this->get_var('confdir').'/plugins/';
-	print $target."\n";
 	if(not -e $target)
 	{
 		mkdir($target) or $this->_warn('FATAL: failed to mkdir('.$target.'): '.$!);
