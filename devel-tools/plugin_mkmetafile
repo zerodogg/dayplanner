@@ -45,9 +45,18 @@ my $fatal = 0;
 	local *STDERR;
 	open(STDOUT,'>','/dev/null');
 	open(STDERR,'>','/dev/null');
-	$plugin = $pobj->load_plugin(basename($base), [ dirname($name) ]) or $fatal = 0;
+	eval
+	{
+		$plugin = $pobj->load_plugin(basename($base), [ dirname($name) ]) or $fatal = 0;
+	};
+	my $i = $@;
+	if ($i)
+	{
+		$fatal = $i;
+	}
 }
-die("Failed to load plugin\n") if $fatal;
+die("Failed to load plugin: $fatal") if $fatal;
+die("Plugin loading appears to have failed, it returned $plugin which is not a reference\n") if not ref $plugin;
 
 WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->{meta}, {
 		HEADER => 'Day Planner plugin metadata file',
