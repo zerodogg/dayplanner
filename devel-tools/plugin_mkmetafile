@@ -68,4 +68,7 @@ WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->{meta}, {
 		author => 'The author of the plugin',
 		license => 'The plugin license',
 	}) or die("Failed to write: $!");
-print "Wrote ".dirname($name).'/'.$base.'.dpi'."\n";
+if(not $ENV{PLUGIN_MKMETAFILE_SILENCE})
+{
+	print "Wrote ".dirname($name).'/'.$base.'.dpi'."\n";
+}
