@@ -67,6 +67,8 @@ WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->{meta}, {
 		apiversion => 'The Day Planner plugin API version requied',
 		author => 'The author of the plugin',
 		license => 'The plugin license',
+		needs_modules => 'The perl modules this plugin requires',
+		website => 'The website for this plugin',
 	}) or die("Failed to write: $!");
 if(not $ENV{PLUGIN_MKMETAFILE_SILENCE})
 {
