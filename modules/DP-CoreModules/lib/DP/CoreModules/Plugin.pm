@@ -373,7 +373,16 @@ sub _extractPluginPackage
 		$file = $currDir.'/'.$file;
 	}
 	$file = realpath($file);
-	my $ret = system('tar','-jxf',$file);
+	my $ret;
+	{
+		open(my $stdout, '>&',\*STDOUT);
+		open(my $stderr, '>&',\*STDOUT);
+		open(STDOUT,'>','/dev/null');
+		open(STDERR,'>','/dev/null');
+		$ret = system('tar','-jxf',$file);
+		open(STDOUT,'>&',$stdout);
+		open(STDERR,'>&',$stderr);
+	}
 	if ($ret != 0)
 	{
 		$this->_warn($file.': failed to extract');
