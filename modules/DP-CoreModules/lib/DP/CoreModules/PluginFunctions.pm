@@ -22,7 +22,7 @@ use Exporter qw(import);
 
 our @EXPORT_OK = qw(Assert);
 
-foreach my $sub (qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use UpdatedData Gtk2_Button_SetImage DPQuestion DetectImage))
+foreach my $sub (qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPInfo DPCreateProgressWin runtime_use UpdatedData Gtk2_Button_SetImage DPQuestion DetectImage QuitSub))
 {
 	eval('sub '.$sub.' { return main::'.$sub.'(@_); }');
 	push(@EXPORT_OK,$sub);
