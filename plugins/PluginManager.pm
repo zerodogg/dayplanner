@@ -216,8 +216,8 @@ sub InstallPlugin
 	my $this = shift;
 	my $i18n = $this->{plugin}->get_var('i18n');
 	my $InstallWindow = Gtk2::FileChooserDialog->new($i18n->get('Install Day Planner plugin package'), undef, 'open',
-	'gtk-cancel' => 'reject',
-	'gtk-open' => 'accept',);
+		'gtk-cancel' => 'reject',
+		'gtk-open' => 'accept',);
 	$InstallWindow->set_local_only(1);
 	$InstallWindow->set_default_response('accept');
 	my $filter = Gtk2::FileFilter->new;
@@ -230,29 +230,36 @@ sub InstallPlugin
 		my $Filename = $InstallWindow->get_filename();
 		if($Filename =~ /\.(dpp)$/i) {
 			my $meta = $this->{plugin}->get_info_from_package($Filename);
-			my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
-			if (-e $ppath.'/'.$meta->{shortPluginName}.'.pm')
+			if(not $meta)
 			{
-				DPInfo($i18n->get('This plugin is already installed, if you want to re-install or upgrade it you will need to uninstall the one that is already installed first'));
+				DPError($i18n->get('This file does not appear to be a Day Planner plugin package'));
 			}
 			else
 			{
-				if ($meta->{apiversion} != 1)
+				my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
+				if (-e $ppath.'/'.$meta->{shortPluginName}.'.pm')
 				{
-					DPInfo($i18n->get('This plugin is written for a later version of Day Planner. You need to upgrade Day Planner before you can use it'));
+					DPInfo($i18n->get('This plugin is already installed, if you want to re-install or upgrade it you will need to uninstall the one that is already installed first'));
 				}
 				else
 				{
-					my $string = $this->generateInfoString($meta);
-					if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, unsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
+					if ($meta->{apiversion} != 1)
 					{
-						if(not $this->{plugin}->install_plugin($Filename))
+						DPInfo($i18n->get('This plugin is written for a later version of Day Planner. You need to upgrade Day Planner before you can use it'));
+					}
+					else
+					{
+						my $string = $this->generateInfoString($meta);
+						if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, unsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
 						{
-							DPError($i18n->get('Installation failed, this file does not appear to be a Day Planner plugin package'));
-						}
-						else
-						{
-							$return = false;
+							if(not $this->{plugin}->install_plugin($Filename))
+							{
+								DPError($i18n->get('Installation failed, this file does not appear to be a Day Planner plugin package'));
+							}
+							else
+							{
+								$return = false;
+							}
 						}
 					}
 				}
