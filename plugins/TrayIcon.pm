@@ -21,7 +21,7 @@ package DP::Plugin::TrayIcon;
 use strict;
 use warnings;
 use Gtk2::TrayIcon;
-use DP::CoreModules::PluginFunctions qw(DPError DetectImage);
+use DP::CoreModules::PluginFunctions qw(DPError DetectImage QuitSub);
 
 sub new_instance
 {
@@ -61,13 +61,19 @@ sub initTrayIcon
 	$icon->add($eventbox);
 	my $mainWin = $this->{plugin}->get_var('MainWindow');
 	$eventbox->signal_connect('button_press_event' => sub { 
-			if ($mainWin->visible)
-			{
-				$mainWin->hide;
+			if ( $_[ 1 ]->button == 3 ) {
+				$this->rightClickMenu($_[1])
 			}
 			else
 			{
-				$mainWin->show;
+				if ($mainWin->visible)
+				{
+					$mainWin->hide;
+				}
+				else
+				{
+					$mainWin->show;
+				}
 			}
 		});
 	$icon->show_all;
@@ -80,4 +86,23 @@ sub initTrayIcon
 			$mainWin->hide();
 			return 1;
 		});
+}
+
+sub rightClickMenu
+{
+	my($self,$event) = @_;
+	my $i18n = $self->{plugin}->get_var('i18n');
+	my $PopupWidget = Gtk2::Menu->new();
+	my $quit = Gtk2::ImageMenuItem->new_from_stock('gtk-quit');
+	$quit->show();
+	$quit->signal_connect('activate' => \&QuitSub);
+	my $add = Gtk2::ImageMenuItem->new($i18n->get('_Add an Event...'));
+	$add->show();
+	my $addIcon = Gtk2::Image->new_from_stock('gtk-add','menu');
+	$add->signal_connect('activate' => \&main::AddEvent);
+	$add->set_image($addIcon);
+	$PopupWidget->append($add);
+	$PopupWidget->append($quit);
+	$PopupWidget->show();
+	$PopupWidget->popup(undef, undef, undef, undef, 0, $event->time);
 }
