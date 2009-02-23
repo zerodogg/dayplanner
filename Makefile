@@ -252,6 +252,8 @@ sanity:
 	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
 	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
 	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules/Plugin.pm
+	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules/PluginFunctions.pm
 	@perl $(LOCALMODULES) -c ./dayplanner
 	@perl $(LOCALMODULES) -c ./dayplanner-daemon
 	@perl $(LOCALMODULES) -c ./dayplanner-notifier
