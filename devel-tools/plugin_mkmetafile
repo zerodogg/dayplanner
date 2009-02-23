@@ -56,6 +56,7 @@ my $fatal = 0;
 	}
 }
 die("Failed to load plugin: $fatal") if $fatal;
+die("Plugin loading appears to have failed") if not $plugin;
 die("Plugin loading appears to have failed, it returned $plugin which is not a reference\n") if not ref $plugin;
 
 WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->{meta}, {
