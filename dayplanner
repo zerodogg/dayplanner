@@ -2493,7 +2493,9 @@ sub DPQuestion {
 
 # Purpose: Call save functions on exit
 # Usage: QuitSub();
-sub QuitSub {
+sub QuitSub
+{
+	my $type = shift;
 	$MainWindow->set_sensitive(0);
 	$plugin->signal_emit('SHUTDOWN');
 	my $SaveData = SaveMainData();
@@ -2507,7 +2509,14 @@ sub QuitSub {
 	
 	Gtk2->main_quit;
 	CloseIPC();
-	exit(0);
+	if(defined $type and $type eq 'RESTART')
+	{
+		exec($0);
+	}
+	else
+	{
+		exit(0);
+	}
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
