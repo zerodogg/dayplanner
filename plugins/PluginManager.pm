@@ -180,17 +180,18 @@ sub ShowManager
 	# Handler for a user selecting an entry
 	$pluginList->signal_connect('cursor-changed' => sub {
 			my $Selected = [$pluginList->get_selected_indices]->[0];
+			# TODO: This could perhaps use some optimizing
 			if(defined $Selected)
 			{
 				my $selectedPlugin = $pluginList->{data}[$Selected][0];
 				my $string;
+				my $meta = $this->{metadata}->{$selectedPlugin};
 				if ($this->{pluginInfo}->{$selectedPlugin})
 				{
 					$string = $this->{pluginInfo}->{$selectedPlugin};
 				}
 				else
 				{
-					my $meta = $this->{metadata}->{$selectedPlugin};
 					$string = $this->generateInfoString($meta);
 					$this->{pluginInfo}->{$selectedPlugin} = $string;
 				}
@@ -202,6 +203,39 @@ sub ShowManager
 				else
 				{
 					$RemoveButton->set_sensitive(false);
+				}
+				if ($pluginList->{data}[$Selected][1])
+				{
+					if ($meta->{needs_modules})
+					{
+						foreach my $module (split(/\s+/,$meta->{needs_modules}))
+						{
+							if(not eval('use '.$module.'; 1;'))
+							{
+								$pluginList->{data}[$Selected][1] = 0;
+								my @names;
+
+								my $name = $module;
+								$name =~ s/::/-/g;
+								$name =~ tr[A-Z][a-z];
+								$name = 'lib'.$name.'-perl';
+								$name =~ s/-+/-/g;
+								push(@names,$name);
+
+								$name = $module;
+								$name =~ s/::/-/g;
+								$name = 'perl-'.$name;
+								push(@names,$name);
+
+								DPError($i18n->get_advanced("The plugin \"%(PLUGIN)\" needs the perl module \"%(MODULE)\", but that module is not installed on your system.\n\nYou will have to install this module before you can continue. Consult your distribution documentation for instructions on how to do that.\n\nThe package might be called something like the following: %(PACKAGE)", {
+											PLUGIN => $selectedPlugin,
+											MODULE => $module,
+											PACKAGE => join(' or ',@names),
+										}));
+								return;
+							}
+						}
+					}
 				}
 			}
 		}
