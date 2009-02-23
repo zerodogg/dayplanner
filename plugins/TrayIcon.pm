@@ -59,8 +59,8 @@ sub initTrayIcon
 	my $eventbox = Gtk2::EventBox->new;
 	$eventbox->add( $image );
 	$icon->add($eventbox);
+	my $mainWin = $this->{plugin}->get_var('MainWindow');
 	$eventbox->signal_connect('button_press_event' => sub { 
-			my $mainWin = $this->{plugin}->get_var('MainWindow');
 			if ($mainWin->visible)
 			{
 				$mainWin->hide;
@@ -71,4 +71,13 @@ sub initTrayIcon
 			}
 		});
 	$icon->show_all;
+	$mainWin->signal_handlers_disconnect_by_func(\&main::QuitSub);
+	$mainWin->signal_connect('destroy' => sub {
+			$mainWin->hide();
+			return 1;
+		});
+	$mainWin->signal_connect('delete-event' => sub {
+			$mainWin->hide();
+			return 1;
+		});
 }
