@@ -279,29 +279,13 @@ sub install_plugin
 {
 	my $this = shift;
 	my $file = shift;
-
-	if(not -e $file)
-	{
-		$this->_warn($file.': does not exist');
-	}
-
 	my $currDir = getcwd();
-	my $tempDir = tempdir( 'dayplannerPluginInstall-XXXXXX', CLEANUP => 1, TMPDIR => 1);
-
-	chdir($tempDir);
-	if(not -e $file)
+	my ($dir,$conf) = $this->_extractPluginPackage($file);
+	if(not $dir)
 	{
-		$file = $currDir.'/'.$file;
+		return false;
 	}
-	$file = realpath($file);
-	system('tar','-jxf',$file);
-	chdir('DP_pluginData');
-	die if not -e './pluginInfo.conf';
-	my %conf;
-	LoadConfigFile('./pluginInfo.conf',\%conf);
-	my $name = $conf{pluginName};
-	die if not -e './'.$name.'.pm';
-	die if not -e './'.$name.'.dpi';
+	my $name = $conf->{pluginName};
 	my $target = $this->get_var('confdir').'/plugins/';
 	if(not -e $target)
 	{
@@ -317,33 +301,19 @@ sub get_info_from_package
 {
 	my $this = shift;
 	my $file = shift;
-
-	if(not -e $file)
-	{
-		$this->_warn($file.': does not exist');
-	}
-
 	my $currDir = getcwd();
-	my $tempDir = tempdir( 'dayplannerPluginInfo-XXXXXX', CLEANUP => 1, TMPDIR => 1);
-
-	chdir($tempDir);
-	if(not -e $file)
+	my ($dir,$conf) = $this->_extractPluginPackage($file);
+	if(not $dir)
 	{
-		$file = $currDir.'/'.$file;
+		return false;
 	}
-	$file = realpath($file);
-	system('tar','-jxf',$file);
-	chdir('DP_pluginData');
-	die if not -e './pluginInfo.conf';
-	my %conf;
-	LoadConfigFile('./pluginInfo.conf',\%conf);
-	my $name = $conf{pluginName};
-	die if not -e './'.$name.'.dpi';
-	%conf = ();
-	my $meta = LoadConfigFile('./'.$name.'.dpi',\%conf);
-	$conf{shortPluginName} = $name;
+
+	my $name = $conf->{pluginName};
+	my %pluginInfo;
+	my $meta = LoadConfigFile('./'.$name.'.dpi',\%pluginInfo);
+	$pluginInfo{shortPluginName} = $name;
 	chdir($currDir);
-	return \%conf;
+	return \%pluginInfo;
 }
 
 # Summary: Mark something as a stub
@@ -382,6 +352,58 @@ sub _get_currName
 	$base =~ s/DP::Plugin:://g;
 	$base =~ s/::/_/g;
 	return $base;
+}
+
+sub _extractPluginPackage
+{
+	my $this = shift;
+	my $file = shift;
+
+	if(not -e $file)
+	{
+		$this->_warn($file.': does not exist');
+	}
+
+	my $currDir = getcwd();
+	my $tempDir = tempdir( 'dayplannerPluginInstall-XXXXXX', CLEANUP => 1, TMPDIR => 1);
+
+	chdir($tempDir);
+	if(not -e $file)
+	{
+		$file = $currDir.'/'.$file;
+	}
+	$file = realpath($file);
+	my $ret = system('tar','-jxf',$file);
+	if ($ret != 0)
+	{
+		$this->_warn($file.': failed to extract');
+		chdir($currDir); return false;
+	}
+	if(not -d './DP_pluginData')
+	{
+		$this->_warn($file.': did not contain the DP_pluginData directory');
+		chdir($currDir); return false;
+	}
+	chdir('DP_pluginData');
+	if(not -e './pluginInfo.conf')
+	{
+		$this->_warn($file.': did not contain a pluginInfo.conf');
+		chdir($currDir); return false;
+	}
+	my %conf;
+	LoadConfigFile('./pluginInfo.conf',\%conf);
+	my $name = $conf{pluginName};
+	if(not -e './'.$name.'.dpi')
+	{
+		$this->_warn($file.': did not contain '.$name.'.dpi');
+		chdir($currDir); return false;
+	}
+	if(not -e './'.$name.'.pm')
+	{
+		$this->_warn($file.': did not contain '.$name.'.pm');
+		chdir($currDir); return false;
+	}
+	return ($tempDir,\%conf);
 }
 1;
 __END__
