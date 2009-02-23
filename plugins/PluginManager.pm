@@ -22,7 +22,7 @@ use strict;
 use warnings;
 use Gtk2;
 use Gtk2::SimpleList;
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin runtime_use Assert Gtk2_Button_SetImage);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin runtime_use Assert Gtk2_Button_SetImage QuitSub);
 use DP::GeneralHelpers qw(LoadConfigFile);
 use constant { true => 1, false => 0 };
 
@@ -132,17 +132,37 @@ sub ShowManager
 		my %plugins = (
 			PluginManager => 1,
 		);
+		my $needsReload = 0;
 		foreach my $i (@{$pluginList->{data}})
 		{
 			if ($i->[1])
 			{
 				$plugins{$i->[0]} = 1;
-				$this->{plugin}->load_plugin_if_missing($i->[0]);
+				if(not $this->{plugin}->plugin_loaded($i->[0]))
+				{
+					$needsReload = 1;
+				}
+			}
+			else
+			{
+				if($this->{plugin}->plugin_loaded($i->[0]))
+				{
+					$needsReload = 2 if not $needsReload;
+				}
 			}
 		}
 		my $newPlugins = join(' ',keys %plugins);
 		my $InternalConfig = $this->{plugin}->get_var('state');
 		$InternalConfig->{plugins_enabled} = $newPlugins;
+		if ($needsReload)
+		{
+			my $question = $i18n->get("You have enabled new plugins. Day Planner needs to be restarted before they become activated.\n\nDo you want to restart Day Planner now?");
+			$question = $i18n->get("You have disabled some plugins. Day Planner needs to be restarted before they become deactivated.\n\nDo you want to restart Day Planner now?") if $needsReload == 2;
+			if(DPQuestion($question))
+			{
+				QuitSub('RESTART');
+			}
+		}
 	};
 
 	$CloseButton->signal_connect('clicked' => $ClosePerform);
