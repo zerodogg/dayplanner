@@ -237,11 +237,24 @@ sub InstallPlugin
 			}
 			else
 			{
-				my $string = $this->generateInfoString($meta);
-				if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, unsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
+				if ($meta->{apiversion} != 1)
 				{
-					$this->{plugin}->install_plugin($Filename);
-					$return = false;
+					DPInfo($i18n->get('This plugin is written for a later version of Day Planner. You need to upgrade Day Planner before you can use it'));
+				}
+				else
+				{
+					my $string = $this->generateInfoString($meta);
+					if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, unsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
+					{
+						if(not $this->{plugin}->install_plugin($Filename))
+						{
+							DPError($i18n->get('Installation failed, this file does not appear to be a Day Planner plugin package'));
+						}
+						else
+						{
+							$return = false;
+						}
+					}
 				}
 			}
 		} else {
