@@ -62,7 +62,6 @@ my $i18n;
 my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
 my $plugin;
-my @ORIG_ARGV = @ARGV;
 
 # FIXME: Unused
 # Arrays
@@ -2512,7 +2511,7 @@ sub QuitSub
 	CloseIPC();
 	if(defined $type and $type eq 'RESTART')
 	{
-		exec($0,@ORIG_ARGV);
+		exec($0,'--confdir',$SaveToDir);
 	}
 	else
 	{
