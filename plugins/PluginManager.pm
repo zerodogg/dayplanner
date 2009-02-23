@@ -349,10 +349,28 @@ sub generateInfoString
 {
 	my $this = shift;
 	my $meta = shift;
-	my $string = 'Author: '.$meta->{author}."\n";
-	$string .= 'Version: '.$meta->{version}."\n";
-	$string .= 'License: '.$meta->{license}."\n";
-	$string .= 'Description: '.$meta->{description};
+	my $string = '';
+	if ($meta->{author})
+	{
+		$string = 'Author: '.$meta->{author}."\n";
+	}
+	if ($meta->{version})
+	{
+		$string .= 'Version: '.$meta->{version}."\n";
+	}
+	if ($meta->{license})
+	{
+		$string .= 'License: '.$meta->{license}."\n";
+	}
+	if ($meta->{description})
+	{
+		$string .= 'Description: '.$meta->{description}."\n";
+	}
+	if ($meta->{website})
+	{
+		$string .= 'Website: '.$meta->{website}."\n";
+	}
+	$string =~ s/\n$//;
 	return $string;
 }
 
