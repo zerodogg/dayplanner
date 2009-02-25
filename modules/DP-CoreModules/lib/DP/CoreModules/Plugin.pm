@@ -121,6 +121,17 @@ sub signal_connect
 	return true;
 }
 
+sub signal_connect_ifavailable
+{
+	my $this = shift;
+	my $signal = shift;
+	if(not $this->{signals}{$signal})
+	{
+		return false;
+	}
+	return $this->signal_connect($signal,@_);
+}
+
 sub set_searchpath
 {
 	my $this = shift;
@@ -465,6 +476,15 @@ Emits the signal supplied, calling all listeners.
 Connects the method on the plugin object supplied to the signal supplied.
 The method will then be called whenever the signal is emitted.
 
+=item signal_connect_ifavailable(B<STRING> signal, B<OBJECT> plugin, B<STRING> method)
+
+The same as signal_connect, but this will not attach to (or warn about)
+unregistered signals, instead it will silently ignore the request.
+
+Its primary use is connecting to signals that belong to another plugin,
+and it should not be used within the INIT signal, but within the POST_INIT
+signal (see the I<BUILTIN SIGNALS> section).
+
 =item set_var(B<STRING> variable name, B<VARIABLE> content)
 
 This is used for sharing data. Sets the variable supplied to the content
@@ -584,6 +604,12 @@ this is where it should be done.
 
 For instance, a synchronization plugin will want to do its initial synchronization
 in this signal.
+
+=item POST_INIT
+
+This is run immediately after the INIT signal. At this point all signals that
+will be available for connection should be registered. If you are connecting to signals
+belonging to another plugin, this is the place to do that (using signal_connect_ifavailable).
 
 =item SAVEDATA
 

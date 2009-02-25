@@ -227,7 +227,7 @@ sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS));
+	$plugin->register_signals(qw(SHUTDOWN INIT POST_INIT SAVEDATA CREATE_MENUITEMS));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -275,6 +275,7 @@ sub WriteStateFile {
 		Holiday_Attempted => 'The last Day Planner version the holiday file was attempted set up (but failed)',
 		Holiday_Setup => 'If the holiday file has been properly set up or not (ie. not a dummy file)',
 		LastVersion => 'The last Day Planner version used',
+		plugins_enabled => "A space-separated list of plugins to load on startup\n# WARNING: Modify at your own risk, plugins that are present here are\n# not checked for dependencies, you should use the plugins GUI\n# available from within Day Planner instead, to ensure dependencies are resolved",
 		HEADER => "This file contains internal configuration used by Day Planner\n# In most cases you really don't want to edit this file manually",
 	);
 
@@ -4592,6 +4593,7 @@ sub InitDPCore {
 
 	$plugin->set_var('MainWindow',$MainWindow);
 	$plugin->signal_emit('INIT');
+	$plugin->signal_emit('POST_INIT');
 	return true;
 }
 
