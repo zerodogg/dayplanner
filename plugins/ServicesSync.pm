@@ -433,7 +433,7 @@ sub DPS_DataSync {
 	#	The MD5 sum of our current local data
 	my $LocalMD5 = md5_base64(encode_base64($iCalendar->get_rawdata(),""));
 	#	The MD5 sum of the data we last uploaded
-	my $LastUpMD5 = $this->{plugin}->get_var('state')->{DPS_LastMD5};
+	my $LastUpMD5 = $this->{plugin}->get_confval('DPS_LastMD5') ? $this->{plugin}->get_confval('DPS_LastMD5') : 'undef';
 
 	# Okay, the required information is available.
 	# First check if our current local MD5 sum matches the one on the server.
