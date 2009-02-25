@@ -64,6 +64,7 @@ sub new_instance
 		apiversion => 1,
 		author => 'Eskild Hustvedt',
 		license => 'GNU General Public License version 3 or later',
+		needs_modules => 'IO::Socket::SSL',
 	};
 	return $this;
 }
@@ -180,10 +181,8 @@ sub PreferencesWindow
 	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
 	$EnableDisableCButton->signal_connect('toggled' => sub {
 			if($EnableDisableCButton->get_active) {
-				if(DP::Plugin::ServicesSync::DPS_SSLSocketTest()) {
 					$plugin->set_confval('DPS_enable',1);
 					$Config_Table->set_sensitive(1);
-				}
 			} else {
 				$plugin->set_confval('DPS_enable',0);
 				$Config_Table->set_sensitive(0);
@@ -536,7 +535,6 @@ sub DPS_Perform {
 			$this->{$Option} = $this->{plugin}->get_confval("DPS_$Option");
 		}
 	}
-	return if not DPS_SSLSocketTest();
 	# Create the progress window
 	if($this->{plugin}->get_var('Gtk2Init')) {
 		$MainWindow->set_sensitive(0);
@@ -567,21 +565,6 @@ sub DPS_Perform {
 	$this->DPS_Disconnect();
 	$GuiEnded->();
 	return(1);
-}
-
-# Purpose: Test for IO::Socket::SSL
-# Usage: DPS_SSLSocketTest();
-sub DPS_SSLSocketTest {
-	my $this = shift;
-	# Make sure the IO::Socket::SSL module is available and loaded
-	if(not runtime_use('IO::Socket::SSL',true)) {
-		if (not $this->{IO_SOCKET_SSL_ERR_DISPLAYED}) {
-			DPError($this->{i18n}->get("You don't have the IO::Socket:SSL module. This module is required for the Day Planner services to function. The services will not function until this module is installed."));
-			$this->{IO_SOCKET_SSL_ERR_DISPLAYED} = true;
-		}
-		return(false);
-	}
-	return(true);
 }
 
 # Purpose: Connect to a Day Planner services server.
