@@ -43,8 +43,8 @@ sub new_instance
 		return;
 	}
 
-	# Register the one signal we have
-	$plugin->register_signals(qw(DPS_ENTERPREFS));
+	# Register our signals
+	$plugin->register_signals(qw(DPS_ENTERPREFS DPS_PRE_SYNCHRONIZE DPS_POST_SYNCHRONIZE));
 	# Connect to signals
 	#$plugin->signal_connect('SAVEDATA',$this,'synchronize');
 	$plugin->signal_connect('INIT',$this,'synchronize');
@@ -90,7 +90,9 @@ sub synchronize
 	{
 		return;
 	}
+	$this->{plugin}->signal_emit('DPS_PRE_SYNCHRONIZE');
 	$this->DPS_Perform('SYNC');
+	$this->{plugin}->signal_emit('DPS_POST_SYNCHRONIZE');
 }
 
 sub PreferencesWindow
