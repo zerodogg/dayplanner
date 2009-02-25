@@ -25,7 +25,7 @@ sub new_instance
 	my $plugin = shift;
 	$this->{plugin} = $plugin;
 	$this->{plugin}->signal_connect('INIT',$this,'helloWorld');
-	$this->{plugin}->signal_connect('POST_INIT',$this,'init_plugin_handlers');
+	$this->{plugin}->signal_connect('INIT',$this,'init_plugin_handlers');
 	# Clean up on exit
 	$this->{plugin}->signal_connect('SHUTDOWN',$this,'cleanWorld');
 

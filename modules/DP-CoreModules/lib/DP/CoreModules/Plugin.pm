@@ -482,7 +482,7 @@ The same as signal_connect, but this will not attach to (or warn about)
 unregistered signals, instead it will silently ignore the request.
 
 Its primary use is connecting to signals that belong to another plugin,
-and it should not be used within the INIT signal, but within the POST_INIT
+and it should not be used within the constructor, but within the INIT
 signal (see the I<BUILTIN SIGNALS> section).
 
 =item set_var(B<STRING> variable name, B<VARIABLE> content)
@@ -604,12 +604,6 @@ this is where it should be done.
 
 For instance, a synchronization plugin will want to do its initial synchronization
 in this signal.
-
-=item POST_INIT
-
-This is run immediately after the INIT signal. At this point all signals that
-will be available for connection should be registered. If you are connecting to signals
-belonging to another plugin, this is the place to do that (using signal_connect_ifavailable).
 
 =item SAVEDATA
 

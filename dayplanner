@@ -227,7 +227,7 @@ sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT POST_INIT SAVEDATA CREATE_MENUITEMS));
+	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -4593,7 +4593,6 @@ sub InitDPCore {
 
 	$plugin->set_var('MainWindow',$MainWindow);
 	$plugin->signal_emit('INIT');
-	$plugin->signal_emit('POST_INIT');
 	return true;
 }
 
