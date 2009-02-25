@@ -29,6 +29,7 @@ sub new_instance
 	$this = {};
 	bless($this);
 	my $plugin = shift;
+	$plugin->register_signals(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
 	$this->{plugin} = $plugin;
 	$this->{plugin}->signal_connect('INIT',$this,'initTrayIcon');
 	$this->{meta} =
@@ -68,10 +69,12 @@ sub initTrayIcon
 			{
 				if ($mainWin->visible)
 				{
+					$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
 					$mainWin->hide;
 				}
 				else
 				{
+					$this->{plugin}->signal_emit('SHOW_FROM_TRAY');
 					$mainWin->show;
 				}
 			}
@@ -79,10 +82,12 @@ sub initTrayIcon
 	$icon->show_all;
 	$mainWin->signal_handlers_disconnect_by_func(\&main::QuitSub);
 	$mainWin->signal_connect('destroy' => sub {
+			$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
 			$mainWin->hide();
 			return 1;
 		});
 	$mainWin->signal_connect('delete-event' => sub {
+			$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
 			$mainWin->hide();
 			return 1;
 		});
