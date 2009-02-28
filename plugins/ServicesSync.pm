@@ -127,6 +127,7 @@ sub PreferencesWindow
 	my $Port = $plugin->get_confval('DPS_port') ? $plugin->get_confval('DPS_port') : 4435;
 	my $Username = $plugin->get_confval('DPS_user') ? $plugin->get_confval('DPS_user') : '';
 	my $Password = $plugin->get_confval('DPS_pass') ? $plugin->get_confval('DPS_pass') : '';
+	$Password = decode_base64(decode_base64($Password));
 	my $DPSWasStatus = $plugin->get_confval('DPS_enable');
 
 	# Create the vbox
