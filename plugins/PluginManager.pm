@@ -22,7 +22,7 @@ use strict;
 use warnings;
 use Gtk2;
 use Gtk2::SimpleList;
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin runtime_use Assert Gtk2_Button_SetImage QuitSub);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin Assert Gtk2_Button_SetImage QuitSub);
 use DP::GeneralHelpers qw(LoadConfigFile);
 use constant { true => 1, false => 0 };
 

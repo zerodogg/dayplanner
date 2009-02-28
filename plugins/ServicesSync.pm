@@ -23,7 +23,7 @@ use warnings;
 use IO::Socket::SSL;
 use MIME::Base64;
 use Digest::MD5 qw(md5_base64);
-use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin runtime_use Assert UpdatedData);
+use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPCreateProgressWin Assert UpdatedData);
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 my $DPS_APILevel = '06';			# The DPS API level used/supported
