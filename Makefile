@@ -17,10 +17,10 @@
 
 # If prefix is already set then use some distro-friendly install rules
 ifdef prefix
-INSTALLRULES=maininstall maninstall moduleinstall artinstall holidayinstall i18ninstall distribdesktop
+INSTALLRULES=maininstall maninstall moduleinstall pluginintall artinstall holidayinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=maininstall maninstall moduleinstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
+INSTALLRULES=maininstall maninstall moduleinstall pluginintall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
@@ -105,7 +105,7 @@ maninstall:
 # Date::HolidayParser installation
 DHPinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/Date/
-	install -m755 modules/Date-HolidayParser/lib/Date/HolidayParser.pm $(DP_MAINTARGET)/modules/Date/HolidayParser.pm
+	install -m644 modules/Date-HolidayParser/lib/Date/HolidayParser.pm $(DP_MAINTARGET)/modules/Date/HolidayParser.pm
 
 # --- INTERNAL RULES ---
 
@@ -149,9 +149,17 @@ moduleinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/DP
 	mkdir -p $(DP_MAINTARGET)/modules/DP/iCalendar
 	mkdir -p $(DP_MAINTARGET)/modules/DP/GeneralHelpers
-	install -m755 $(shell ls ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
-	install -m755 $(shell ls ./modules/*/lib/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
-	install -m755 $(shell ls ./modules/*/lib/DP/iCalendar/*pm) $(DP_MAINTARGET)/modules/DP/iCalendar/
+	mkdir -p $(DP_MAINTARGET)/modules/DP/CoreModules
+	install -m644 $(shell ls ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
+	install -m644 $(shell ls ./modules/*/lib/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
+	install -m644 $(shell ls ./modules/*/lib/DP/iCalendar/*pm) $(DP_MAINTARGET)/modules/DP/iCalendar/
+	install -m644 $(shell ls ./modules/*/lib/DP/CoreModules/*pm) $(DP_MAINTARGET)/modules/DP/CoreModules/
+
+# Plugin installation
+plugininstall:
+	mkdir -p $(DP_MAINTARGET)/plugins
+	install -m644 $(shell ls ./plugins/*pm) $(DP_MAINTARGET)/plugins
+	install -m644 $(shell ls ./plugins/*dpi) $(DP_MAINTARGET)/plugins
 
 # Holiday installation
 holidayinstall:
@@ -258,6 +266,12 @@ sanity:
 	@perl $(LOCALMODULES) -c ./dayplanner-daemon
 	@perl $(LOCALMODULES) -c ./dayplanner-notifier
 	@perl $(LOCALMODULES) -c ./mobile/dayplanner-data-servant
+	@perl $(LOCALMODULES) -c ./plugins/HelloWorld.pm
+	@perl $(LOCALMODULES) -c ./plugins/PluginManager.pm
+	@perl $(LOCALMODULES) -c ./plugins/ServicesSync.pm
+	@perl $(LOCALMODULES) -c ./plugins/TrayIcon.pm
+	@perl $(LOCALMODULES) -c ./devel-tools/plugin_mkmetafile
+	@perl $(LOCALMODULES) -c ./devel-tools/plugin_package
 	@perl -c ./devel-tools/installer/MainInstallerPart
 	@perl -c ./devel-tools/installer/InstallLocal
 	@perl -c ./devel-tools/GenDesktop
