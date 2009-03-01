@@ -17,10 +17,10 @@
 
 # If prefix is already set then use some distro-friendly install rules
 ifdef prefix
-INSTALLRULES=maininstall maninstall moduleinstall pluginintall artinstall holidayinstall i18ninstall distribdesktop
+INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall holidayinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=maininstall maninstall moduleinstall pluginintall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
+INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
