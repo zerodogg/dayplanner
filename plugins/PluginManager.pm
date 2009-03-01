@@ -24,6 +24,7 @@ use Gtk2;
 use Gtk2::SimpleList;
 use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin Assert Gtk2_Button_SetImage QuitSub);
 use DP::GeneralHelpers qw(LoadConfigFile);
+use File::Basename qw(basename);
 use constant { true => 1, false => 0 };
 
 sub new_instance
@@ -336,9 +337,10 @@ sub PopulateList
 	{
 		foreach my $p (glob($d.'/*dpi'))
 		{
+			my $e = basename($p);
 			next if $p =~ m{/\*dpi$};
-			next if $plugins{$p};
-			$plugins{$p} = 1;
+			next if $plugins{$e};
+			$plugins{$e} = 1;
 			my $info = $this->LoadPluginMetadataFromFile($p);
 			next if not $info;
 			$this->{metadata}{$info->{name}} = $info;
