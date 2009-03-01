@@ -10,6 +10,9 @@ Version 0.10 (Unreleased)
   the calendar menu instead
 - Added a plugin system
 - Split DPS into a plugin
+- Fixed a bug that could cause the main Day Planner window to stay inactive
+  if the "Import data from program" window was closed via the window manager
+  close function rather than the Day Planner close button
 
 * Notifier (dayplanner-notifier)
 - Added manpage
