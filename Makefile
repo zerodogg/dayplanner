@@ -200,7 +200,7 @@ gendistribdesktop:
 # --- DISTRIB TARGETS ---
 distrib: prepdistrib tarball $(PKG) installer mobiledistrib
 simpledistrib: prepdistrib tarball installer mobiledistrib
-prepdistrib: gendistribdesktop test clean
+prepdistrib: gendistribdesktop test clean pluginprep
 	mkdir -p packages
 mobiledistrib:
 	make -C mobile distrib
