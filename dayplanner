@@ -2711,7 +2711,7 @@ sub PopupDateSel
 
 	# Create the window and stuff inside the window
 	my $Window = Gtk2::Window->new();
-	$Window->set_deletable(0);
+	$Window->set_deletable(0) if $Window->can('set_deletable');
 	$Window->set_modal(1);
 	$Window->set_skip_taskbar_hint(1);
 	$Window->set_skip_pager_hint(1);
