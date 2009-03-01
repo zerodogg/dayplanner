@@ -53,6 +53,7 @@ help:
 	@echo " updatepo     - update po-files"
 	@echo " mo           - build the locale/ tree"
 	@echo " DHPinstall   - install the Date::HolidayParser module (only needed for distro packages)"
+	@echo " pluginprep   - build plugin metafiles"
 	@echo "Developer targets:"
 	@echo " distrib      - create packages (tarball, installer and rpm)"
 	@echo " tarball      - create tarball"
@@ -82,6 +83,7 @@ uninstall:
 clean:
 	rm -f `find|egrep '(~|\.swp)$$'`
 	rm -rf ./dp_deb_tmp
+	rm -f ./plugins/*dpi
 	rm -f po/*.mo po/*.pot
 	rm -rf po/locale packages locale dayplanner-$(VERSION) installer
 	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
@@ -155,8 +157,12 @@ moduleinstall:
 	install -m644 $(shell ls ./modules/*/lib/DP/iCalendar/*pm) $(DP_MAINTARGET)/modules/DP/iCalendar/
 	install -m644 $(shell ls ./modules/*/lib/DP/CoreModules/*pm) $(DP_MAINTARGET)/modules/DP/CoreModules/
 
+# Plugin prep
+pluginprep:
+	for file in $(shell ls ./plugins/*pm) ; do ./devel-tools/plugin_mkmetafile $$file;done
+	rm -f ./plugins/HelloWorld.dpi
 # Plugin installation
-plugininstall:
+plugininstall: pluginprep
 	mkdir -p $(DP_MAINTARGET)/plugins
 	install -m644 $(shell ls ./plugins/*pm) $(DP_MAINTARGET)/plugins
 	install -m644 $(shell ls ./plugins/*dpi) $(DP_MAINTARGET)/plugins
