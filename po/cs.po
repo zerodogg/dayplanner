@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DayPlanner\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2009-03-01 23:23+0100\n"
+"POT-Creation-Date: 2009-03-01 23:46+0100\n"
 "PO-Revision-Date: 2006-08-06 17:11+0200\n"
 "Last-Translator: Vlastimil Ott <vlastimil@e-ott.info>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -431,7 +431,7 @@ msgstr "Ukládám..."
 msgid "_Export..."
 msgstr "Ukládám..."
 
-#: dayplanner:4320 TrayIcon.pm:104
+#: dayplanner:4320 TrayIcon.pm:111
 #, fuzzy
 msgid "_Add an Event..."
 msgstr "_Pøidat událost"
@@ -638,23 +638,26 @@ msgstr ""
 msgid "Day Planner plugins"
 msgstr "Denní plánovaè"
 
-#: PluginManager.pm:91
+#. TRANSLATORS: The title of the column with the checkbox to activate/deactiate a plugin
+#: PluginManager.pm:92
 msgid "Active"
 msgstr ""
 
-#: PluginManager.pm:92
+#: PluginManager.pm:93
 msgid "Plugin"
 msgstr ""
 
-#: PluginManager.pm:119
+#. TRANSLATORS: This would pop up a window where one can select a plugin package file to install
+#: PluginManager.pm:121
 msgid "_Install a plugin"
 msgstr ""
 
-#: PluginManager.pm:124
+#. TRANSLATORS: As in uninstall the currently selected plugin in the list of plugins
+#: PluginManager.pm:127
 msgid "_Uninstall plugin"
 msgstr ""
 
-#: PluginManager.pm:160
+#: PluginManager.pm:163
 msgid ""
 "You have enabled new plugins. Day Planner needs to be restarted before they "
 "become activated.\n"
@@ -662,7 +665,7 @@ msgid ""
 "Do you want to restart Day Planner now?"
 msgstr ""
 
-#: PluginManager.pm:161
+#: PluginManager.pm:164
 msgid ""
 "You have disabled some plugins. Day Planner needs to be restarted before "
 "they become deactivated.\n"
@@ -670,54 +673,54 @@ msgid ""
 "Do you want to restart Day Planner now?"
 msgstr ""
 
-#: PluginManager.pm:183
-msgid "Are you sure you want to uninstall the plugin \""
+#: PluginManager.pm:186
+msgid "Are you sure you want to uninstall the plugin \"%(PLUGIN)\"?"
 msgstr ""
 
-#: PluginManager.pm:251
+#: PluginManager.pm:254
 msgid ""
 "The plugin \"%(PLUGIN)\" needs the perl module \"%(MODULE)\", but that "
 "module is not installed on your system.\n"
 "\n"
-"You will have to install this module before you can continue. Consult your "
-"distribution documentation for instructions on how to do that.\n"
+"You will have to install this module before you can install this plugin. "
+"Consult your distribution documentation for instructions on how to do that.\n"
 "\n"
 "The package might be called something like the following: %(PACKAGE)"
 msgstr ""
 
-#: PluginManager.pm:273
+#: PluginManager.pm:276
 msgid "Install Day Planner plugin package"
 msgstr ""
 
-#: PluginManager.pm:280
+#: PluginManager.pm:283
 #, fuzzy
 msgid "Day Planner plugin packages"
 msgstr "Událost denního plánovaèe"
 
-#: PluginManager.pm:290
+#: PluginManager.pm:293
 msgid "This file does not appear to be a Day Planner plugin package"
 msgstr ""
 
-#: PluginManager.pm:297
+#: PluginManager.pm:300
 msgid ""
 "This plugin is already installed, if you want to re-install or upgrade it "
 "you will need to uninstall the one that is already installed first"
 msgstr ""
 
-#: PluginManager.pm:303
+#: PluginManager.pm:306
 msgid ""
 "This plugin is written for a later version of Day Planner. You need to "
 "upgrade Day Planner before you can use it"
 msgstr ""
 
-#: PluginManager.pm:308
+#: PluginManager.pm:311
 msgid ""
 "Are you sure you wish to install this package? You should only install "
 "plugins from sources you trust, unsafe plugins can damage your system and "
 "files."
 msgstr ""
 
-#: PluginManager.pm:312
+#: PluginManager.pm:315
 msgid ""
 "Installation failed, this file does not appear to be a Day Planner plugin "
 "package"
