@@ -111,3 +111,5 @@ sub rightClickMenu
 	$PopupWidget->show();
 	$PopupWidget->popup(undef, undef, undef, undef, 0, $event->time);
 }
+
+1;
