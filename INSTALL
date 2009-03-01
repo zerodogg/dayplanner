@@ -3,7 +3,8 @@ Installation documentation for Day Planner
 
 Index:
 1	Local install
-2	Packaging
+2	Local from the repository
+3	Packaging
 
 1 - LOCAL INSTALL
 -----------------
@@ -11,7 +12,13 @@ In order to install Day Planner locally, simply type make install in the
 Day Planner base directory. Either as root or as the user you wish to
 use Day Planner as.
 
-2 - PACKAGING
+2 - LOCAL FROM THE REPOSITORY
+-----------------------------
+This is only recommended if you are doing Day Planner development.
+Run 'make pluginprep' to prepare plugin metadata files, from there on you can
+use ./dayplanner and similar commands.
+
+3 - PACKAGING
 -------------
 Simply make install. If prefix is set then it will detect that a distro package
 is being built and won't include Date::HolidayParser, nor any other files that
