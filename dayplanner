@@ -1748,7 +1748,8 @@ sub PlanConvert_ProcessFile {
 
 # Purpose: Pop up a import dialog for importing from other programs
 # Usage: ImportDataFromProgram(IS_FIRST_TIME);
-sub ImportDataFromProgram {
+sub ImportDataFromProgram
+{
 	my $FirstTime = $_[0];
 	my $ProgressWindow = DPCreateProgressWin($i18n->get('Preparing'), $i18n->get('Preparing to import'), 0);
 
@@ -1924,6 +1925,16 @@ sub ImportDataFromProgram {
 	$ButtonHBox->pack_end($CancelButton,0,0,0);
 	# Signal callback (destroys the window)
 	$CancelButton->signal_connect('clicked' => sub {
+			$ImportWindow->destroy();
+			$MainWindow->show() if $FirstTime;
+			$MainWindow->set_sensitive(1) if $MainWindow;
+		});
+	$ImportWindow->signal_connect('destroy' => sub {
+			$ImportWindow->destroy();
+			$MainWindow->show() if $FirstTime;
+			$MainWindow->set_sensitive(1) if $MainWindow;
+		});
+	$ImportWindow->signal_connect('delete-event' => sub {
 			$ImportWindow->destroy();
 			$MainWindow->show() if $FirstTime;
 			$MainWindow->set_sensitive(1) if $MainWindow;
