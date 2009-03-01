@@ -183,7 +183,7 @@ sub ShowManager
 			if(defined $Selected)
 			{
 				my $selectedPlugin = $pluginList->{data}[$Selected][0];
-				if(DPQuestion($i18n->get('Are you sure you want to uninstall the plugin "'.$selectedPlugin.'"?')))
+				if(DPQuestion($i18n->get_advanced('Are you sure you want to uninstall the plugin "%(PLUGIN)"?', { PLUGIN => $selectedPlugin })))
 				{
 					my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
 					if(not -e $ppath.$selectedPlugin.'.pm')
@@ -251,7 +251,7 @@ sub ShowManager
 								$name = 'perl-'.$name;
 								push(@names,$name);
 
-								DPError($i18n->get_advanced("The plugin \"%(PLUGIN)\" needs the perl module \"%(MODULE)\", but that module is not installed on your system.\n\nYou will have to install this module before you can continue. Consult your distribution documentation for instructions on how to do that.\n\nThe package might be called something like the following: %(PACKAGE)", {
+								DPError($i18n->get_advanced("The plugin \"%(PLUGIN)\" needs the perl module \"%(MODULE)\", but that module is not installed on your system.\n\nYou will have to install this module before you can install this plugin. Consult your distribution documentation for instructions on how to do that.\n\nThe package might be called something like the following: %(PACKAGE)", {
 											PLUGIN => $selectedPlugin,
 											MODULE => $module,
 											PACKAGE => join(' or ',@names),
