@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2009-03-01 23:40+0100\n"
-"PO-Revision-Date: 2009-03-01 23:41+0100\n"
+"PO-Revision-Date: 2009-03-01 23:46+0100\n"
 "Last-Translator: Eskild Hustvedt <eskildh@gnome.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-no@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -472,7 +472,7 @@ msgid ""
 "Planner window.\n"
 "\n"
 "Exception: %(exception)"
-msgstr ""
+msgstr "Ein programfeil har oppstått. Dette reflekterar ein feil i Dagsplanleggaren. Det kan hende at Dagsplanleggaren ikkje vil fungere rett før du startar han på nytt\n\nSjekk at du køyrar den nyaste versjonen av Dagsplanleggaren. Viss du gjer det, lagre den følgjande teksten og rapporter problemet til utviklarane av Dagsplanleggaren ved å velje «Hjelp» -> «Rapporter feil»\n\nFeil (exception): %(exception)"
 
 #: dayplanner-notifier:98 dayplanner-notifier:107
 msgid "Show details"
@@ -712,7 +712,7 @@ msgstr "Denne fila ser ikkje ut til å vere ein pakke som inneheld eit programti
 msgid ""
 "This plugin is already installed, if you want to re-install or upgrade it "
 "you will need to uninstall the one that is already installed first"
-msgstr ""
+msgstr "Dette programtillegget er allereie installert, viss du vil installere det på nytt eller oppgradere det må du fyrst fjerne den som allereie er installert."
 
 #: PluginManager.pm:306
 msgid ""
