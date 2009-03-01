@@ -88,6 +88,7 @@ sub ShowManager
 	# The list
 	my $pluginList = Gtk2::SimpleList->new(
 		'name' => 'hidden',
+		# TRANSLATORS: The title of the column with the checkbox to activate/deactiate a plugin
 		$i18n->get('Active') => 'bool',
 		$i18n->get('Plugin') => 'text',
 	);
@@ -116,11 +117,13 @@ sub ShowManager
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
 	$CloseButton->show();
 	$ButtonHBox->pack_end($CloseButton,0,0,0);
+	# TRANSLATORS: This would pop up a window where one can select a plugin package file to install
 	my $InstallButton = Gtk2::Button->new($i18n->get('_Install a plugin'));
 	my $icon = Gtk2::Image->new_from_stock('gtk-harddisk','button');
 	Gtk2_Button_SetImage($InstallButton,$icon,'_Install a new plugin');
 	$InstallButton->show();
 	$ButtonHBox->pack_end($InstallButton,0,0,0);
+	# TRANSLATORS: As in uninstall the currently selected plugin in the list of plugins
 	my $RemoveButton = Gtk2::Button->new($i18n->get('_Uninstall plugin'));
 	my $removeIcon = Gtk2::Image->new_from_stock('gtk-remove','button');
 	Gtk2_Button_SetImage($RemoveButton,$removeIcon,'_Uninstall plugin');

@@ -32,6 +32,8 @@ sub new_instance
 	$plugin->register_signals(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
 	$this->{plugin} = $plugin;
 	$this->{plugin}->signal_connect('INIT',$this,'initTrayIcon');
+	$this->{mainwin_x} = undef;
+	$this->{mainwin_y} = undef;
 	$this->{meta} =
 	{
 		name => 'TrayIcon',
@@ -70,12 +72,17 @@ sub initTrayIcon
 				if ($mainWin->visible)
 				{
 					$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
+					($this->{mainwin_x}, $this->{mainwin_y}) = $mainWin->get_position();
 					$mainWin->hide;
 				}
 				else
 				{
 					$this->{plugin}->signal_emit('SHOW_FROM_TRAY');
 					$mainWin->show;
+					if(defined $this->{mainwin_x} and defined $this->{mainwin_y})
+					{
+						$mainWin->move($this->{mainwin_x}, $this->{mainwin_y});
+					}
 				}
 			}
 		});
