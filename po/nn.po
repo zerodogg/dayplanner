@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
-"POT-Creation-Date: 2009-03-01 23:26+0100\n"
-"PO-Revision-Date: 2009-03-01 23:34+0100\n"
+"POT-Creation-Date: 2009-03-01 23:40+0100\n"
+"PO-Revision-Date: 2009-03-01 23:41+0100\n"
 "Last-Translator: Eskild Hustvedt <eskildh@gnome.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-no@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -430,7 +430,7 @@ msgstr "Importer frå _program ..."
 msgid "_Export..."
 msgstr "_Eksporter ..."
 
-#: dayplanner:4320 TrayIcon.pm:104
+#: dayplanner:4320 TrayIcon.pm:111
 msgid "_Add an Event..."
 msgstr "_Legg til ei hending ..."
 
@@ -643,87 +643,106 @@ msgstr "Aktivert"
 msgid "Plugin"
 msgstr "Programtillegg"
 
-#: PluginManager.pm:120
+#. TRANSLATORS: This would pop up a window where one can select a plugin package file to install
+#: PluginManager.pm:121
 msgid "_Install a plugin"
 msgstr "_Installer et programtillegg"
 
-#: PluginManager.pm:125
+#. TRANSLATORS: As in uninstall the currently selected plugin in the list of plugins
+#: PluginManager.pm:127
 msgid "_Uninstall plugin"
 msgstr "_Fjern programtillegg"
 
-#: PluginManager.pm:161
+#: PluginManager.pm:163
 msgid ""
 "You have enabled new plugins. Day Planner needs to be restarted before they "
 "become activated.\n"
 "\n"
 "Do you want to restart Day Planner now?"
-msgstr "Du har slått på nye programtillegg. Dagsplanleggaren må startast på nytt før dei blir aktivert.\n\nVil du starte Dagsplanleggaren på nytt no?"
+msgstr ""
+"Du har slått på nye programtillegg. Dagsplanleggaren må startast på nytt før "
+"dei blir aktivert.\n"
+"\n"
+"Vil du starte Dagsplanleggaren på nytt no?"
 
-#: PluginManager.pm:162
+#: PluginManager.pm:164
 msgid ""
 "You have disabled some plugins. Day Planner needs to be restarted before "
 "they become deactivated.\n"
 "\n"
 "Do you want to restart Day Planner now?"
-msgstr "Du har skrudd av nokre programtillegg. Dagsplanleggaren må startast på nytt før dei blir deaktivert.\n\nVil du starte Dagsplanleggaren på nytt no?"
-
-#: PluginManager.pm:184
-msgid "Are you sure you want to uninstall the plugin \""
 msgstr ""
+"Du har skrudd av nokre programtillegg. Dagsplanleggaren må startast på nytt "
+"før dei blir deaktivert.\n"
+"\n"
+"Vil du starte Dagsplanleggaren på nytt no?"
 
-#: PluginManager.pm:252
+#: PluginManager.pm:186
+msgid "Are you sure you want to uninstall the plugin \"%(PLUGIN)\"?"
+msgstr "Er du sikker på at du vil fjerne programtillegget «%(PLUGIN)»?"
+
+#: PluginManager.pm:254
 msgid ""
 "The plugin \"%(PLUGIN)\" needs the perl module \"%(MODULE)\", but that "
 "module is not installed on your system.\n"
 "\n"
-"You will have to install this module before you can continue. Consult your "
-"distribution documentation for instructions on how to do that.\n"
+"You will have to install this module before you can install this plugin. "
+"Consult your distribution documentation for instructions on how to do that.\n"
 "\n"
 "The package might be called something like the following: %(PACKAGE)"
 msgstr ""
+"Programtillegget «%(PLUGIN)» treng perl modulen «%(MODULE)», men den modulen "
+"er ikkje installert på ditt system.\n"
+"\n"
+"Du må installere denne modulen før du kan installere dette programtillegget. Sjekk dokumentasjonen til din distribusjon for instruksar om korleis du kan gjere det.\n\nPakka vert kanskje kalla noko som: %(PACKAGE)"
 
-#: PluginManager.pm:274
+#: PluginManager.pm:276
 msgid "Install Day Planner plugin package"
-msgstr ""
+msgstr "Installer ein Dagsplanleggar-programtilleggspakke"
 
-#: PluginManager.pm:281
+#: PluginManager.pm:283
 msgid "Day Planner plugin packages"
 msgstr "Dagsplanleggar programtilleggspakkar"
 
-#: PluginManager.pm:291
-#, fuzzy
+#: PluginManager.pm:293
 msgid "This file does not appear to be a Day Planner plugin package"
-msgstr "%s ser ikkje ut til å vera ei datafil for dagsplanleggaren"
+msgstr "Denne fila ser ikkje ut til å vere ein pakke som inneheld eit programtillegg for Dagsplanleggaren"
 
-#: PluginManager.pm:298
+#: PluginManager.pm:300
 msgid ""
 "This plugin is already installed, if you want to re-install or upgrade it "
 "you will need to uninstall the one that is already installed first"
 msgstr ""
 
-#: PluginManager.pm:304
+#: PluginManager.pm:306
 msgid ""
 "This plugin is written for a later version of Day Planner. You need to "
 "upgrade Day Planner before you can use it"
 msgstr ""
+"Dette programtillegget er skrevet for ein nyare versjon av Dagsplanleggaren. "
+"Du må oppgrader Dagsplanleggaren før du kan bruke det."
 
-#: PluginManager.pm:309
+#: PluginManager.pm:311
 msgid ""
 "Are you sure you wish to install this package? You should only install "
 "plugins from sources you trust, unsafe plugins can damage your system and "
 "files."
 msgstr ""
+"Er du sikker på at du vil installere denne pakken? Du bør berre installere "
+"programtillegg frå kjelder som du stolar på, utrygge programtillegg kan "
+"skade systemet ditt og filene dine."
 
-#: PluginManager.pm:313
+#: PluginManager.pm:315
 msgid ""
 "Installation failed, this file does not appear to be a Day Planner plugin "
 "package"
 msgstr ""
+"Installasjonen vart mislukka, denne fila ser ikkje ut til å vere ein pakke "
+"som inneheld eit programtillegg til Dagsplanleggaren."
 
 #: ServicesSync.pm:80
-#, fuzzy
 msgid "_Synchronization"
-msgstr "Synkronisering"
+msgstr "_Synkronisering"
 
 #: ServicesSync.pm:110
 msgid "Synchronization"
