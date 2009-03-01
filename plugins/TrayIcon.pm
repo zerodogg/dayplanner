@@ -36,7 +36,7 @@ sub new_instance
 	{
 		name => 'TrayIcon',
 		title => 'System tray icon',
-		description => 'This is a simple icon that sits in your system tray. When clicked it will hide the Day Planner window if it is visible, and show it if it is not.',
+		description => 'This is a simple icon that sits in your system tray. When clicked, it will toggle the visibility of the Day Planner window.',
 		version => 0.1,
 		apiversion => 1,
 		needs_modules => 'Gtk2::TrayIcon',
