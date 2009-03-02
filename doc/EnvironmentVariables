@@ -61,4 +61,8 @@ DP_LOAD_PLUGINS
 			config file. Its syntax is the same as the plugins_enabled
 			config setting in state.conf
 
+DP_DISABLE_PLUGINS
+			Disables the Day Planner plugin system for the current
+			session.
+
 vim: set tw=70 autoindent :

@@ -225,6 +225,11 @@ sub Daemon_SendData {
 # Usage: init_plugins();
 sub init_plugins
 {
+	if(defined $ENV{DP_DISABLE_PLUGINS} and $ENV{DP_DISABLE_PLUGINS} eq '1')
+	{
+		DPIntWarn('Plugins disabled by the DP_DISABLE_PLUGINS environment variable');
+		return;
+	}
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
 	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS));
