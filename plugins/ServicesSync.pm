@@ -265,7 +265,7 @@ sub PreferencesWindow
 	# ==================================================================
 	my $ClosePerform = sub {
 			$plugin->set_confval('DPS_user',$UserEntry->get_text());
-			$plugin->set_confval('DPS_pass',$PasswordEntry->get_text());
+			$plugin->set_confval('DPS_pass',encode_base64(encode_base64($PasswordEntry->get_text())));
 			$plugin->set_confval('DPS_host',$HostEntry->get_text());
 			$plugin->set_confval('DPS_port',$PortSpinner->get_value());
 			# Make sure that the proper DPS settings are in place
