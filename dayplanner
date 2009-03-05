@@ -48,7 +48,7 @@ use DP::GeneralHelpers::I18N;
 
 # Scalars
 our $Version = '0.10';
-my $VersionName = 'SVN';
+my $VersionName = 'GIT';
 my $RCSRev = '$Id$';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
@@ -670,8 +670,8 @@ sub Assert
 	{
 		$msg .= "\n";
 	}
-	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
-	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
+	# If this is the GIT version or DP_FATAL_ASSERT is set, then the error is fatal.
+	if ($VersionName eq 'GIT' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
 	{
 		if(defined $SaveToDir && -d $SaveToDir && defined $iCalendar)
 		{
@@ -3942,12 +3942,12 @@ sub AboutBox {
 		$AboutDialog->set_name($AppName);
 	}
 	$AboutDialog->set_version($Version);
-	# Add revision when we're the SVN version
-	if ($VersionName eq 'SVN')
+	# Add revision when we're the GIT version
+	if ($VersionName eq 'GIT')
 	{
 		my $Rev = $RCSRev;
 		$Rev =~ s/^.*dayplanner\s+(\d+)\s+.*/$1/;
-		$AboutDialog->set_version($Version.' SVN r'.$Rev);
+		$AboutDialog->set_version($Version.' GIT snapshot');
 	}
 	# GPL summary, should never be marked as translateable
 	$AboutDialog->set_license("Day Planner is free software: you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation, either version 3\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\nGNU General Public License for more details.\n\nYou should have recieved a copy of the GNU General Public License\nalong with this program. If not, see <http://www.gnu.org/licenses/>.");
