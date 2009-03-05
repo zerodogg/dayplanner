@@ -2122,7 +2122,10 @@ sub ExportData {
 				}
 			} elsif ($ActiveIndex == 1) {
 				if(PromptOverwrite($Filename, 1)) {
-					HTML_Export($Filename);
+					runtime_use('DP::iCalendar::WebExp') or die();
+					my $html = DP::iCalendar::WebExp->new();
+					$html->set_dpi($iCalendar);
+					$html->writehtml($Filename);
 					last;
 				}
 			}
