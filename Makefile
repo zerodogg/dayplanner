@@ -97,7 +97,7 @@ distclean: clean
 # Create manpages
 man:
 	pod2man --name "Day Planner" --center "" --release "Day Planner $(VERSION)" ./dayplanner ./dayplanner.1
-	pod2man --name "Day Planne Daemon" --center "" --release "Day Planner $(VERSION)" ./dayplanner-daemon ./dayplanner-daemon.1
+	pod2man --name "Day Planner Daemon" --center "" --release "Day Planner $(VERSION)" ./dayplanner-daemon ./dayplanner-daemon.1
 	pod2man --name "Day Planner" --center "" --release "Day Planner Notifier $(VERSION)" ./dayplanner-notifier ./dayplanner-notifier.1
 # Install manpages
 maninstall:
