@@ -13,6 +13,8 @@ Version 0.10 (Unreleased)
 - Fixed a bug that could cause the main Day Planner window to stay inactive
   if the "Import data from program" window was closed via the window manager
   close function rather than the Day Planner close button
+- Fixed a bug that could cause recurring events to drift out of sync for
+  some timezones
 
 * Notifier (dayplanner-notifier)
 - Added manpage
