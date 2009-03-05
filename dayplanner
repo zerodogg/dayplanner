@@ -1611,23 +1611,6 @@ sub CLI_Import {
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# HTML/PHP export functions 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# Purpose: Export Day Planner data to HTML
-# Usage: HTML_Export(DIRECTORY);
-sub HTML_Export {
-	warn('STUB: Should use the new lib');
-	DPInfo('Temporarily unavailable in SVN');
-}
-# Purpose: Export Day Planner data to PHP/HTML
-# Usage: PHP_Export(DIRECTORY);
-sub PHP_Export {
-	warn('STUB: Should use the new lib');
-	DPInfo('Temporarily unavailable in SVN');
-}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Plan migration functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
