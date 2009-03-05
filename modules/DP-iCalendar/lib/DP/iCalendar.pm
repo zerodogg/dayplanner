@@ -1379,7 +1379,7 @@ sub _RRULE_DAILY {
 	# Good, let's process.
 	# First get the UNIX time string for the said date.
 	# We use it to calculate.
-	my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
+	my $TimeString = mktime(0,0,12, $StartDate{Day},$StartDate{Month},$UnixYear);
 	# Okay, now loop through /all/ possible dates
 	my $LoopYear = $YEAR;
 	while($LoopYear eq $YEAR) {
@@ -1505,7 +1505,7 @@ sub _RRULE_WEEKLY {
 		# The unix year
 		my $nixYear = $YEAR - 1900;
 		# The date to begin processing on (1/1/year)
-		my $mktYearFirst = mktime(5,0,0,1,0,$nixYear);
+		my $mktYearFirst = mktime(5,0,12,1,0,$nixYear);
 		# Start looping
 		while(true)
 		{
@@ -1526,7 +1526,7 @@ sub _RRULE_WEEKLY {
 	# Good, let's process.
 	# First get the UNIX time string for the said date.
 	# We use it to calculate.
-	my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
+	my $TimeString = mktime(0,0,12, $StartDate{Day},$StartDate{Month},$UnixYear);
 	# Okay, now loop through /all/ possible dates
 	my $LoopYear = $YEAR;
 	while($LoopYear eq $YEAR) {
@@ -1610,7 +1610,7 @@ sub _RRULE_MONTHLY {
 	# Good, let's process.
 	# First get the UNIX time string for the said date.
 	# We use it to calculate.
-	my $TimeString = mktime(0,0,0, $StartDate{Day},$StartDate{Month},$UnixYear);
+	my $TimeString = mktime(0,0,12, $StartDate{Day},$StartDate{Month},$UnixYear);
 	# Okay, now loop through /all/ possible dates
 	my $LoopYear = $YEAR;
 	while(1) {
