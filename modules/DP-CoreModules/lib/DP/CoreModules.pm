@@ -23,7 +23,7 @@ use constant { true => 1, false => 0 };
 use FindBin;
 
 our $Version = '0.10';
-my $VersionName = 'SVN';
+my $VersionName = 'GIT';
 my %RuntimeModules;		# Keeps track of modules loaded during runtime
 
 # NOTE:
@@ -145,13 +145,13 @@ sub ParseEntryField {
 sub ReportBug
 {
 	my $BugUrl = 'http://www.day-planner.org/index.php/development/bugs/?b_version='.$Version;
-	if ($VersionName eq 'SVN')
+	if ($VersionName eq 'GIT')
 	{
-		$BugUrl .= '&b_issvn=1';
+		$BugUrl .= '&b_isgit=1';
 	}
 	else
 	{
-		$BugUrl .= '&b_issvn=0';
+		$BugUrl .= '&b_isgit=0';
 	}
 	LaunchWebBrowser($BugUrl);
 }
