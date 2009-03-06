@@ -49,8 +49,11 @@ sub Assert
 	}
 	DPIntWarn($msg);
 	# Attempt to make the main window usable again, in case
-	# this screws things up.
+	# this screws things up. We disable warnings on this line because if not
+	# perl -c will whine and that annoys me during make test :)
+	no warnings;
 	$main::MainWindow->set_sensitive(1);
+	use warnings;
 	return 1;
 }
 1;
