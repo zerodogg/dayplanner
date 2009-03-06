@@ -8,6 +8,8 @@ I would also like to thank the following individuals:
   suggestions
 - Michal Spáda for his invaluable comments and suggestions
 - Kalle Persson for the Day Planner icon
+- Eric Gillespie (The Viking) for all of his comments, testing and
+  proofreading
 
 And lastly, I would like to thank the authors of the perl modules that
 Day Planner uses, which include Cwd Data::Dumper Digest::MD5 File::Basename
