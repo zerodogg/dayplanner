@@ -79,8 +79,8 @@ $0 = 'dayplanner-daemon';
 my $NotifierName = 'dayplanner-notifier';
 # Our version number
 my $Version = '0.10';
-# The version name. Used for SVN detection
-my $VersionName = 'SVN';
+# The version name. Used for GIT detection
+my $VersionName = 'GIT';
 # The iCalendar object
 my $iCalendar;
 # The Day Planner directory
@@ -106,9 +106,9 @@ my $ForceFork;
 # ForceFork overrides it.
 my $NoFork;
 
-# The default log level - increased for SVN
+# The default log level - increased for GIT
 my $LogLevel = 2;
-if ($VersionName eq 'SVN')
+if ($VersionName eq 'GIT')
 {
 	$LogLevel = 4;
 }
@@ -246,8 +246,8 @@ sub assert
 	{
 		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line\n";
 	}
-	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
-	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
+	# If this is the GIT version or DP_FATAL_ASSERT is set, then the error is fatal.
+	if ($VersionName eq 'GIT' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
 	{
 		die($msg);
 	}

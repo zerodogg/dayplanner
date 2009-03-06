@@ -40,8 +40,8 @@ my $RealZero = $0;
 $0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
 my $Version = '0.10';
-# The version name. Used for SVN detection
-my $VersionName = 'SVN';
+# The version name. Used for GIT detection
+my $VersionName = 'GIT';
 
 my $CalendarPath;		# The source iCalendar file
 my $DP_I18N_Mode;
@@ -77,8 +77,8 @@ sub Assert
 	{
 		$msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line\n";
 	}
-	# If this is the SVN version or DP_FATAL_ASSERT is set, then the error is fatal.
-	if ($VersionName eq 'SVN' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
+	# If this is the GIT version or DP_FATAL_ASSERT is set, then the error is fatal.
+	if ($VersionName eq 'GIT' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
 	{
 		die($msg);
 	}
