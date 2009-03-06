@@ -43,8 +43,8 @@ my $Self = $0;
 $0 = 'dayplanner-data-servant';
 # Our version number
 my $Version = 0.9;
-# The version name. Used for SVN detection
-my $VersionName = 'SVN';
+# The version name. Used for GIT detection
+my $VersionName = 'GIT';
 # The iCalendar object
 my $iCalendar;
 # The Day Planner directory

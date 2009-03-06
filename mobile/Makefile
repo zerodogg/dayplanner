@@ -31,7 +31,6 @@ tarball:
 	mkdir -p dayplanner-mobile-$(VERSION)
 	cp mobile-dp-gui.py dayplanner-data-servant README README.FIRST Makefile ./dayplanner-mobile-$(VERSION)
 	cp -r ../holiday ../po ../modules ../NEWS ../COPYING ../AUTHORS ../THANKS ../TODO ./dayplanner-mobile-$(VERSION)
-	rm -rf `find dayplanner-mobile-$(VERSION) -name \\.svn`
 	tar -jcf ./packages/dayplanner-mobile-$(VERSION).tar.bz2 ./dayplanner-mobile-$(VERSION)
 	rm -rf dayplanner-mobile-$(VERSION)
 # This creates a single file executable that one can run to get a
