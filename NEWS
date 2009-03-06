@@ -15,6 +15,11 @@ Version 0.10 (Unreleased)
   close function rather than the Day Planner close button
 - Fixed a bug that could cause recurring events to drift out of sync for
   some timezones
+- Better support for broken/strange iCalendar files
+- Fixed a bug that could cause duplicate events to get created during
+    synchronization
+- Now creates better random UIDs when duplicate UIDs that differ are found
+- UTF-8 is now enforced as the default encoding (fixes #12636)
 
 * Notifier (dayplanner-notifier)
 - Added manpage
