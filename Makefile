@@ -159,8 +159,7 @@ moduleinstall:
 
 # Plugin prep
 pluginprep:
-	for file in $(shell ls ./plugins/*pm) ; do ./devel-tools/plugin_mkmetafile $$file;done
-	rm -f ./plugins/HelloWorld.dpi
+	for file in $(shell ls ./plugins/*pm|egrep -v '(PluginManager|HelloWorld)') ; do ./devel-tools/plugin_mkmetafile $$file;done
 # Plugin installation
 plugininstall: pluginprep
 	mkdir -p $(DP_MAINTARGET)/plugins
