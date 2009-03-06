@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 # DP::iCalendar
-# $Id$
 # An iCalendar parser/loader.
 # Copyright (C) Eskild Hustvedt 2007, 2008
 #

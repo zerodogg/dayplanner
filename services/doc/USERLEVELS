@@ -30,5 +30,4 @@ Read data                       X       X       X       X
 Write data                              X       X       X
 ADMIN command access                                    X
 
-$Id$
 vim: set expandtab tabstop=8 :

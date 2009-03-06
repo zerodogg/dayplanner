@@ -1,5 +1,4 @@
 Plan to Day Planner migration notes
-$Id$
 -----------------------------------
 
 The conversion between the plan data format and the Day Planner data format is lossy.

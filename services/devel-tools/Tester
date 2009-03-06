@@ -33,7 +33,6 @@ my %DPServices = (
 	host => "localhost",
 	port => "1500",
 );
-my $Version = '$Id$';
 
 my %InternalConfig;
 
@@ -49,7 +48,7 @@ sub DPF_GetData {
 	$Data::Dumper::Sortkeys = 0;
 	# Set the indentation (none in this case)
 	$Data::Dumper::Indent = 0;
-	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n\$DP_Exportedby = '$Version';\n \$DP_ExportedAt = '" . time() . "';\n";
+	my $Data = "\$DP_OnlyBirthdays = '$OnlyBirthdays';\n\$DP_Exportedby = '';\n \$DP_ExportedAt = '" . time() . "';\n";
 	$Data .= Data::Dumper->Dump([\%BirthdayContents], ["*BirthdayCalendarContent"]);
 
 	unless($OnlyBirthdays) {

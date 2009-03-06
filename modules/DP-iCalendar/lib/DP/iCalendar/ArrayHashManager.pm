@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 # DP::iCalendar::ArrayHashManager
-# $Id$
 # A manager and lookup indexer of arrays of hashes
 # Copyright (C) Eskild Hustvedt 2008
 #

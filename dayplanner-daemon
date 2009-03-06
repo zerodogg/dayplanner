@@ -81,8 +81,6 @@ my $NotifierName = 'dayplanner-notifier';
 my $Version = '0.10';
 # The version name. Used for SVN detection
 my $VersionName = 'SVN';
-# Our RCS revision
-my $RCSRev = '$Id$';
 # The iCalendar object
 my $iCalendar;
 # The Day Planner directory
@@ -1052,7 +1050,6 @@ GetOptions (
 	},
 	'version' => sub {
 		print "Day Planner daemon version $Version\n";
-		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
 	'test|t:i' => sub {

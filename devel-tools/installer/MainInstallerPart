@@ -138,8 +138,6 @@ $| = 1;
 
 print "Perl installer part...\n";
 print "Using install dir: $InstallDirectory\n";
-my $Internal_Version = '$Id$';
-print "Installer version: $Internal_Version\n";
 
 die("Fatal internal error: Perl installer part got no data directory supplied\n") unless(defined($ARGV[0]));
 die("Fatal internal error: The data directory supplied ($ARGV[0]) does not exist.\nThis probably means that this package is corrupt, try re-downloading it.\n") unless -e $ARGV[0];

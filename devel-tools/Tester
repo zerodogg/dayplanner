@@ -116,13 +116,3 @@ SetKeySendDelay(100);
 # Run the available tests
 NN_24H_Gui();
 EN_12H_Gui();
-
-__END__
-
-=head1 NAME
-
-Tester
-
-=head1 VERSION
-
-$Id$

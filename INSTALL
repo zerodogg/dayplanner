@@ -30,5 +30,3 @@ You must install (or symlink) the icons in the art/ directory yourself if you wa
 be available outside of Day Planners own art/ tree or the DATADIR/pixmaps/ tree.
 
 An example of a packaged Day Planner is in ./devel-tools/rpm/package.spec
-
-$Id$

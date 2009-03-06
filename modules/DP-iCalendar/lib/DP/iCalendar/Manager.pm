@@ -1,5 +1,4 @@
 # DP::iCalendar::Manager
-# $Id$
 # A wrapper around DP::iCalendar that allows multiple DP::iCalendar-compatible objects to be seen
 # and manipulated as one.
 # Copyright (C) Eskild Hustvedt 2007, 2008

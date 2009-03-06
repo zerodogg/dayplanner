@@ -1,5 +1,4 @@
 # DP::GeneralHelpers::IPC
-# $Id$
 # Copyright (C) Eskild Hustvedt 2007, 2008
 #
 # This program is free software; you can redistribute it and/or modify
