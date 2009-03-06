@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 # DP::iCalendar::StructHandler
-# $Id$
 # An iCalendar structure loader
 # Copyright (C) Eskild Hustvedt 2008
 #
@@ -18,6 +17,8 @@
 # are also implemented:
 # Does not allow multiple toplevel BEGIN:VCALENDAR-entries
 # Encodes and decodes iCalendar escapes
+
+# TODO: FIXME: Add a iCalendar mode, which lets us toggle the iCalendar quirks stuff off and on
 
 use strict;
 use warnings;
@@ -157,6 +158,10 @@ sub _loadFH
 		Nest => [],
 		CurrRef => $this->{data},
 		PrevValue => undef,
+		# True if vcalendar has just ended
+		VCalendarRef => undef,
+		# The ref to our vcalendar entry, for use when fixing borked files
+		VCalendar_Ended => 0,
 	};
 	if (@_)
 	{
@@ -167,6 +172,7 @@ sub _loadFH
 	push(@{$s->{Nest}},$s->{CurrRef});
 	my $lineNo;
 	$this->_assertMustBeRef('HASH',$s->{CurrRef},'CurrRef',true,'start _loadFH');
+
 	while($_ = <$infile>)
 	{
 		$lineNo++;
@@ -214,7 +220,14 @@ sub _loadFH
 			# but should be safe when run on others.
 			if (scalar(@{$s->{Nest}}) == 1 && $value eq 'VCALENDAR' && defined($s->{CurrRef}->{'VCALENDAR'}) && scalar(@{$s->{CurrRef}->{'VCALENDAR'}}) > 0)
 			{
-				$s->{CurrRef} = $s->{CurrRef}->{$value}[0];
+				if ($s->{VCalendarRef})
+				{
+					$s->{CurrRef} = $s->{VCalendarRef};
+				}
+				else
+				{
+					$s->{CurrRef} = $s->{CurrRef}->{$value}[0];
+				}
 				if(not $this->{loadFileMode})
 				{
 					_parseWarn("Line $lineNo: Multiple BEGIN:VCALENDAR detected (on line $lineNo)! The file is broken, ignoring request to restart BEGIN:VCALENDAR, basing new block on the old one to attempt to fix this mess");
@@ -222,14 +235,33 @@ sub _loadFH
 			}
 			else
 			{
+				if ($s->{VCalendar_Ended} && $s->{VCalendarRef})
+				{
+					$s->{CurrRef} = $s->{VCalendarRef};
+					$s->{VCalendar_Ended} = 0;
+					_parseWarn("Line $lineNo: VCALENDAR has already ended, yet here we are trying to add another $value. Pretending not to have seen the END:VCALENDAR");
+				}
+				elsif($value eq 'VEVENT' && scalar(@{$s->{Nest}}) > 2 && $s->{VCalendarRef})
+				{
+					_parseWarn("Line $lineNo: Creating VEVENT inside of an item other than VCALENDAR. This doesn't make any sense, pretending the current item was ENDed");
+					$s->{CurrRef} = $s->{VCalendarRef};
+				}
 				my $pushNo = push(@{$s->{CurrRef}->{$value}}, {});
 				$pushNo--;
 				$s->{CurrRef} = $s->{CurrRef}->{$value}[$pushNo];
 			}
+				if ($value eq 'VCALENDAR')
+				{
+					$s->{VCalendarRef} = $s->{CurrRef};
+				}
 			push(@{$s->{Nest}},$s->{CurrRef});
 		}
 		elsif ($key eq 'END')
 		{
+			if ($value eq 'VCALENDAR')
+			{
+				$s->{VCalendar_Ended} = 1;
+			}
 			pop(@{$s->{Nest}});
 			my $nestSize = @{$s->{Nest}};
 			$nestSize--;
