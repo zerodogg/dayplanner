@@ -2,7 +2,6 @@
 # Day Planner
 # A graphical Day Planner written in perl that uses Gtk2
 # Copyright (C) Eskild Hustvedt 2006, 2007, 2008, 2009
-# $Id$
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +48,6 @@ use DP::GeneralHelpers::I18N;
 # Scalars
 our $Version = '0.10';
 my $VersionName = 'GIT';
-my $RCSRev = '$Id$';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
 my $ICSFile = 'calendar.ics';		# The ICS calendar
@@ -574,7 +572,19 @@ sub GetDebugInfo
 		select($orig_fh);
 	}
 	$SaveToDir = DetectConfDir();
-	print {$target} "Day Planner version $Version - $RCSRev\n";
+	
+	my $digest;
+	{
+		runtime_use('Digest::MD5');
+		open(my $f,'<',$FindBin::RealScript);
+		my $md5 = Digest::MD5->new();
+		$md5->addfile($f);
+		$digest = $md5->hexdigest;
+		close($f);
+	}
+
+	print {$target} "Day Planner version $Version\n";
+	print {$target} "MD5: $digest\n";
 	print {$target} "Using config dir: $SaveToDir\n";
 	printf {$target} "Perl version %vd\n", $^V;
 	print {$target} 'Gtk2 version ', join ('.', Gtk2->GET_VERSION_INFO),"\n";
@@ -3945,8 +3955,6 @@ sub AboutBox {
 	# Add revision when we're the GIT version
 	if ($VersionName eq 'GIT')
 	{
-		my $Rev = $RCSRev;
-		$Rev =~ s/^.*dayplanner\s+(\d+)\s+.*/$1/;
 		$AboutDialog->set_version($Version.' GIT snapshot');
 	}
 	# GPL summary, should never be marked as translateable
@@ -4616,7 +4624,6 @@ GetOptions (
 	},
 	'version|v' => sub {
 		print "Day Planner version $Version \"$VersionName\"\n";
-		print "RCS revision: $RCSRev\n";
 		exit(0);
 	},
 	'debuginfo' => sub
