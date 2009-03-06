@@ -29,7 +29,7 @@ my $NewVersion = $ARGV[0];
 my $Name = $ARGV[1];
 if(not defined($Name))
 {
-	$Name = 'SVN';
+	$Name = 'GIT';
 }
 
 my $OrigDir = dirname(realpath($0));

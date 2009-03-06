@@ -206,7 +206,7 @@ print "Installing...";
 SystemChild("mkdir -p $InstallDirectory");
 
 if(defined($ENV{DAYPLANNER_CP_SILENTERRORS}) and $ENV{DAYPLANNER_CP_SILENTERRORS} eq 'TRUE') {
-	# When using the local installer we might get svn files which will make cp display
+	# When using the local installer we might get git files which will make cp display
 	# harmless errors. Setting DAYPLANNER_CP_SILENTERRORS to TRUE silences cp
 	SystemChild("cp -r $InstallerData/* $InstallDirectory/ &>/dev/null");
 } else {
