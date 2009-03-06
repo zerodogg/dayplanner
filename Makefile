@@ -1,5 +1,5 @@
 # Makefile for Day Planner
-# Copyright (C) Eskild Hustvedt 2007, 2008
+# Copyright (C) Eskild Hustvedt 2007, 2008, 2009
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ LOCALMODULES=-I./modules/DP-GeneralHelpers/lib/ -I./modules/DP-iCalendar/lib/ -I
 
 # So I have to type less
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
+BESILENT = perl -e "open(STDIN,'>','/dev/null'); open(STDOUT,'>','/dev/null'); exec(@ARGV);"
 
 # --- USER USABLE RULES ---
 help:
@@ -219,7 +220,7 @@ rpmonly:
 	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
 	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
 	perl -pi -e 's#\[DAYPLANNER_VERSION\]#$(VERSION)#gi' ./dayplanner.spec
-	rpmbuild --define '_with_unstable 1' --with old_menu --with holidayparser -ba ./dayplanner.spec &> packages/rpmbuild.log
+	$(BESILENT) rpmbuild --define '_with_unstable 1' --with old_menu --with holidayparser -ba ./dayplanner.spec
 	rm -f packages/rpmbuild.log
 	rm -f ./dayplanner.spec
 	mv $$HOME/rpm/RPMS/noarch/dayplanner*.rpm $$HOME/rpm/SRPMS/dayplanner*.rpm ./packages/
@@ -243,9 +244,9 @@ installer: prepdistrib tarball
 	mv dayplanner-$(VERSION) installer/dayplanner-data
 	cp ./devel-tools/installer/* ./installer
 	rm -f installer/InstallLocal
-	./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art &> /dev/null
-	./installer/dayplanner-data/devel-tools/BuildLocale &> /dev/null
-	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; ./makeself.sh --bzip2 --nox11 $$OLDPWD/installer/ dayplanner-$(VERSION).run 'Generic Day Planner installation script' ./StartInstaller &> /dev/null || exit 1; mv ./dayplanner-$(VERSION).run $$OLDPWD/packages )
+	$(BESILENT) ./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art
+	$(BESILENT) ./installer/dayplanner-data/devel-tools/BuildLocale
+	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; $(BESILENT) ./makeself.sh --bzip2 --nox11 $$OLDPWD/installer/ dayplanner-$(VERSION).run 'Generic Day Planner installation script' ./StartInstaller || exit 1; mv ./dayplanner-$(VERSION).run $$OLDPWD/packages )
 	rm -f $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
 	rm -rf installer
 
