@@ -47,7 +47,7 @@ help:
 	@echo "User targets:"
 	@echo " install      - install Day Planner"
 	@echo " uninstall    - uninstall a previously installed Day Planner"
-	@-[ -e "./.svn" ] && echo " localinstall - install symlinks and .desktop files to use the current SVN checkout";true
+	@-[ -e "./.git" ] && echo " localinstall - install symlinks and .desktop files to use the current git checkout";true
 	@echo "Advanced targets:"
 	@echo " clean        - clean up the tree"
 	@echo " updatepo     - update po-files"
@@ -90,7 +90,7 @@ clean:
 	[ ! -e ./modules/DP-iCalendar/Makefile ] || make -C ./modules/DP-iCalendar/ distclean
 	[ ! -e ./modules/Date-HolidayParser/Makefile ] || make -C ./modules/Date-HolidayParser/ distclean
 distclean: clean
-	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ m#/\.svn#; if(not -d $$_) { if(not -e "./.svn/text-base/$$_.svn-base") { print "unlink: $$File::Find::name\n";unlink($$_);}} else { if (not -d "$$_/.svn") { print "rmtree: $$_\n";rmtree($$_)}} },"./");'
+	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ /\.git/; my $$i = `git stat $$_ 2>&1`; if ($$i =~ /^error.*did.*not.*match/) { if (-d $$_) { print "rmtree: $$File::Find::name\n"; rmtree($$_); } else {  print "unlink: $$File::Find::name\n"; unlink($$_); }}},"./");'
 	rm -f ./dayplanner-daemon.1 ./dayplanner-notifier.1 ./dayplanner.1
 	rm -f doc/dayplanner.desktop
 
@@ -207,10 +207,10 @@ mobiledistrib:
 	make -C mobile clean
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
-	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.svn ./dayplanner-$(VERSION)
+	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.git ./dayplanner-$(VERSION)
 	make -C ./dayplanner-$(VERSION) distclean
 	rm -rf ./dayplanner-$(VERSION)/devel-tools/rpm ./dayplanner-$(VERSION)/devel-tools/debian
-	rm -rf `find dayplanner-$(VERSION) -name \\.svn`
+	rm -rf ./dayplanner-$(VERSION)/.git
 	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
 	rm -rf dayplanner-$(VERSION)
 rpm: prepdistrib tarball rpmonly
