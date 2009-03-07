@@ -66,9 +66,9 @@ sub handleIPC
 		return;
 	}
 	# Ok, we're going to assume handling of this signal, so abort the rest
-	$this->{plugin}->abort();
 	$this->{plugin}->set_var('IPC_REPLY','ALIVE_ONDISPLAY');
 	$this->toggleMainWinVisibility();
+	$this->{plugin}->abort();
 }
 
 sub toggleMainWinVisibility
