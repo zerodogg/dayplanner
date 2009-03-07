@@ -119,13 +119,11 @@ sub initTrayIcon
 	$icon->show_all;
 	$mainWin->signal_handlers_disconnect_by_func(\&main::QuitSub);
 	$mainWin->signal_connect('destroy' => sub {
-			$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
-			$mainWin->hide();
+			$this->toggleMainWinVisibility();
 			return 1;
 		});
 	$mainWin->signal_connect('delete-event' => sub {
-			$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
-			$mainWin->hide();
+			$this->toggleMainWinVisibility();
 			return 1;
 		});
 }
