@@ -50,7 +50,7 @@ use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
 # Day Planner-specific libs
 use DP::iCalendar qw(iCal_ConvertToUnixTime); # iCalendar support
-use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile PrefixZero);
 use DP::CoreModules;
 
 # Hash containing unixtime -> array of events pairs.

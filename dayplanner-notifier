@@ -31,7 +31,7 @@ use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
 # Day Planner-specific libs
-use DP::GeneralHelpers qw(AppendZero DPIntWarn);
+use DP::GeneralHelpers qw(PrefixZero DPIntWarn);
 use DP::GeneralHelpers::I18N;
 use DP::iCalendar qw(iCal_ParseDateTime iCal_ConvertToUnixTime);
 use DP::CoreModules;
@@ -163,7 +163,7 @@ sub GetMessagesFromCalendar
 	foreach my $possibleTime (@{[$LaunchTime, $LaunchTime - 60, $LaunchTime + 60]})
 	{
 		my ($sec,$min,$hour,$mday,$month,$year,$wday,$yday,$isdst) = GetDate($possibleTime);
-		if($iCalendar->UID_exists_at($UID,$year,$month,$mday,AppendZero($hour).':'.AppendZero($min)))
+		if($iCalendar->UID_exists_at($UID,$year,$month,$mday,PrefixZero($hour).':'.PrefixZero($min)))
 		{
 			$IsWarning = false;
 		}

@@ -34,7 +34,7 @@ Getopt::Long::Configure ('bundling', 'prefix_pattern=(--|-)');
 use POSIX qw/ mktime setsid/;		# We need setsid();
 # Day Planner-specific libs
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
-use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile AppendZero);
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile);
 use DP::CoreModules;
 
 # The path to us

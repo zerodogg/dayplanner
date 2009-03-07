@@ -729,8 +729,8 @@ sub iCal_GenDateTime {
 	# NOTE: This version ignores $Time because it isn't used in HolidayParser
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
-	my $iCalMonth = _AppendZero($Month);
-	my $iCalDay = _AppendZero($Day);
+	my $iCalMonth = _PrefixZero($Month);
+	my $iCalDay = _PrefixZero($Day);
 	return("$Year$iCalMonth$iCalDay");
 }
 
@@ -745,9 +745,9 @@ sub iCal_ConvertFromUnixTime {
 	return(iCal_GenDateTime($realyear,$realmonth,$realmday,"$realhour:$realmin"));
 }
 
-# Purpose: Append a "0" to a number if it is only one digit.
-# Usage: my $NewNumber = AppendZero(NUMBER);
-sub _AppendZero {
+# Purpose: Prefix a "0" to a number if it is only one digit.
+# Usage: my $NewNumber = PrefixZero(NUMBER);
+sub _PrefixZero {
 	if ($_[0] =~ /^\d$/) {
 		return("0$_[0]");
 	}
