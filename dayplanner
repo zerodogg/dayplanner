@@ -4598,7 +4598,6 @@ sub InitDPCore {
 		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub { 
 				my $m = shift;
 				chomp($m);
-				print "RECIEVED: $m\n";
 				if ($m =~ /^ALIVE_ONDISPLAY/)
 				{
 					exit(0);
