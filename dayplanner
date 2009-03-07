@@ -4595,7 +4595,17 @@ sub InitDPCore {
 	# Create the socket
 	$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	if(not $IPC_Socket) {
-		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub { return });
+		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub { 
+				my $m = shift;
+				chomp($m);
+				print "RECIEVED: $m\n";
+				if ($m =~ /^ALIVE_ONDISPLAY/)
+				{
+					exit(0);
+				}
+				return });
+		# Send an alive request
+		$Client->client_send('ALIVE '.$ENV{DISPLAY});
 		if(@ARGV) {
 			foreach(@ARGV) {
 				$Client->client_send("IMPORT_DATA $_");
