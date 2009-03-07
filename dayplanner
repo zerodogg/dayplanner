@@ -225,7 +225,7 @@ sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS));
+	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS IPC_IN));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -776,16 +776,44 @@ sub AlreadyRunningDP {
 
 # Purpose: Handle IPC talking
 # Usage: IPC_Handler();
-sub IPC_Handler {
+sub IPC_Handler
+{
 	my $Message = shift;
 	chomp($Message);
+
+	$plugin->delete_var('IPC_REPLY');
+	$plugin->set_tempvar('IPC_REQUEST',$Message);
+	my $aborted = $plugin->signal_emit('IPC_IN');
+	if ($aborted)
+	{
+		if (my $ret = $plugin->get_var('IPC_REPLY'))
+		{
+			$plugin->delete_var('IPC_REPLY');
+			return $ret;
+		}
+		else
+		{
+			DPIntWarn('A plugin aborted the IPC_Handler but did not ->set_var("IPC_REPLY",...), don\'t know what to reply, so ignoring the abort request');
+		}
+	}
+
 	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/)
 	{
 		$iCalendar->addfile($Message);
 		print "Imported $Message\n";
 		UpdatedData();
 	}
-	elsif ($Message =~ /^QUIT/) {
+	# This is used to check if we're alive, the syntax is:
+	# ALIVE DISPLAY
+	# Where DISPLAY is the X display ($ENV{DISPLAY}) that the caller is running
+	# on. The usual reply is ALIVEANDWELL, but other replies can be returned by 
+	# plugins that abort us.
+	elsif($message =~ s/^ALIVE\s+//)
+	{
+		return('ALIVEANDWELL');
+	}
+	elsif ($Message =~ /^QUIT/)
+	{
 		# This is the same as ctrl+c
 		DP_SigHandler('IPC_QUIT_REQUEST');
 	} 
