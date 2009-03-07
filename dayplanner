@@ -808,7 +808,7 @@ sub IPC_Handler
 	# Where DISPLAY is the X display ($ENV{DISPLAY}) that the caller is running
 	# on. The usual reply is ALIVEANDWELL, but other replies can be returned by 
 	# plugins that abort us.
-	elsif($message =~ s/^ALIVE\s+//)
+	elsif($Message =~ s/^ALIVE\s+//)
 	{
 		return('ALIVEANDWELL');
 	}
