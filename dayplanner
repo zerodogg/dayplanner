@@ -61,11 +61,11 @@ my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
 my $plugin;
 
-# FIXME: Unused
 # Arrays
-my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
-	$ENV{HOME}, "$ENV{HOME}/Desktop", "$ENV{HOME}/Documents", "$ENV{HOME}/tmp", "/tmp", "/var/tmp", "/usr/tmp",
-);
+# FIXME: Unused
+#my @SaveFallbackDirs = (				# The directories to use for fallback saving if we can't save to $SaveToDir
+#	$ENV{HOME}, "$ENV{HOME}/Desktop", "$ENV{HOME}/Documents", "$ENV{HOME}/tmp", "/tmp", "/var/tmp", "/usr/tmp",
+#);
 
 # Hashes
 my %Holidays;			# The holidays
@@ -1586,9 +1586,7 @@ sub CLI_Export {
 			}
 		}
 		if($Type =~ /html/) {
-			# FIXME: This probably needs some fixing
-
-			runtime_use('DP::iCalendar::WebExp') or die();
+			runtime_use('DP::iCalendar::WebExp') or die('Failed to load the requried web export module, your Day Planner install appears to be corrupt');
 			my $html = DP::iCalendar::WebExp->new();
 			$html->set_dpi($iCalendar);
 			$html->writehtml($Target);
@@ -2045,7 +2043,7 @@ sub ImportDataFromFile {
 	# way around.
 	# Create the main window
 	# FIXME
-	my $ImportWindow = Gtk2::FileChooserDialog->new('Import data from file', $MainWindow, 'open',
+	my $ImportWindow = Gtk2::FileChooserDialog->new($i18n->get('Import data from file'), $MainWindow, 'open',
 	'gtk-cancel' => 'reject',
 	'gtk-open' => 'accept',);
 	$ImportWindow->set_local_only(1);
