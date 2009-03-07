@@ -12,3 +12,4 @@ modules/Date-HolidayParser/pm_to_blib
 doc/dayplanner.desktop
 packages/
 po/dayplanner.pot
+locale/
