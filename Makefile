@@ -34,7 +34,7 @@ PKG=$(shell if which debuild 2>/dev/null >/dev/null; then echo deb; else echo rp
 # If this file does not exist it means manpages aren't built. So build them.
 MANPAGES=$(shell [ ! -e ./dayplanner.1 ] && echo man)
 
-VERSION=0.10
+VERSION=0.11
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share

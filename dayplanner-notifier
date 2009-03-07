@@ -39,7 +39,7 @@ use DP::CoreModules;
 my $RealZero = $0;
 $0 = 'dayplanner-notifier';
 my $Gettext;			# Global Gettext object
-my $Version = '0.10';
+my $Version = '0.11';
 # The version name. Used for GIT detection
 my $VersionName = 'GIT';
 

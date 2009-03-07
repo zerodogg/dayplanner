@@ -46,7 +46,7 @@ use DP::GeneralHelpers::IPC;
 use DP::GeneralHelpers::I18N;
 
 # Scalars
-our $Version = '0.10';
+our $Version = '0.11';
 my $VersionName = 'GIT';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
