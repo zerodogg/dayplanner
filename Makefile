@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+PLUGINPREP=$(shell perl -e 'if(-d "./.git" ) { print "pluginprep" } elsif (not glob("./plugins/*.dpi")) { print "pluginprep" }')
+
 # If prefix is already set then use some distro-friendly install rules
 ifdef prefix
 INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall holidayinstall i18ninstall distribdesktop
@@ -161,7 +163,7 @@ moduleinstall:
 pluginprep:
 	for file in $(shell ls ./plugins/*pm|egrep -v '(PluginManager|HelloWorld)') ; do ./devel-tools/plugin_mkmetafile $$file;done
 # Plugin installation
-plugininstall: pluginprep
+plugininstall: $(PLUGINPREP)
 	mkdir -p $(DP_MAINTARGET)/plugins
 	install -m644 $(shell ls ./plugins/*pm) $(DP_MAINTARGET)/plugins
 	install -m644 $(shell ls ./plugins/*dpi) $(DP_MAINTARGET)/plugins
