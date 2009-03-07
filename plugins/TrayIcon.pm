@@ -53,7 +53,7 @@ sub new_instance
 sub handleIPC
 {
 	my $this = shift;
-	my $request = $this->get_var('IPC_REQUEST');
+	my $request = $this->{plugin}->get_var('IPC_REQUEST');
 	return if not $request =~ s/^ALIVE\s+//;
 	$request =~ s/\s+//g;
 	if (not $request eq $ENV{DISPLAY})
