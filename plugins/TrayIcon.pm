@@ -32,6 +32,7 @@ sub new_instance
 	$plugin->register_signals(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
 	$this->{plugin} = $plugin;
 	$this->{plugin}->signal_connect('INIT',$this,'initTrayIcon');
+	$this->{plugin}->signal_connect('IPC_IN',$this,'handleIPC');
 	$this->{mainwin_x} = undef;
 	$this->{mainwin_y} = undef;
 	$this->{meta} =
@@ -39,13 +40,56 @@ sub new_instance
 		name => 'TrayIcon',
 		title => 'System tray icon',
 		description => 'This is a simple icon that sits in your system tray. When clicked, it will toggle the visibility of the Day Planner window.',
-		version => 0.1,
+		version => '0.1.1',
+		# TODO: bump apiversion when it has been done in dayplanner
 		apiversion => 1,
 		needs_modules => 'Gtk2::TrayIcon',
 		author => 'Eskild Hustvedt',
 		license => 'GNU General Public License version 3 or later',
 	};
 	return $this;
+}
+
+sub handleIPC
+{
+	my $this = shift;
+	my $request = $this->get_var('IPC_REQUEST');
+	return if not $request =~ s/^ALIVE\s+//;
+	$request =~ s/\s+//g;
+	if (not $request eq $ENV{DISPLAY})
+	{
+		return;
+	}
+	my $mainWin = $this->{plugin}->get_var('MainWindow');
+	if ($mainWin->visible)
+	{
+		return;
+	}
+	# Ok, we're going to assume handling of this signal, so abort the rest
+	$this->{plugin}->abort();
+	$this->{plugin}->set_var('IPC_REPLY','ALIVE_ONDISPLAY');
+	$this->toggleMainWinVisibility();
+}
+
+sub toggleMainWinVisibility
+{
+	my $this = shift;
+	my $mainWin = $this->{plugin}->get_var('MainWindow');
+	if ($mainWin->visible)
+	{
+		$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
+		($this->{mainwin_x}, $this->{mainwin_y}) = $mainWin->get_position();
+		$mainWin->hide;
+	}
+	else
+	{
+		$this->{plugin}->signal_emit('SHOW_FROM_TRAY');
+		$mainWin->show;
+		if(defined $this->{mainwin_x} and defined $this->{mainwin_y})
+		{
+			$mainWin->move($this->{mainwin_x}, $this->{mainwin_y});
+		}
+	}
 }
 
 sub initTrayIcon
@@ -69,21 +113,7 @@ sub initTrayIcon
 			}
 			else
 			{
-				if ($mainWin->visible)
-				{
-					$this->{plugin}->signal_emit('MINIMIZE_TO_TRAY');
-					($this->{mainwin_x}, $this->{mainwin_y}) = $mainWin->get_position();
-					$mainWin->hide;
-				}
-				else
-				{
-					$this->{plugin}->signal_emit('SHOW_FROM_TRAY');
-					$mainWin->show;
-					if(defined $this->{mainwin_x} and defined $this->{mainwin_y})
-					{
-						$mainWin->move($this->{mainwin_x}, $this->{mainwin_y});
-					}
-				}
+				$this->toggleMainWinVisibility();
 			}
 		});
 	$icon->show_all;
