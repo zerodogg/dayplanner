@@ -589,7 +589,15 @@ sub GetDebugInfo
 		}
 	}
 
-	print {$target} "Day Planner version $Version\n";
+	print {$target} "Day Planner version $Version";
+	if ($VersionName eq 'GIT')
+	{
+		print {$target} " (git snapshot)\n";
+	}
+	else
+	{
+		print {$target} " ($VersionName)\n";
+	}
 	printf {$target} "%-15s: %s\n", "MD5" ,$digests{dayplanner};
 	printf {$target} "%-15s: %s\n", "MD5 (daemon)", $digests{daemon};
 	printf {$target} "%-15s: %s\n", "MD5 (notifier)", $digests{notifier};
@@ -4681,7 +4689,15 @@ GetOptions (
 		exit(0);
 	},
 	'version|v' => sub {
-		print "Day Planner version $Version \"$VersionName\"\n";
+		print "Day Planner version $Version";
+		if ($VersionName eq 'GIT')
+		{
+			print " (git snapshot)\n";
+		}
+		else
+		{
+			print " ($VersionName)\n";
+		}
 		exit(0);
 	},
 	'debuginfo' => sub
