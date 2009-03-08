@@ -36,9 +36,10 @@ sub new
 	$this->{stash} = {};
 	$this->{signals} = {};
 	$this->{currPlugin} = undef;
-	$this->{abortCurrent} = false;
 	$this->{loadedPlugins} = {};
 	$this->{tempVars} = [];
+	$this->{runningSignals} = [];
+	$this->{signalRunning} = {};
 	return $this;
 }
 
@@ -233,6 +234,23 @@ sub signal_emit
 {
 	my $this = shift;
 	my $signal = shift;
+	my $multi = false;
+
+	if ($this->{signalRunning}->{$signal})
+	{
+		$multi = true;
+		$this->_warn("Signal \"$signal\" emitted before another instance of the same signal has finished, tempvar and aborts will not work properly at all");
+	}
+
+	$this->{signalRunning}->{$signal} = {
+		tempVars => $this->{tempVars} ? $this->{tempVars} : [],
+		abort => 0
+	};
+	$this->{tempVars} = [];
+
+	push(@{$this->{runningSignals}},$signal);
+	my $info = $this->{signalRunning}->{$signal};
+
 	if ($this->{signals}{$signal})
 	{
 		my $repairIt = false;
@@ -240,6 +258,7 @@ sub signal_emit
 		{
 			$this->{currPlugin} = $i->{module};
 			eval('$i->{module}->'.$i->{method}.'($this);');
+			$this->{currPlugin} = undef;
 			my $e = $@;
 			if ($e)
 			{
@@ -247,7 +266,6 @@ sub signal_emit
 				$this->_warn("Failure when emitting signal $signal: $e: ignoring and attempting to repair main app state");
 				$repairIt = true;
 			}
-			$this->{currPlugin} = undef;
 		}
 
 		# Try to make sure the app itself is in a usable state
@@ -263,26 +281,33 @@ sub signal_emit
 	}
 	else
 	{
-		$this->_warn('Emitted unregistered signal: '.$signal);
+		$this->_warn('Attempted to emit unregistered signal (request refused): '.$signal);
 	}
+
 	# Delete temporary variables
-	foreach my $var(@{$this->{tempVars}})
+	foreach my $var(@{$info->{tempVars}})
 	{
 		$this->delete_var($var);
 	}
 
-	if ($this->{abortCurrent})
+	my $return = false;
+
+	if ($info->{abort})
 	{
-		$this->{abortCurrent} = false;
-		return true;
+		$return = true;
 	}
-	return false;
+	if(not $multi)
+	{
+		delete($this->{signalRunning}->{$signal});
+	}
+	return $return;
 }
 
 sub abort
 {
 	my $this = shift;
-	$this->{abortCurrent} = true;
+	my $sig = $this->get_current_signal();
+	$this->{signalRunning}->{$sig}->{abort} = 1;
 	return true;
 }
 
@@ -334,6 +359,16 @@ sub STUB
     my ($stub_package, $stub_filename, $stub_line, $stub_subroutine, $stub_hasargs,
         $stub_wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
     warn "STUB: $stub_subroutine\n";
+}
+
+sub get_current_signal
+{
+	my $this = shift;
+	if (@{$this->{runningSignals}})
+	{
+		return $this->{runningSignals}->[-1];
+	}
+	return undef;
 }
 
 sub _warn
