@@ -799,9 +799,16 @@ sub IPC_Handler
 
 	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/)
 	{
-		$iCalendar->addfile($Message);
-		print "Imported $Message\n";
-		UpdatedData();
+		if (-e $Message && -r $Message)
+		{
+			$iCalendar->addfile($Message);
+			print "Imported $Message\n";
+			UpdatedData();
+		}
+		else
+		{
+			print "\"$Message\": did not exist\n";
+		}
 	}
 	# This is used to check if we're alive, the syntax is:
 	# ALIVE DISPLAY
