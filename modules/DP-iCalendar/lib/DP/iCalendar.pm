@@ -84,7 +84,7 @@ sub newfile {
 # Purpose: Get information for the supplied month (list of days there are events)
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH);
 sub get_monthinfo {
-	my($this, $Year, $Month) = @_;	# TODO: verify that they are set
+	my($this, $Year, $Month) = @_;
 	return if _nf_assert($this,'invalid method call');
 	return if _nf_assert(defined $Year,'Year missing');
 	return if _nf_assert(defined $Month, 'Month missing');
@@ -101,7 +101,7 @@ sub get_monthinfo {
 # Purpose: Get information for the supplied date (list of times in the day there are events)
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
 sub get_dateinfo {
-	my($this, $Year, $Month, $Day) = @_;	# TODO: verify that they are set
+	my($this, $Year, $Month, $Day) = @_;
 	return if _nf_assert($this,'invalid method call');
 	return if _nf_assert(defined $Year,'Year missing');
 	return if _nf_assert(defined $Month, 'Month missing');
@@ -121,7 +121,7 @@ sub get_dateinfo {
 # Purpose: Get the list of UIDs for the supplied time
 # Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
 sub get_timeinfo {
-	my($this, $Year, $Month, $Day, $Time) = @_;	# TODO: verify that they are set
+	my($this, $Year, $Month, $Day, $Time) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
 	return if _nf_assert(defined $Year,  'Year missing');
@@ -347,7 +347,7 @@ sub get_rawdata {
 # Purpose: Delete an iCalendar entry
 # Usage: $object->delete(UID);
 sub delete {
-	my ($this, $UID) = @_;	# TODO verify UID
+	my ($this, $UID) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
 	return if _nf_assert(defined $UID,   'UID missing');
