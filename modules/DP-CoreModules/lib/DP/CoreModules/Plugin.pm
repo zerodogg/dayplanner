@@ -300,6 +300,7 @@ sub signal_emit
 	{
 		delete($this->{signalRunning}->{$signal});
 	}
+	shift(@{$this->{runningSignals}});
 	return $return;
 }
 
