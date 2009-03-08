@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # DP::iCalendar
 # An iCalendar parser/loader.
-# Copyright (C) Eskild Hustvedt 2007, 2008
+# Copyright (C) Eskild Hustvedt 2007, 2008, 2009
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself. There is NO warranty;
@@ -23,7 +23,7 @@ our @EXPORT_OK = qw(iCal_ParseDateTime iCal_GenDateTime iCal_ConvertFromUnixTime
 
 # Version number
 our $VERSION;
-$VERSION = '0.3.1';
+$VERSION = '0.3.2';
 
 # - Public methods
 
@@ -435,10 +435,6 @@ sub addfile {
 # Usage: $object->clean()
 sub clean {
 	my $this = shift;
-	if (not $_[0])
-	{
-		carp("DP::iCalendar->clean(): Deprecated. Create a new object instead.");
-	}
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->_ClearCalculated();
 	return(true);
@@ -482,7 +478,6 @@ sub disable {
 # Usage: $object->reload();
 sub reload {
 	my $this = shift;
-	carp("DP::iCalendar->reload(): Deprecated. Create a new object instead.");
 	if($this->{FILETYPE} eq 'ref') {
 		carp('reload called on object created from array ref');
 		return(false);
