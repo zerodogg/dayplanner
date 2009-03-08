@@ -4460,6 +4460,14 @@ sub DrawMainWindow {
 	$UpcomingEventsWidget->set_editable(0);
 	$UpcomingEventsWidget->set_wrap_mode('word');
 	$UpcomingEventsWidget->show();
+	eval
+	{
+		$UpcomingEventsWidget->set_cursor_visible(false);
+	};
+	if ($@)
+	{
+		DPIntWarn('Gtk2 doesn\'t appear to support set_cursor_visible(). Please send a bug report with the output of "dayplanner --debuginfo" to the Day Planner developers');
+	}
 	$UpcomingEventsWindow->add($UpcomingEventsWidget);
 	# Pack it onto the main window
 	$RightHandVBox->pack_end($UpcomingEventsWindow,1,1,0);
