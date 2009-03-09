@@ -478,14 +478,14 @@ of these plugins to get a feel for it.
 
 =head1 THE BASIC PLUGIN LAYOUT
 
-A plugin should have a new_instance method. This instance gets the
+A plugin should have a new_instance method. This method gets the
 plugin handler object supplied as its sole parameter.
 
-It should create the plugin's object and return it. It should only do
-signal connecting and the initialization that is required for it to be
-operational until the INIT signal is issued and it can finalize its
-initialization. See the builtin signals section for more information about
-the INIT signal.
+It should create the plugin's object and return it (like a normal module).  It
+should only do signal connecting and the initialization that is required for it
+to be operational until the INIT signal is issued and it can finalize its
+initialization. See the builtin signals section for more information about the
+INIT signal.
 
 =head1 THE PLUGIN HANDLER OBJECT
 
@@ -501,16 +501,20 @@ It has the following methods:
 
 This method takes an array of zero or more elements as its parameter.
 It is used to register a signal (not a handler) for use. You should
-call this if your plugin will emit signals.
+call this if your plugin will emit signals. The plugin handler ignores
+all emitted signals that has not been previously registered.
 
 =item signal_emit(B<STRING> signal)
 
-Emits the signal supplied, calling all listeners.
+Emits the signal supplied, calling all listeners in turn.
 
 =item signal_connect(B<STRING> signal, B<OBJECT> plugin, B<STRING> method)
 
 Connects the method on the plugin object supplied to the signal supplied.
 The method will then be called whenever the signal is emitted.
+
+Plugins are called inside of an eval, so any die()s or crashes will be
+caught by the plugin handler.
 
 =item signal_connect_ifavailable(B<STRING> signal, B<OBJECT> plugin, B<STRING> method)
 
@@ -535,7 +539,7 @@ in the documentation for the signal in question.
 =item delete_var(B<STRING> variable name)
 
 Deletes the variable supplied. You should never use this to delete
-content that is shared by anthing other than your plugin.
+content that is shared by anything other than your plugin.
 
 =item set_tempvar(B<STRING> variable name, B<VARIABLE> content)
 
@@ -545,24 +549,40 @@ througout a single signal.
 
 =item set_confval(B<STRING> name, B<STRING> value)
 
-Sets the configuration value name to value for THIS plugin. The plugin
-object automatically handles making it unique for your plugin, so you do
-not need to ensure that the name is unique for the entire program, only
-for your plugin. The configuration values are automatically saved by
-Day Planner.
+Sets the configuration value name to value for THIS plugin. The plugin object
+automatically handles making it unique for your plugin, so you do not need to
+ensure that the name is unique for the entire program, only for your plugin.
+The configuration values are automatically saved and loaded by Day Planner.
 
 =item get_confval(B<STRING> name)
 
-Gets the configuration value supplied.
+Gets the configuration value supplied. This retrieves settings set using
+set_confval()
 
 =item abort()
 
-Tells the plugin handler that the action that triggered the signal
-should stop processing after the signal has finished. Use with care.
+Tells the plugin handler that the action that triggered the signal should stop
+processing after the signal has finished. Use with care. Note that not all signals
+will honor an abort() call (ie. you can't abort for instance SHUTDOWN and SAVEDATA).
 
 =back
 
+=head1 USEFUL DAY PLANNER FUNCTIONS
+
+Day Planner has many useful functions that you can import from various sources.
+The most common ones are found in L<DP::CoreModules::PluginFunctions>, and allow
+access to such things as telling Day Planner that data has been updated, and
+displaying simple dialog boxes, as well as an Assert() function. See the
+documentation for that module for more information.
+
+The calendar interface is provided by L<DP::iCalendar>, and you can find
+various generic helpers in L<DP::GeneralHelpers>.
+
 =head1 GLOBALLY SHARED VARIABLES
+
+These variables are available with get_var() throughout the lifetime of the
+application. Some of these variables are however not available before after the
+INIT signal has been emitted.
 
 =over
 
@@ -649,7 +669,7 @@ be aborted.
 =item SHUTDOWN
 
 Emitted right before Day Planner is about to exit (before the gtk2 main loop
-is exited, and before writing state and iCalendar files.
+is exited, and before writing state and iCalendar files).
 
 =back
 
@@ -658,12 +678,13 @@ is exited, and before writing state and iCalendar files.
 For program documentation: 
 L<dayplanner> L<dayplanner-daemon(1)> L<dayplanner-notifier(1)>
 
-For API documentation:
+For API documentation see:
 L<DP::iCalendar> L<DP::iCalendar::Manager> L<Date::HolidayParser>
+L<DP::GeneralHelpers> L<DP::CoreModules::PluginFunctions>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) Eskild Hustvedt 2006, 2007, 2008
+Copyright (C) Eskild Hustvedt 2006, 2007, 2008, 2009
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
