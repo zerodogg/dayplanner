@@ -31,7 +31,7 @@ use constant {
 };
 
 # Exported functions
-our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile InPath PrefixZero);
+our @EXPORT_OK = qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile InPath PrefixZero versionToFloat);
 
 # Purpose: Print a warning to STDERR with proper output
 # Usage: DPIntWarn("Warning");
@@ -144,6 +144,30 @@ sub PrefixZero
 		return("0$Number");
 	}
 	return($Number);
+}
+
+# Purpose: Convert a version number string in the form major.minor.patch to a float
+# Usage: my $versionFloat = versionToFloat($VERSION);
+# .patch is optional, .0 is assumed if it is missing
+# Returns a float that is usable for versions as large as N.999.999
+sub versionToFloat
+{
+	my $number = shift;
+	(my $major = $number) =~ s/^(\d+)\..*/$1/;
+	(my $minor = $number) =~ s/^\d+\.(\d+)(\.\d+)*$/$1/;
+	(my $patch = $number) =~ s/^\d+\.\d+\.(\d+)$/$1/;
+
+	$patch = '000' if $patch =~ /\./;
+
+	foreach my $v (\$minor, \$patch)
+	{
+		while(length $$v < 3)
+		{
+			$$v = "0$$v";
+		}
+	}
+
+	return $major.'.'.$minor.$patch;
 }
 
 # Version number
