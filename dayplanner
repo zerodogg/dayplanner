@@ -576,13 +576,28 @@ sub GetDebugInfo
 	my %digests;
 	{
 		runtime_use('Digest::MD5');
-		foreach my $cFile (qw(- -daemon -notifier))
+		my $fail = 0;
+		foreach my $cFile (qw(dayplanner dayplanner-daemon dayplanner-notifier))
 		{
-			my $file = $cFile eq '-' ? '' : $cFile;
-			my $oFile = $cFile eq '-' ? 'dayplanner' : $cFile;
-			$oFile =~ s/-//g;
-			open(my $f,'<',$FindBin::RealScript.$file);
+			my $oFile = $cFile;
+			$oFile =~ s/^dayplanner-//;
+			$digests{$oFile} = '(unknown)';
+			if(not -e $FindBin::RealBin.'/'.$cFile)
+			{
+				$fail = 1;
+				warn("ERROR: Failed to locate: $FindBin::RealBin/$cFile\n");
+				next;
+			}
+			my $f;
+			open($f,'<',$FindBin::RealBin.'/'.$cFile) or $f = undef;
+			if(not $f)
+			{
+				$fail = 1;
+				warn("ERROR: Failed to open $FindBin::RealBin/$cFile for reading: $!\n");
+				next;
+			}
 			my $md5 = Digest::MD5->new();
+			binmode($f);
 			$md5->addfile($f);
 			$digests{$oFile} = $md5->hexdigest;
 			close($f);
