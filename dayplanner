@@ -2184,7 +2184,7 @@ sub PromptOverwrite {
 			if(-d $File) {
 				while(glob("$File/*")) {
 					unless($_ =~ /^\./) {
-						if(DPQuestion($i18n->get_advanced("There are already files in the directory \"%(dir)\". If you continue any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?", { dir =>  $File}))) {
+						if(DPQuestion($i18n->get_advanced("There are already files in the directory \"%(dir)\". If you continue, any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?", { dir =>  $File}))) {
 							return(1);
 						} else {
 							return(undef);
