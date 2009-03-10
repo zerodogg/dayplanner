@@ -1863,7 +1863,7 @@ sub ImportDataFromProgram
 	$ImportWindow->add($ImportVBox);
 
 	# Create the initial text
-	my $LabelText = $FirstTime ? $i18n->get("Welcome to Day Planner.\n\nYou may now choose to import data from other applications.\nCheck the application(s) you want to import from below and\npress Ok to continue, press Cancel if you don't want\nto import anything.") : $i18n->get('Which application(s) do you want to import data from?');
+	my $LabelText = $FirstTime ? $i18n-get("Welcome to Day Planner.\n\nIf you wish to import calendar data from another application, select the application now and press \"Import\" to continue, otherwise press \"Don't import\".") : $i18n->get('Which application(s) do you want to import data from?');
 	my $ImportLabel = Gtk2::Label->new($LabelText);
 	$ImportLabel->set_line_wrap_mode('word-char');
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
@@ -2405,7 +2405,7 @@ sub DeleteEvent {
 
 		UpdatedData(0,1);
 	} elsif ($Type eq 'holiday') {
-		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
+		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event cannot be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	}
 }
 
@@ -3511,7 +3511,7 @@ sub EditEvent
 		$AllDayEvent->{MainVBox}->show();
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, $EventUID, 0)});
 	} elsif ($Type eq 'holiday') {
-		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event can not be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
+		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event cannot be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
 		return(1);
 	} 
