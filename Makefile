@@ -42,7 +42,12 @@ LOCALMODULES=-I./modules/DP-GeneralHelpers/lib/ -I./modules/DP-iCalendar/lib/ -I
 
 # So I have to type less
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
-BESILENT = perl -e "open(STDIN,'>','/dev/null'); open(STDOUT,'>','/dev/null'); exec(@ARGV);"
+
+# Set these so that it can be overridden by the calld if needed
+CP ?= cp
+
+# Silencing perl helper
+BESILENT = perl -e "open(STDIN,'<','/dev/null'); open(STDOUT,'>','/dev/null'); exec(@ARGV);"
 
 # --- USER USABLE RULES ---
 help:
@@ -104,7 +109,7 @@ man:
 # Install manpages
 maninstall:
 	mkdir -p "$(DESTDIR)$(DATADIR)/man/man1"
-	cp -f dayplanner.1 dayplanner-daemon.1 dayplanner-notifier.1 "$(DESTDIR)$(DATADIR)/man/man1" 
+	$(CP) -f dayplanner.1 dayplanner-daemon.1 dayplanner-notifier.1 "$(DESTDIR)$(DATADIR)/man/man1" 
 
 # Date::HolidayParser installation
 DHPinstall:
@@ -120,7 +125,7 @@ nice_i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale || true
-	cp -r locale $(DESTDIR)$(DATADIR)
+	$(CP) -r locale $(DESTDIR)$(DATADIR)
 
 # This is the normal one, it will die if it fails and it won't create additional
 # symlinks
@@ -128,7 +133,7 @@ i18ninstall:
 	rm -rf locale
 	mkdir locale
 	perl ./devel-tools/BuildLocale ./locale
-	cp -r locale $(DESTDIR)$(DATADIR)
+	$(CP) -r locale $(DESTDIR)$(DATADIR)
 
 # Installation of DP
 maininstall:
@@ -209,7 +214,7 @@ mobiledistrib:
 	make -C mobile clean
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
-	cp -r ./`ls|grep -v dayplanner-$(VERSION)` ./.git ./dayplanner-$(VERSION)
+	$(CP) -r ./`ls|grep -v dayplanner-$(VERSION)` ./.git ./dayplanner-$(VERSION)
 	make -C ./dayplanner-$(VERSION) distclean
 	rm -rf ./dayplanner-$(VERSION)/devel-tools/rpm ./dayplanner-$(VERSION)/devel-tools/debian
 	rm -rf ./dayplanner-$(VERSION)/.git
@@ -219,8 +224,8 @@ rpm: prepdistrib tarball rpmonly
 rpmonly:
 	[ -e ./packages/dayplanner-$(VERSION).tar.bz2 ]
 	mkdir -p $$HOME/rpm/SOURCES/ $$HOME/rpm/RPMS/noarch/ $$HOME/rpm/BUILD/ $$HOME/rpm/SRPMS
-	cp ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
-	cp ./devel-tools/rpm/package.spec ./dayplanner.spec
+	$(CP) ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
+	$(CP) ./devel-tools/rpm/package.spec ./dayplanner.spec
 	perl -pi -e 's#\[DAYPLANNER_VERSION\]#$(VERSION)#gi' ./dayplanner.spec
 	$(BESILENT) rpmbuild --define '_with_unstable 1' --with old_menu --with holidayparser -ba ./dayplanner.spec
 	rm -f packages/rpmbuild.log
@@ -233,10 +238,10 @@ debonly:
 	rm -rf ./dp_deb_tmp
 	mkdir -p ./dp_deb_tmp
 	(cd dp_deb_tmp; tar -jxvf ../packages/dayplanner-$(VERSION).tar.bz2)
-	(cd dp_deb_tmp; cp ../packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner_$(VERSION).orig.tar.bz2)
+	(cd dp_deb_tmp; $(CP) ../packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner_$(VERSION).orig.tar.bz2)
 	(cd dp_deb_tmp; bunzip2 ./dayplanner_$(VERSION).orig.tar.bz2 && gzip ./dayplanner_$(VERSION).orig.tar)
 	(if ! grep $(VERSION) ./devel-tools/debian/changelog; then $$EDITOR ./devel-tools/debian/changelog;fi)
-	cp -r ./devel-tools/debian ./dp_deb_tmp/dayplanner-$(VERSION)/debian
+	$(CP) -r ./devel-tools/debian ./dp_deb_tmp/dayplanner-$(VERSION)/debian
 	(cd dp_deb_tmp/dayplanner-$(VERSION); debuild -i -us -uc -b)
 	mv dp_deb_tmp/*deb packages/
 	rm -rf dp_deb_tmp
@@ -244,7 +249,7 @@ installer: prepdistrib tarball
 	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
 	mkdir -p installer
 	mv dayplanner-$(VERSION) installer/dayplanner-data
-	cp ./devel-tools/installer/* ./installer
+	$(CP) ./devel-tools/installer/* ./installer
 	rm -f installer/InstallLocal
 	$(BESILENT) ./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art
 	$(BESILENT) ./installer/dayplanner-data/devel-tools/BuildLocale
