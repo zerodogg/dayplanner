@@ -215,7 +215,7 @@ mobiledistrib:
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
 	$(CP) -r ./`ls|grep -v dayplanner-$(VERSION)` ./.git ./dayplanner-$(VERSION)
-	make -C ./dayplanner-$(VERSION) distclean
+	make -C ./dayplanner-$(VERSION) distclean man
 	rm -rf ./dayplanner-$(VERSION)/devel-tools/rpm ./dayplanner-$(VERSION)/devel-tools/debian
 	rm -rf ./dayplanner-$(VERSION)/.git
 	tar -jcf ./packages/dayplanner-$(VERSION).tar.bz2 ./dayplanner-$(VERSION)
