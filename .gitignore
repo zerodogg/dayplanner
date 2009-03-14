@@ -13,3 +13,5 @@ doc/dayplanner.desktop
 packages/
 po/dayplanner.pot
 locale/
+# Manpages
+dayplanner*.1
