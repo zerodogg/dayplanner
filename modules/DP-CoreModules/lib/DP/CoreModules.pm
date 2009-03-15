@@ -16,11 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+package DP::CoreModules;
 use strict;
 use warnings;
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 use FindBin;
+use Exporter qw(import);
+use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile PrefixZero);
+
+our @EXPORT = qw(InPath GetXDGDir DetectConfDir ParseDateString
+	ParseEntryField ReportBug GetDistVer LaunchWebBrowser P_WriteConfig
+	P_LoadConfig DP_mkpath P_CreateSaveDir GetUpcomingEventsString runtime_use
+	DetectImage P_GetSummaryString GetDate);
 
 our $Version = '0.11';
 my $VersionName = 'GIT';
@@ -692,5 +700,11 @@ sub GetDate {
 	$curryear += 1900;						# Fix the year format
 	$currmonth++;							# Fix the month format
 	return($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst);
+}
+
+# Temporary hack to generate wrappers to import methods from main
+foreach(qw(i18nwrapper i18nwrapper_advanced i18nwrapper_AMPM_From24 GetSummaryString))
+{
+	eval('sub '.$_.' { return main::'.$_.'(@_); }');
 }
 1;
