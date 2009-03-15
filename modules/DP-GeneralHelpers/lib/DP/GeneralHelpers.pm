@@ -1,5 +1,5 @@
 # DP::GeneralHelpers
-# Copyright (C) Eskild Hustvedt 2007, 2008
+# Copyright (C) Eskild Hustvedt 2007, 2008, 2009
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of either:
@@ -46,48 +46,30 @@ sub DPIntInfo {
 	print "*** (Day Planner$ver): $_[0]\n";
 }
 
-# Purpose: Open a file
-# Usage: DP_sopen(PARAMS);
-# 	PARAMS are identical to those of open(), skipping the first one;
-#
-# 	Returns false on error, the FH if not.
-sub DP_sopen
-{
-	my $type = shift;
-	my $sourcetype = shift;
-	my $err;
-	open(my $FH, $type, $sourcetype) or do
-	{
-		$err = $!;
-	};
-	if ($err)
-	{
-		DPIntWarn("Failed to open $sourcetype: $err");
-		return(false);
-	}
-	return($FH);
-}
-
 # Purpose: Write a configuration file
 # Usage: WriteConfigFile(/FILE, \%ConfigHash, \%ExplanationHash);
 sub WriteConfigFile {
 	my ($File, $Config, $Explanations) = @_;
 
 	# Open the config for writing
-	open(my $CONFIG, '>', "$File") or do {
+	open(my $CONFIG, '>', $File) or do
+	{
 		# If we can't then we error out, no need for failsafe stuff - it's just the config file
 		DPIntWarn("Unable to save the configuration file $File: $!");
 		return(0);
 	};
-	if(defined($Explanations->{HEADER})) {
-		print $CONFIG "# $Explanations->{HEADER}\n";
+	if(defined($Explanations->{HEADER}))
+	{
+		print $CONFIG '# '.$Explanations->{HEADER}."\n";
 	}
-	foreach(sort(keys(%{$Config}))) {
+	foreach(sort(keys(%{$Config})))
+	{
 		next unless length($Config->{$_});	# Don't write empty options
-		if(defined($Explanations->{$_})) {
-			print $CONFIG "\n# $Explanations->{$_}";
+		if(defined($Explanations->{$_}))
+		{
+			print $CONFIG "\n# ".$Explanations->{$_};
 		}
-		print $CONFIG "\n$_=$Config->{$_}\n";
+		print $CONFIG "\n".$_.'='.$Config->{$_}."\n";
 	}
 	close($CONFIG);
 }
@@ -101,11 +83,13 @@ sub WriteConfigFile {
 sub LoadConfigFile {
 	my ($File, $ConfigHash, $OptionRegex, $OnlyValidOptions) = @_;
 
-	open(my $CONFIG, '<', "$File") or do {
-		DPIntWarn(sprintf("Unable to read the configuration settings from %s: %s", $File, $!));
+	open(my $CONFIG, '<', $File) or do
+	{
+		DPIntWarn(sprintf('Unable to read the configuration settings from %s: %s', $File, $!));
 		return(0);
 	};
-	while(<$CONFIG>) {
+	while(<$CONFIG>)
+	{
 		next if m/^\s*(#.*)?$/;
 		next unless m/=/;
 		chomp;
@@ -113,19 +97,24 @@ sub LoadConfigFile {
 		my $Value = $_;
 		$Option =~ s/^\s*(\w+)\s*=.*/$1/;
 		$Value =~ s/^\s*\w+\s*=\s*(.*)\s*/$1/;
-		if($OnlyValidOptions) {
-			unless(defined($OptionRegex->{$Option})) {
-				DPIntWarn("Unknown configuration option \"$Option\" (=$Value) in $File: Ignored.");
+		if($OnlyValidOptions)
+		{
+			if(not defined($OptionRegex->{$Option}))
+			{
+				DPIntWarn('Unknown configuration option "'.$Option.'" (='.$Value.') in '.$File.': Ignored.');
 				next;
 			}
 		}
-		unless(defined($Value)) {
-			DPIntWarn("Empty value for option $Option in $File");
+		if(not defined($Value))
+		{
+			DPIntWarn('Empty value for option '.$Option.' in '.$File);
 		}
-		if(defined($OptionRegex) and defined($OptionRegex->{$Option})) {
+		if(defined($OptionRegex) and defined($OptionRegex->{$Option}))
+		{
 			my $MustMatch = $OptionRegex->{$Option};
-			unless ($Value =~ /$MustMatch/) {
-				DPIntWarn("Invalid setting of $Option (=$Value) in the config file: Must match $OptionRegex->{Option}.");
+			if (not $Value =~ /$MustMatch/)
+			{
+				DPIntWarn('Invalid setting of '.$Option.' (='.$Value.') in the config file: Must match '.$OptionRegex->{Option}.'.');
 				next;
 			}
 		}
