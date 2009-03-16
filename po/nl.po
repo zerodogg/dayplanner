@@ -4,14 +4,14 @@
 # as published by the Free Software Foundation; either version 3 of the license
 # or (at your option) any later version (the same license as Day Planner)
 #
-# Reinout van Schouwen <reinout@gmail.com>, 2007,2008
+# Reinout van Schouwen <reinout@gmail.com>, 2007-2009
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Day Planner 0.6\n"
 "Report-Msgid-Bugs-To: https://gna.org/bugs/?group=dayplanner\n"
 "POT-Creation-Date: 2009-03-14 17:29+0100\n"
-"PO-Revision-Date: 2008-04-35 11:45+0200\n"
+"PO-Revision-Date: 2009-03-16 13:46+0100\n"
 "Last-Translator: Reinout van Schouwen <reinout@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "MIME-Version: 1.0\n"
@@ -86,6 +86,12 @@ msgid ""
 "From there select \"Startup Programs\", click \"Add\". Type \"dayplanner-"
 "daemon\" in the \"Startup Command\" field and press the \"OK\" button."
 msgstr ""
+"Er is een probleem opgetreden bij het instellen van het automatisch startproces "
+"van de Dagplanner-herinnering.\n"
+"\n"
+"U kunt het met de hand doen door te selecteren: menu -> Werkplek -> Voorkeuren -> Sessies. "
+"Vanuit daar selecteert u \"Startup Programs\", klik op \"Toevoegen\". Type \"dayplanner-"
+"daemon\" in het \"Startup Command\"-veld en druk op de \"OK\"-knop."
 
 #: dayplanner:1371
 msgid ""
@@ -113,7 +119,6 @@ msgid "Import data"
 msgstr "Gegevens importeren"
 
 #: dayplanner:1866
-#, fuzzy
 msgid ""
 "Welcome to Day Planner.\n"
 "\n"
@@ -121,12 +126,11 @@ msgid ""
 "application(s) now and press \"Import\" to continue, otherwise press \"Don't "
 "import\"."
 msgstr ""
-"Welkom bij Day Planner.\n"
+"Welkom bij Dagplanner.\n"
 "\n"
-"U kunt nu kiezen om gegevens te importeren uit andere toepassingen.\n"
-"Kruis hieronder de toepassing(en) aan van waaruit u wilt importeren en \n"
-"druk op Ok om door te gaan. Druk op Annuleren als u niets wilt \n"
-"importeren."
+"Wilt u agendagegevens uit andere toepassingen importeren, selecteer dan nu "
+"de toepassing(en) en druk op ‘Importeren’ om door te gaan. "
+"In andere gevallen drukt u op ‘Niet importeren’."
 
 #: dayplanner:1866
 msgid "Which application(s) do you want to import data from?"
@@ -134,15 +138,13 @@ msgstr "Van welke toepassing(en) wilt u gegevens importeren?"
 
 #. TRANSLATORS: Button in the "import from program" window
 #: dayplanner:1929
-#, fuzzy
 msgid "_Import"
-msgstr "Importeren"
+msgstr "I_mporteren"
 
 #. TRANSLATORS: Button in the "import from program" window
 #: dayplanner:1948
-#, fuzzy
 msgid "_Don't import"
-msgstr "Niet importeren"
+msgstr "_Niet importeren"
 
 #: dayplanner:1981
 msgid "Importing..."
@@ -153,9 +155,8 @@ msgid "Done"
 msgstr "Klaar"
 
 #: dayplanner:2068
-#, fuzzy
 msgid "Import data from file"
-msgstr "De gegevens vanuit een bestand importeren"
+msgstr "Gegevens vanuit een bestand importeren"
 
 #: dayplanner:2076
 msgid "All supported file formats"
@@ -179,7 +180,6 @@ msgid "XHTML (exports to a directory)"
 msgstr "XHTML (exporteert naar een map)"
 
 #: dayplanner:2187
-#, fuzzy
 msgid ""
 "There are already files in the directory \"%(dir)\". If you continue, any "
 "existing exported Day Planner data in that directory will be overwritten. Do "
@@ -206,13 +206,13 @@ msgid "\"%(file)\" already exists. Overwrite?"
 msgstr "\"%(file)\" bestaat al, overschrijven?"
 
 #: dayplanner:2408 dayplanner:3514
-#, fuzzy, perl-format
+#, perl-format
 msgid ""
 "This is a predefined \"holiday\" event. This event cannot be edited directly "
 "from within Day Planner. In order to change these events use a text editor "
 "and edit the file %s."
 msgstr ""
-"Dit is een voorgedefineerde \"vakantie\"-gebeurtenis. Deze gebeurtenis kan "
+"Dit is een voorgedefineerde “vakantie-gebeurtenis”. Deze gebeurtenis kan "
 "niet direct vanuit Day Planner worden bewerkt. Om deze gebeuretenissen te "
 "wijzigen kunt u een tekst-editor gebruiken om het bestand %s te bewerken."
 
@@ -419,15 +419,13 @@ msgstr "_Agenda"
 
 #. TRANSLATORS: Menu selection in the Calendar menu
 #: dayplanner:4337
-#, fuzzy
 msgid "_Import file..."
-msgstr "_Importeren…"
+msgstr "Bestand i_mporteren…"
 
 #. TRANSLATORS: Menu selection in the Calendar menu
 #: dayplanner:4340
-#, fuzzy
 msgid "Import from _program..."
-msgstr "_Importeren…"
+msgstr "Uit _programma importeren…"
 
 #. TRANSLATORS: Menu selection in the Calendar menu. Exports calendar data.
 #: dayplanner:4343
@@ -477,6 +475,15 @@ msgid ""
 "\n"
 "Exception: %(exception)"
 msgstr ""
+"Er is een fout opgetreden. Dit betekent dat er een bug in Dagplanner zit. "
+"Mogelijk werkt Dagplanner niet correct meer totdat het is herstart.\n"
+"\n"
+"Controleer alstublieft of u de nieuwste versie van Dagplanner gebruikt. "
+"Als dat zo is, sla dan de volgende tekst op en meld het probleem bij de "
+"ontwikkelaars van Dagplanner door ‘Hulp’ -> ‘Programmafout melden’ in het "
+"hoofdscherm van Dagplanner.\n"
+"\n"
+"Exception: %(exception)"
 
 #: dayplanner-notifier:96 dayplanner-notifier:105
 msgid "Show details"
@@ -633,31 +640,30 @@ msgstr "Onbekend"
 
 #: PluginManager.pm:60
 msgid "_Plugins"
-msgstr ""
+msgstr "_Plug-ins"
 
 #: PluginManager.pm:74
-#, fuzzy
 msgid "Day Planner plugins"
-msgstr "Dagplanner"
+msgstr "Dagplanner-plug-ins"
 
 #. TRANSLATORS: The title of the column with the checkbox to activate/deactiate a plugin
 #: PluginManager.pm:92
 msgid "Active"
-msgstr ""
+msgstr "Actief"
 
 #: PluginManager.pm:93
 msgid "Plugin"
-msgstr ""
+msgstr "Plug-in"
 
 #. TRANSLATORS: This would pop up a window where one can select a plugin package file to install
 #: PluginManager.pm:121
 msgid "_Install a plugin"
-msgstr ""
+msgstr "Een plu_g-in installeren"
 
 #. TRANSLATORS: As in uninstall the currently selected plugin in the list of plugins
 #: PluginManager.pm:127
 msgid "_Uninstall plugin"
-msgstr ""
+msgstr "Plug-in _deïnstalleren"
 
 #: PluginManager.pm:163
 msgid ""
@@ -666,6 +672,10 @@ msgid ""
 "\n"
 "Do you want to restart Day Planner now?"
 msgstr ""
+"U heeft nieuwe plug-ins ingeschakeld. Dagplanner dient te herstarten "
+"voordat ze actief worden.\n"
+"\n"
+"Wilt u Dagplanner nu herstarten?"
 
 #: PluginManager.pm:164
 msgid ""
@@ -674,10 +684,14 @@ msgid ""
 "\n"
 "Do you want to restart Day Planner now?"
 msgstr ""
+"U heeft enkele plug-ins uitgeschakeld. Dagplanner dient te herstarten "
+"voordat ze gedeactiveerd worden.\n"
+"\n"
+"Wilt u Dagplanner nu herstarten?"
 
 #: PluginManager.pm:186
 msgid "Are you sure you want to uninstall the plugin \"%(PLUGIN)\"?"
-msgstr ""
+msgstr "Weet u zeker dat u de plug-in ‘%(PLUGIN)’ wilt deïnstalleren?"
 
 #: PluginManager.pm:254
 msgid ""
@@ -689,31 +703,41 @@ msgid ""
 "\n"
 "The package might be called something like the following: %(PACKAGE)"
 msgstr ""
+"De plug-in ‘%(PLUGIN)’ vereist de perl-module ‘%(MOUDULE)’, maar die module "
+"is niet op uw systeem geïnstalleerd.\n"
+"\n"
+"U dient deze module te installeren voordat u deze plug-in kunt installeren. "
+"Raadpleeg de documentatie van uw besturingssysteem voor instructies over hoe u dat doet.\n"
+"\n"
+"Het pakket zou ongeveer zo kunnen heten: %(PACKAGE)"
 
 #: PluginManager.pm:276
 msgid "Install Day Planner plugin package"
-msgstr ""
+msgstr "Een plug-in-pakket voor dagplanner installeren"
 
 #: PluginManager.pm:283
-#, fuzzy
 msgid "Day Planner plugin packages"
-msgstr "Day Planner-herinnering"
+msgstr "Plug-inpakketten voor dagplanner"
 
 #: PluginManager.pm:293
 msgid "This file does not appear to be a Day Planner plugin package"
-msgstr ""
+msgstr "Dit bestand lijkt geen plug-inpakket voor Dagplanner te zijn"
 
 #: PluginManager.pm:300
 msgid ""
 "This plugin is already installed, if you want to re-install or upgrade it "
 "you will need to uninstall the one that is already installed first"
 msgstr ""
+"Deze plug-in is reeds geïnstalleerd. Als u hem wilt herinstalleren of opwaarderen "
+"dan dient u eerst degene die al geïnstalleerd is, te deïnstalleren."
 
 #: PluginManager.pm:306
 msgid ""
 "This plugin is written for a later version of Day Planner. You need to "
 "upgrade Day Planner before you can use it"
 msgstr ""
+"Deze plug-in is geschreven voor een nieuwere versie van Dagplanner. U dient "
+"Dagplanner op te waarderen voordat u hem kunt gebruiken."
 
 #: PluginManager.pm:311
 msgid ""
@@ -721,17 +745,20 @@ msgid ""
 "plugins from sources you trust, unsafe plugins can damage your system and "
 "files."
 msgstr ""
+"Weet u zeker dat u dit pakket wilt installeren? Het is aan te raden om alleen "
+"plug-ins te installeren uit bronnen die u vertrouwt. Onveilige plug-ins kunnen "
+"uw systeem en bestanden beschadigen."
 
 #: PluginManager.pm:315
 msgid ""
 "Installation failed, this file does not appear to be a Day Planner plugin "
 "package"
 msgstr ""
+"Installatie mislukt. Dit bestand lijkt geen Dagplanner-plug-in te zijn."
 
 #: ServicesSync.pm:80
-#, fuzzy
 msgid "_Synchronization"
-msgstr "Synchronisatie"
+msgstr "_Synchronisatie"
 
 #: ServicesSync.pm:110
 msgid "Synchronization"
