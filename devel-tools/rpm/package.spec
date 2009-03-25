@@ -72,6 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dayplanner-daemon
 %{_bindir}/dayplanner-notifier
 %{_datadir}/%name/
+%{_datadir}/man/man1/*
 %{_iconsdir}/dayplanner*.png
 %{_miconsdir}/dayplanner*.png
 %{_liconsdir}/dayplanner*.png
