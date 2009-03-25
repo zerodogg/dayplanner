@@ -1052,10 +1052,23 @@ GetOptions (
 		print "Day Planner daemon version $Version\n";
 		exit(0);
 	},
-	'test|t:i' => sub {
-		my $NumberPrefix = $_[1] ? $_[1] : '';
+	'test|t:s' => sub {
+		shift;
+		my $prefix = shift;
+		if ($prefix && $prefix =~ /(\s|\/)/)
+		{
+			die("The parameter for --test needs to be a string with no spaces and no /\n");
+		}
+		elsif(not defined $prefix)
+		{
+			$prefix = '';
+		}
+		elsif ($prefix =~ /\D/)
+		{
+			$prefix = '_'.$prefix;
+		}
 		$DataDir = DetectConfDir();
-		$DataDir .= "/debug$NumberPrefix";
+		$DataDir .= "/debug$prefix";
 		my $Dir = $DataDir;
 		$Dir =~ s/^$ENV{HOME}/~/g;
 		DPIntInfo("Running in test mode (using $Dir)");
