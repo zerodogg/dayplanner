@@ -1752,6 +1752,7 @@ sub ImportDataFromProgram
 	my $LabelText = $FirstTime ? $i18n->get("Welcome to Day Planner.\n\nIf you wish to import calendar data from other applications, select the application(s) now and press \"Import\" to continue, otherwise press \"Don't import\".") : $i18n->get('Which application(s) do you want to import data from?');
 	my $ImportLabel = Gtk2::Label->new($LabelText);
 	$ImportLabel->set_line_wrap_mode('word-char');
+	$ImportLabel->set_line_wrap(1);
 	$ImportVBox->pack_start($ImportLabel,0,0,0);
 	$ImportLabel->show();
 
