@@ -17,102 +17,154 @@
 
 use strict;
 use warnings;
-use X11::GUITest qw(StartApp WaitWindowViewable SendKeys SetKeySendDelay);
+use X11::GUITest qw(StartApp WaitWindowViewable WaitWindowClose SendKeys);
 
-my $DPExec = '../dayplanner -t -s';
+my $DPExec = '../dayplanner -t dpGUIAutoTest -s';
+my $MAX_WAIT_SECS = 5;
+my %globalWinIds;
 
-sub SetLocaleVars {
+sub SetLocaleVars
+{
 	my ($LC_Setting, $LANG_Setting) = @_;
-	foreach(keys(%ENV)) {
+	foreach(keys(%ENV))
+	{
 		next unless /^(LC_|LANG)/;
-		if(/^LC_/) {
+		if(/^LC_/ or $_ eq 'LANG')
+		{
 			$ENV{$_} = $LC_Setting;
-		} elsif (/^LANGUAGE/) {
+		}
+		elsif (/^LANGUAGE/)
+		{
 			$ENV{$_} = $LANG_Setting;
 		}
 	}
 }
 
-sub Type {
-	SendKeys($_[0]);
-	if (WaitWindowViewable('(Feil|Error|Warning|Advarsel)', undef, 1)) {
-		die("Testing FAILED. See the GUI window for error information.\n");
+sub Type
+{
+	foreach my $keys (@_)
+	{
+		SendKeys($keys);
+		if ($ENV{TESTER_PARANOID_ERRORCHECKS})
+		{
+			if (WaitWindowViewable('(Error|Warning)', undef, 1))
+			{
+				die("Testing FAILED. See the GUI window for error information.\n");
+			}
+		}
 	}
 }
 
-sub EN_12H_Gui {
-	print "Running test: EN_12H_Gui\n";
-	SetLocaleVars("en_US", "en");
-	# Start dayplanner application
+sub RequireWindowPresent
+{
+	my $win = shift;
+	my ($gotWin) = WaitWindowViewable($win,undef,$MAX_WAIT_SECS);
+	if (!$gotWin)
+	{
+		die("Unable to detect the window \"$win\"\n");
+	}
+	$globalWinIds{$win} = $gotWin;
+	return $gotWin;
+}
+
+sub RequireWindowClosed
+{
+	my $win = shift;
+	if ($win =~ /\D/)
+	{
+		if ($globalWinIds{$win})
+		{
+			$win = $globalWinIds{$win};
+		}
+		else
+		{
+			die("RequireWindowClosed() failed to locate the winid needed");
+		}
+	}
+	my ($gotWin) = WaitWindowClose($win,undef,$MAX_WAIT_SECS);
+	if (!$gotWin)
+	{
+		die("The window \"$win\" appears to have failed to close\n");
+	}
+}
+
+sub MainWindowTest
+{
+	my $win = shift;
+	my $openActions = shift;
+	my $duringActions = shift;
+	my $closeActions = shift;
+	Type(split(/ /,$openActions));
+	my ($present) = RequireWindowPresent($win);
+	if ($duringActions)
+	{
+		Type(split(/ /,$duringActions));
+	}
+	if(not defined $closeActions)
+	{
+		$closeActions = '%(c)';
+	}
+	Type(split(/ /,$closeActions));
+	RequireWindowClosed($present);
+}
+
+sub TestWindowOpen
+{
+	my $win = shift;
+	my $openActions = shift;
+	my $closeActions = shift;
+	MainWindowTest($win,$openActions,undef,$closeActions);
+}
+
+sub PrimaryTest_24H
+{
+	print "Running primary test (24H)\n";
+	SetLocaleVars('C', 'C');
+	$ENV{DP_FORCE_24H} = 1;
 	StartApp($DPExec);
 
 	# Wait for application window to come up and become viewable. 
-	my ($GEditWinId) = WaitWindowViewable('Day Planner');
-	if (!$GEditWinId) {
-		die("Unable to detect the window (en)\n");
-	}
-	# Delete an existing event
-	Type("\t^(d)");
-	# Add a birthday
-	Type('^(a)');
-	Type(' {DOW} ');
-	Type("\t");
-	Type("Tester");
-	Type("\t\t");
-	Type("\n");
-	# Quit
-	Type("%(c)");
-	Type("{DOW}");
-	Type("{DOW}");
-	Type("\n");
+	RequireWindowPresent('Day Planner');
+
+	# Basic tests
+	TestWindowOpen('Add an event',"%(e)\n");
+	TestWindowOpen('Preferences',"%(e){UP}\n");
+	TestWindowOpen('Day Planner plugins',"%(e){DOW}\n");
+	TestWindowOpen('About Day Planner',"%(h){UP}\n");
+	TestWindowOpen('Import data from file',"%(c)\n");
+	TestWindowOpen('Import data',"%(c){DOW}\n",'%(d)');
+	TestWindowOpen('Export data',"%(c){DOW}{DOW}\n");
+
+	# Main adding test
+	MainWindowTest('Add an event',"%(e)\n","\t\t\t\t\tMyTestEvent","\n");
+	MainWindowTest('Editing an event',"\t{DOW}\n");
+	MainWindowTest('Editing an event',"%(e){DOW}\n");
+	MainWindowTest('Editing an event',"%(e){DOW}\n","\t\t\t\tMyTestEvent_V2","\n");
+	# Focus the event and delete it
+	Type("{DOW}{UP}\t{DOW}{UP}%(e){DOW}{DOW}\n");
+	MainWindowTest('Add an event',"%(e)\n","\n{DOW}\n\t\t\tMyTestFullDayEvent","\n");
+	# Focus the event
+	Type("\t\t\t\t\t{DOW}{UP}\t");
+	MainWindowTest('Editing an all day event',"%(e){DOW}\n");
+	# Focus the event and delete it
+	Type("{DOW}{UP}\t{DOW}{UP}%(e){DOW}{DOW}\n");
+	MainWindowTest('Add an event',"%(e)\n","\n{DOW}{DOW}\n\t\t\tSomeBday","\n");
+	# Focus the event
+	Type("\t\t\t\t\t{DOW}{UP}\t");
+	MainWindowTest('Editing a birthday',"%(e){DOW}\n");
+	# Focus the event and delete it
+	Type("{DOW}{UP}\t{DOW}{UP}%(e){DOW}{DOW}\n");
+
+	# Close DP
+	Type('%(c)q');
+	RequireWindowClosed('Day Planner');
 }
 
-sub NN_24H_Gui {
-	print "Running test: nn_NO\n";
-	SetLocaleVars("nn_NO.UTF-8", "nn:no\@nynorsk:no_NY:no:nb");
-	# Start dayplanner application
-	StartApp($DPExec);
-
-	# Wait for application window to come up and become viewable. 
-	my ($GEditWinId) = WaitWindowViewable('Dagsplanleggar');
-	if (!$GEditWinId) {
-		die("Unable to detect the window (nn)\n");
-	}
-	# Delete an existing event
-	Type("\t^(d)");
-	# Add an event
-	Type('^(a)');
-	Type("\t");
-	Type("03\t44");
-	Type("\tHeisann\t\t\t");
-	Type("\n");
-	# Edit the event
-	Type("\t\t\n");
-	Type("\t32\tTesting more\t\t\t");
-	Type("\n");
-	# Edit menu
-	Type("%(e)");
-	Type("{DOW}");
-	Type("\n");
-	# Set the expand details setting
-	Type("{SPA}");
-	Type("%(l)");
-	# Unset it
-	
-	Type("%(e)");
-	Type("{DOW}");
-	Type("\n");
-	Type("{SPA}");
-	Type("%(l)");
-	# Quit
-	Type("%(k)");
-	Type("{DOW}");
-	Type("{DOW}");
-	Type("\n");
+sub SecondaryTest_12H
+{
+	print "Secondary test is stubbed\n";
 }
-
-SetKeySendDelay(100);
 
 # Run the available tests
-NN_24H_Gui();
-EN_12H_Gui();
+PrimaryTest_24H();
+SecondaryTest_12H();
