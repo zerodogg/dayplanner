@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 VERSION=0.10
+BESILENT = perl -e "open(STDIN,'<','/dev/null'); open(STDOUT,'>','/dev/null'); exec(@ARGV);"
 
 clean:
 	rm -f *~
@@ -38,5 +39,5 @@ tarball:
 singlefile: tarball
 	mkdir -p packages
 	tar -jxvf packages/dayplanner-mobile-$(VERSION).tar.bz2
-	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; ./makeself.sh --bzip2 --nox11 $$OLDPWD/dayplanner-mobile-$(VERSION) dayplanner-mobile-single-$(VERSION).run 'Day Planner mobile standalone single-executeable' ./mobile-dp-gui.py &> /dev/null || exit 1; mv ./dayplanner-mobile-single-$(VERSION).run $$OLDPWD/packages )
+	( cd $$HOME/makeself* || cd $$HOME/downloads/makeself* || exit 1; $(BESILENT) ./makeself.sh --bzip2 --nox11 $$OLDPWD/dayplanner-mobile-$(VERSION) dayplanner-mobile-single-$(VERSION).run 'Day Planner mobile standalone single-executeable' ./mobile-dp-gui.py || exit 1; mv ./dayplanner-mobile-single-$(VERSION).run $$OLDPWD/packages )
 	rm -rf dayplanner-mobile-$(VERSION)
