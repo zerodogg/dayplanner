@@ -32,10 +32,11 @@ the tests, not the whole document. Like so:
 2.2 - pass
 
 In addition to that you will need to provide the revision number of
-the TESTCASES file you used. This one is: $Rev$
+the TESTCASES file you used. You can get it by running:
+git log TESTCASES |head -n1
+if you are using a release tarball, just provide the version number.
 
-The date format used in this file is the international date format.
-DD.MM.YYYY
+The date format used in this file is: DD.MM.YYYY
 
 2 - MAIN GUI
 ============
