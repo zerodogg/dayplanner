@@ -120,16 +120,8 @@ sub TestWindowOpen
 	MainWindowTest($win,$openActions,undef,$closeActions);
 }
 
-sub PrimaryTest_24H
+sub BasicSanityChecks
 {
-	print "Running primary test (24H)\n";
-	SetLocaleVars('C', 'C');
-	$ENV{DP_FORCE_24H} = 1;
-	StartApp($DPExec);
-
-	RequireWindowPresent('Day Planner - Import data');
-	Type('%(d)');
-
 	# Wait for application window to come up and become viewable. 
 	RequireWindowPresent('Day Planner');
 
@@ -141,6 +133,19 @@ sub PrimaryTest_24H
 	TestWindowOpen('Import data from file',"%(c)\n");
 	TestWindowOpen('Import data',"%(c){DOW}\n",'%(d)');
 	TestWindowOpen('Export data',"%(c){DOW}{DOW}\n");
+}
+
+sub PrimaryTest_24H
+{
+	print "Running primary test (24H)\n";
+	SetLocaleVars('C', 'C');
+	$ENV{DP_FORCE_24H} = 1;
+	StartApp($DPExec);
+
+	RequireWindowPresent('Day Planner - Import data');
+	Type('%(d)');
+
+	BasicSanityChecks();
 
 	# Main adding test
 	MainWindowTest('Add an event',"%(e)\n","\t\t\t\t\tMyTestEvent","\n");
@@ -162,6 +167,13 @@ sub PrimaryTest_24H
 	# Focus the event and delete it
 	Type("{DOW}{UP}\t{DOW}{UP}%(e){DOW}{DOW}\n");
 
+	# Open the add event window and the calendar window there
+	Type("%(e)\n");
+	RequireWindowPresent('Add an event');
+	Type("\t\t\t\t\n");
+	RequireWindowPresent('Calendar');
+	Type('%(c)%(c)');
+
 	# Close DP
 	Type('%(c)q');
 	RequireWindowClosed('Day Planner');
@@ -169,7 +181,27 @@ sub PrimaryTest_24H
 
 sub SecondaryTest_12H
 {
-	print "Secondary test is stubbed\n";
+	# This is just basic sanity checking of the 12H version
+	print "Running secondary test (12H)\n";
+	SetLocaleVars('C', 'C');
+	$ENV{DP_FORCE_24H} = 0;
+	StartApp($DPExec);
+
+	BasicSanityChecks();
+
+	# Main tests
+	MainWindowTest('Add an event',"%(e)\n","\t\t\t\t\t\tMyTestEvent","\n");
+	# Focus the event and delete it
+	Type("{DOW}{UP}\t{DOW}{UP}%(e){DOW}{DOW}\n");
+
+	MainWindowTest('Add an event',"%(e)\n","\t\t\t\n{DOW}\n\t\t\tMyTestAMPMChangeEvent","\n");
+	MainWindowTest('Editing an event',"\t{DOW}\n");
+	# Focus the event and delete it
+	Type("{DOW}{UP}\t{DOW}{UP}%(e){DOW}{DOW}\n");
+
+	# Close DP
+	Type('%(c)q');
+	RequireWindowClosed('Day Planner');
 }
 
 sub prepare
@@ -185,7 +217,7 @@ sub prepare
 		{
 			# Don't kill other files
 			next if not /(\.ics|\.log|\.conf|Socket|holidays)$/;
-			if (-f $_)
+			if (-f $_ || -S $_)
 			{
 				unlink($_);
 			}
