@@ -18,9 +18,13 @@
 use strict;
 use warnings;
 use X11::GUITest qw(StartApp WaitWindowViewable WaitWindowClose SendKeys);
+use Cwd qw(getcwd);
+use File::Path qw(mkpath);
+use Fatal qw(unlink rmdir chdir mkpath open close);
 
 my $DPExec = '../dayplanner -t dpGUIAutoTest -s';
 my $MAX_WAIT_SECS = 5;
+my $origCwd = getcwd();
 my %globalWinIds;
 
 sub SetLocaleVars
@@ -123,6 +127,9 @@ sub PrimaryTest_24H
 	$ENV{DP_FORCE_24H} = 1;
 	StartApp($DPExec);
 
+	RequireWindowPresent('Day Planner - Import data');
+	Type('%(d)');
+
 	# Wait for application window to come up and become viewable. 
 	RequireWindowPresent('Day Planner');
 
@@ -165,6 +172,45 @@ sub SecondaryTest_12H
 	print "Secondary test is stubbed\n";
 }
 
+sub prepare
+{
+	print "Preparing to run tests...\n";
+	my $XDG = $ENV{XDG_CONFIG_PATH};
+	$XDG = $XDG ? $XDG : $ENV{HOME}.'/.config';
+	my $conf = $XDG.'/dayplanner/debug_dpGUIAutoTest';
+	if (-d $conf)
+	{
+		chdir($conf);
+		foreach(<*>)
+		{
+			# Don't kill other files
+			next if not /(\.ics|\.log|\.conf|Socket|holidays)$/;
+			if (-f $_)
+			{
+				unlink($_);
+			}
+		}
+		chdir($origCwd);
+		rmdir($conf);
+	}
+	if(not -d $ENV{HOME}.'/.evolution/calendar/local/system')
+	{
+		mkpath($ENV{HOME}.'/.evolution/calendar/local/system');
+	}
+	if(not -e $ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics')
+	{
+		open(my $EVOCAL,'>',$ENV{HOME}.'/.evolution/calendar/local/system/calendar.ics');
+		print $EVOCAL "BEGIN:VCALENDAR\nCALSCALE:GREGORIAN\nPRODID:-//day-planner.org//NONSGML Day Planner GUI Test script//EN\nVERSION:2.0\nEND:VCALENDAR\n";
+		close($EVOCAL);
+	}
+}
+
+if (not @ARGV or not $ARGV[0] eq 'run')
+{
+	die("This is the Day Planner automated GUI test.\n\n- You can not use X while it is running.\n- It will create a dummy debug* dir that it will remove when finished\n- It will create dummy data for evolution if it is not present\n\nIf you still want to run it, supply the command-line argument 'run'\n");
+}
+
+prepare();
 # Run the available tests
 PrimaryTest_24H();
 SecondaryTest_12H();
