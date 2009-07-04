@@ -759,6 +759,20 @@ sub Assert
 sub AlreadyRunningDP {
 	my $ClientConnection = shift;
 	Assert(defined $ClientConnection);
+
+	my $display = $ClientConnection->client_send_blocking('GETDISPLAY');
+	if(defined $display and length $display and defined $ENV{DISPLAY})
+	{
+		if ($display eq $ENV{DISPLAY})
+		{
+			my $reply = $ClientConnection->client_send_blocking('SHOWHIDE');
+			if ($reply eq 'OK')
+			{
+				exit(0);
+			}
+		}
+	}
+
 	if($Gtk2Init) {
 		my $ErrorDialog = Gtk2::MessageDialog->new (undef,
 						'destroy-with-parent',
@@ -868,6 +882,25 @@ sub IPC_Handler
 	elsif ($Message =~ /^GETPID/)
 	{
 		return($$);
+	}
+	elsif ($Message =~ /^GETDISPLAY/)
+	{
+		my $display = $ENV{DISPLAY} ? $ENV{DISPLAY} : '';
+		return ($display);
+	}
+	elsif($Message =~ /^SHOWHIDE/)
+	{
+		if ($MainWindow)
+		{
+			$MainWindow->hide();
+			$MainWindow->show();
+			$MainWindow->present();
+			return 'OK';
+		}
+		else
+		{
+			return 'FAILURE';
+		}
 	}
 	# This isn't used anywhere yet, but is added in case it is needed
 	# in future versions that needs to be able to talk to this one.
