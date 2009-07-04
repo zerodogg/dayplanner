@@ -188,7 +188,8 @@ sub ShowManager
 					my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
 					if(not -e $ppath.$selectedPlugin.'.pm')
 					{
-						DPError("Failed to locate plugin");
+						DPIntWarn('Failed to locate plugin at '.$ppath.$selectedPlugin.'.pm: '.$!);
+						DPError($i18n->get('Failed to locate the plugin files, unable to uninstall'));
 					}
 					else
 					{
@@ -254,7 +255,10 @@ sub ShowManager
 								DPError($i18n->get_advanced("The plugin \"%(PLUGIN)\" needs the perl module \"%(MODULE)\", but that module is not installed on your system.\n\nYou will have to install this module before you can install this plugin. Consult your distribution documentation for instructions on how to do that.\n\nThe package might be called something like the following: %(PACKAGE)", {
 											PLUGIN => $selectedPlugin,
 											MODULE => $module,
-											PACKAGE => join(' or ',@names),
+											# TRANSLATORS: This word appears in the 'the plugin ... needs the perl module...' message, at the end.
+											# 	%(PACKAGE) is a list of packages, and in English it might end up as something like:
+											# 	"libsomething-perl or perl-something", the ' or ' string acts as glue.
+											PACKAGE => join($i18n->get(' or '),@names),
 										}));
 								return;
 							}
