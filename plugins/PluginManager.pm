@@ -375,25 +375,26 @@ sub generateInfoString
 	my $this = shift;
 	my $meta = shift;
 	my $string = '';
+	my $i18n = $this->{plugin}->get_var('i18n');
 	if ($meta->{author})
 	{
-		$string = 'Author: '.$meta->{author}."\n";
+		$string = $i18n->get('Author:').' '.$meta->{author}."\n";
 	}
 	if ($meta->{version})
 	{
-		$string .= 'Version: '.$meta->{version}."\n";
+		$string .= $i18n->get('Version:').' '.$meta->{version}."\n";
 	}
 	if ($meta->{license})
 	{
-		$string .= 'License: '.$meta->{license}."\n";
+		$string .= $i18n->get('License:').' '.$meta->{license}."\n";
 	}
 	if ($meta->{description})
 	{
-		$string .= 'Description: '.$meta->{description}."\n";
+		$string .= $i18n->get('Description:').' '.$meta->{description}."\n";
 	}
 	if ($meta->{website})
 	{
-		$string .= 'Website: '.$meta->{website}."\n";
+		$string .= $i18n->get('Website:').' '.$meta->{website}."\n";
 	}
 	$string =~ s/\n$//;
 	return $string;
