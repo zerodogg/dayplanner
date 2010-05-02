@@ -27,6 +27,39 @@ my $MAX_WAIT_SECS = 5;
 my $origCwd = getcwd();
 my %globalWinIds;
 
+sub fail
+{
+	my $error = shift;
+	my @info;
+	my $cint = 0;
+	my $testLine;
+	my $pLine;
+	use Data::Dumper;
+	while(1)
+	{
+		@info = caller($cint);
+		if (not @info)
+		{
+			last;
+		}
+		if ($info[3] =~ /Test_\d\dH/)
+		{
+			$testLine = $pLine;
+			last;
+		}
+		$pLine = $info[2];
+		$cint++;
+	}
+	if ($testLine)
+	{
+		die("Test at line $testLine failed: $error");
+	}
+	else
+	{
+		die($error);
+	}
+}
+
 sub SetLocaleVars
 {
 	my ($LC_Setting, $LANG_Setting) = @_;
@@ -53,7 +86,7 @@ sub Type
 		{
 			if (WaitWindowViewable('(Error|Warning)', undef, 1))
 			{
-				die("Testing FAILED. See the GUI window for error information.\n");
+				fail("Testing FAILED. See the GUI window for error information.\n");
 			}
 		}
 	}
@@ -65,7 +98,7 @@ sub RequireWindowPresent
 	my ($gotWin) = WaitWindowViewable($win,undef,$MAX_WAIT_SECS);
 	if (!$gotWin)
 	{
-		die("Unable to detect the window \"$win\"\n");
+		fail("Unable to detect the window \"$win\"\n");
 	}
 	$globalWinIds{$win} = $gotWin;
 	return $gotWin;
@@ -74,6 +107,7 @@ sub RequireWindowPresent
 sub RequireWindowClosed
 {
 	my $win = shift;
+	my $name = shift;
 	if ($win =~ /\D/)
 	{
 		if ($globalWinIds{$win})
@@ -82,13 +116,20 @@ sub RequireWindowClosed
 		}
 		else
 		{
-			die("RequireWindowClosed() failed to locate the winid needed");
+			fail("RequireWindowClosed() failed to locate the winid needed");
 		}
 	}
 	my ($gotWin) = WaitWindowClose($win,undef,$MAX_WAIT_SECS);
 	if (!$gotWin)
 	{
-		die("The window \"$win\" appears to have failed to close\n");
+		if ($name)
+		{
+			fail("The window $win (\"$name\") appears to have failed to close\n");
+		}
+		else
+		{
+			fail("The window \"$win\" appears to have failed to close\n");
+		}
 	}
 }
 
@@ -109,7 +150,7 @@ sub MainWindowTest
 		$closeActions = '%(c)';
 	}
 	Type(split(/ /,$closeActions));
-	RequireWindowClosed($present);
+	RequireWindowClosed($present,$win);
 }
 
 sub TestWindowOpen
