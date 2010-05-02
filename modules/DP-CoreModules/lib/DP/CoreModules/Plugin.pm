@@ -588,7 +588,7 @@ INIT signal has been emitted.
 
 =item MainWindow
 
-This is the main Gtk2::Window for Day Planner. Not available
+This is the main L<Gtk2::Window> for Day Planner. Not available
 before the INIT signal.
 
 =item CalendarWidget
@@ -602,7 +602,7 @@ Day Planner will not redraw the list of events until you do.
 
 =item calendar
 
-The DP::iCalendar::Manager object.
+The L<DP::iCalendar::Manager> object.
 
 =item state
 
@@ -621,7 +621,7 @@ Boolean, true if gtk2 has been initialized.
 
 =item i18n
 
-The DP::GeneralHelpers::i18n object.
+The L<DP::GeneralHelpers::i18n> object.
 
 =item version
 
@@ -648,7 +648,7 @@ temporary variables:
 
 =item MenuItems
 
-An arrayref to an array containing elements for a Gtk2::ItemFactory.
+An arrayref to an array containing elements for a L<Gtk2::ItemFactory>.
 You can push additional items that you wish added to the menu onto this
 variable.
 
