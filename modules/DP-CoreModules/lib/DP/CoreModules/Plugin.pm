@@ -591,6 +591,15 @@ INIT signal has been emitted.
 This is the main Gtk2::Window for Day Planner. Not available
 before the INIT signal.
 
+=item CalendarWidget
+
+This is the main L<Gtk2::Calendar> widget displayed in the main
+Day Planner window. Not available before the INIT signal.
+
+NOTE: If you switch the date, you have to remember to call:
+I<$object->signal_emit('day-selected')> after you have switched it.
+Day Planner will not redraw the list of events until you do.
+
 =item calendar
 
 The DP::iCalendar::Manager object.

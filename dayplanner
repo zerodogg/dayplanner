@@ -4587,6 +4587,7 @@ sub InitDPCore {
 	Set_DayChangeTimer();
 
 	$plugin->set_var('MainWindow',$MainWindow);
+	$plugin->set_var('CalendarWidget',$CalendarWidget);
 	$plugin->signal_emit('INIT');
 	return true;
 }
