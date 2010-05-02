@@ -224,7 +224,7 @@ sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS IPC_IN));
+	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -4437,6 +4437,12 @@ sub DrawMainWindow {
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
 	$ToolbarEditButton->show();
+
+	# Let plugins add buttons
+	$plugin->set_tempvar('Toolbar',$Toolbar);
+	$plugin->set_tempvar('Tooltips',$Tooltips);
+	$plugin->signal_emit('BUILD_TOOLBAR');
+
 	
 	# Add button
 	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');

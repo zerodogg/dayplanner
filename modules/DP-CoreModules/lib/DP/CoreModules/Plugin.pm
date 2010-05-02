@@ -653,6 +653,29 @@ The localized name of the edit menu.
 
 =back
 
+=item BUILD_TOOLBAR
+
+NOTE: This signal is emitted BEFORE the INIT signal.
+
+This lets you add buttons to the Day Planner toolbar at the bottom of
+the main window. It shares the following temporary variables
+
+=over 
+
+=item Toolbar
+
+The L<Gtk2::Toolbar> object that represents the Day Planner toolbar widget.
+
+=item Tooltips
+
+The L<Gtk2::Tooltips> object used for the toolbar. Use this to add tooltips
+to any button you add, like this:
+
+	$myButton->set_tooltip($TooltipsObj,'My tooltip','');
+	$TooltipsObj->set_tip($myButton,'My tooltip');
+
+=back
+
 =item INIT
 
 This is the initialization signal. If your module needs to perform some initial tasks,
