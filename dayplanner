@@ -33,7 +33,8 @@ use constant { true => 1, false => 0 };
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
-use lib "$FindBin::RealBin/modules/";
+# External deps as fetched by the makefile
+use lib "$FindBin::RealBin/modules/external/";
 # Day Planner-specific libs
 use Date::HolidayParser::iCalendar 0.4;	# Parsing of .holiday files
 use DP::CoreModules::Plugin;
