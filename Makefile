@@ -122,8 +122,9 @@ DHPinstall:
 
 MOUSE_VER=0.58
 ANYMOOSE_VER=0.12
+HOLIDAYPARSER_VER=0.4
 
-DOWNLOAD_DEPS=$(shell perl -e 'if(not eval("use Mouse;1")) { print "deps_mouse "}; if(not eval("use Date::HolidayParser::iCalendar 0.4;1")) { print "deps_holidayparser"};')
+DOWNLOAD_DEPS=$(shell perl -e 'if(not eval("use Mouse;1")) { print "deps_mouse "}; if(not eval("use Date::HolidayParser::iCalendar $(HOLIDAYPARSER_VER);1")) { print "deps_holidayparser"}; if(not eval("use Any::Moose;1;")) { print "deps_anymoose "}')
 
 deps: $(DOWNLOAD_DEPS)
 deps_prep:
@@ -131,7 +132,10 @@ deps_prep:
 	mkdir -p ./modules/external
 deps_holidayparser: deps_prep
 	@echo "Fetching dependency: Date::HolidayParser"
-	# TODO
+	wget http://search.cpan.org/CPAN/authors/id/Z/ZE/ZERODOGG/Date-HolidayParser-$(HOLIDAYPARSER_VER).tar.gz
+	tar -zxvf Date-HolidayParser-$(HOLIDAYPARSER_VER).tar.gz
+	mv ./Date-HolidayParser-$(HOLIDAYPARSER_VER)/lib/* ./modules/external/
+	rm -fr ./Date-HolidayParser-$(HOLIDAYPARSER_VER) Date-HolidayParser-$(HOLIDAYPARSER_VER).tar.gz
 deps_mouse: deps_prep
 	@echo "Fetching dependency: Mouse"
 	wget http://search.cpan.org/CPAN/authors/id/G/GF/GFUJI/Mouse-$(MOUSE_VER).tar.gz
