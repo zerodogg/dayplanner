@@ -120,6 +120,7 @@ HOLIDAYPARSER_VER=0.4
 DOWNLOAD_DEPS=$(shell perl -e 'if(not eval("use Mouse;1")) { print "deps_mouse "}; if(not eval("use Date::HolidayParser::iCalendar $(HOLIDAYPARSER_VER);1")) { print "deps_holidayparser"}; if(not eval("use Any::Moose;1;")) { print "deps_anymoose "}')
 
 deps: $(DOWNLOAD_DEPS)
+deps_force: deps_holidayparser deps_mouse deps_anymoose
 deps_prep:
 	rm -rf ./modules/external
 	mkdir -p ./modules/external
@@ -268,6 +269,7 @@ installer: prepdistrib tarball
 	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
 	mkdir -p installer
 	mv dayplanner-$(VERSION) installer/dayplanner-data
+	make -C installer/dayplanner-data deps_force
 	$(CP) ./devel-tools/installer/* ./installer
 	rm -f installer/InstallLocal
 	$(BESILENT) ./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art
