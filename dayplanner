@@ -30,13 +30,13 @@ use FindBin;			# So that we can detect module dirs during runtime
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 # This here is done so that we can use local versions of our libs
-use lib "$FindBin::RealBin/modules/Date-HolidayParser/lib/";
 use lib "$FindBin::RealBin/modules/DP-iCalendar/lib/";
 use lib "$FindBin::RealBin/modules/DP-GeneralHelpers/lib/";
 use lib "$FindBin::RealBin/modules/DP-CoreModules/lib/";
-use lib "$FindBin::RealBin/modules/";
+# External deps as fetched by the makefile
+use lib "$FindBin::RealBin/modules/external/";
 # Day Planner-specific libs
-use Date::HolidayParser 0.4;	# Parsing of .holiday files
+use Date::HolidayParser::iCalendar 0.4;	# Parsing of .holiday files
 use DP::CoreModules::Plugin;
 use DP::CoreModules;
 use DP::iCalendar qw(iCal_ParseDateTime iCal_GenDateTime); # iCalendar support
@@ -225,7 +225,7 @@ sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS IPC_IN));
+	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -472,10 +472,7 @@ sub LoadCalendar {
 	if (-e "$SaveToDir/holidays")
 	{
 		# Load the holiday file
-		$HolidayParser = Date::HolidayParser->new("$SaveToDir/holidays");
-		# Enable Date::HolidayParsers DP::iCalendar-compatible interface, replacing
-		# the standard interface.
-		$HolidayParser->enable_ical_interface();
+		$HolidayParser = Date::HolidayParser::iCalendar->new("$SaveToDir/holidays");
 		# Add the holiday parser to the manager
 		$iCalendar->add_object($HolidayParser,false);
 	}
@@ -625,7 +622,7 @@ sub GetDebugInfo
 	my @AvailModules;
 	my @UnavailModules;
 	print {$target} "Available modules:";
-	foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/) {
+	foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser::iCalendar IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/) {
 		if(eval("use $Module; 1")) {
 			if($Prev) {
 				print {$target} ',';
@@ -4441,6 +4438,12 @@ sub DrawMainWindow {
 	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
 	$Toolbar->insert($ToolbarEditButton,0);
 	$ToolbarEditButton->show();
+
+	# Let plugins add buttons
+	$plugin->set_tempvar('Toolbar',$Toolbar);
+	$plugin->set_tempvar('Tooltips',$Tooltips);
+	$plugin->signal_emit('BUILD_TOOLBAR');
+
 	
 	# Add button
 	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
@@ -4585,6 +4588,7 @@ sub InitDPCore {
 	Set_DayChangeTimer();
 
 	$plugin->set_var('MainWindow',$MainWindow);
+	$plugin->set_var('CalendarWidget',$CalendarWidget);
 	$plugin->signal_emit('INIT');
 	return true;
 }

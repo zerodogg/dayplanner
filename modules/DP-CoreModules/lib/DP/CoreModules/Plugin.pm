@@ -588,12 +588,21 @@ INIT signal has been emitted.
 
 =item MainWindow
 
-This is the main Gtk2::Window for Day Planner. Not available
+This is the main L<Gtk2::Window> for Day Planner. Not available
 before the INIT signal.
+
+=item CalendarWidget
+
+This is the main L<Gtk2::Calendar> widget displayed in the main
+Day Planner window. Not available before the INIT signal.
+
+NOTE: If you switch the date, you have to remember to call:
+I<$object->signal_emit('day-selected')> after you have switched it.
+Day Planner will not redraw the list of events until you do.
 
 =item calendar
 
-The DP::iCalendar::Manager object.
+The L<DP::iCalendar::Manager> object.
 
 =item state
 
@@ -612,7 +621,7 @@ Boolean, true if gtk2 has been initialized.
 
 =item i18n
 
-The DP::GeneralHelpers::i18n object.
+The L<DP::GeneralHelpers::i18n> object.
 
 =item version
 
@@ -639,7 +648,7 @@ temporary variables:
 
 =item MenuItems
 
-An arrayref to an array containing elements for a Gtk2::ItemFactory.
+An arrayref to an array containing elements for a L<Gtk2::ItemFactory>.
 You can push additional items that you wish added to the menu onto this
 variable.
 
@@ -650,6 +659,29 @@ The localized name of the help menu.
 =item EditName
 
 The localized name of the edit menu.
+
+=back
+
+=item BUILD_TOOLBAR
+
+NOTE: This signal is emitted BEFORE the INIT signal.
+
+This lets you add buttons to the Day Planner toolbar at the bottom of
+the main window. It shares the following temporary variables
+
+=over 
+
+=item Toolbar
+
+The L<Gtk2::Toolbar> object that represents the Day Planner toolbar widget.
+
+=item Tooltips
+
+The L<Gtk2::Tooltips> object used for the toolbar. Use this to add tooltips
+to any button you add, like this:
+
+	$myButton->set_tooltip($TooltipsObj,'My tooltip','');
+	$TooltipsObj->set_tip($myButton,'My tooltip');
 
 =back
 

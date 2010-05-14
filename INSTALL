@@ -8,25 +8,27 @@ Index:
 
 1 - LOCAL INSTALL
 -----------------
-In order to install Day Planner locally, simply type make install in the
-Day Planner base directory. Either as root or as the user you wish to
-use Day Planner as.
+In order to install Day Planner locally, simply type make install in the Day
+Planner base directory. Either as root or as the user you wish to use Day
+Planner as.
 
 2 - LOCAL FROM THE REPOSITORY
 -----------------------------
-This is only recommended if you are doing Day Planner development.
-Run 'make pluginprep' to prepare plugin metadata files, from there on you can
+This is only recommended if you are doing Day Planner development.  Run 'make
+pluginprep' to prepare plugin metadata files, then run 'make deps' to fetch any
+dependencies you may be missing into ./modules/external, from there on you can
 use ./dayplanner and similar commands.
 
 3 - PACKAGING
 -------------
 Simply make install. If prefix is set then it will detect that a distro package
-is being built and won't include Date::HolidayParser, nor any other files that
-distro packages don't need (or install seperately). If you still need to install
-Date::HolidayParser just make DHPinstall after make install. It will also create
-a .desktop file that doesn't use any absolute paths. 
+is being built and won't include any files that distro packages don't need (or
+install seperately). It will also create a .desktop file that doesn't use any
+absolute paths. 
 
-You must install (or symlink) the icons in the art/ directory yourself if you want them to
-be available outside of Day Planners own art/ tree or the DATADIR/pixmaps/ tree.
+You must install (or symlink) the icons in the art/ directory yourself if you
+want them to be available outside of Day Planners own art/ tree or the
+DATADIR/pixmaps/ tree.
 
-An example of a packaged Day Planner is in ./devel-tools/rpm/package.spec
+An example of a packaged Day Planner is in ./devel-tools/debian and
+./devel-tools/rpm/package.spec

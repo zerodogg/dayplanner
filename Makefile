@@ -21,7 +21,7 @@ ifdef prefix
 INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall holidayinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
+INSTALLRULES=deps maininstall maninstall moduleinstall plugininstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
@@ -55,6 +55,7 @@ help:
 	@echo " install      - install Day Planner"
 	@echo " uninstall    - uninstall a previously installed Day Planner"
 	@-[ -e "./.git" ] && echo " localinstall - install symlinks and .desktop files to use the current git checkout";true
+	@echo " deps         - install Day Planner dependencies to ./modules/external"
 	@echo "Advanced targets:"
 	@echo " clean        - clean up the tree"
 	@echo " updatepo     - update po-files"
@@ -101,6 +102,7 @@ distclean: clean
 	rm -f ./dayplanner-daemon.1 ./dayplanner-notifier.1 ./dayplanner.1
 	rm -f doc/dayplanner.desktop
 
+
 # Create manpages
 man:
 	pod2man --name "Day Planner" --center "" --release "Day Planner $(VERSION)" ./dayplanner ./dayplanner.1
@@ -115,6 +117,33 @@ maninstall:
 DHPinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/Date/
 	install -m644 modules/Date-HolidayParser/lib/Date/HolidayParser.pm $(DP_MAINTARGET)/modules/Date/HolidayParser.pm
+
+# --- Dependency fetching ---
+
+MOUSE_VER=0.58
+ANYMOOSE_VER=0.12
+
+DOWNLOAD_DEPS=$(shell perl -e 'if(not eval("use Mouse;1")) { print "deps_mouse "}; if(not eval("use Date::HolidayParser::iCalendar 0.4;1")) { print "deps_holidayparser"};')
+
+deps: $(DOWNLOAD_DEPS)
+deps_prep:
+	rm -rf ./modules/external
+	mkdir -p ./modules/external
+deps_holidayparser: deps_prep
+	@echo "Fetching dependency: Date::HolidayParser"
+	# TODO
+deps_mouse: deps_prep
+	@echo "Fetching dependency: Mouse"
+	wget http://search.cpan.org/CPAN/authors/id/G/GF/GFUJI/Mouse-$(MOUSE_VER).tar.gz
+	tar -zxf Mouse-$(MOUSE_VER).tar.gz
+	mv ./Mouse-$(MOUSE_VER)/lib/* ./modules/external/
+	rm -rf ./Mouse-$(MOUSE_VER) ./Mouse-$(MOUSE_VER).tar.gz
+deps_anymoose: deps_prep
+	@echo "Fetching dependency: Any::Moose"
+	wget http://search.cpan.org/CPAN/authors/id/S/SA/SARTAK/Any-Moose-$(ANYMOOSE_VER).tar.gz
+	tar -zxf Any-Moose-$(ANYMOOSE_VER).tar.gz
+	mv ./Any-Moose-$(ANYMOOSE_VER)/lib/* ./modules/external/
+	rm -rf ./Any-Moose-$(ANYMOOSE_VER) ./Any-Moose-$(ANYMOOSE_VER).tar.gz
 
 # --- INTERNAL RULES ---
 

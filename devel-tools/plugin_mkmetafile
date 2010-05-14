@@ -55,9 +55,9 @@ my $fatal = 0;
 		$fatal = $i;
 	}
 }
-die("Failed to load plugin: $fatal") if $fatal;
-die("Plugin loading appears to have failed") if not $plugin;
-die("Plugin loading appears to have failed, it returned $plugin which is not a reference\n") if not ref $plugin;
+die("Failed to load plugin \"$name\": $fatal") if $fatal;
+die("Plugin loading appears to have failed for $name") if not defined $plugin;
+die("Plugin loading appears to have failed for \"$name\": it returned $plugin which is not a reference\n") if not ref $plugin;
 
 die("Plugin \"$base\" doesn't have any meta entries. Please see the documentation for how to add them. Refusing to create empty meta file.\n") if not defined $plugin->{meta};
 foreach my $required (qw(name title version apiversion license author))
