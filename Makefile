@@ -18,10 +18,10 @@ PLUGINPREP=$(shell perl -e 'if(-d "./.git" ) { print "pluginprep" } elsif (not g
 
 # If prefix is already set then use some distro-friendly install rules
 ifdef prefix
-INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall holidayinstall i18ninstall distribdesktop
+INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=deps maininstall maninstall moduleinstall plugininstall artinstall holidayinstall DHPinstall nice_i18ninstall desktop essentialdocs
+INSTALLRULES=deps maininstall maninstall moduleinstall plugininstall artinstall DHPinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
@@ -38,7 +38,7 @@ VERSION=0.11
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
-LOCALMODULES=-I./modules/DP-GeneralHelpers/lib/ -I./modules/DP-iCalendar/lib/ -I./modules/DP-CoreModules/lib/ -I./modules/Date-HolidayParser/lib/
+LOCALMODULES=-I./modules/DP-GeneralHelpers/lib/ -I./modules/DP-iCalendar/lib/ -I./modules/DP-CoreModules/lib/ -I./modules/external/
 
 # So I have to type less
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
@@ -60,7 +60,6 @@ help:
 	@echo " clean        - clean up the tree"
 	@echo " updatepo     - update po-files"
 	@echo " mo           - build the locale/ tree"
-	@echo " DHPinstall   - install the Date::HolidayParser module (only needed for distro packages)"
 	@echo " pluginprep   - build plugin metafiles"
 	@echo "Developer targets:"
 	@echo " distrib      - create packages (tarball, installer and rpm)"
@@ -96,7 +95,6 @@ clean:
 	rm -rf po/locale packages locale dayplanner-$(VERSION) installer
 	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
 	[ ! -e ./modules/DP-iCalendar/Makefile ] || make -C ./modules/DP-iCalendar/ distclean
-	[ ! -e ./modules/Date-HolidayParser/Makefile ] || make -C ./modules/Date-HolidayParser/ distclean
 distclean: clean
 	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ /\.git/; my $$i = `git stat $$_ 2>&1`; if ($$i =~ /^error.*did.*not.*match/) { if (-d $$_) { print "rmtree: $$File::Find::name\n"; rmtree($$_); } else {  print "unlink: $$File::Find::name\n"; unlink($$_); }}},"./");'
 	rm -f ./dayplanner-daemon.1 ./dayplanner-notifier.1 ./dayplanner.1
@@ -112,11 +110,6 @@ man:
 maninstall:
 	mkdir -p "$(DESTDIR)$(DATADIR)/man/man1"
 	$(CP) -f dayplanner.1 dayplanner-daemon.1 dayplanner-notifier.1 "$(DESTDIR)$(DATADIR)/man/man1" 
-
-# Date::HolidayParser installation
-DHPinstall:
-	mkdir -p $(DP_MAINTARGET)/modules/Date/
-	install -m644 modules/Date-HolidayParser/lib/Date/HolidayParser.pm $(DP_MAINTARGET)/modules/Date/HolidayParser.pm
 
 # --- Dependency fetching ---
 
@@ -206,13 +199,6 @@ plugininstall: $(PLUGINPREP)
 	install -m644 $(shell ls ./plugins/*pm) $(DP_MAINTARGET)/plugins
 	install -m644 $(shell ls ./plugins/*dpi) $(DP_MAINTARGET)/plugins
 
-# Holiday installation
-holidayinstall:
-	mkdir -p $(DP_MAINTARGET)/holiday
-	install -m644 $(shell ls ./holiday/holiday*) $(DP_MAINTARGET)/holiday
-	install -m644 ./holiday/dayplanner_detection $(DP_MAINTARGET)/holiday
-	install -m644 ./holiday/dayplanner_upgrade $(DP_MAINTARGET)/holiday
-
 # Essential documentation
 essentialdocs:
 	install -m644 NEWS $(DP_MAINTARGET)
@@ -260,7 +246,7 @@ rpmonly:
 	$(CP) ./packages/dayplanner-$(VERSION).tar.bz2 $$HOME/rpm/SOURCES/
 	$(CP) ./devel-tools/rpm/package.spec ./dayplanner.spec
 	perl -pi -e 's#\[DAYPLANNER_VERSION\]#$(VERSION)#gi' ./dayplanner.spec
-	$(BESILENT) rpmbuild --define '_with_unstable 1' --with old_menu --with holidayparser -ba ./dayplanner.spec
+	$(BESILENT) rpmbuild --define '_with_unstable 1' --with old_menu -ba ./dayplanner.spec
 	rm -f packages/rpmbuild.log
 	rm -f ./dayplanner.spec
 	mv $$HOME/rpm/RPMS/noarch/dayplanner*.rpm $$HOME/rpm/SRPMS/dayplanner*.rpm ./packages/
@@ -291,7 +277,7 @@ installer: prepdistrib tarball
 	rm -rf installer
 
 # -- Tests --
-test: sanity dpi_test date_holiday
+test: sanity dpi_test
 
 # Verify sanity
 sanity:
@@ -332,7 +318,3 @@ sanity:
 dpi_test: sanity
 	[ -e ./modules/DP-iCalendar/Makefile ] || (cd ./modules/DP-iCalendar/ && perl Makefile.PL)
 	make -C ./modules/DP-iCalendar/ test
-# Date::HolidayParser tests
-date_holiday: sanity
-	[ -e ./modules/Date-HolidayParser/Makefile ] || (cd ./modules/Date-HolidayParser/ && perl Makefile.PL)
-	make -C ./modules/Date-HolidayParser/ test
