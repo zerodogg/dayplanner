@@ -9,7 +9,7 @@ It uses the GNU Gettext library for the functions.
 Essentials for the translator
 - - - - - - - - - - - - - - -
 First of all. Make sure you're translating the latest git snapshot of Day Planner.
-See http://home.gna.org/dayplanner/git.html - if you don't translate
+See http://www.day-planner.org/development/git - if you don't translate
 the latest git then your translations might be outdated before they're done.
 
 Secondly, it's recommended that you join the
