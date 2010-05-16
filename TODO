@@ -12,11 +12,6 @@ may be subject to change.
 
 * Version 0.12
 - - - - - - -
-- Add proper support for mobile Day Planner (see mobile/)
-- Left align labels
-
-* Version 0.13
-- - - - - - -
 - Use Conduit for synchronization of Calendars (except when using
 	DPServices). Offer:
 	- Sync with online server
@@ -28,11 +23,11 @@ may be subject to change.
 - Add a prompt when started with a iCalendar file on the commandline
 	that asks if you want to view it (ro-mode) or import it.
 
-* Version 0.14
+* Version 0.13
 - - - - - - -
 - Add support for choosing how long an event lasts
 
-* Version 0.15
+* Version 0.14
 - - - - - - -
 - Add a dayplanner-daemon that works with evolution-data-server as an
 	alternative to the main dayplanner-daemon
@@ -43,7 +38,7 @@ may be subject to change.
 	When the following items are met, Day Planner will be labeled 1.0.
 	Entries will be removed from this list as they are implemented.
 - - - - - - -
-- Support for calendar subscriptions
+- Support for calendar subscriptions (with GUI)
 - e-d-s support
 - Synchronization with more online services (Conduit support)
 - No known usability issues
@@ -52,4 +47,3 @@ may be subject to change.
 - Visual indicators that an event has details
 - A better way than having to use "edit" to view details (Gtk2::Expander
   in the list?)
-- Maemo support
