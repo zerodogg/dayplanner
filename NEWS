@@ -1,6 +1,21 @@
 Day Planner version history
 **************************
 
+Version 0.11 (Unreleased)
+-------------------------
+
+* GUI (dayplanner)
+- Major code cleanups
+- Added Spanish translation by Juan Matias Granda 
+- Day Planner will now try to bring its window to front instead of 
+  displaying the "another Day Planner instance is running" window 
+  when possible. 
+- Some i18n fixes for the plugin manager 
+
+* Notifier (dayplanenr-notifier)
+
+* Daemon (dayplanner-daemon)
+
 Version 0.10 (Released on the 25th of March 2009)
 -------------------------
 
