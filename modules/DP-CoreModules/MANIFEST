@@ -1,6 +1,0 @@
-GeneralHelpers.xs
-Makefile.PL
-MANIFEST
-README
-t/DP-CoreModules.t
-lib/DP/GeneralHelpers.pm

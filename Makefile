@@ -38,7 +38,7 @@ VERSION=0.11
 DP_DATADIR ?= dayplanner
 BINDIR ?= bin
 DATADIR ?= $(prefix)/share
-LOCALMODULES=-I./modules/DP-GeneralHelpers/lib/ -I./modules/DP-iCalendar/lib/ -I./modules/DP-CoreModules/lib/ -I./modules/external/
+LOCALMODULES=-I./modules/DP-iCalendar/lib/ -I./modules/dayplanner/ -I./modules/external/
 
 # So I have to type less
 DP_MAINTARGET = $(DESTDIR)$(DATADIR)/$(DP_DATADIR)
@@ -186,10 +186,10 @@ moduleinstall:
 	mkdir -p $(DP_MAINTARGET)/modules/DP/iCalendar
 	mkdir -p $(DP_MAINTARGET)/modules/DP/GeneralHelpers
 	mkdir -p $(DP_MAINTARGET)/modules/DP/CoreModules
-	install -m644 $(shell ls ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
-	install -m644 $(shell ls ./modules/*/lib/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
+	install -m644 $(shell ls ./modules/*/DP/*pm ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
+	install -m644 $(shell ls ./modules/*/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
 	install -m644 $(shell ls ./modules/*/lib/DP/iCalendar/*pm) $(DP_MAINTARGET)/modules/DP/iCalendar/
-	install -m644 $(shell ls ./modules/*/lib/DP/CoreModules/*pm) $(DP_MAINTARGET)/modules/DP/CoreModules/
+	install -m644 $(shell ls ./modules/*/DP/CoreModules/*pm) $(DP_MAINTARGET)/modules/DP/CoreModules/
 
 # Plugin prep
 pluginprep:
@@ -288,13 +288,13 @@ sanity:
 	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar/Manager.pm
 	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar/StructHandler.pm
 	@perl $(LOCALMODULES) -c ./modules/DP-iCalendar/lib/DP/iCalendar.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/IPC.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/HTTPFetch.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers/I18N.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-GeneralHelpers/lib/DP/GeneralHelpers.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules/Plugin.pm
-	@perl $(LOCALMODULES) -c ./modules/DP-CoreModules/lib/DP/CoreModules/PluginFunctions.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/GeneralHelpers/IPC.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/GeneralHelpers/HTTPFetch.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/GeneralHelpers/I18N.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/GeneralHelpers.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/CoreModules.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/CoreModules/Plugin.pm
+	@perl $(LOCALMODULES) -c ./modules/dayplanner/DP/CoreModules/PluginFunctions.pm
 	@perl $(LOCALMODULES) -c ./dayplanner
 	@perl $(LOCALMODULES) -c ./dayplanner-daemon
 	@perl $(LOCALMODULES) -c ./dayplanner-notifier
@@ -305,16 +305,16 @@ sanity:
 	@perl $(LOCALMODULES) -c ./plugins/TrayIcon.pm
 	@perl $(LOCALMODULES) -c ./devel-tools/plugin_mkmetafile
 	@perl $(LOCALMODULES) -c ./devel-tools/plugin_package
-	@perl -c ./devel-tools/installer/MainInstallerPart
-	@perl -c ./devel-tools/installer/InstallLocal
-	@perl -c ./devel-tools/GenDesktop
-	@perl -c ./devel-tools/BuildLocale
-	@perl -c ./devel-tools/SetVersion
-	@perl -c ./devel-tools/postat
-	@perl -c ./devel-tools/updatepo
-	@perl -c ./services/tools/DPSAdmin
-	@perl -c ./services/tools/GenHTML
-	@perl -c ./services/dayplanner-services-daemon
+	@perl $(LOCALMODULES) -c ./devel-tools/installer/MainInstallerPart
+	@perl $(LOCALMODULES) -c ./devel-tools/installer/InstallLocal
+	@perl $(LOCALMODULES) -c ./devel-tools/GenDesktop
+	@perl $(LOCALMODULES) -c ./devel-tools/BuildLocale
+	@perl $(LOCALMODULES) -c ./devel-tools/SetVersion
+	@perl $(LOCALMODULES) -c ./devel-tools/postat
+	@perl $(LOCALMODULES) -c ./devel-tools/updatepo
+	@perl $(LOCALMODULES) -c ./services/tools/DPSAdmin
+	@perl $(LOCALMODULES) -c ./services/tools/GenHTML
+	@perl $(LOCALMODULES) -c ./services/dayplanner-services-daemon
 
 # DP::iCalendar tests
 dpi_test: sanity
