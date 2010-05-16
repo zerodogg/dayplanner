@@ -11,6 +11,8 @@ Version 0.11 (Unreleased)
   displaying the "another Day Planner instance is running" window 
   when possible. 
 - Some i18n fixes for the plugin manager 
+- Dropped support for automatically adding our daemon to the autostart
+  for GNOME versions 2.12 and older
 
 * Notifier (dayplanenr-notifier)
 
