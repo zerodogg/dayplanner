@@ -50,7 +50,6 @@ our $Version = '0.11';
 my $VersionName = 'GIT';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
-my $ICSFile = 'calendar.ics';		# The ICS calendar
 my $ConfigFile = 'dayplanner.conf';	# The filename to save the configuration to
 my $DaemonName = 'dayplanner-daemon';# The name of the daemon
 my $DaemonInitialized = 0;			# Has the daemon been initialized?
@@ -104,7 +103,8 @@ $SIG{TERM} = \&DP_SigHandler;
 
 # Purpose: Initialize the i18n subsystem
 # Usage: DP_InitI18n();
-sub DP_InitI18n {
+sub DP_InitI18n
+{
 	Assert(!$i18n);
 	$i18n = DP::GeneralHelpers::I18N->new('dayplanner');
 	Assert($i18n);
@@ -140,15 +140,18 @@ sub i18nwrapper_AMPM_From24
 
 # Purpose: Initialize and connect to the daemon
 # Usage: DaemonInit();
-sub DaemonInit {
+sub DaemonInit
+{
 	return if $NoDaemon; # Don't do anything if the daemon is disabled
 	$DaemonInitialized = 1;
 	DaemonConnect();
-	if (not $DaemonSocket) {
-		if(not StartDaemon()) {
+	if (not $DaemonSocket)
+	{
+		if (not StartDaemon())
+		{
 			return(undef);
 		}
-		if(not DaemonConnect())
+		if (not DaemonConnect())
 		{
 			DPIntWarn("DaemonInit(): Failed, even after attempted daemon startup. Will attempt to restart DaemonInit()");
 			return(DaemonInit());
@@ -162,7 +165,8 @@ sub DaemonInit {
 sub DaemonConnect
 {
 	return if $NoDaemon; # Don't do anything if the daemon is disabled
-	if (-e "$SaveToDir/$DaemonSocketName") {
+	if (-e "$SaveToDir/$DaemonSocketName")
+	{
 		my $daemonConnErr;
 		($DaemonSocket,$daemonConnErr) = DP::GeneralHelpers::IPC->new_client("$SaveToDir/$DaemonSocketName",sub { return });
 		# TODO: Check daemon version.
@@ -174,13 +178,17 @@ sub DaemonConnect
 
 # Purpose: Start the Day Planner daemon
 # Usage: StartDaemon();
-sub StartDaemon {
+sub StartDaemon
+{
 	return if $NoDaemon; # Don't do anything if the daemon is disabled
-	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
-		if (-x "$_/$DaemonName") {
+	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} )))
+	{
+		if (-x "$_/$DaemonName")
+		{
 			# Yes this is a bit weird statement. But remember that commands return 0 on true
 			# and 1-255 on false, so it's the other way around from perl
-			unless(system("$_/$DaemonName", '--force-fork', '--dayplannerdir', $SaveToDir)) {
+			if (not system("$_/$DaemonName", '--force-fork', '--dayplannerdir', $SaveToDir))
+			{
 				return(true);
 			}
 			else
@@ -195,14 +203,18 @@ sub StartDaemon {
 
 # Purpose: Close the connection to the daemon (shutdown if $ShutdownDaemon) and close the IPC socket
 # Usage: CloseIPC();
-sub CloseIPC {
-	if($ShutdownDaemon && !$NoDaemon) {
+sub CloseIPC
+{
+	if ($ShutdownDaemon && !$NoDaemon)
+	{
 		$DaemonSocket->client_send($$.' SHUTDOWN');
 	}
-	if($IPC_Socket) {
+	if ($IPC_Socket)
+	{
 		$IPC_Socket->destroy();
 	}
-	if($DaemonSocket) {
+	if ($DaemonSocket)
+	{
 		$DaemonSocket->destroy();
 	}
 	return(1);
@@ -210,9 +222,11 @@ sub CloseIPC {
 
 # Purpose: Send a message to the daemon
 # Usage: Daemon_SendData(DATA);
-sub Daemon_SendData {
+sub Daemon_SendData
+{
 	return if $NoDaemon; # Don't do anything if the daemon is disabled
-	if(not $DaemonSocket) {
+	if (not $DaemonSocket)
+	{
 		return(undef);
 	}
 	Assert(scalar(@_) == 1);
@@ -235,7 +249,7 @@ sub init_plugins
 	$plugin->set_var('confdir',$SaveToDir);
 	$plugin->set_var('pluginPaths',$paths);
 	$plugin->set_searchpath($paths);
-	if(defined $ENV{DP_DISABLE_PLUGINS} and $ENV{DP_DISABLE_PLUGINS} eq '1')
+	if (defined $ENV{DP_DISABLE_PLUGINS} and $ENV{DP_DISABLE_PLUGINS} eq '1')
 	{
 		DPIntWarn('Plugins disabled by the DP_DISABLE_PLUGINS environment variable');
 		return;
@@ -259,7 +273,8 @@ sub init_plugins
 
 # Purpose: Write the state file 
 # Usage: WriteStateFile(DIRECTORY, FILENAME);
-sub WriteStateFile {
+sub WriteStateFile
+{
 	# The parameters
 	my $Dir = $_[0];
 	my $File = $_[1];
@@ -282,62 +297,76 @@ sub WriteStateFile {
 		HEADER => "This file contains internal configuration used by Day Planner\n# In most cases you really don't want to edit this file manually",
 	);
 
-	
-	if(defined($InternalConfig{MainWin_Maximized}) and $InternalConfig{MainWin_Maximized} =~ /maximized/) {
+
+	if (defined($InternalConfig{MainWin_Maximized}) and $InternalConfig{MainWin_Maximized} =~ /maximized/)
+	{
 		$InternalConfig{MainWin_Maximized} = 1;
-	} else {
+	}
+	else
+	{
 		$InternalConfig{MainWin_Maximized} = 0;
-		if($NewWinState and defined($MainWindow)) {
+		if ($NewWinState and defined($MainWindow))
+		{
 			($InternalConfig{MainWin_Width}, $InternalConfig{MainWin_Height}) = $MainWindow->get_size();
 			($InternalConfig{MainWin_X}, $InternalConfig{MainWin_Y}) = $MainWindow->get_position();
 		}
 	}
-	
+
 	# Write the actual file
 	WriteConfigFile("$Dir/$File", \%InternalConfig, \%Explenations);
 }
 
 # Purpose: Load the state file
 # Usage: LoadStateFile(DIRECTORY, FILENAME);
-sub LoadStateFile {
+sub LoadStateFile
+{
 	# The parameters
-	if(-e "$SaveToDir/state.conf") {
+	if (-e "$SaveToDir/state.conf")
+	{
 		LoadConfigFile("$SaveToDir/state.conf", \%InternalConfig, undef, 0);
-		if(not defined($InternalConfig{LastVersion}) or not $InternalConfig{LastVersion} eq $Version) {
+		if (not defined($InternalConfig{LastVersion}) or not $InternalConfig{LastVersion} eq $Version)
+		{
 			UpgradeVersion();
 		}
-	} else {
+	}
+	else
+	{
 		$InternalConfig{LastVersion} = $Version;
 	}
 }
 
 # Purpose: Write the configuration file
 # Usage: WriteConfig(DIRECTORY, FILENAME);
-sub WriteConfig {
+sub WriteConfig
+{
 	P_WriteConfig($SaveToDir,$ConfigFile,%UserConfig);
 }
 
 # Purpose: Load the configuration file
 # Usage: LoadConfig();
-sub LoadConfig {
+sub LoadConfig
+{
 	%UserConfig = P_LoadConfig($SaveToDir,$ConfigFile);
 	return(1);
 }
 
 # Purpose: Create the directory in $SaveToDir if it doesn't exist and display a error if it fails
 # Usage: CreateSaveDir();
-sub CreateSaveDir {
+sub CreateSaveDir
+{
 	return P_CreateSaveDir($SaveToDir);
 }
 
 # Purpose: Perform certain commands on first startup
 # Usage: FirstStartup(GUI?);
-sub FirstStartup {
+sub FirstStartup
+{
 	# First create the savedir
 	CreateSaveDir();
 	# Set LastVersion
 	$InternalConfig{LastVersion} = $Version;
-	if(not $_[0]) {
+	if (not $_[0])
+	{
 		# Attempt to import data
 		return(ImportDataFromProgram(1));
 	}
@@ -346,7 +375,8 @@ sub FirstStartup {
 
 # Purpose: Save the main data files
 # Usage: SaveMainData();
-sub SaveMainData {
+sub SaveMainData
+{
 	$plugin->signal_emit('SAVEDATA');
 	$iCalendar->write();	# TODO: Check return value
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
@@ -356,10 +386,13 @@ sub SaveMainData {
 
 # Purpose: Save the data file and redraw the needed windows
 # Usage: UpdatedData(DONT_SAVE?, DONT_REDRAW_EVENTLIST);
-sub UpdatedData {
+sub UpdatedData
+{
 	my ($DontSave,$DontRedrawEventList) = @_;
-	if($MainWindow) {
-		if(not $DontRedrawEventList) {
+	if ($MainWindow)
+	{
+		if (not $DontRedrawEventList)
+		{
 			# Redraw the event list
 			DrawEventlist();
 		}
@@ -372,7 +405,8 @@ sub UpdatedData {
 	EventListToggle();
 	# Lastly, save the main data if needed.
 	# We do this last because that speeds up redrawing the calendar
-	if(not $DontSave) {
+	if (not $DontSave)
+	{
 		# Save the data
 		SaveMainData();
 	}
@@ -382,7 +416,7 @@ sub UpdatedData {
 # Usage: LoadHTTPSubscriptions;
 sub LoadHTTPSubscriptions
 {
-	if(not defined($UserConfig{HTTP_Calendars}) or not length($UserConfig{HTTP_Calendars}) > 7)
+	if (not defined($UserConfig{HTTP_Calendars}) or not length($UserConfig{HTTP_Calendars}) > 7)
 	{
 		return;
 	}
@@ -393,7 +427,7 @@ sub LoadHTTPSubscriptions
 	foreach my $subscription(split(/\s+/,$UserConfig{HTTP_Calendars}))
 	{
 		PulsateProgressbar($ProgressWin);
-		if(not $subscription =~ /^(http|webcal)/)
+		if (not $subscription =~ /^(http|webcal)/)
 		{
 			my $scheme = $subscription;
 			$scheme =~ s/^(.+):.*$/$1/;
@@ -405,14 +439,15 @@ sub LoadHTTPSubscriptions
 		my $loopturn = 1;
 		my $maxturns = 8;
 		my $obj = DP::iCalendar::HTTPSubscription->new($subscription,
-			sub {
+			sub
+			{
 				my $lt = time();
 				if ($lastupdate != $lt)
 				{
-						$updates = 0;
-						$loopturn = 1;
+					$updates = 0;
+					$loopturn = 1;
 				}
-				if($updates != 2)
+				if ($updates != 2)
 				{
 					if ($loopturn == 1 or $loopturn == $maxturns)
 					{
@@ -442,17 +477,21 @@ sub LoadHTTPSubscriptions
 
 # Purpose: Load the calendar contents
 # Usage: LoadCalendar();
-sub LoadCalendar {
+sub LoadCalendar
+{
 	my $IsFirstStartup = shift;
 	# Create the manager
 	$iCalendar = DP::iCalendar::Manager->new();
 	my $MainCalendar;
-	if(-e "$SaveToDir/$ICSFile") {
+	if (-e "$SaveToDir/calendar.ics")
+	{
 		# Load an already existing calendar
-		$MainCalendar = DP::iCalendar->new("$SaveToDir/$ICSFile");
-	} else {
+		$MainCalendar = DP::iCalendar->new("$SaveToDir/calendar.ics");
+	}
+	else
+	{
 		# Create a new calendar
-		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/$ICSFile");
+		$MainCalendar = DP::iCalendar->newfile("$SaveToDir/calendar.ics");
 		# Save it
 		$MainCalendar->write();
 	}
@@ -494,7 +533,8 @@ sub LoadCalendar {
 # Purpose: Print formatted --help output
 # Usage: PrintHelp("-shortoption", "--longoption", "description");
 #  Description will be reformatted to fit within a normal terminal
-sub PrintHelp {
+sub PrintHelp
+{
 	# The short option
 	my $short = shift,
 	# The long option
@@ -519,7 +559,7 @@ sub PrintHelp {
 	# Split the description into lines
 	foreach my $part (split(/ /,$desc))
 	{
-		if(defined $GeneratedDesc)
+		if (defined $GeneratedDesc)
 		{
 			if ((length($currdesc) + length($part) + 1 + 20) > $maxlen)
 			{
@@ -569,7 +609,7 @@ sub GetDebugInfo
 		select($orig_fh);
 	}
 	$SaveToDir = DetectConfDir();
-	
+
 	my %digests;
 	{
 		runtime_use('Digest::MD5');
@@ -579,7 +619,7 @@ sub GetDebugInfo
 			my $oFile = $cFile;
 			$oFile =~ s/^dayplanner-//;
 			$digests{$oFile} = '(unknown)';
-			if(not -e $FindBin::RealBin.'/'.$cFile)
+			if (not -e $FindBin::RealBin.'/'.$cFile)
 			{
 				$fail = 1;
 				warn("ERROR: Failed to locate: $FindBin::RealBin/$cFile\n");
@@ -587,7 +627,7 @@ sub GetDebugInfo
 			}
 			my $f;
 			open($f,'<',$FindBin::RealBin.'/'.$cFile) or $f = undef;
-			if(not $f)
+			if (not $f)
 			{
 				$fail = 1;
 				warn("ERROR: Failed to open $FindBin::RealBin/$cFile for reading: $!\n");
@@ -622,32 +662,43 @@ sub GetDebugInfo
 	my @AvailModules;
 	my @UnavailModules;
 	print {$target} "Available modules:";
-	foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser::iCalendar IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/) {
-		if(eval("use $Module; 1")) {
-			if($Prev) {
+	foreach my $Module (sort qw/Locale::gettext POSIX Gtk2 Data::Dumper Gtk2::SimpleList Gtk2::Gdk::Keysyms Getopt::Long Cwd File::Basename IO::Socket File::Copy FindBin MIME::Base64 Digest::MD5 File::Path Date::HolidayParser::iCalendar IO::Select DP::iCalendar DP::GeneralHelpers IO::Socket::SSL IPC::Open2 Net::DBus Sys::Hostname/)
+	{
+		if (eval("use $Module; 1"))
+		{
+			if ($Prev)
+			{
 				print {$target} ',';
-			} else {
+			}
+			else
+			{
 				$Prev = 1;
 			}
-			my $ModVer = eval("if(defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}else { return undef;}");
-			if($ModVer and $ModVer =~ /\S/ and length($ModVer) > 1 and $ModVer =~ /\d/) {
+			my $ModVer = eval("if (defined(\$$Module\:\:VERSION)) { return \$$Module\:\:VERSION}else { return undef;}");
+			if ($ModVer and $ModVer =~ /\S/ and length($ModVer) > 1 and $ModVer =~ /\d/)
+			{
 				$ModVer =~ s/_//g;	# Some version numbers use the _ seperator inside numbers
 				# printf() doesn't like it so we remove it.
 				print {$target} " $Module $ModVer";
-			} else {
+			}
+			else
+			{
 				print {$target} " $Module";
 			}
-		} else {
+		}
+		else
+		{
 			push(@UnavailModules, $Module);
 		}
 	}
 	print {$target} "\nUnavailable modules:";
 	print {$target} " $_" foreach(@UnavailModules);
-	print {$target} ' (none)' unless(@UnavailModules);
+	print {$target} ' (none)' if (not @UnavailModules);
 	print {$target} "\n";
 	print {$target} '@INC:';
 	$Prev = false;
-	foreach my $i (@INC) {
+	foreach my $i (@INC)
+	{
 		if ($Prev)
 		{
 			print {$target} ',';
@@ -678,13 +729,13 @@ sub GetDebugInfo
 	{
 		print {$target} "(none detected)\n";
 	}
-	if(not $i18n)
+	if (not $i18n)
 	{
 		DP_InitI18n();
 	}
 	print {$target} 'I18n workaround: '. ($i18n->{workaround} ? 'on' : 'off');
 	print {$target} "\n";
-	if(not keys %InternalConfig)
+	if (not keys %InternalConfig)
 	{
 		LoadStateFile();
 	}
@@ -718,7 +769,7 @@ sub Assert
 	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
 	my ($s2_package, $s2_filename, $s2_line, $s2_subroutine, $s2_hasargs, $s2_wantarray, $s2_evaltext, $s2_is_require, $s2_hints, $s2_bitmask) = caller(0);
 	my $msg = "Assertion failure at $s2_filename:$s2_line in $subroutine originating from call at $filename:$line";
-	if(defined($_[0]))
+	if (defined($_[0]))
 	{
 		$msg .= ': '.$_[0]."\n";
 	}
@@ -729,7 +780,7 @@ sub Assert
 	# If this is the GIT version or DP_FATAL_ASSERT is set, then the error is fatal.
 	if ($VersionName eq 'GIT' or (defined($ENV{DP_FATAL_ASSERT}) and $ENV{DP_FATAL_ASSERT} eq 1))
 	{
-		if(defined $SaveToDir && -d $SaveToDir && defined $iCalendar)
+		if (defined $SaveToDir && -d $SaveToDir && defined $iCalendar)
 		{
 			(my $loctime = scalar localtime) =~ s/\s+/_/g;
 			my $bakFile = $SaveToDir.'/assertionFailureBackup.'.time().'.ics';
@@ -753,12 +804,13 @@ sub Assert
 
 # Purpose: Display an error about an already running Day Planner session
 # Usage: AlreadyRunningDP(IPC_CLIENT);
-sub AlreadyRunningDP {
+sub AlreadyRunningDP
+{
 	my $ClientConnection = shift;
 	Assert(defined $ClientConnection);
 
 	my $display = $ClientConnection->client_send_blocking('GETDISPLAY');
-	if(defined $display and length $display and defined $ENV{DISPLAY})
+	if (defined $display and length $display and defined $ENV{DISPLAY})
 	{
 		if ($display eq $ENV{DISPLAY})
 		{
@@ -770,12 +822,13 @@ sub AlreadyRunningDP {
 		}
 	}
 
-	if($Gtk2Init) {
+	if ($Gtk2Init)
+	{
 		my $ErrorDialog = Gtk2::MessageDialog->new (undef,
-						'destroy-with-parent',
-						'error',
-						'none',
-						 $i18n->get("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nYou may force the other instance to quit if you wish."));
+			'destroy-with-parent',
+			'error',
+			'none',
+			$i18n->get("Another instance of Day Planner appears to be running. Please quit the currently running instance of Day Planner before continuing\n\nYou may force the other instance to quit if you wish."));
 		$ErrorDialog->set_title($i18n->get('Day Planner'));
 
 		$ErrorDialog->add_buttons(
@@ -783,13 +836,16 @@ sub AlreadyRunningDP {
 			$i18n->get('_Force') => 'reject',
 			'gtk-ok' => 'accept',
 		);
-	
+
 		$ErrorDialog->set_default_response('accept');
-		if($ErrorDialog->run eq 'accept') {
+		if ($ErrorDialog->run eq 'accept')
+		{
 			$ErrorDialog->destroy();
 			$ClientConnection->destroy();
 			exit(0)
-		} else {
+		}
+		else
+		{
 			$ErrorDialog->destroy;
 			my $pid = $ClientConnection->client_send_blocking('GETPID');
 			$ClientConnection->client_send('QUIT');
@@ -806,7 +862,7 @@ sub AlreadyRunningDP {
 			{
 				if (defined $pid and $pid =~ /^\d+$/)
 				{
-					if(kill(0,$pid) == 0)
+					if (kill(0,$pid) == 0)
 					{
 						last;
 					}
@@ -820,7 +876,9 @@ sub AlreadyRunningDP {
 			$iCalendar->reload();
 			return(true);
 		}
-	} else {
+	}
+	else
+	{
 		$ClientConnection->destroy();
 		die("Another instance of Day Planner appears to be running, unable to continue\n");
 	}
@@ -849,7 +907,7 @@ sub IPC_Handler
 		}
 	}
 
-	if($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/)
+	if ($Message =~ s/^IMPORT_DATA\s+(.+)$/$1/)
 	{
 		if (-e $Message && -r $Message)
 		{
@@ -867,7 +925,7 @@ sub IPC_Handler
 	# Where DISPLAY is the X display ($ENV{DISPLAY}) that the caller is running
 	# on. The usual reply is ALIVEANDWELL, but other replies can be returned by 
 	# plugins that abort us.
-	elsif($Message =~ s/^ALIVE\s+//)
+	elsif ($Message =~ s/^ALIVE\s+//)
 	{
 		return('ALIVEANDWELL');
 	}
@@ -885,7 +943,7 @@ sub IPC_Handler
 		my $display = $ENV{DISPLAY} ? $ENV{DISPLAY} : '';
 		return ($display);
 	}
-	elsif($Message =~ /^SHOWHIDE/)
+	elsif ($Message =~ /^SHOWHIDE/)
 	{
 		if ($MainWindow)
 		{
@@ -913,46 +971,58 @@ sub IPC_Handler
 
 # Purpose: Upgrade from one version to another
 # Usage: UpgradeVersion();
-sub UpgradeVersion {
+sub UpgradeVersion
+{
 	my $ProgressWin = DPCreateProgressWin($i18n->get('Upgrading'), '', 1);
 	$InternalConfig{LastVersion} = $Version;
 	my $Total = 10;
 	# Upgrade the holiday file if needed
-	if(-e $HolidayFile) {
-		ProgressMade(1, $Total, $ProgressWin) if($Gtk2Init);
-		if(-e "$FindBin::RealBin/holiday/dayplanner_upgrade") {
+	if (-e $HolidayFile)
+	{
+		ProgressMade(1, $Total, $ProgressWin) if ($Gtk2Init);
+		if (-e "$FindBin::RealBin/holiday/dayplanner_upgrade")
+		{
 			runtime_use('Digest::MD5 qw(md5_base64 md5_hex)');
 			my %UpgradeInfo;
 			LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_upgrade", \%UpgradeInfo, undef, 0);
-			ProgressMade(2, $Total, $ProgressWin) if($Gtk2Init);
+			ProgressMade(2, $Total, $ProgressWin) if ($Gtk2Init);
 			open(my $ReadHoliday, '<', $HolidayFile);
 			my $HolidayMd5 = md5_hex(<$ReadHoliday>);
 			close($ReadHoliday);
-			if($UpgradeInfo{$HolidayMd5}) {
-				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}") {
+			if ($UpgradeInfo{$HolidayMd5})
+			{
+				if (-e "$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}")
+				{
 					runtime_use('File::Copy');
 					# Copy the new file in place
 					unlink($HolidayFile);
 					copy("$FindBin::RealBin/holiday/$UpgradeInfo{$HolidayMd5}", $HolidayFile);
 					DPIntInfo("Upgraded $HolidayFile");
-					ProgressMade(3, $Total, $ProgressWin) if($Gtk2Init);
+					ProgressMade(3, $Total, $ProgressWin) if ($Gtk2Init);
 				}
 			}
 		}
 	}
 	# Upgrade the old data files if needed
-	if(not -e "$SaveToDir/$ICSFile") {
+	if (not -e "$SaveToDir/calendar.ics")
+	{
 		# Normal events (events.dpd)
-		if(-e "$SaveToDir/events.dpd") {
+		if (-e "$SaveToDir/events.dpd")
+		{
 			my %CalendarContents = do("$SaveToDir/events.dpd");
-			foreach my $Year(keys(%CalendarContents)) {
-				foreach my $Month (keys(%{$CalendarContents{$Year}})) {
-					foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}})) {
-						foreach my $Time (keys(%{$CalendarContents{$Year}{$Month}{$Day}})) {
+			foreach my $Year(keys(%CalendarContents))
+			{
+				foreach my $Month (keys(%{$CalendarContents{$Year}}))
+				{
+					foreach my $Day (keys(%{$CalendarContents{$Year}{$Month}}))
+					{
+						foreach my $Time (keys(%{$CalendarContents{$Year}{$Month}{$Day}}))
+						{
 							# Create the data hash
 							my %iCalData;
 							$iCalData{SUMMARY} = $CalendarContents{$Year}{$Month}{$Day}{$Time}{summary};
-							if(defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext})) {
+							if (defined($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}) and length($CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext}))
+							{
 								$iCalData{DESCRIPTION} = $CalendarContents{$Year}{$Month}{$Day}{$Time}{fulltext};
 							}
 							$iCalData{DTSTART} = iCal_GenDateTime($Year, $Month, $Day, $Time);
@@ -963,13 +1033,17 @@ sub UpgradeVersion {
 				}
 			}
 		}
-		ProgressMade(4, $Total, $ProgressWin) if($Gtk2Init);
+		ProgressMade(4, $Total, $ProgressWin) if ($Gtk2Init);
 		# Birthday events (birthdays.dpd)
-		if(-e "$SaveToDir/birthdays.dpd") {
+		if (-e "$SaveToDir/birthdays.dpd")
+		{
 			my %BirthdayContents = do("$SaveToDir/birthdays.dpd");
-			foreach my $Month (keys(%BirthdayContents)) {
-				foreach my $Day (keys(%{$BirthdayContents{$Month}})) {
-					foreach my $Name (keys(%{$BirthdayContents{$Month}{$Day}})) {
+			foreach my $Month (keys(%BirthdayContents))
+			{
+				foreach my $Day (keys(%{$BirthdayContents{$Month}}))
+				{
+					foreach my $Name (keys(%{$BirthdayContents{$Month}{$Day}}))
+					{
 						# Create the data hash
 						my %iCalData;
 						$iCalData{DTSTART} = iCal_GenDateTime(1970, $Month, $Day, '00:00');
@@ -983,12 +1057,13 @@ sub UpgradeVersion {
 				}
 			}
 		}
-		ProgressMade(5, $Total, $ProgressWin) if($Gtk2Init);
+		ProgressMade(5, $Total, $ProgressWin) if ($Gtk2Init);
 		# Write the iCalendar file.
 		$iCalendar->write();
-		ProgressMade(6, $Total, $ProgressWin) if($Gtk2Init);
+		ProgressMade(6, $Total, $ProgressWin) if ($Gtk2Init);
 	}
-	foreach(qw/special_events.dpd events.dpd birthdays.dpd/) {
+	foreach(qw/special_events.dpd events.dpd birthdays.dpd/)
+	{
 		unlink("$SaveToDir/$_") if -e "$SaveToDir/$_";
 	}
 	ProgressMade(7, $Total, $ProgressWin) if ($Gtk2Init);
@@ -1003,7 +1078,7 @@ sub UpgradeVersion {
 		# Ensure that the socket is gone
 		unlink("$SaveToDir/dayplannerd") if -e "$SaveToDir/dayplannerd";
 	}
-	ProgressMade(8, $Total, $ProgressWin) if($Gtk2Init);
+	ProgressMade(8, $Total, $ProgressWin) if ($Gtk2Init);
 	# Remove and re-add autostart if it is enabled, so that
 	# the autostart is correct (daemon path might have changed)
 	if ($InternalConfig{AutostartOn} eq '1')
@@ -1011,14 +1086,14 @@ sub UpgradeVersion {
 		RemoveAutostart();
 		DP_AddAutostart();
 	}
-	ProgressMade(9, $Total, $ProgressWin) if($Gtk2Init);
+	ProgressMade(9, $Total, $ProgressWin) if ($Gtk2Init);
 	my $hadDPS = 0;
 	# Upgrade DPS values (0.9 and older) to plugin ones
 	foreach my $val(qw(DPS_enable DPS_host DPS_pass DPS_port DPS_user DPS_LastMD5))
 	{
 		if ($UserConfig{$val})
 		{
-			if(not $InternalConfig{'ServicesSync_'.$val})
+			if (not $InternalConfig{'ServicesSync_'.$val})
 			{
 				$hadDPS = 1;
 				$InternalConfig{'ServicesSync_'.$val} = $UserConfig{$val};
@@ -1030,43 +1105,56 @@ sub UpgradeVersion {
 	{
 		$InternalConfig{plugins_enabled} .= ' ServicesSync';
 	}
-	if(not $InternalConfig{plugins_enabled} =~ /PluginManager/)
+	if (not $InternalConfig{plugins_enabled} =~ /PluginManager/)
 	{
 		$InternalConfig{plugins_enabled} .= ' PluginManager';
 	}
 	WriteConfig();
-	ProgressMade(10, $Total, $ProgressWin) if($Gtk2Init);
+	ProgressMade(10, $Total, $ProgressWin) if ($Gtk2Init);
 	DP_DestroyProgressWin($ProgressWin);
 }
 
 # Purpose: Handle various signals gracefully
 # Usage: $SIG{SIGNAL} = \&DP_SigHandler;
-sub DP_SigHandler {
+sub DP_SigHandler
+{
 	$| = 1;
 	print "SIG$_[0] recieved.\nSaving data...";
-	if($iCalendar) {
-		if(SaveMainData() eq 'SAVE_FAILED') {
+	if ($iCalendar)
+	{
+		if (SaveMainData() eq 'SAVE_FAILED')
+		{
 			print 'FAILED';
-		} else {
+		}
+		else
+		{
 			print 'done';
 		}
-	} else {
+	}
+	else
+	{
 		print 'not needed';
 	}
 	print "\nWriting state file...";
-	if($SaveToDir and scalar keys %InternalConfig) {
+	if ($SaveToDir and scalar keys %InternalConfig)
+	{
 		WriteStateFile($SaveToDir, "state.conf");
 		print "done\n";
-	} else {
+	}
+	else
+	{
 		print "not needed\n";
 	}
 	print "Closing the daemon connection...";
 	CloseIPC();
 	print "done\nExiting the gtk2 main loop...";
-	if($Gtk2Init) {
+	if ($Gtk2Init)
+	{
 		Gtk2->main_quit;
 		print "done\nExiting\n";
-	} else {
+	}
+	else
+	{
 		print "not running\nExiting\n";
 	}
 	exit(0);
@@ -1074,20 +1162,25 @@ sub DP_SigHandler {
 
 # Purpose: Make sure we have a .holiday set up
 # Usage: HolidaySetup();
-sub HolidaySetup {
+sub HolidaySetup
+{
 	# If Holiday_Setup is true and the file exists then Day Planner has properly set up
 	# a holiday-file.
 	#
 	# If Holiday_Attempted is defined and equal to $Version then we've attempted and failed
 	# to set up a holiday file in this version of Day Planner so we'll skip trying again.
-	if($InternalConfig{Holiday_Setup} and -e $HolidayFile) {
+	if ($InternalConfig{Holiday_Setup} and -e $HolidayFile)
+	{
 		return(1);
-	} elsif(defined($InternalConfig{Holiday_Attempted}) and $InternalConfig{Holiday_Attempted} eq $Version) {
+	}
+	elsif (defined($InternalConfig{Holiday_Attempted}) and $InternalConfig{Holiday_Attempted} eq $Version)
+	{
 		return(1);
 	}
 
 	# Yay, the user already has a .holiday file. Use this one
-	if(-e "$ENV{HOME}/.holiday") {
+	if (-e "$ENV{HOME}/.holiday")
+	{
 		symlink("$ENV{HOME}/.holiday",$HolidayFile);
 		$InternalConfig{Holiday_Setup} = 1; delete($InternalConfig{Holiday_Attempted}) if defined($InternalConfig{Holiday_Attempted});
 		return(1);
@@ -1096,31 +1189,32 @@ sub HolidaySetup {
 	# Hash of LC_ADDRESS code => holiday file
 	# Loaded from dayplanner_detection
 	my %HolidayFiles;
-	if(-e "$FindBin::RealBin/holiday/dayplanner_detection") {
+	if (-e "$FindBin::RealBin/holiday/dayplanner_detection")
+	{
 		LoadConfigFile("$FindBin::RealBin/holiday/dayplanner_detection", \%HolidayFiles, undef, 0)
 			or DPIntWarn('Unable to load holiday detection definitions!');
 	}
-	
+
 	my $LocationDetect;
 
 	# First try to fetch from the environment
 	foreach my $var(qw(LC_ADDRESS LC_TELEPHONE LC_IDENTIFICATION LC_MESSAGES LC_ALL LANGUAGE LANG LC_MONETARY LC_NUMERIC LC_TIME LC_COLLATE LC_CTYPE))
 	{
-		if(defined($ENV{$var}))
+		if (defined($ENV{$var}))
 		{
 			$LocationDetect = $ENV{$var};
 			last;
 		}
 	}
 	# If that didn't work, try to get it from setlocale()
-	if(not $LocationDetect)
+	if (not $LocationDetect)
 	{
 		foreach my $var([LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, LC_TIME])
 		{
 			$LocationDetect = setlocale($var);
 			# If it is defined, not of zero length and not set to C then we can use it, if not
 			# then discard this value and continue
-			if(defined($LocationDetect) and length($LocationDetect) and not $LocationDetect eq 'C')
+			if (defined($LocationDetect) and length($LocationDetect) and not $LocationDetect eq 'C')
 			{
 				last;
 			}
@@ -1131,7 +1225,7 @@ sub HolidaySetup {
 		}
 	}
 	# If THAT didn't work either, fall back to guessing environment variables
-	if(not $LocationDetect)
+	if (not $LocationDetect)
 	{
 		my $BaseWarning = 'Neither of the environment variables LC_ADDRESS, LC_TELEPHONE, LC_IDENTIFICATION, LC_MESSAGES, LC_ALL nor LANGUAGE was set. ';
 		# Fall back to automatic detection
@@ -1153,37 +1247,49 @@ sub HolidaySetup {
 	}
 
 	my $CopyFile;
-	
-	if(defined($LocationDetect)) {
+
+	if (defined($LocationDetect))
+	{
 		# Let's try to find the LocationDetect value in the %HolidayFiles hash
 		# We sort it so that we test the longest entries before testing the short ones
-		foreach my $Key (sort {length($b) <=> length($a)} keys(%HolidayFiles)) {
-			if($LocationDetect =~ /^$Key/) {
+		foreach my $Key (sort{length($b) <=> length($a)} keys(%HolidayFiles))
+		{
+			if ($LocationDetect =~ /^$Key/)
+			{
 				$CopyFile = $HolidayFiles{$Key};
 				last;
 			}
 		}
-		if(defined($CopyFile)) {
-			if(-e "$FindBin::RealBin/holiday/holiday_$CopyFile") {
+		if (defined($CopyFile))
+		{
+			if (-e "$FindBin::RealBin/holiday/holiday_$CopyFile")
+			{
 				runtime_use('File::Copy');
 				copy("$FindBin::RealBin/holiday/holiday_$CopyFile", $HolidayFile);
 				$InternalConfig{Holiday_Setup} = 1; delete($InternalConfig{Holiday_Attempted}) if defined($InternalConfig{Holiday_Attempted});
 				return(1);
-			} else {
+			}
+			else
+			{
 				DPIntWarn("The .holiday file detected for you (holiday_$CopyFile at $FindBin::RealBin/holiday/holiday_$CopyFile) did not exist.");
 			}
-		} else {
+		}
+		else
+		{
 			DPIntWarn("Couldn't detect a .holiday file for $LocationDetect. Maybe you would like to write one?");
 		}
 	}
 	open(my $DUMMY_FILE, '>', "$HolidayFile");
-	if($LocationDetect) {
+	if ($LocationDetect)
+	{
 		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. It couldn't detect a proper\n";
 		print $DUMMY_FILE ": one suitable for your location (which at the time was detected to be $LocationDetect).\n";
 		print $DUMMY_FILE ": You may want to write one yourself (see the files contained in the holiday/ directory\n";
 		print $DUMMY_FILE ":  of the Day Planner distribution for examples of the syntax).\n";
 		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file, copy the proper file to ~/.holiday and re-run Day Planner";
-	} else {
+	}
+	else
+	{
 		print $DUMMY_FILE ": This is a dummy .holiday file for Day Planner. You didn't have any\n";
 		print $DUMMY_FILE ": environment variables set so Day Planner couldn't autodetect one.\n";
 		print $DUMMY_FILE "\n: HOW TO REPLACE THE DUMMY FILE WITH A PROPER ONE:\n: Remove this file. Remove the entry Holiday_Attempted\n: in state.conf and re-run Day Planner.\n";
@@ -1198,21 +1304,26 @@ sub HolidaySetup {
 
 # Purpose: Remove the daemon from autostart for the various DMs/WMs
 # Usage: RemoveAutostart();
-sub RemoveAutostart {
+sub RemoveAutostart
+{
 	# KDE, XDG - easy
-	foreach("$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop",) {
+	foreach("$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh", "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop",)
+	{
 		unlink($_) if -e $_;
 	}
 
 	# Fluxbox
-	if(-w "$ENV{HOME}/.fluxbox/startup") {
+	if (-w "$ENV{HOME}/.fluxbox/startup")
+	{
 		my @FluxboxStartup;
 		open(my $OLDFLUX, '<', "$ENV{HOME}/.fluxbox/startup");
 		push(@FluxboxStartup, $_) while(<$OLDFLUX>);
 		close($OLDFLUX);
 		open(my $FLUXSTART, '>', "$ENV{HOME}/.fluxbox/startup");
-		foreach(@FluxboxStartup) {
-			unless(/$DaemonName/) {
+		foreach(@FluxboxStartup)
+		{
+			if (not /$DaemonName/)
+			{
 				chomp;
 				print $FLUXSTART "$_\n";
 			}
@@ -1221,7 +1332,8 @@ sub RemoveAutostart {
 	}
 	# GNOME 2 versions 2.12 and older.
 	#  This solution is very very hacky and unreliable, but it will have to do.
-	if(-w "$ENV{HOME}/.gnome2/session-manual") {
+	if (-w "$ENV{HOME}/.gnome2/session-manual")
+	{
 		my @Gnome2Session;
 		my $GNOME2SESS;
 		open($GNOME2SESS, '<', "$ENV{HOME}/.gnome2/session-manual");
@@ -1229,18 +1341,21 @@ sub RemoveAutostart {
 		close($GNOME2SESS);
 		my ($Last, $Has_DP, $DP_ID, $Nullout);
 		# Parse
-		foreach(@Gnome2Session) {
-			next unless /\=/;
-			next unless /^\d,/;
+		foreach(@Gnome2Session)
+		{
+			next if not /\=/;
+			next if not /^\d,/;
 			my $ID = $_;
 			$ID =~ s/^(\d+).*/$1/;
-			if(/$DaemonName/) {
+			if (/$DaemonName/)
+			{
 				$DP_ID = $ID;
 				$Has_DP = 1;
 			}
 			$Last = $ID;
 			# Make sure we're not starting on yet another session.
-			if($ID == 0) {
+			if ($ID == 0)
+			{
 				# GAH, another session decleration. This is too much for us to parse.
 				# Use the alternate nullout method (continue attempting to parse if Has_DP is
 				# false
@@ -1248,30 +1363,39 @@ sub RemoveAutostart {
 				last if $Has_DP;
 			}
 		}
-		
+
 		# We've got three ways to do this, one more hacky than the next - but
 		# as gnome2 (2.12 and older) doesn't have any good way of dealing with
 		# this we'll have to do this.
-		if($Has_DP) {
-			if($Last == 0) {
+		if ($Has_DP)
+		{
+			if ($Last == 0)
+			{
 				# Wee, LAST is 0, just 0 out the file
 				open($GNOME2SESS, '>', "$ENV{HOME}/.gnome2/session-manual");
 				close($GNOME2SESS);
-			} elsif($Nullout) {
+			}
+			elsif ($Nullout)
+			{
 				DPIntWarn("Unable to properly remove the GNOME2 Day Planner entry from $ENV{HOME}/.gnome2/session-manual. A workaround to disable the daemon startup has been applied but you may want to use the GNOME2 session manager to remove it completely.");
-				foreach(@Gnome2Session) {
+				foreach(@Gnome2Session)
+				{
 					s/=.*$DaemonName.*/perl -e '# Removed by Day Planner'/;
 				}
 				open($GNOME2SESS, '>', "$ENV{HOME}/.gnome2/session-manual");
-				foreach(@Gnome2Session) {
+				foreach(@Gnome2Session)
+				{
 					print $GNOME2SESS $_;
 				}
 				close($GNOME2SESS);
-			} else {
+			}
+			else
+			{
 				my $NumClients = $Last + 1;
 				# Write out changes
 				open($GNOME2SESS, '>', "$ENV{HOME}/.gnome2/session-manual");
-				foreach(@Gnome2Session) {
+				foreach(@Gnome2Session)
+				{
 					chomp;
 					s/^num_clients=\d+/num_clients=$Last/;
 					s/^$Last,/$DP_ID,/;
@@ -1289,12 +1413,15 @@ sub RemoveAutostart {
 # Usage: AddAutostart(OLD_GNOME?);
 #	OLD_GNOME is either 1 or 0, defines if the GNOME version used is
 #	older than 2.13 or not
-sub AddAutostart {
+sub AddAutostart
+{
 	my $TryGnome = $_[0];
 	my $DaemonExec;
 	my $RETURN = 'okay';
-	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
-		if (-x "$_/$DaemonName") {
+	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} )))
+	{
+		if (-x "$_/$DaemonName")
+		{
 			$DaemonExec = "$_/$DaemonName";
 			last;
 		}
@@ -1302,10 +1429,12 @@ sub AddAutostart {
 	Assert(defined $DaemonExec,'Daemon detection failed');
 
 	# KDE - this is easy
-	if(-d "$ENV{HOME}/.kde/") {
-		mkdir("$ENV{HOME}/.kde/Autostart/") unless -e "$ENV{HOME}/.kde/Autostart/";
+	if (-d "$ENV{HOME}/.kde/")
+	{
+		mkdir("$ENV{HOME}/.kde/Autostart/") if not -e "$ENV{HOME}/.kde/Autostart/";
 		open(my $KDESCRIPT, '>', "$ENV{HOME}/.kde/Autostart/dayplanner_auto.sh") or warn("Unable to open $ENV{HOME}/.kde/Autostart/dayplanner_auto.sh for writing: $!");
-		if($KDESCRIPT) {
+		if ($KDESCRIPT)
+		{
 			print $KDESCRIPT "#!/bin/sh\n# Autogenerated startup script written by Day Planner\n";
 			print $KDESCRIPT "$DaemonExec\n";
 			close($KDESCRIPT);
@@ -1313,8 +1442,9 @@ sub AddAutostart {
 		}
 	}
 	# Freedesktop spec - this is easy too
-	if(-d "$ENV{HOME}/.config/") {
-		mkdir("$ENV{HOME}/.config/autostart/") unless -e "$ENV{HOME}/.config/autostart";
+	if (-d "$ENV{HOME}/.config/")
+	{
+		mkdir("$ENV{HOME}/.config/autostart/") if not -e "$ENV{HOME}/.config/autostart";
 		open(my $XDGSTART, '>', "$ENV{HOME}/.config/autostart/dayplanner_auto.desktop");
 		print $XDGSTART "# Autogenerated startup desktop file written by Day Planner\n";
 		print $XDGSTART "[Desktop Entry]\n";
@@ -1332,15 +1462,15 @@ sub AddAutostart {
 		# This is hacky, but we'll try anyway
 		my $Locale = setlocale(LC_ALL);
 		$Locale =~ s/^(\w\w)(_\w\w)?.*/$1$2/;
-		if(not $Locale =~ /^en/ and length($Locale))
+		if (not $Locale =~ /^en/ and length($Locale))
 		{
 			my $LocalizedName = $i18n->get('Day Planner Reminder');
 			$LocalizedName = undef
-				if ($LocalizedName eq 'Day Planner Reminder');
+			if ($LocalizedName eq 'Day Planner Reminder');
 			# TRANSLATORS: This is the comment used in the autostart .desktop file about the Day Planner Reminder
 			my $LocalizedComment = $i18n->get('Ensures you get notified about events');
 			$LocalizedComment = undef
-				if ($LocalizedComment eq 'Ensures you get notified about events');
+			if ($LocalizedComment eq 'Ensures you get notified about events');
 			# We print twice to ensure the locale is correct
 			print $XDGSTART "Name[$Locale]=$LocalizedName\n" if $LocalizedName;
 			print $XDGSTART "Comment[$Locale]=$LocalizedComment\n" if $LocalizedComment;
@@ -1352,24 +1482,31 @@ sub AddAutostart {
 	}
 	# GNOME - this is harder. No real common spec or easy way to do it. 2.14 or so
 	#  supports the freedesktop spec, older however - does not.
-	if(-d "$ENV{HOME}/.gnome2/" and $TryGnome) {
+	if (-d "$ENV{HOME}/.gnome2/" and $TryGnome)
+	{
 		# If it doesn't exist then we just write it
-		unless(-e "$ENV{HOME}/.gnome2/session-manual") {
+		if (not -e "$ENV{HOME}/.gnome2/session-manual")
+		{
 			open(my $GNOMESESS, '>', "$ENV{HOME}/.gnome2/session-manual");
 			print $GNOMESESS "[Default]\nnum_clients=1\n0,RestartStyleHint=3\n0,Priority=50\n0,RestartCommand=$DaemonExec\n0,Program=$DaemonExec";
 			close($GNOMESESS);
-		} else {
+		}
+		else
+		{
 			$RETURN = 'gnome-fail';
 			my @G2H;
 			open(my $GNOMESESS, '<', "$ENV{HOME}/.gnome2/session-manual");
-			while(<$GNOMESESS>) {
-				if(s/perl -e '# Removed by Day Planner'/$DaemonExec/i) {
+			while(<$GNOMESESS>)
+			{
+				if (s/perl -e '# Removed by Day Planner'/$DaemonExec/i)
+				{
 					$RETURN = 'okay';
 				}
 				push(@G2H, $_);
 			}
 			close($GNOMESESS);
-			if($RETURN eq 'okay') {
+			if ($RETURN eq 'okay')
+			{
 				open($GNOMESESS, '>', "$ENV{HOME}/.gnome2/session-manual");
 				print $GNOMESESS $_ foreach(@G2H);
 				close($GNOMESESS);
@@ -1377,16 +1514,19 @@ sub AddAutostart {
 		}
 	}
 	# Fluxbox
-	if(-d "$ENV{HOME}/.fluxbox") {
+	if (-d "$ENV{HOME}/.fluxbox")
+	{
 		my @FluxboxStartup;
 		push(@FluxboxStartup, "$DaemonExec &");
-		if(-e "$ENV{HOME}/.fluxbox/startup") {
+		if (-e "$ENV{HOME}/.fluxbox/startup")
+		{
 			open(my $OLDFLUX, '<', "$ENV{HOME}/.fluxbox/startup");
 			push(@FluxboxStartup, $_) while(<$OLDFLUX>);
 			close($OLDFLUX);
 		}
 		open(my $FLUXSTART, '>', "$ENV{HOME}/.fluxbox/startup");
-		foreach(@FluxboxStartup) {
+		foreach(@FluxboxStartup)
+		{
 			chomp;
 			print $FLUXSTART "$_\n";
 		}
@@ -1399,7 +1539,8 @@ sub AddAutostart {
 #		version of GNOME and displays an information dialog about the
 #		inability to add a gnome autostart
 # Usage: DP_AddAutostart();
-sub DP_AddAutostart {
+sub DP_AddAutostart
+{
 	my $GNOME_Version;
 	my $Old_GNOME;
 
@@ -1407,24 +1548,32 @@ sub DP_AddAutostart {
 	$InternalConfig{AutostartOn} = 1;
 
 	# Try to get the gnome version from the gnome control center
-	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} ))) {
-		if (-x "$_/gnome-control-center") {
+	foreach(split(/:/, sprintf('%s:%s', $FindBin::RealBin, $ENV{PATH} )))
+	{
+		if (-x "$_/gnome-control-center")
+		{
 			$GNOME_Version = qx#$_/gnome-control-center --version#;
 			chomp($GNOME_Version);
 			$GNOME_Version =~ s/^(.+)\s+(.+)\s+(.+)$/$3/;
 			$GNOME_Version =~ s/^(\d+\.\d+).*$/$1/;
-			$GNOME_Version = undef unless($GNOME_Version =~ /^\d+\.\d+(\.\d+.*)?$/);
+			$GNOME_Version = undef if (not $GNOME_Version =~ /^\d+\.\d+(\.\d+.*)?$/);
 			last;
 		}
 	}
-	if(defined($GNOME_Version)) {
-		unless($GNOME_Version > 2.12) {
+	if (defined($GNOME_Version))
+	{
+		if (not $GNOME_Version > 2.12)
+		{
 			$Old_GNOME = 1;
-		} else {
+		}
+		else
+		{
 			$Old_GNOME = 0;
 		}
-	} else {	# If we couldn't get the GNOME version then we just assume the user 
-			# either doesn't use GNOME or has a version of GNOME newer than 2.12
+	}
+	else
+	{	# If we couldn't get the GNOME version then we just assume the user 
+		# either doesn't use GNOME or has a version of GNOME newer than 2.12
 		$Old_GNOME = 0;
 	}
 
@@ -1432,11 +1581,13 @@ sub DP_AddAutostart {
 	Assert($Result =~ /^(okay|gnome-fail)$/);
 	return(true) if $Result eq 'okay';
 
-	if($Result eq 'gnome-fail') {
+	if ($Result eq 'gnome-fail')
+	{
 		# GNOME failed, check if GNOME_DESKTOP_SESSION_ID is set.
 		# If it isn't set, then the user isn't running GNOME *now* so we don't want to display the
 		# error.
-		if(defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID})) {
+		if (defined($ENV{GNOME_DESKTOP_SESSION_ID}) and length($ENV{GNOME_DESKTOP_SESSION_ID}))
+		{
 			# It's set, so the user is running GNOME - display the error
 			# TRANSLATORS: This string appears when Day Planner fails to add dayplanner-daemon
 			# 	to autostart in old GNOME releases (version 2.12 and older).
@@ -1451,8 +1602,10 @@ sub DP_AddAutostart {
 
 # Purpose: Wrapper around RemoveAutostart that sets the config vars
 # Usage: DP_RemoveAutostart();
-sub DP_RemoveAutostart {
-	if(DPQuestion($i18n->get('Disabling automatic startup of the reminder will prevent notifications unless Day Planner has been manually started. Disable automatic startup?'))) {
+sub DP_RemoveAutostart
+{
+	if (DPQuestion($i18n->get('Disabling automatic startup of the reminder will prevent notifications unless Day Planner has been manually started. Disable automatic startup?')))
+	{
 		$InternalConfig{AutostartOn} = 1;
 		return(RemoveAutostart());
 	}
@@ -1461,7 +1614,8 @@ sub DP_RemoveAutostart {
 
 # Purpose: Get the number of *milli*seconds until midnight
 # Usage: my $miliseconds = MilisecondsUntilMidnight();
-sub MilisecondsUntilMidnight {
+sub MilisecondsUntilMidnight
+{
 	my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = localtime(time);
 	# Convert hours to seconds
 	$currhour = $currhour * 60 * 60;
@@ -1475,7 +1629,8 @@ sub MilisecondsUntilMidnight {
 
 # Purpose: Repopulate the UpcomingEvents widget on a timer (every 24h)
 # Usage: \&Day_Changed_Event;
-sub Day_Changed_Event {
+sub Day_Changed_Event
+{
 	# First repopulate the upcoming events widget
 	PopulateUpcomingEvents();
 
@@ -1483,7 +1638,8 @@ sub Day_Changed_Event {
 	# from the time value in order to get "yesterday"
 	my ($yestersec,$yestermin,$yesterhour,$yestermday,$yestermonth,$yesteryear,$yesterwday,$yesteryday,$yesterisdst) = GetDate(time - 200);
 	my ($CalYear, $CalMonth, $CalDay) = $CalendarWidget->get_date();
-	if($CalYear == $yesteryear && $CalMonth == $yestermonth && $CalDay == $yestermday) {
+	if ($CalYear == $yesteryear && $CalMonth == $yestermonth && $CalDay == $yestermday)
+	{
 		my ($currsec,$currmin,$currhour,$currmday,$currmonth,$curryear,$currwday,$curryday,$currisdst) = GetDate(time - 200);
 		$CalendarWidget->select_month($currmonth,$curryear);
 		$CalendarWidget->select_day($currmday);
@@ -1498,7 +1654,8 @@ sub Day_Changed_Event {
 
 # Purpose: Set the day-changed timer
 # Usage: Set_DayChangeTimer();
-sub Set_DayChangeTimer {
+sub Set_DayChangeTimer
+{
 	# Set the timer
 	Glib::Timeout->add(MilisecondsUntilMidnight(), \&Day_Changed_Event);
 }
@@ -1513,45 +1670,62 @@ sub Set_DayChangeTimer {
 
 # Purpose: Commandline wrapper around the export functions
 # Usage: 'x|yzx' => \&CLI_Export,
-sub CLI_Export {
+sub CLI_Export
+{
 	# First initialize the i18n system
 	DP_InitI18n();
 	# Then initialize the data
 	my($Type,$Target) = @_;
 	MainInit(1);
-	if($Type =~ /(ical|ics_dps)/) {
+	if ($Type =~ /(ical|ics_dps)/)
+	{
 		runtime_use('File::Basename');
-		unless(-w dirname($Target)) {
+		if (not -w dirname($Target))
+		{
 			die("Unable to write to " . dirname($Target) . "\n");
 		}
-		if(-d $Target) {
+		if (-d $Target)
+		{
 			die("$Target: is a directory\n");
 		}
-		if($Type =~ /(ical|ics_dps)/) {
-			if($iCalendar->write($Target)) {
+		if ($Type =~ /(ical|ics_dps)/)
+		{
+			if ($iCalendar->write($Target))
+			{
 				print "iCalendar data written to $Target\n";
 			}
 		}
-	} elsif($Type =~ /(html|php)/) {
-		if(-e $Target) {
-			unless(-w $Target) {
+	}
+	elsif ($Type =~ /(html|php)/)
+	{
+		if (-e $Target)
+		{
+			if (not -w $Target)
+			{
 				die("I don't have write permission to $Target\n");
 			}
-			unless(-d $Target) {
+			if (not -d $Target)
+			{
 				die("$Target: is not a directory\n");
 			}
 		}
-		if($Type =~ /html/) {
+		if ($Type =~ /html/)
+		{
 			runtime_use('DP::iCalendar::WebExp') or die('Failed to load the requried web export module, your Day Planner install appears to be corrupt');
 			my $html = DP::iCalendar::WebExp->new();
 			$html->set_dpi($iCalendar);
 			$html->writehtml($Target);
-		} elsif ($Type =~ /php/) {
-			if(PHP_Export($Target)) {
+		}
+		elsif ($Type =~ /php/)
+		{
+			if (PHP_Export($Target))
+			{
 				print "PHP written to $Target\n";
 			}
 		}
-	} else {
+	}
+	else
+	{
 		die("Unknown type given as argument to CLI_Export: $Type\n");
 	}
 	exit(0);
@@ -1559,18 +1733,23 @@ sub CLI_Export {
 
 # Purpose: Commandline wrapper around the import functions
 # Usage: 'x|yzx' => \&CLI_Import,
-sub CLI_Import {
+sub CLI_Import
+{
 	my($Type,$Source) = @_;
 	MainInit(1);
-	die("$Source: does not exist\n") unless(-e $Source);
-	die("$Source: is not readable by me\n") unless(-r $Source);
+	die("$Source: does not exist\n") if (not -e $Source);
+	die("$Source: is not readable by me\n") if (not -r $Source);
 	die("$Source: is a directory\n") if (-d $Source);
 	# Initialize the daemon (we need it)
 	Assert(DaemonInit());
-	if($Type =~ /ical/) {
-		if($iCalendar->addfile($Source)) {
+	if ($Type =~ /ical/)
+	{
+		if ($iCalendar->addfile($Source))
+		{
 			print "Imported iCalendar data from $Source\n";
-		} else {
+		}
+		else
+		{
 			print "Importing failed.\n";
 		}
 	}
@@ -1588,13 +1767,16 @@ sub CLI_Import {
 
 # Purpose: Purge the current $PlanConvertHash-> buffer and put it into %CalendarContents
 # Usage: PlanConvert_PurgeBuffer(\%PlanConvertHash);
-sub PlanConvert_PurgeBuffer {
+sub PlanConvert_PurgeBuffer
+{
 	my $PlanConvertHash = $_[0];
 	Assert(defined $PlanConvertHash);
 	my $ErrorMessage;
-	if(defined($PlanConvertHash->{Day})) {
+	if (defined($PlanConvertHash->{Day}))
+	{
 		Assert($$PlanConvertHash->{Type} =~ /^(normal|bday)$/);
-		if ($PlanConvertHash->{Type} eq 'normal') {
+		if ($PlanConvertHash->{Type} eq 'normal')
+		{
 			my %TargetEvent;
 			$TargetEvent{DTSTART} = iCal_GenDateTime($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day},$PlanConvertHash->{Time});
 			$TargetEvent{DTEND} = $TargetEvent{DTSTART};
@@ -1602,25 +1784,30 @@ sub PlanConvert_PurgeBuffer {
 			delete($PlanConvertHash->{Month});
 			delete($PlanConvertHash->{Year});
 			delete($PlanConvertHash->{Time});
-			if (not defined($PlanConvertHash->{Summary})) {
+			if (not defined($PlanConvertHash->{Summary}))
+			{
 				DPIntWarn("Plan importer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
 				return(undef);
 			}
 			$TargetEvent{SUMMARY} = $PlanConvertHash->{Summary};
-			if (defined($PlanConvertHash->{Fulltext})) {
+			if (defined($PlanConvertHash->{Fulltext}))
+			{
 				$TargetEvent{DESCRIPTION} = $PlanConvertHash->{Fulltext};
 				delete($PlanConvertHash->{Fulltext});
 			}
 			delete($PlanConvertHash->{Summary});
 			$iCalendar->add(%TargetEvent);
-		} elsif ($PlanConvertHash->{Type} eq 'bday') {
+		}
+		elsif ($PlanConvertHash->{Type} eq 'bday')
+		{
 			my %TargetEvent;
 			$TargetEvent{DTSTART} = iCal_GenDateTime($PlanConvertHash->{Year},$PlanConvertHash->{Month},$PlanConvertHash->{Day});
 			$TargetEvent{DTEND} = $TargetEvent{DTSTART};
 			delete($PlanConvertHash->{Day});
 			delete($PlanConvertHash->{Month});
 			delete($PlanConvertHash->{Year});
-			if (not defined($PlanConvertHash->{Summary})) {
+			if (not defined($PlanConvertHash->{Summary}))
+			{
 				DPIntWarn("Plan importer: Event at $TargetEvent{DTSTART} did not have a summary. Skipping.");
 				next;
 			}
@@ -1638,39 +1825,55 @@ sub PlanConvert_PurgeBuffer {
 
 # Purpose: Convert the file supplied
 # Usage: PlanConvert_PurgeBuffer(/path/to/file,\%PlanConvertHash, $ProgressBar);
-sub PlanConvert_ProcessFile {
+sub PlanConvert_ProcessFile
+{
 	Assert(scalar(@_) > 1);
 	my $PlanConvertHash = $_[1]; 
 	$PlanConvertHash->{Type} = 'normal';
 
-	open(my $PLAN_FILE, '<', $_[0]) or do {
+	open(my $PLAN_FILE, '<', $_[0]) or do
+	{
 		DPIntWarn("Unable to open $_[0]: $!");
 		return(0);
 	};
 	my $LineNo = 0;
-	while(<$PLAN_FILE>) {
+	while(<$PLAN_FILE>)
+	{
 		$LineNo++;
 		next if /^\s*(O|o|t|e|l|a|y|P|p|m|L|u|E)/;	# These are Plan specific stuff, just ignore them
 		chomp;
-		if (/^\s*(N)/) {		# Entry equalent to the dayplanner summary
+		if (/^\s*(N)/)
+		{		# Entry equalent to the dayplanner summary
 			my $Summary = $_;
 			$Summary =~ s#^\s*N\s+(.*)#$1#;
 			$PlanConvertHash->{Summary} = $Summary;
-		} elsif (/^\s*(M)/) {		# Entry equalent to the dayplanner fulltext
+		}
+		elsif (/^\s*(M)/)
+		{		# Entry equalent to the dayplanner fulltext
 			my $Fulltext = $_;
 			$Fulltext =~ s#^\s*M\s+(.*)#$1#;
-			if(defined($PlanConvertHash->{Fulltext})) {
+			if (defined($PlanConvertHash->{Fulltext}))
+			{
 				$PlanConvertHash->{Fulltext} = "$PlanConvertHash->{Fulltext} $Fulltext";
-			} else {
+			}
+			else
+			{
 				$PlanConvertHash->{Fulltext} = $Fulltext;
 			}
-		} elsif (/^\s*(R)/) {		# These we just skip but might parse at some point
-			if (/^\s*R\s+0\s+0\s+0\s+0\s+1/) {
+		}
+		elsif (/^\s*(R)/)
+		{		# These we just skip but might parse at some point
+			if (/^\s*R\s+0\s+0\s+0\s+0\s+1/)
+			{
 				$PlanConvertHash->{Type} = 'bday';
-			} else {
+			}
+			else
+			{
 				next;
 			}
-		} elsif (/^\s*\d/) {		# Okay, it starts with a digit, it's a new date
+		}
+		elsif (/^\s*\d/)
+		{		# Okay, it starts with a digit, it's a new date
 			PlanConvert_PurgeBuffer($PlanConvertHash);
 			my ($Day,$Month,$Year,$Time) = ($_,$_,$_,$_);
 			# Get the day
@@ -1683,10 +1886,12 @@ sub PlanConvert_ProcessFile {
 			$Time =~ s#\s*\d+/\d+/\d+\s+(\d+:\d+):\d+\s+.*#$1#;
 			# Convert the time to a more dayplannerish format
 			$Time = '00:00' if $Time eq '99:99';
-			if ($Time =~ /^\d+:\d$/) {
+			if ($Time =~ /^\d+:\d$/)
+			{
 				$Time = $Time . '0';
 			}
-			if ($Time =~ /^\d:\d*$/) {
+			if ($Time =~ /^\d:\d*$/)
+			{
 				$Time = "0$Time";
 			}
 			# Set the variables in the hash
@@ -1694,7 +1899,9 @@ sub PlanConvert_ProcessFile {
 			$PlanConvertHash->{Month} = $Month;
 			$PlanConvertHash->{Year} = $Year;
 			$PlanConvertHash->{Time} = $Time;
-		} else {
+		}
+		else
+		{
 			DPIntWarn("WARNING: Unrecognized line (please report this): $_[0]:$LineNo: $_");
 			next;
 		}
@@ -1724,50 +1931,58 @@ sub ImportDataFromProgram
 	);
 
 	# Detect evolution
-	if(-e "$ENV{HOME}/.evolution/calendar/local/system/calendar.ics") {
+	if (-e "$ENV{HOME}/.evolution/calendar/local/system/calendar.ics")
+	{
 		$Programs{Evolution} = 1;
 		$Programs{ImportPossible} = 1;
 	}
 	ProgressMade($Programs{TotalPrograms}, 1, $ProgressWindow);
 
 	# Detect Gnome Calendar
-	if(-e "$ENV{HOME}/.gnome/user-cal.vcf") {
+	if (-e "$ENV{HOME}/.gnome/user-cal.vcf")
+	{
 		$Programs{GnomeCalendar} = 1;
 		$Programs{ImportPossible} = 1;
 	}
 	ProgressMade($Programs{TotalPrograms}, 2, $ProgressWindow);
 
 	# Detect plan
-	foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
-		if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
+	foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir")
+	{
+		if (defined($Dir) and -d $Dir and -e "$Dir/dayplan")
+		{
 			$Programs{ImportPossible} = 1;
 			$Programs{Plan} = 1;
 		}
 	}
 	ProgressMade($Programs{TotalPrograms}, 3, $ProgressWindow);
 	# Detect Korganizer
-	if (-e "$ENV{HOME}/.kde/share/apps/korganizer/std.ics") {
+	if (-e "$ENV{HOME}/.kde/share/apps/korganizer/std.ics")
+	{
 		$Programs{Korganizer} = 1;
 		$Programs{ImportPossible} = 1;
 	}
 	ProgressMade($Programs{TotalPrograms}, 4, $ProgressWindow);
 	# Detect Orage
-	if (-e "$ENV{HOME}/.config/xfce4/orage/orage.ics") {
+	if (-e "$ENV{HOME}/.config/xfce4/orage/orage.ics")
+	{
 		$Programs{Orage} = 1;
 		$Programs{ImportPossible} = 1;
 	}
 	ProgressMade($Programs{TotalPrograms}, 5, $ProgressWindow);
 
 	DP_DestroyProgressWin($ProgressWindow);
-	if(not $Programs{ImportPossible}) {
-		if(not $FirstTime) {
+	if (not $Programs{ImportPossible})
+	{
+		if (not $FirstTime)
+		{
 			$MainWindow->show();
 			DPInfo($i18n->get('Could not detect data from any application to import.'));
 		}
 		return(0);
 	}
 	my %ImportFrom;
-	$MainWindow->set_sensitive(0) if($MainWindow);
+	$MainWindow->set_sensitive(0) if ($MainWindow);
 
 	# Create the window and vbox
 	my $ImportWindow = Gtk2::Window->new();
@@ -1778,7 +1993,8 @@ sub ImportDataFromProgram
 	$ImportWindow->set_type_hint('dialog');
 	$ImportWindow->resize(120,50);
 	# Do some extra things if it is the first time
-	if($FirstTime) {
+	if ($FirstTime)
+	{
 		$ImportWindow->set_title($i18n->get('Day Planner') . ' - ' . $i18n->get('Import data'));
 		# Set the icons
 		my @WindowIcons = GetAppIcons();
@@ -1786,7 +2002,9 @@ sub ImportDataFromProgram
 		{
 			$ImportWindow->set_icon_list(@WindowIcons);
 		}
-	} else {
+	}
+	else
+	{
 		$ImportWindow->set_title($i18n->get("Import data"));
 		$ImportWindow->set_skip_taskbar_hint(1);
 		$ImportWindow->set_skip_pager_hint(1);
@@ -1808,57 +2026,72 @@ sub ImportDataFromProgram
 	my $EvolutionButton = Gtk2::CheckButton->new_with_label('Evolution');
 	$ImportVBox->pack_start($EvolutionButton,0,0,0);
 	$EvolutionButton->show();
-	if($Programs{Evolution}) {
+	if ($Programs{Evolution})
+	{
 		$EvolutionButton->set_active(1);
-	} else {
+	}
+	else
+	{
 		$EvolutionButton->set_sensitive(0);
 	}
-	
+
 	# Gnome calendar
 	my $GnomeCalButton = Gtk2::CheckButton->new_with_label('Gnome calendar');
 	$ImportVBox->pack_start($GnomeCalButton,0,0,0);
 	$GnomeCalButton->show();
-	if($Programs{GnomeCalendar}) {
+	if ($Programs{GnomeCalendar})
+	{
 		$GnomeCalButton->set_active(1);
-	} else {
+	}
+	else
+	{
 		$GnomeCalButton->set_sensitive(0);
 	}
-	
+
 	# Korganizer
 	my $KorganizerButton = Gtk2::CheckButton->new_with_label('Korganizer');
 	$ImportVBox->pack_start($KorganizerButton,0,0,0);
 	$KorganizerButton->show();
-	if($Programs{Korganizer}) {
+	if ($Programs{Korganizer})
+	{
 		$KorganizerButton->set_active(1);
-	} else {
+	}
+	else
+	{
 		$KorganizerButton->set_sensitive(0);
 	}
-	
+
 	# Orage
 	my $OrageButton = Gtk2::CheckButton->new_with_label('Orage');
 	$ImportVBox->pack_start($OrageButton,0,0,0);
 	$OrageButton->show();
-	if($Programs{Orage}) {
+	if ($Programs{Orage})
+	{
 		$OrageButton->set_active(1);
-	} else {
+	}
+	else
+	{
 		$OrageButton->set_sensitive(0);
 	}
-	
+
 	# Plan
 	my $PlanButton= Gtk2::CheckButton->new_with_label('Plan');
 	$ImportVBox->pack_start($PlanButton,0,0,0);
-	if($Programs{Plan}) {
+	if ($Programs{Plan})
+	{
 		$PlanButton->set_active(1);
-	} else {
+	}
+	else
+	{
 		$PlanButton->set_sensitive(0);
 	}
 	$PlanButton->show();
-	
+
 	# Add the buttons
 	my $ButtonHBox = Gtk2::HBox->new();
 	$ButtonHBox->show();
 	$ImportVBox->pack_end($ButtonHBox,0,0,0);
-	
+
 	# Ok button
 	# TRANSLATORS: Button in the "import from program" window
 	my $OKButton = Gtk2::Button->new($i18n->get('_Import'));
@@ -1873,8 +2106,8 @@ sub ImportDataFromProgram
 			ImportProgData($EvolutionButton->get_active(), $PlanButton->get_active(), $GnomeCalButton->get_active(), $KorganizerButton->get_active(),$OrageButton->get_active());
 			$MainWindow->show() if $FirstTime;
 		}	# NOTE: Removing this makes perl 5.8.8 in mdv20070 segfault.
-			# This might need a bug report
-		);
+		# This might need a bug report
+	);
 	$ButtonHBox->pack_end($OKButton,0,0,0);
 
 	# Cancel button
@@ -1907,7 +2140,8 @@ sub ImportDataFromProgram
 
 # Purpose: Import data from other programs
 # Usage: ImportProgData(EVOLUTION?, PLAN?, GNOME_CAL?, KORGANIZER?, ORAGE?);
-sub ImportProgData {
+sub ImportProgData
+{
 	my($ImportEvolution, $ImportPlan, $ImportGnome, $ImportKorganizer, $ImportOrage) = @_;
 	my (@PlanFiles, @EvolutionFiles);
 
@@ -1916,10 +2150,13 @@ sub ImportProgData {
 	my $Progress = DPCreateProgressWin($i18n->get("Importing..."), $i18n->get("Preparing"), 0);
 
 	# Get the files to import plan data from
-	if($ImportPlan) {
-		foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir") {
-			if (defined($Dir) and -d $Dir and -e "$Dir/dayplan") {
-				while (my $File = glob("$Dir/*")) {
+	if ($ImportPlan)
+	{
+		foreach my $Dir ("$ENV{HOME}/.plan","$ENV{HOME}/.plan.dir"){
+			if (defined($Dir) and -d $Dir and -e "$Dir/dayplan")
+			{
+				while (my $File = glob("$Dir/*"))
+				{
 					next if $File =~ m#/(lock\.pland|pland|holiday)$#;
 					push(@PlanFiles, $File);
 				}
@@ -1928,58 +2165,70 @@ sub ImportProgData {
 	}
 
 	# Get the files to import Evolution data from
-	if($ImportEvolution) {
+	if ($ImportEvolution)
+	{
 		my $EvoDir = "$ENV{HOME}/.evolution/calendar/local/system";
-		while(my $File = glob("$EvoDir/*.ics")) {
+		while(my $File = glob("$EvoDir/*.ics"))
+		{
 			push(@EvolutionFiles, $File);
 		}
 	}
 
 	# Set MaxProgress for gnome cal
-	if($ImportGnome) {
+	if ($ImportGnome)
+	{
 		$MaxProgress++;
 	}
 	# Set MaxProgress for Korganizer (FIXME: Does it have additional files?)
-	if($ImportKorganizer) {
+	if ($ImportKorganizer)
+	{
 		$MaxProgress++;
 	}
 	# Set the total MaxProgress
-	if(@PlanFiles) {
+	if (@PlanFiles)
+	{
 		$MaxProgress += scalar(@PlanFiles);
 	}
-	if(@EvolutionFiles) {
+	if (@EvolutionFiles)
+	{
 		$MaxProgress += scalar(@EvolutionFiles);
 	}
 
 	# Begin with gnome
-	if($ImportGnome) {
+	if ($ImportGnome)
+	{
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Gnome Calendar");
 		$iCalendar->addfile("$ENV{HOME}/.gnome/user-cal.vcf");
 		$CurrentProgress++;
 	}
 	# Continue with evolution
-	foreach(@EvolutionFiles) {
+	foreach(@EvolutionFiles)
+	{
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Evolution");
 		$iCalendar->addfile($_);
 		$CurrentProgress++;
 	}
 	# Then do korganizer
-	if($ImportKorganizer) {
+	if ($ImportKorganizer)
+	{
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Korganizer");
 		$iCalendar->addfile("$ENV{HOME}/.kde/share/apps/korganizer/std.ics");
 		$CurrentProgress++;
 	}
 	# Then do Orage
-	if($ImportOrage) {
+	if ($ImportOrage)
+	{
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Orage");
 		$iCalendar->addfile("$ENV{HOME}/.config/xfce4/orage/orage.ics");
 		$CurrentProgress++;
 	}
 	# End with plan
-	foreach(@PlanFiles) {
+	foreach(@PlanFiles)
+	{
 		ProgressMade($MaxProgress, $CurrentProgress, $Progress, "Plan");
 		my %PlanConvertHash;
-		if(PlanConvert_ProcessFile($_,\%PlanConvertHash)) {
+		if (PlanConvert_ProcessFile($_,\%PlanConvertHash))
+		{
 			PlanConvert_PurgeBuffer(\%PlanConvertHash);
 		}
 		$CurrentProgress++;
@@ -1987,13 +2236,14 @@ sub ImportProgData {
 	ProgressMade($MaxProgress, $CurrentProgress, $Progress, $i18n->get("Done"));
 	UpdatedData(1);
 	DP_DestroyProgressWin($Progress);
-	
+
 	$MainWindow->set_sensitive(1) if $MainWindow;
 }
 
 # Purpose: Pop up a file picker to find the file to import
 # Usage: ImportDataFromFile();
-sub ImportDataFromFile {
+sub ImportDataFromFile
+{
 	# NOTE: We currently rely upon file extensions. This might actually be fine
 	# but this note is left as a little heads up. As we filter on filenames anyway
 	# the only case would be a file named *.ics which should be *.dpf or the other
@@ -2001,8 +2251,8 @@ sub ImportDataFromFile {
 	# Create the main window
 	# FIXME
 	my $ImportWindow = Gtk2::FileChooserDialog->new($i18n->get('Import data from file'), $MainWindow, 'open',
-	'gtk-cancel' => 'reject',
-	'gtk-open' => 'accept',);
+		'gtk-cancel' => 'reject',
+		'gtk-open' => 'accept',);
 	$ImportWindow->set_local_only(1);
 	$ImportWindow->set_default_response('accept');
 	my $filter = Gtk2::FileFilter->new;
@@ -2011,12 +2261,16 @@ sub ImportDataFromFile {
 	$filter->set_name($i18n->get('All supported file formats'));
 	$ImportWindow->add_filter($filter);
 	my $Response = $ImportWindow->run();
-	if($Response eq 'accept') {
+	if ($Response eq 'accept')
+	{
 		my $Filename = $ImportWindow->get_filename();
-		if($Filename =~ /\.(ics|vcf)$/i) {
+		if ($Filename =~ /\.(ics|vcf)$/i)
+		{
 			$iCalendar->addfile($Filename);
 			UpdatedData();
-		} else {
+		}
+		else
+		{
 			DPIntWarn("Unknown filetype: $Filename");
 		}
 	}
@@ -2025,11 +2279,12 @@ sub ImportDataFromFile {
 
 # Purpose: Pop up a graphical dialog for exporting data
 # Usage: ExportData();
-sub ExportData {
+sub ExportData
+{
 	# Create the main window
 	my $ExportWindow = Gtk2::FileChooserDialog->new($i18n->get('Export data'), $MainWindow, 'save',
-	'gtk-cancel' => 'reject',
-	'gtk-save' => 'accept',);
+		'gtk-cancel' => 'reject',
+		'gtk-save' => 'accept',);
 	$ExportWindow->set_current_name($i18n->get('My_dayplanner'));
 	$ExportWindow->set_local_only(1);
 
@@ -2065,36 +2320,47 @@ sub ExportData {
 	$Export_Combo->show();
 
 	# Handle changed values in the combo box
-	$Export_Combo->signal_connect('changed' => sub {
-		$ActiveIndex = $Export_Combo->get_active();
-		#unless($ActiveIndex == 0) {
-		#	$EncryptionCheckbox->set_sensitive(0);
-		#} else {
-		#	$EncryptionCheckbox->set_sensitive(1);
-		#}
-		if($ActiveIndex == 1) {
-			#$BirthdaysOnlyCheckbox->set_sensitive(0);
-			$ExportWindow->set_action('select-folder');
-		} else {
-			#$BirthdaysOnlyCheckbox->set_sensitive(1);
-			$ExportWindow->set_action('save');
-		}
-	});
+	$Export_Combo->signal_connect('changed' => sub
+		{
+			$ActiveIndex = $Export_Combo->get_active();
+			#unless($ActiveIndex == 0){
+			#	$EncryptionCheckbox->set_sensitive(0);
+			#} else {
+			#	$EncryptionCheckbox->set_sensitive(1);
+			#}
+			if ($ActiveIndex == 1)
+			{
+				#$BirthdaysOnlyCheckbox->set_sensitive(0);
+				$ExportWindow->set_action('select-folder');
+			}
+			else
+			{
+				#$BirthdaysOnlyCheckbox->set_sensitive(1);
+				$ExportWindow->set_action('save');
+			}
+		});
 	$Export_Combo->set_active(0);
 
-	while (1) {
+	while (1)
+	{
 		my $Response = $ExportWindow->run();
 		my $Filename = $ExportWindow->get_filename();
-		if($Response eq 'accept') {
+		if ($Response eq 'accept')
+		{
 			Assert($ActiveIndex == 0 || $ActiveIndex == 1);
 			#my $OnlyBirthdays = $BirthdaysOnlyCheckbox->get_active();
-			if ($ActiveIndex == 0) {
-				if(PromptOverwrite("$Filename.ics")) {
+			if ($ActiveIndex == 0)
+			{
+				if (PromptOverwrite("$Filename.ics"))
+				{
 					$iCalendar->write("$Filename.ics");
 					last;
 				}
-			} elsif ($ActiveIndex == 1) {
-				if(PromptOverwrite($Filename, 1)) {
+			}
+			elsif ($ActiveIndex == 1)
+			{
+				if (PromptOverwrite($Filename, 1))
+				{
 					runtime_use('DP::iCalendar::WebExp') or die();
 					my $html = DP::iCalendar::WebExp->new();
 					$html->set_dpi($iCalendar);
@@ -2102,7 +2368,9 @@ sub ExportData {
 					last;
 				}
 			}
-		} else {
+		}
+		else
+		{
 			last;
 		}
 	}
@@ -2112,45 +2380,68 @@ sub ExportData {
 # Purpose: Prompt the user to overwrite data
 # Usage: PromptOverwrite(PATH, DIR?);
 #	Returns undef on "don't overwrite". Otherwise true.
-sub PromptOverwrite {
+sub PromptOverwrite
+{
 	my ($File, $Dir) = @_;
-	if($Dir) {
-		if(-e $File) {
-			if(-d $File) {
-				while(glob("$File/*")) {
-					unless($_ =~ /^\./) {
-						if(DPQuestion($i18n->get_advanced("There are already files in the directory \"%(dir)\". If you continue, any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?", { dir =>  $File}))) {
+	if ($Dir)
+	{
+		if (-e $File)
+		{
+			if (-d $File)
+			{
+				while(glob("$File/*"))
+				{
+					if (not $_ =~ /^\./)
+					{
+						if (DPQuestion($i18n->get_advanced("There are already files in the directory \"%(dir)\". If you continue, any existing exported Day Planner data in that directory will be overwritten. Do you want to continue?", { dir =>  $File}))) {
 							return(1);
-						} else {
+						}
+						else
+						{
 							return(undef);
 						}
 					}
 				}
 				return(1);
-			} else {
+			}
+			else
+			{
 				DPInfo($i18n->get_advanced("\"%(file)\" already exists and is not a directory", { file => $File }));
 				return(undef);
 			}
-		} else {
+		}
+		else
+		{
 			return(1);
 		}
-	} else {
+	}
+	else
+	{
 		runtime_use('File::Basename');
 		my $FileDirname = dirname($File);
-		unless(-w $FileDirname) {
+		if (not -w $FileDirname)
+		{
 			DPInfo($i18n->get_advanced("\"%(dir)\" is read only. Write permissions are required.", { dir => $FileDirname}));
 			return(undef);
 		}
-		if(-e $File) {
-			if(-d $File) {
+		if (-e $File)
+		{
+			if (-d $File)
+			{
 				DPInfo($i18n->get_advanced("\"%(dir)\" is a directory.", { dir => $File }));
 				return(undef);
-			} elsif(DPQuestion($i18n->get_advanced("\"%(file)\" already exists. Overwrite?", { file => $File}))) {
+			}
+			elsif (DPQuestion($i18n->get_advanced("\"%(file)\" already exists. Overwrite?", { file => $File})))
+			{
 				return(1);
-			} else {
+			}
+			else
+			{
 				return(undef);
 			}
-		} else {
+		}
+		else
+		{
 			return(1);
 		}
 	}
@@ -2185,20 +2476,25 @@ sub GTK_Flush
 # 	->set_image on buttons
 # Usage: Gtk2_Button_SetImage(BUTTON, IMAGE, LABEL);
 # 	Sets LABEL if version is old
-sub Gtk2_Button_SetImage {
+sub Gtk2_Button_SetImage
+{
 	my($button,$image,$label) = @_;
 	Assert(scalar(@_) == 3);
-	if($Gtk2::VERSION <= 1.070) {
+	if ($Gtk2::VERSION <= 1.070)
+	{
 		DPIntWarn("You're running Day Planner using an old version of Gtk2. This version contains certain limitations which will be worked around. This will cause the interface to look sub-optimal, you are encouraged to upgrade to a later version of Gtk2/Gtk2-perl");
 		return $button->set_label($i18n->get($label));
-	} else {
+	}
+	else
+	{
 		return $button->set_image($image);
 	}
 }	
 
 # Purpose: Initialize gtk2
 # Usage: Gtk2Init();
-sub Gtk2Init {
+sub Gtk2Init
+{
 	Gtk2->init();
 	$Gtk2Init = 1;
 }
@@ -2217,7 +2513,8 @@ sub DP_DestroyProgressWin
 #	Returns a hashref with the following keys:
 #		Window = The window
 #		ProgressBar = The progress bar
-sub DPCreateProgressWin {
+sub DPCreateProgressWin
+{
 	return if not $Gtk2Init;
 
 	my ($Name, $Text, $PulsateMode) = @_;
@@ -2226,25 +2523,33 @@ sub DPCreateProgressWin {
 	$ProgressHash{Window}->set_skip_taskbar_hint(1);
 	$ProgressHash{Window}->set_skip_pager_hint(1);
 	$ProgressHash{Window}->set_type_hint('dialog');
-	if(defined($Name)) {
+	if (defined($Name))
+	{
 		$ProgressHash{Window}->set_title($Name);
 	}
-	if(defined($MainWindow)) {
+	if (defined($MainWindow))
+	{
 		$ProgressHash{Window}->set_transient_for($MainWindow);
 		$ProgressHash{Window}->set_position('center-on-parent');
-	} else {
+	}
+	else
+	{
 		$ProgressHash{Window}->set_position('center');
 	}
 	$ProgressHash{ProgressBar} = Gtk2::ProgressBar->new();
 	$ProgressHash{Window}->add($ProgressHash{ProgressBar});
 	$ProgressHash{Window}->set_modal(1);
 	$ProgressHash{Window}->set_resizable(0);
-	if(defined($Text)) {
+	if (defined($Text))
+	{
 		$ProgressHash{ProgressBar}->set_text($Text);
-	} else {
+	}
+	else
+	{
 		$ProgressHash{ProgressBar}->set_fraction(0);
 	}
-	if($PulsateMode) {
+	if ($PulsateMode)
+	{
 		$ProgressHash{ProgressBar}->{activity_mode} = 0;
 	}
 	$ProgressHash{ProgressBar}->show();
@@ -2255,11 +2560,13 @@ sub DPCreateProgressWin {
 
 # Purpose: Pulsate a progressbar
 # Usage: PulsateProgressbar($Progressbar);
-sub PulsateProgressbar {
+sub PulsateProgressbar
+{
 	my $ProgressHash = shift;
 	return if not $Gtk2Init;
-	if(defined($ProgressHash)) {		# So that the calling function can just *assume* it has a progressbar
-						# even when it doesn't
+	if (defined($ProgressHash))
+	{		# So that the calling function can just *assume* it has a progressbar
+		# even when it doesn't
 		my $Bar = $ProgressHash->{ProgressBar};
 		$Bar->pulse();
 		GTK_Flush();
@@ -2269,19 +2576,24 @@ sub PulsateProgressbar {
 
 # Purpose: Set the progress of a progressbar
 # Usage: ProgressMade(FUNCTIONS TO PERFORM, FUNCTIONS PERFORMED, $ProgressWindowHashref, NewText?);
-sub ProgressMade {
+sub ProgressMade
+{
 	return if not $Gtk2Init;
 
 	my ($ToPerform, $Performed, $ProgressHash,$Text) = @_;
 	my $Bar = $ProgressHash->{ProgressBar};
 	my $Result = sprintf("%d", ($Performed / $ToPerform) * 100);
-	if($Result < 100) {
+	if ($Result < 100)
+	{
 		$Result = "0.$Result"; 
-	} else {
+	}
+	else
+	{
 		$Result = 1;
 	}
 	$Bar->set_fraction($Result);
-	if($Text) {
+	if ($Text)
+	{
 		$Bar->set_text($Text);
 	}
 	GTK_Flush();
@@ -2290,9 +2602,11 @@ sub ProgressMade {
 
 # Purpose: Set the fraction in a progressbar
 # Usage: ProgressFraction($Progressbar, fraction);
-sub ProgressFraction {
+sub ProgressFraction
+{
 	my($Progressbar, $fraction) = @_;
-	if($Gtk2Init and defined($Progressbar)) {
+	if ($Gtk2Init and defined($Progressbar))
+	{
 		$Progressbar->set_fraction($fraction);
 		GTK_Flush();
 	}
@@ -2300,18 +2614,21 @@ sub ProgressFraction {
 
 # Purpose: Populate the upcoming events widget
 # Usage: PopulateUpcomingEvents();
-sub PopulateUpcomingEvents {
+sub PopulateUpcomingEvents
+{
 	my $NewUpcoming = GetUpcomingEventsString($iCalendar);
 	Assert(defined $NewUpcoming);
 	# Don't update the widget if the text hasn't changed
-	if(not $UpcomingEventsWidget->get_buffer eq $NewUpcoming) {
+	if (not $UpcomingEventsWidget->get_buffer eq $NewUpcoming)
+	{
 		$UpcomingEventsBuffer->set_text($NewUpcoming);
 	}
 }
 
 # Purpose: Delete the event currently selected in the eventlist
 # Usage: DeleteEvent();
-sub DeleteEvent {
+sub DeleteEvent
+{
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# Unless $Selected is defined we don't have anything selected in the eventlist
 	Assert(defined $Selected);
@@ -2320,7 +2637,8 @@ sub DeleteEvent {
 	my @StandardTypes = ( 'normal', 'allday','bday' );
 	Assert(grep($Type, @StandardTypes) || $Type eq 'holiday');
 
-	if(grep($Type, @StandardTypes)) {
+	if (grep($Type, @StandardTypes))
+	{
 		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 		my $EventUID = $EventlistWidget->{data}[$Selected][0];
 		my $EventTime = $EventlistWidget->{data}[$Selected][1];
@@ -2339,63 +2657,83 @@ sub DeleteEvent {
 		$iCalendar->delete($EventUID);
 
 		UpdatedData(0,1);
-	} elsif ($Type eq 'holiday') {
+	}
+	elsif ($Type eq 'holiday')
+	{
 		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event cannot be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 	}
 }
 
 # Purpose: Detect which kind of event is selected in the eventlist
 # Usage: my $Type = GetEventListType();
-sub GetEventListType {
+sub GetEventListType
+{
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
-	unless(defined($Selected)) {
+	if (not defined($Selected))
+	{
 		return(0);
 	}
 	# Initialize
 	my $Event;
-	if(not $EventlistWidget->{data}[$Selected][0] eq 'NULL' and $iCalendar->exists($EventlistWidget->{data}[$Selected][0])) {
+	if (not $EventlistWidget->{data}[$Selected][0] eq 'NULL' and $iCalendar->exists($EventlistWidget->{data}[$Selected][0]))
+	{
 		my $Dummy = $EventlistWidget->{data}[$Selected][0];
 		$Event = $iCalendar->get_info($EventlistWidget->{data}[$Selected][0]);
 	}
 
 	# Detect the event type
-	if($Event) {
-		if (defined($Event->{'X-DP-BIRTHDAY'}) and $Event->{'X-DP-BIRTHDAY'} eq 'TRUE') {
+	if ($Event)
+	{
+		if (defined($Event->{'X-DP-BIRTHDAY'}) and $Event->{'X-DP-BIRTHDAY'} eq 'TRUE')
+		{
 			return('bday');
-		} elsif (not $Event->{DTSTART} =~ /\dT\d/) {
+		}
+		elsif (not $Event->{DTSTART} =~ /\dT\d/)
+		{
 			# Assume all day since there is no T parameter
 			return('allday');
-		} elsif ($Event->{SUMMARY}) {
+		}
+		elsif ($Event->{SUMMARY})
+		{
 			# Assume normal since SUMMARY is set
 			return('normal');
-		} else {
+		}
+		else
+		{
 			DPIntWarn("GetEventListType(): Unknown type of event $EventlistWidget->{data}[$Selected][0]. Dumping data.");
 			print Dumper($Event);
 		}
-	} else {
+	}
+	else
+	{
 		return('holiday');
 	}
 }
 
 # Purpose: Close a window when the escape key is pressed
 # Usage: $WIDGET->signal_connect("key_release_event" => \&EscapeKeyHandler);
-sub EscapeKeyHandler {
+sub EscapeKeyHandler
+{
 	my ($widget, $event) = @_;
-	if ($event->keyval == $Gtk2::Gdk::Keysyms{Escape}) {
+	if ($event->keyval == $Gtk2::Gdk::Keysyms{Escape})
+	{
 		$widget->destroy();
 	}
 }
 
 # Purpose: Display an error dialog
 # Usage: DPError("Error message");
-sub DPError {
-	if($Gtk2Init) {
+sub DPError
+{
+	if ($Gtk2Init){
 		my $Dialog = Gtk2::MessageDialog->new($MainWindow, 'modal', 'error', 'ok', $_[0]);
 		$Dialog->set_title($i18n->get('Day Planner'));
 		$Dialog->run();
 		$Dialog->destroy();
-	} else {
+	}
+	else
+	{
 		warn($_[0]);
 	}
 	return(1);
@@ -2403,13 +2741,17 @@ sub DPError {
 
 # Purpose: Display a warning dialog
 # Usage: DPWarning("Warning");
-sub DPWarning {
-	if($Gtk2Init) {
+sub DPWarning
+{
+	if ($Gtk2Init)
+	{
 		my $Dialog = Gtk2::MessageDialog->new_with_markup($MainWindow, 'modal', 'warning', 'ok', $_[0]);
 		$Dialog->set_title($i18n->get('Day Planner'));
 		$Dialog->run();
 		$Dialog->destroy();
-	} else {
+	}
+	else
+	{
 		warn($_[0]);
 	}
 	return(1);
@@ -2417,10 +2759,13 @@ sub DPWarning {
 
 # Purpose: Display an information dialog (with optional details)
 # Usage: DPInfo("Information message", details?);
-sub DPInfo {
-	if($Gtk2Init) {
+sub DPInfo
+{
+	if ($Gtk2Init)
+	{
 		my $Dialog = Gtk2::MessageDialog->new($MainWindow, 'modal', 'info', 'ok', $_[0]);
-		if($_[1]) {
+		if ($_[1])
+		{
 			# The expander
 			my $FT_Expander = CreateDetailsWidget();
 			$Dialog->vbox->add($FT_Expander);
@@ -2444,9 +2789,12 @@ sub DPInfo {
 		$Dialog->set_title($i18n->get('Day Planner'));
 		$Dialog->run();
 		$Dialog->destroy();
-	} else {
+	}
+	else
+	{
 		print "$_[0]\n";
-		if(defined($_[1])) {
+		if (defined($_[1]))
+		{
 			print "$_[1]\n";
 		}
 	}
@@ -2455,14 +2803,18 @@ sub DPInfo {
 # Purpose: Display a question dialog
 # Usage: DPQuestion("Question");
 #	Returns true on yes, false on anything else
-sub DPQuestion {
+sub DPQuestion
+{
 	my $Dialog = Gtk2::MessageDialog->new(undef, 'modal', 'question', 'yes-no', $_[0]);
 	$Dialog->set_title($i18n->get('Day Planner'));
 	my $Reply = $Dialog->run();
 	$Dialog->destroy();
-	if ($Reply eq 'yes') {
+	if ($Reply eq 'yes')
+	{
 		return(1);
-	} else {
+	}
+	else
+	{
 		return(0);
 	}
 }
@@ -2475,17 +2827,19 @@ sub QuitSub
 	$MainWindow->set_sensitive(0);
 	$plugin->signal_emit('SHUTDOWN');
 	my $SaveData = SaveMainData();
-	if ($SaveData eq 'SAVE_FAILED') {
-		unless(DPQuestion($i18n->get('Some files could not be saved correctly. Quit anyway?'))) {
+	if ($SaveData eq 'SAVE_FAILED')
+	{
+		if (not DPQuestion($i18n->get('Some files could not be saved correctly. Quit anyway?')))
+		{
 			$MainWindow->show();
 			return(1);
 		}
 	}
 	WriteStateFile($SaveToDir, 'state.conf');
-	
+
 	Gtk2->main_quit;
 	CloseIPC();
-	if(defined $type and $type eq 'RESTART')
+	if (defined $type and $type eq 'RESTART')
 	{
 		exec($0,'--confdir',$SaveToDir);
 	}
@@ -2501,12 +2855,15 @@ sub QuitSub
 
 # Purpose: Sets the active calendar items in the $CalendarWidget
 # Usage: SetActiveCalItems(YEAR, NUMERICAL_MONTH[1-12]);
-sub SetActiveCalItems {
+sub SetActiveCalItems
+{
 	$CalendarWidget->clear_marks;			# Clear the current marks
 	# Calendar contents
 	my $MonthInfo = $iCalendar->get_monthinfo(@_);
-	if ($MonthInfo) {
-		foreach my $Day (@{$MonthInfo}) {
+	if ($MonthInfo)
+	{
+		foreach my $Day (@{$MonthInfo})
+		{
 			$CalendarWidget->mark_day($Day);	# Mark this day
 		}
 	}
@@ -2519,7 +2876,8 @@ sub GetSummaryString
 
 # Purpose: Calls SetActiveCalItems on the current year/month displayed in the $CalendarWidget
 # Usage: CalendarChange();
-sub CalendarChange {
+sub CalendarChange
+{
 	my $Month = $CalendarWidget->month;
 	$Month++;
 	SetActiveCalItems($CalendarWidget->year, $Month);
@@ -2527,7 +2885,8 @@ sub CalendarChange {
 
 # Purpose: Get the day, month and year in a single string from a calendar
 # Usage: my $Date = Get_DateInfo($CALWIDGET);
-sub Get_DateInfo {
+sub Get_DateInfo
+{
 	Assert(defined $CalendarWidget);
 	my ($year, $month, $day) = $CalendarWidget->get_date();
 	return("$year$month$day");
@@ -2560,7 +2919,7 @@ sub GetAppIcons
 			last;
 		}
 	}
-	if(not @ret)
+	if (not @ret)
 	{
 		DPIntWarn('Failed to detect any images or icons. Strange or broken install?');
 	}
@@ -2571,7 +2930,7 @@ sub GetAppIcons
 # Usage: EventListToggle();
 sub EventListToggle
 {
-	if(defined [$EventlistWidget->get_selected_indices]->[0])
+	if (defined [$EventlistWidget->get_selected_indices]->[0])
 	{
 		$ToolbarEditButton->set_sensitive(1);
 		$ToolbarDeleteButton->set_sensitive(1);
@@ -2589,16 +2948,21 @@ sub EventListToggle
 
 # Purpose: Create the details widget
 # Usage: my $ExpanderWidget = CreateDetailsWidget();
-sub CreateDetailsWidget {
+sub CreateDetailsWidget
+{
 	my $FT_Expander = Gtk2::Expander->new($i18n->get('Show advanced settings'));
 	$FT_Expander->show();
-	$FT_Expander->signal_connect('activate' => sub {
+	$FT_Expander->signal_connect('activate' => sub
+		{
 			# Yes, it is weird to use not here, but in the callback it appears
 			# to return "" if it is expanded and 1 if it isn't.
 			# Possibly a race condition within gtk2. This appears to work anyway.
-			if(not $FT_Expander->get_expanded) {
+			if (not $FT_Expander->get_expanded)
+			{
 				$FT_Expander->set_label($i18n->get('Hide advanced settings'));
-			} else {
+			}
+			else
+			{
 				$FT_Expander->set_label($i18n->get('Show advanced settings'));
 			}
 		});
@@ -2607,7 +2971,8 @@ sub CreateDetailsWidget {
 
 # Purpose: Add a date to a text field
 # Usage: AddToField(ENTRY, YEAR, MONTH, DAY);
-sub AddToField {
+sub AddToField
+{
 	Assert(scalar(@_) >= 4);
 	my($Entry,$Year,$Month,$Day) = @_;
 
@@ -2616,7 +2981,8 @@ sub AddToField {
 	# First get the text
 	my $FieldText = $Entry->get_text();
 	# Then add to the text
-	if($FieldText =~ /\S/) {
+	if ($FieldText =~ /\S/)
+	{
 		$FieldText .= ", ";
 	}
 	$FieldText .= "$Day.$Month.$Year";
@@ -2625,13 +2991,15 @@ sub AddToField {
 
 # Purpose: Remove a date from a text field (more tricky)
 # Usage: RemoveFromField(ENTRY, YEAR, MONTH, DAY);
-sub RemoveFromField {
+sub RemoveFromField
+{
 	my($Entry,$EventYear,$EventMonth,$EventDay) = @_;
 	# First get the text
 	my $FieldText = $Entry->get_text();
 	# Then redo it
 	my $NewField = "";
-	foreach my $String (split(/[,|\s]+/, $FieldText)) {
+	foreach my $String (split(/[,|\s]+/, $FieldText))
+	{
 		my $Year = $String;
 		my $Month = $String;
 		my $Day = $String;
@@ -2640,8 +3008,10 @@ sub RemoveFromField {
 		$Day =~ s/^(\d+).*$/$1/;
 		$Month =~ s/^0//;
 		$Day =~ s/^0//;
-		if(not $Year eq $EventYear or not $Month eq $EventMonth or not $Day eq $EventDay) {
-			if($NewField) {
+		if (not $Year eq $EventYear or not $Month eq $EventMonth or not $Day eq $EventDay)
+		{
+			if ($NewField)
+			{
 				$NewField .= ", ";
 			}
 			$NewField .= "$Day.$Month.$Year"
@@ -2685,12 +3055,14 @@ sub PopupDateSel
 	$Window->set_border_width(5);
 	$Window->set_transient_for($MainWindow);
 	$Window->set_type_hint('dialog');
-	$Window->signal_connect('destroy' => sub {
+	$Window->signal_connect('destroy' => sub
+		{
 			$Window->destroy();
 			$CalButton->set_sensitive(1);
 			$TextEntry->grab_focus();
 		});
-	$Window->signal_connect('delete-event' => sub {
+	$Window->signal_connect('delete-event' => sub
+		{
 			$Window->destroy();
 			$CalButton->set_sensitive(1);
 			$TextEntry->grab_focus();
@@ -2702,7 +3074,8 @@ sub PopupDateSel
 	my $ButHBox = Gtk2::HBox->new();
 	$VBox->pack_end($ButHBox,0,0,0);
 	my $CloseButton = Gtk2::Button->new_from_stock('gtk-close');
-	$CloseButton->signal_connect(clicked => sub {
+	$CloseButton->signal_connect(clicked => sub
+		{
 			$Window->destroy();
 			$CalButton->set_sensitive(1);
 			$TextEntry->grab_focus();
@@ -2711,12 +3084,16 @@ sub PopupDateSel
 	# Handle changes to the calendar
 	my %SelHash;
 	# Select the date in the entry field
-	if(defined($Default_Date) and $Default_Date eq 'CURRENT') {
+	if (defined($Default_Date) and $Default_Date eq 'CURRENT')
+	{
 		my ($year, $month, $day) = $CalendarWidget->get_date();
 		$Calendar->select_month($month, $year);
-	} else {
+	}
+	else
+	{
 		my $CurrDate = ParseEntryField($TextEntry);
-		if(@{$CurrDate}) {
+		if (@{$CurrDate})
+		{
 			my($SelYear,$SelMonth,$SelDay) = ParseDateString($CurrDate->[0]);
 			$SelMonth--;
 			$Calendar->select_month($SelMonth,$SelYear);
@@ -2725,13 +3102,17 @@ sub PopupDateSel
 	}
 
 	# Get the dates
-	$Calendar->signal_connect('month-changed' => sub {
+	$Calendar->signal_connect('month-changed' => sub
+		{
 			# If ChangingNow is undef that means we just
 			# got created, so initialize it to zero instead of one
 			# so that selecting days work properly immedietly.
-			if(not defined $ChangingNow) {
+			if (not defined $ChangingNow)
+			{
 				$ChangingNow = 0;
-			} else {
+			}
+			else
+			{
 				$ChangingNow = 1;
 			}
 			my $DateRef = ParseEntryField($TextEntry);
@@ -2739,27 +3120,31 @@ sub PopupDateSel
 			$CurrMonth++;	# 1-12 not 0-11
 			%SelHash = ();
 			$Calendar->clear_marks();
-			foreach my $Date (@{$DateRef}) {
+			foreach my $Date (@{$DateRef})
+			{
 				my($Year,$Month,$Day) = ParseDateString($Date);
-				if($Year eq $CurrYear and $Month eq $CurrMonth) {
+				if ($Year eq $CurrYear and $Month eq $CurrMonth)
+				{
 					$SelHash{$Day} = 1;
 					$Calendar->mark_day($Day);
 				}
 			}
 			# If we're in single mode, then make our day-selected handler do some work aswell (but only when $ChangingNow)
-			if($Mode eq 'SINGLE' and $ChangingNow)
+			if ($Mode eq 'SINGLE' and $ChangingNow)
 			{
 				$Calendar->signal_emit('day-selected');
 			}
 		});
 	# Emit a day-selected event on year change in single mode.
-	$Calendar->signal_connect('prev-year', => sub { 
+	$Calendar->signal_connect('prev-year', => sub
+		{ 
 			if ($Mode eq 'SINGLE')
 			{
 				$Calendar->signal_emit('day-selected');
 			}
 		});
-	$Calendar->signal_connect('next-year', => sub { 
+	$Calendar->signal_connect('next-year', => sub
+		{ 
 			if ($Mode eq 'SINGLE')
 			{
 				$Calendar->signal_emit('day-selected');
@@ -2778,12 +3163,16 @@ sub PopupDateSel
 			my $Selected = $Calendar->selected_day();
 			my ($CurrYear, $CurrMonth, $CurrDay) = $Calendar->get_date();
 			$CurrMonth++;	# Month is 0-11 not 1-12. We want 1-12
-			if($SelHash{$Selected} && $Mode eq 'MULTI') {
+			if ($SelHash{$Selected} && $Mode eq 'MULTI')
+			{
 				$Calendar->unmark_day($Selected);
 				delete($SelHash{$Selected});
 				RemoveFromField($TextEntry,$CurrYear,$CurrMonth,$CurrDay);
-			} else {
-				if($Mode eq 'SINGLE') {
+			}
+			else
+			{
+				if ($Mode eq 'SINGLE')
+				{
 					$Calendar->clear_marks();
 					%SelHash = ();
 					$TextEntry->set_text('');
@@ -2794,8 +3183,10 @@ sub PopupDateSel
 			}
 		});
 	# On double-click in a single-mode window we close.
-	$Calendar->signal_connect('day-selected-double-click' => sub {
-			if($Mode eq 'SINGLE') {
+	$Calendar->signal_connect('day-selected-double-click' => sub
+		{
+			if ($Mode eq 'SINGLE')
+			{
 				$Calendar->signal_emit('day-selected');
 				$CloseButton->signal_emit('clicked');
 			}
@@ -2815,20 +3206,25 @@ sub PopupDateSel
 # Usage: my $ExpanderWidget = CreateAdvancedWidget(RRULE?,EXDATE?);
 # 	RRULE is an RRULE hash as returned by DP::iCalendars ->get_RRULE.
 # 	It can be undef.
-sub CreateAdvancedWidget {
+sub CreateAdvancedWidget
+{
 	my $RRULE = shift;
 	my $EXDATE = shift;
 	my $UNTIL = shift;
 	# Create the expander and set up signal handlers
 	my $FT_Expander = Gtk2::Expander->new($i18n->get('Show advanced settings'));
 	$FT_Expander->show();
-	$FT_Expander->signal_connect('activate' => sub {
+	$FT_Expander->signal_connect('activate' => sub
+		{
 			# Yes, it is weird to use not here, but in the callback it appears
 			# to return "" if it is expanded and 1 if it isn't.
 			# Possibly a race condition within gtk2. This appears to work anyway.
-			if(not $FT_Expander->get_expanded) {
+			if (not $FT_Expander->get_expanded)
+			{
 				$FT_Expander->set_label($i18n->get('Hide advanced settings'));
-			} else {
+			}
+			else
+			{
 				$FT_Expander->set_label($i18n->get('Show advanced settings'));
 			}
 		});
@@ -2837,16 +3233,16 @@ sub CreateAdvancedWidget {
 	$ExpanderVBox->show();
 	$FT_Expander->add($ExpanderVBox);
 	# Create the recurrance checkbutton
-		# HBox for it
+	# HBox for it
 	my $RecurHBox = Gtk2::HBox->new();
 	$RecurHBox->show();
 	$ExpanderVBox->pack_start($RecurHBox,0,0,0);
-		# Checkbutton for it
+	# Checkbutton for it
 	my $RecurCheckButton = Gtk2::CheckButton->new($i18n->get('Repeat event every:') . ' ');
 	$RecurCheckButton->show();
 	$RecurHBox->pack_start($RecurCheckButton,0,0,0);
 	my $Table;		# For use later, needs to be declared here to be used in the RecurCheckButton callback
-		# The combo for it
+	# The combo for it
 	my $Recur_Combo = Gtk2::ComboBox->new_text();
 	# TRANSLATORS: Context: Repeat event every: THIS STRING
 	$Recur_Combo->insert_text(0, $i18n->get('day'));
@@ -2859,37 +3255,41 @@ sub CreateAdvancedWidget {
 	$Recur_Combo->set_active(0);
 	$Recur_Combo->show();
 	$Recur_Combo->set_sensitive(0);
-		# Checkbutton callback
-	$RecurCheckButton->signal_connect('toggled' => sub {
-			if($RecurCheckButton->get_active) {
+	# Checkbutton callback
+	$RecurCheckButton->signal_connect('toggled' => sub
+		{
+			if ($RecurCheckButton->get_active)
+			{
 				$Recur_Combo->set_sensitive(1);
 				$Table->set_sensitive(1);
-			} else {
+			}
+			else
+			{
 				$Recur_Combo->set_sensitive(0);
 				$Table->set_sensitive(0);
 			}
 		});
 	$RecurHBox->pack_start($Recur_Combo,0,0,0);
-		# Recurrance Table
+	# Recurrance Table
 	$Table = Gtk2::Table->new(2,4);
 	$Table->set_sensitive(0);
 	$Table->show();
 	# Create the recurrance ends checkbutton
-		# This is exceedingly ugly. But...works
+	# This is exceedingly ugly. But...works
 	my $SecondIndentLabel = Gtk2::Label->new('    ');
 	$SecondIndentLabel->show();
 	$Table->attach_defaults($SecondIndentLabel,0,1,0,1);
-		# Checkbutton for it
-		# TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
-		my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
+	# Checkbutton for it
+	# TRANSLATORS: The label in front of the entry box where you enter the date when a recurring event should stop recurring.
+	my $StopAtCheckButton = Gtk2::CheckButton->new($i18n->get('Until:') . ' ');
 	$StopAtCheckButton->show();
 	$Table->attach_defaults($StopAtCheckButton,1,2,0,1);
-		# The entry field
+	# The entry field
 	my $StopAt_Entry = Gtk2::Entry->new();
 	$StopAt_Entry->show();
 	$StopAt_Entry->set_sensitive(0);
 	$Table->attach_defaults($StopAt_Entry,2,3,0,1);
-		# The calendar button
+	# The calendar button
 	my $StopAt_CalButton = Gtk2::Button->new();
 	my $SecondCalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
 	Gtk2_Button_SetImage($StopAt_CalButton,$SecondCalImage,'Calendar');
@@ -2897,34 +3297,38 @@ sub CreateAdvancedWidget {
 	$StopAt_CalButton->set_sensitive(0);
 	$StopAt_CalButton->signal_connect('clicked' => sub { PopupDateSel($StopAt_Entry,$StopAt_CalButton,'SINGLE','CURRENT')});
 	$Table->attach_defaults($StopAt_CalButton,3,4,0,1);
-		# CheckButton callback
-	$StopAtCheckButton->signal_connect('toggled' => sub {
-			if($StopAtCheckButton->get_active) {
+	# CheckButton callback
+	$StopAtCheckButton->signal_connect('toggled' => sub
+		{
+			if ($StopAtCheckButton->get_active)
+			{
 				$StopAt_Entry->set_sensitive(1);
 				$StopAt_CalButton->set_sensitive(1);
-			} else {
+			}
+			else
+			{
 				$StopAt_Entry->set_sensitive(0);
 				$StopAt_CalButton->set_sensitive(0);
 			}
 		});
 	# Create the recurrance exception checkbutton
-		# HBox for it
+	# HBox for it
 	$ExpanderVBox->pack_start($Table,0,0,0);
-		# This is exceedingly ugly. But...works
+	# This is exceedingly ugly. But...works
 	my $IndentLabel = Gtk2::Label->new('    ');
 	$IndentLabel->show();
 	$Table->attach_defaults($IndentLabel,0,1,1,2);
-		# Checkbutton for it
-		# TRANSLATORS: Don't recur the event on the dates specified next to this string
+	# Checkbutton for it
+	# TRANSLATORS: Don't recur the event on the dates specified next to this string
 	my $ExceptCheckButton = Gtk2::CheckButton->new($i18n->get('But not on:') . ' ');
 	$ExceptCheckButton->show();
 	$Table->attach_defaults($ExceptCheckButton,1,2,1,2);
-		# The entry field
+	# The entry field
 	my $ExceptEntry = Gtk2::Entry->new();
 	$ExceptEntry->show();
 	$ExceptEntry->set_sensitive(0);
 	$Table->attach_defaults($ExceptEntry,2,3,1,2);
-		# The calendar button
+	# The calendar button
 	my $CalButton = Gtk2::Button->new();
 	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
 	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
@@ -2932,41 +3336,56 @@ sub CreateAdvancedWidget {
 	$CalButton->set_sensitive(0);
 	$CalButton->signal_connect('clicked' => sub { PopupDateSel($ExceptEntry,$CalButton,'MULTI','CURRENT')});
 	$Table->attach_defaults($CalButton,3,4,1,2);
-		# CheckButton callback
-	$ExceptCheckButton->signal_connect('toggled' => sub {
-			if($ExceptCheckButton->get_active) {
+	# CheckButton callback
+	$ExceptCheckButton->signal_connect('toggled' => sub
+		{
+			if ($ExceptCheckButton->get_active)
+			{
 				$ExceptEntry->set_sensitive(1);
 				$CalButton->set_sensitive(1);
-			} else {
+			}
+			else
+			{
 				$ExceptEntry->set_sensitive(0);
 				$CalButton->set_sensitive(0);
 			}
 		});
-		
-		# Get RRULE information if provided and set it
-	if($RRULE) {
+
+	# Get RRULE information if provided and set it
+	if ($RRULE)
+	{
 		$FT_Expander->signal_emit('activate');
 		my $FREQ = $RRULE->{FREQ};
 		$RecurCheckButton->set_active(1);
 		$Table->set_sensitive(1);
-		if($FREQ eq 'DAILY') {
+		if ($FREQ eq 'DAILY')
+		{
 			$Recur_Combo->set_active(0);
-		} elsif($FREQ eq 'WEEKLY') {
+		}
+		elsif ($FREQ eq 'WEEKLY')
+		{
 			$Recur_Combo->set_active(1);
-		} elsif($FREQ eq 'MONTHLY') {
+		}
+		elsif ($FREQ eq 'MONTHLY')
+		{
 			$Recur_Combo->set_active(2);
-		} elsif($FREQ eq 'YEARLY') {
+		}
+		elsif ($FREQ eq 'YEARLY')
+		{
 			$Recur_Combo->set_active(3);
 		}
 		# Get UNTIL information if provided and set it
-		if($RRULE->{UNTIL}) {
+		if ($RRULE->{UNTIL})
+		{
 			$StopAtCheckButton->set_active(1);
 			AddToField($StopAt_Entry,iCal_ParseDateTime($RRULE->{UNTIL}));
 		}
 		# Get EXDATE information if provided and set it
-		if(@{$EXDATE}) {
+		if (@{$EXDATE})
+		{
 			$ExceptCheckButton->set_active(1);
-			foreach my $entry (sort @{$EXDATE}) {
+			foreach my $entry (sort @{$EXDATE})
+			{
 				AddToField($ExceptEntry,iCal_ParseDateTime($entry));
 			}
 		}
@@ -2993,22 +3412,29 @@ sub CreateAdvancedWidget {
 
 # Purpose: Get a properly formatted event time from two widgets (min/hour)
 # Usage: my $Time = GetTimeFromWidgets($HourSpinner, $MinuteSpinner, $AMPM?);
-sub GetTimeFromWidgets {
+sub GetTimeFromWidgets
+{
 	my ($HourSpinner, $MinuteSpinner, $AMPM) = @_;	
 	Assert(scalar(@_) > 1);
 	my $Hour = $HourSpinner->get_value_as_int();
 	my $Minute = $MinuteSpinner->get_value_as_int();
-	if ($Hour <= 9) {
+	if ($Hour <= 9)
+	{
 		$Hour = "0$Hour";
 	}
-	if ($Minute <= 9) {
+	if ($Minute <= 9)
+	{
 		$Minute = "0$Minute";
 	}
-	if(defined($AMPM)) {
+	if (defined($AMPM))
+	{
 		my $Prefix;
-		if($AMPM->get_active() == 0) {
+		if ($AMPM->get_active() == 0)
+		{
 			$Prefix = $i18n->get_ampmstring('AM');
-		} else {
+		}
+		else
+		{
 			$Prefix = $i18n->get_ampmstring('PM');
 		}
 		($Hour,$Minute) = $i18n->AMPM_To24("$Hour:$Minute $Prefix", 1);
@@ -3018,11 +3444,13 @@ sub GetTimeFromWidgets {
 
 # Purpose: Get a formatted RRULE from the combo box.
 # Usage: my $RRULE = GetRRULEFromCombo(WIDGET_HASH);
-sub GetRRULEFromCombo {
+sub GetRRULEFromCombo
+{
 	my $Hash = shift;
 	Assert(defined $Hash);
 	my $combo = $Hash->{RecurCombo};
-	if(not $combo->is_sensitive) {
+	if (not $combo->is_sensitive)
+	{
 		return(undef);
 	}
 	my $RRULE;
@@ -3031,18 +3459,26 @@ sub GetRRULEFromCombo {
 	# 2 == month
 	# 3 == year
 	my $ActiveIndex = $combo->get_active;
-	if($ActiveIndex == 0) {
+	if ($ActiveIndex == 0)
+	{
 		$RRULE = 'FREQ=DAILY';
-	} elsif ($ActiveIndex == 1) {
+	}
+	elsif ($ActiveIndex == 1)
+	{
 		$RRULE = 'FREQ=WEEKLY';
-	} elsif ($ActiveIndex == 2) {
+	}
+	elsif ($ActiveIndex == 2)
+	{
 		$RRULE = 'FREQ=MONTHLY';
-	} elsif ($ActiveIndex == 3) {
+	}
+	elsif ($ActiveIndex == 3)
+	{
 		$RRULE = 'FREQ=YEARLY;INTERVAL=1';
 	}
 	# Get UNTIL
 	my $Until = GetDateFromEntry($Hash->{StopAt_Entry});
-	if($Until) {
+	if ($Until)
+	{
 		$RRULE .= ";UNTIL=$Until";
 	}
 	return($RRULE);
@@ -3050,15 +3486,18 @@ sub GetRRULEFromCombo {
 
 # Purpose: Get a list of formatted EXDATE entries from the exception entry box
 # Usage: my $List = GetExceptionsFromEntry(ENTRY WIDGET);
-sub GetExceptionsFromEntry {
+sub GetExceptionsFromEntry
+{
 	my $Entry = shift;
 	Assert(defined $Entry);
-	if (not $Entry->is_sensitive) {
+	if (not $Entry->is_sensitive)
+	{
 		return([]);
 	}
 	my $EntryArray = ParseEntryField($Entry);
 	my @ReturnArray;
-	foreach my $Date (@{$EntryArray}) {
+	foreach my $Date (@{$EntryArray})
+	{
 		my($Year,$Month,$Day) = ParseDateString($Date);
 		$Month = PrefixZero($Month);
 		$Day = PrefixZero($Day);
@@ -3069,21 +3508,27 @@ sub GetExceptionsFromEntry {
 
 # Purpose: Get the until entry from the until entry box
 # Usage: my $UntilEntry = GetDateFromEntry(ENTRY WIDGET);
-sub GetDateFromEntry {
+sub GetDateFromEntry
+{
 	my $Entry = shift;
 	Assert(defined $Entry);
-	if (not $Entry->is_sensitive) {
+	if (not $Entry->is_sensitive)
+	{
 		return(undef);
 	}
 	my $EntryArray = ParseEntryField($Entry);
 	my @ReturnArray;
-	foreach my $Date (@{$EntryArray}) {
+	foreach my $Date (@{$EntryArray})
+	{
 		my($Year,$Month,$Day) = ParseDateString($Date);
 		$Month = PrefixZero($Month);
 		$Day = PrefixZero($Day);
-		if(wantarray()) {
+		if (wantarray())
+		{
 			return($Year,$Month,$Day);
-		} else {
+		}
+		else
+		{
 			return("$Year$Month$Day");
 		}
 	}
@@ -3092,15 +3537,19 @@ sub GetDateFromEntry {
 
 # Purpose: Create the widgets for selecting the time
 # Usage: my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection("HH:MM");
-sub TimeSelection {
+sub TimeSelection
+{
 	my $Time = shift;
 	Assert(defined $Time);
 	my($HourAdjustment,$MinuteAdjustment, $HourSpinner,$MinuteSpinner,$AMPM);
 
-	if($i18n->get_clocktype() == 24) {
+	if ($i18n->get_clocktype() == 24)
+	{
 		# The hour adjustment
 		$HourAdjustment = Gtk2::Adjustment->new(0.0, 0.0, 23.0, 1.0, 5.0, 0.0);
-	} else {
+	}
+	else
+	{
 		# The hour adjustment
 		$HourAdjustment = Gtk2::Adjustment->new(0.0, 1.0, 12.0, 1.0, 5.0, 0.0);
 	}
@@ -3112,16 +3561,17 @@ sub TimeSelection {
 	# Show them
 	$HourSpinner->show();
 	$MinuteSpinner->show();
-	
+
 	# Create a simple seperating label
 	my $TimeSeperatorLabel = Gtk2::Label->new(' : ');
 	$TimeSeperatorLabel->show();
-	
+
 	# Make them activate the default action
 	$HourSpinner->set_activates_default(1);
 	$MinuteSpinner->set_activates_default(1);
-	
-	if($i18n->get_clocktype() == 24) {
+
+	if ($i18n->get_clocktype() == 24)
+	{
 		# Get the time
 		my $HSTime = $Time;		# Hour
 		my $MSTime = $Time;		# Minute
@@ -3130,7 +3580,9 @@ sub TimeSelection {
 		# Set the initial value
 		$HourSpinner->set_value($HSTime);
 		$MinuteSpinner->set_value($MSTime);
-	} else {
+	}
+	else
+	{
 		# Get the time
 		my $HSTime = $i18n->AMPM_From24($Time);
 		my $MSTime = $i18n->AMPM_From24($Time);
@@ -3147,19 +3599,23 @@ sub TimeSelection {
 		$AMPM->insert_text(1, $i18n->get_ampmstring('PM'));
 		$AMPM->show();
 		# Set the initial value
-		if($Suffix eq $i18n->get_ampmstring('AM')) {
+		if ($Suffix eq $i18n->get_ampmstring('AM'))
+		{
 			$AMPM->set_active(0);
-		} else {
+		}
+		else
+		{
 			$AMPM->set_active(1);
 		}
 	}
-	
+
 	# Create a HBox and pack them onto it
 	my $TimeSpinnerHBox = Gtk2::HBox->new(0,0);
 	$TimeSpinnerHBox->pack_start($HourSpinner,0,0,0);
 	$TimeSpinnerHBox->pack_start($TimeSeperatorLabel,0,0,0);
 	$TimeSpinnerHBox->pack_start($MinuteSpinner,0,0,0);
-	if(defined($AMPM)) {
+	if (defined($AMPM))
+	{
 		$TimeSpinnerHBox->pack_start($AMPM,0,0,0);
 	}
 	$TimeSpinnerHBox->show();
@@ -3170,33 +3626,37 @@ sub TimeSelection {
 
 # Purpose: Create the widgets for selecting the date
 # Usage: my ($DateTable, $DateEntry) = DateSelection(UID?);
-sub DateSelection {
+sub DateSelection
+{
 	my $UID = shift;
 
 	my $Table = Gtk2::Table->new(2,1);
 	$Table->show();
-		# The entry field
+	# The entry field
 	my $Entry = Gtk2::Entry->new();
 	$Entry->show();
 	$Table->attach_defaults($Entry,0,1,0,1);
-		# The calendar button
+	# The calendar button
 	my $CalButton = Gtk2::Button->new();
 	my $CalImage = Gtk2::Image->new_from_file(DetectImage('x-office-calendar.png','dayplanner-16x16.png'));
 	Gtk2_Button_SetImage($CalButton,$CalImage,'Calendar');
 	$CalButton->show();
 	$CalButton->signal_connect('clicked' => sub { PopupDateSel($Entry,$CalButton,'SINGLE')});
 	$Table->attach_defaults($CalButton,1,2,0,1);
-	
+
 	# If we have an UID then get it from that, if not then get it from the calendar widget
-	if(defined($UID) and not $UID eq 'NULL') {
+	if (defined($UID) and not $UID eq 'NULL')
+	{
 		my $UIDObj = $iCalendar->get_info($UID);
 		# Get date information from the UID
 		AddToField($Entry,iCal_ParseDateTime($UIDObj->{DTSTART}))
-	} else {
+	}
+	else
+	{
 		my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 		AddToField($Entry,$EventYear,$EventMonth,$EventDay);
 	}
-	
+
 	return($Table,$Entry);
 }
 
@@ -3206,20 +3666,24 @@ sub DateSelection {
 # TITLE is the title of the window.
 # OK_BUTTON_TYPE is the Gtk2::Stock ID to use for the button
 # UID is the UID of the event. This can be undef.
-sub CreateEventContainerWin {
+sub CreateEventContainerWin
+{
 	# Get the options passed to the sub
 	my ($WindowTitle, $OkButtonType, $UID) = @_;
 	Assert(scalar(@_) < 4);
-	
+
 	# Get the date
 	my ($EventYear, $EventMonth, $EventDay);
 	# If we have an UID then get it from that, if not then get it from the calendar widget
-	if($UID) {
+	if ($UID)
+	{
 		my $UIDObj = $iCalendar->get_info($UID);
 		# Get date information from the UID
 		($EventYear, $EventMonth, $EventDay) = iCal_ParseDateTime($UIDObj->{DTSTART});
 		$EventMonth =~ s/^0//;	# Drop leading zero from event month.
-	} else {
+	}
+	else
+	{
 		($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	}
 
@@ -3248,21 +3712,21 @@ sub CreateEventContainerWin {
 	# Handle closing
 	$AddEventBox->signal_connect('destroy' => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
 	$AddEventBox->signal_connect('delete-event' => sub { $AddEventBox->destroy; $MainWindow->set_sensitive(1) });
-	
+
 	# Primary vbox
 	my $ADPrimVBox = Gtk2::VBox->new();
 	$AddEventBox->add($ADPrimVBox);
 	$ADPrimVBox->show();
-	
+
 	# ==================================================================
 	# Call the functions that constructs the main window contents
 	# ==================================================================
-	
+
 	# Create the hbox for the buttons
 	my $TB_ButtonHBox = Gtk2::HBox->new(0,6);
 	$TB_ButtonHBox->show();
 	$ADPrimVBox->pack_end($TB_ButtonHBox,0,0,0);
-	
+
 	# Create the OK button
 	my $OKButton = Gtk2::Button->new_from_stock($OkButtonType);
 	$OKButton->show();
@@ -3275,7 +3739,7 @@ sub CreateEventContainerWin {
 		});
 	$CancelButton->show();
 	$TB_ButtonHBox->pack_end($CancelButton,0,0,0);
-	
+
 	# Handle the esc button
 	$AddEventBox->signal_connect('key_release_event' => \&EscapeKeyHandler);
 	$AddEventBox->set_default($OKButton);
@@ -3291,14 +3755,14 @@ sub CreateEventContainerWin {
 sub AddEvent
 {
 	$MainWindow->set_sensitive(0);
-        my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
+	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my $OKSignal;
 	my %TimeHash = (
 		EventYear => $EventYear,
 		EventMonth => $EventMonth,
 		EventDay => $EventDay,
 	);
-		
+
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
 	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Add an Event'), 'gtk-add');
 	# HBox
@@ -3326,7 +3790,7 @@ sub AddEvent
 	# Set the tooltips
 	$Tooltips->set_tip($OKButton, $i18n->get('Add this event'));
 	$Tooltips->set_tip($CancelButton, $i18n->get('Discard this event'));
-	
+
 	# Create the widgets for the normal event selection
 	my ($NormalEvent) = NormalEventWindow('NULL', $OKButton, $VBox_HBoxContainer, $Window);
 	# Create the widgets for the all day event selection
@@ -3335,35 +3799,41 @@ sub AddEvent
 	my ($BirthdayEvent) = BirthdayEventWindow(undef, $VBox_HBoxContainer, $Window);
 
 	# Handle changed values in the combo box
-	$EventType_Combo->signal_connect('changed' => sub {
+	$EventType_Combo->signal_connect('changed' => sub
+		{
 			my $ActiveIndex = $EventType_Combo->get_active;
-			if ($ActiveIndex == 0) {
+			if ($ActiveIndex == 0)
+			{
 				$BirthdayEvent->{MainVBox}->hide();
 				$AllDayEvent->{MainVBox}->hide();
 				$NormalEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					NormalEvent_OK($Window, $NormalEvent, \%TimeHash, 0);
-				});
-			} elsif ($ActiveIndex == 1) {
+						NormalEvent_OK($Window, $NormalEvent, \%TimeHash, 0);
+					});
+			}
+			elsif ($ActiveIndex == 1)
+			{
 				$NormalEvent->{MainVBox}->hide();
 				$BirthdayEvent->{MainVBox}->hide();
 				$AllDayEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, 0)});
-			} elsif ($ActiveIndex == 2) {
+						AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, 0)});
+			}
+			elsif ($ActiveIndex == 2)
+			{
 				$NormalEvent->{MainVBox}->hide();
 				$AllDayEvent->{MainVBox}->hide();
 				$BirthdayEvent->{MainVBox}->show();
 				$OKButton->signal_handler_disconnect($OKSignal) if defined($OKSignal);
 				$OKSignal = $OKButton->signal_connect('clicked' => sub {
-					AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, 0,1)});
+						AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, 0,1)});
 			}
 		});
 
 	$EventType_Combo->set_active(0);
-	
+
 	# Show the window
 	$Window->show();
 }
@@ -3375,7 +3845,7 @@ sub EditEvent
 	my $Selected = [$EventlistWidget->get_selected_indices]->[0];
 	# If $Selected isn't defined then nothing *is* selected and thus we just return (false)
 	Assert(defined $Selected);
-	
+
 	$MainWindow->set_sensitive(0);
 
 	# Initialize
@@ -3385,11 +3855,12 @@ sub EditEvent
 	$Tooltips->enable();
 	my $UIDObj = $iCalendar->get_info($EventUID);
 	# Get date information from the UID
-        my ($EventYear, $EventMonth, $EventDay) = iCal_ParseDateTime($UIDObj->{DTSTART});
+	my ($EventYear, $EventMonth, $EventDay) = iCal_ParseDateTime($UIDObj->{DTSTART});
 	# Get date information from the calendar, we check if it differs with the one from
 	# the UID
 	my $Differs = 0;
-	if($UIDObj->{RRULE}) {
+	if ($UIDObj->{RRULE})
+	{
 		$Differs = 1;
 	}
 	my %TimeHash = (
@@ -3402,7 +3873,7 @@ sub EditEvent
 		OldEventTime => $Time,
 		Differs => $Differs,
 	);
-		
+
 	# Create the main window with the appropriate OK/Cancel buttons and the event frame
 	my ($Window, $VBox_HBoxContainer, $OKButton, $CancelButton);
 
@@ -3410,7 +3881,8 @@ sub EditEvent
 
 	Assert($Type =~ /^(normal|bday|allday|holiday)$/);
 
-	if ($Type eq 'normal') {
+	if ($Type eq 'normal')
+	{
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# NORMAL EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3420,21 +3892,25 @@ sub EditEvent
 		my ($NormalEvent) = NormalEventWindow($EventUID, $OKButton, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub {
 				NormalEvent_OK($Window, $NormalEvent, \%TimeHash, $EventUID);
-		});
-		
+			});
+
 		# Show the default widget (Normal event)
 		$NormalEvent->{MainVBox}->show();
-	} elsif ($Type eq 'bday') {
+	}
+	elsif ($Type eq 'bday')
+	{
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# BIRTHDAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		($Window, $VBox_HBoxContainer, $OKButton, $CancelButton) = CreateEventContainerWin($i18n->get('Editing a birthday'), 'gtk-ok',$EventUID);
-		
+
 		my ($BirthdayEvent) = BirthdayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $BirthdayEvent, \%TimeHash, $EventUID, 1)});
 		# Show the main vbox
 		$BirthdayEvent->{MainVBox}->show();
-	} elsif ($Type eq 'allday') {
+	}
+	elsif ($Type eq 'allday')
+	{
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		# ALL DAY EVENT
 		# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3445,15 +3921,17 @@ sub EditEvent
 		my ($AllDayEvent) = AllDayEventWindow($EventUID, $VBox_HBoxContainer, $Window);
 		$AllDayEvent->{MainVBox}->show();
 		$OKButton->signal_connect('clicked' => sub { AllDayEvent_OK($Window, $AllDayEvent, \%TimeHash, $EventUID, 0)});
-	} elsif ($Type eq 'holiday') {
+	}
+	elsif ($Type eq 'holiday')
+	{
 		DPInfo(sprintf($i18n->get("This is a predefined \"holiday\" event. This event cannot be edited directly from within Day Planner. In order to change these events use a text editor and edit the file %s."), $HolidayFile));
 		$MainWindow->set_sensitive(1);
 		return(1);
 	} 
-	
+
 	$Tooltips->set_tip($CancelButton, $i18n->get('Discard changes'));
 	$Tooltips->set_tip($OKButton, $i18n->get('Accept changes'));
-			
+
 	# Show the window
 	$Window->show();
 }
@@ -3467,7 +3945,8 @@ sub EditEvent
 # OK_BUTTON is the OK button widget to attach to
 # VBOX_WIDGET is the widget you want to pack our table into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
-sub NormalEventWindow {
+sub NormalEventWindow
+{
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
@@ -3475,15 +3954,18 @@ sub NormalEventWindow {
 	Assert(scalar(@_) == 4);
 
 	my $IsEditing = 0;
-	
+
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE,$EventEXDATE);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
-	
+
 	# Check if the event is already defined, if it is then we assume that we're editing
-	if($EventUID eq 'NULL') {
+	if ($EventUID eq 'NULL')
+	{
 		$EventTime = '09:00';
-	} else {
+	}
+	else
+	{
 		my $EventHash = $iCalendar->get_info($EventUID);
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		($EventYear, $EventMonth, $EventDay, $EventTime) = iCal_ParseDateTime($EventHash->{DTSTART});
@@ -3498,30 +3980,30 @@ sub NormalEventWindow {
 	# Create the tooltips widget
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-	
+
 	# Create our main vbox
 	my $MainVBox = Gtk2::VBox->new();
 	$ParentVBox->pack_start($MainVBox,0,0,0);
-	
+
 	# Create the table inside the frame
 	my $ContentTable = Gtk2::Table->new(2,3);
 	$ContentTable->show();
 	$MainVBox->pack_start($ContentTable,1,1,0);
-	
+
 	# ==================================================================
 	# ADD THE DATE/TIME/SUMMARY BOXES
 	# ==================================================================
-	
+
 	# Create the time label
 	my $TimeLabel = Gtk2::Label->new($i18n->get('Time:'));
 	$TimeLabel->show();
 	$ContentTable->attach_defaults($TimeLabel, 0,1,0,1);
-	
+
 	# Time entry box
 	my ($HourSpinner, $MinuteSpinner, $TimeHBox, $AMPM) = TimeSelection($EventTime);
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($TimeHBox, 1,2,0,1);
-	
+
 	# Create the date label
 	my $DateLabel = Gtk2::Label->new($i18n->get('Date:'));
 	$DateLabel->show();
@@ -3530,7 +4012,7 @@ sub NormalEventWindow {
 	my ($DateTable, $DateEntry) = DateSelection($EventUID);
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($DateTable, 1,2,1,2);
-	
+
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
 	$SummaryLabel->show();
@@ -3538,27 +4020,30 @@ sub NormalEventWindow {
 
 	# Create the summary entry box
 	my $SummaryEntry = Gtk2::Entry->new();
-	if (defined($EventSummary) and length($EventSummary)) {
+	if (defined($EventSummary) and length($EventSummary))
+	{
 		$SummaryEntry->set_text($EventSummary);
 	}
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,2,3);
 	$Tooltips->set_tip($SummaryEntry, $i18n->get('Enter a description of the event here'));
-	
+
 	# ==================================================================
 	# ADD THE EXTENDED ENTRY
 	# ==================================================================
 	my $FulltextWindow;
-	
+
 	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry,$StopAt_Entry) = CreateAdvancedWidget($EventRRULE,$EventEXDATE);
 	$MainVBox->pack_start($FT_Expander,0,0,0);
 	# Add text to it if needed
-	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
+	if (defined($EventFulltext) and $EventFulltext =~ /\S/)
+	{
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
-		if(not $FT_Expander->get_expanded) {
+		if (not $FT_Expander->get_expanded)
+		{
 			$FT_Expander->signal_emit('activate');
 		}
 	}
@@ -3583,10 +4068,11 @@ sub NormalEventWindow {
 # Usage: $OKButton->signal_connect('clicked' => sub { NormalEvent_OK($MainWindow, $WidgetHash, \%TimeHash, EventUID)});
 #
 # EventUID can be undef.
-sub NormalEvent_OK {
+sub NormalEvent_OK
+{
 	my ($MyWindow, $WidgetHash, $TimeHash, $EventUID) = @_;
 	my $Error = 0;
-	
+
 	# Get the contents
 	my $Time = GetTimeFromWidgets($WidgetHash->{HourSpinner},$WidgetHash->{MinuteSpinner}, $WidgetHash->{AMPM});
 	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
@@ -3600,18 +4086,21 @@ sub NormalEvent_OK {
 	my $OldEventTime = ${$TimeHash}{OldEventTime};
 	# Get time
 	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
-	
+
 	# TODO: Add tests for an event that is *identical*
-	unless ($Summary) {
+	if (not $Summary)
+	{
 		DPError($i18n->get('There is no description of this event. Please enter a description.'));
 		$Error = 1;
 	}
-	if(not $EventYear and not $Error) {
+	if (not $EventYear and not $Error)
+	{
 		DPError($i18n->get('The date you have entered is invalid.'));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
-	unless ($Error) {
+	if (not $Error)
+	{
 		my %EntryHash;
 		# Add them to the hash
 		$EntryHash{SUMMARY} = $Summary;
@@ -3619,19 +4108,24 @@ sub NormalEvent_OK {
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay, $Time);
 		$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash);
-		foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})}) {
-			if(not $EntryHash{EXDATE}) {
+		foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})})
+		{
+			if (not $EntryHash{EXDATE})
+			{
 				$EntryHash{EXDATE} = [];
 			}
 			push(@{$EntryHash{EXDATE}}, $EXDATE);
 		}
 
-		if($EventUID) {
+		if ($EventUID)
+		{
 			$iCalendar->change($EventUID,%EntryHash);
-		} else {
+		}
+		else
+		{
 			$iCalendar->add(%EntryHash);
 		}
-		
+
 		# Call UpdatedData to tell Day Planner to save the data and redraw widgets
 		UpdatedData();
 		# Destroy our window, it will get the signal and do anything it needs to
@@ -3651,7 +4145,8 @@ sub NormalEvent_OK {
 #
 # TODO: Make AllDayEventWindow and NormalEventWindow share the same
 # summary and fulltext entries!
-sub AllDayEventWindow {
+sub AllDayEventWindow
+{
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
@@ -3661,9 +4156,10 @@ sub AllDayEventWindow {
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
 	my ($EventSummary, $EventFulltext,$EventTime,$EventRRULE,$EventEXDATE);
 	my ($OldEventYear, $OldEventMonth,$OldEventDay,$OldEventTime);
-	
+
 	# Check if the event is already defined, if it is then we assume that we're editing
-	if(not $EventUID eq 'NULL') {
+	if (not $EventUID eq 'NULL')
+	{
 		my $EventHash = $iCalendar->get_info($EventUID);
 		# We assume these two aren't empty. This will need to change if another part becomes obligatory
 		my ($Year, $Month, $Day) = iCal_ParseDateTime($EventHash->{DTSTART});
@@ -3677,16 +4173,16 @@ sub AllDayEventWindow {
 	# Create the tooltips widget
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-	
+
 	# Create our main vbox
 	my $MainVBox = Gtk2::VBox->new();
 	$ParentVBox->pack_start($MainVBox,0,0,0);
-	
+
 	# Create the table inside the frame
 	my $ContentTable = Gtk2::Table->new(2,2);
 	$ContentTable->show();
 	$MainVBox->pack_start($ContentTable,1,1,0);
-	
+
 	# ==================================================================
 	# ADD THE DATE/SUMMARY BOXES
 	# ==================================================================
@@ -3698,7 +4194,7 @@ sub AllDayEventWindow {
 	my ($DateTable, $DateEntry) = DateSelection($EventUID);
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($DateTable, 1,2,0,1);
-	
+
 	# Create the summary label
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Description:'));
 	$SummaryLabel->show();
@@ -3706,34 +4202,37 @@ sub AllDayEventWindow {
 
 	# Create the summary entry box
 	my $SummaryEntry = Gtk2::Entry->new();
-	if (defined($EventSummary) and length($EventSummary)) {
+	if (defined($EventSummary) and length($EventSummary))
+	{
 		$SummaryEntry->set_text($EventSummary);
 	}
 	$SummaryEntry->set_activates_default(1);
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
 	$Tooltips->set_tip($SummaryEntry, $i18n->get('Enter a description of the event here'));
-	
+
 	# ==================================================================
 	# ADD THE EXTENDED ENTRY
 	# ==================================================================
 	my $FulltextWindow;
-	
+
 	my ($FT_Expander, $FulltextEntry,$RecurCombo,$ExceptEntry,$StopAt_Entry) = CreateAdvancedWidget($EventRRULE,$EventEXDATE);
 	$Tooltips->set_tip($FT_Expander, $i18n->get('Additional information'));
 	$MainVBox->pack_start($FT_Expander,0,0,0);
-	
+
 	# Add text to it if needed
-	if (defined($EventFulltext) and $EventFulltext =~ /\S/) {
+	if (defined($EventFulltext) and $EventFulltext =~ /\S/)
+	{
 		my $AddEventBuffer = Gtk2::TextBuffer->new();
 		$AddEventBuffer->set_text($EventFulltext);
 		$FulltextEntry->set_buffer($AddEventBuffer);
 		# Expand it if it isn't already
-		if(not $FT_Expander->get_expanded) {
+		if (not $FT_Expander->get_expanded)
+		{
 			$FT_Expander->signal_emit('activate');
 		}
 	}
-	
+
 	my %ReturnHash;
 	$ReturnHash{MainVBox} = $MainVBox;
 	$ReturnHash{SummaryEntry} = $SummaryEntry;
@@ -3742,7 +4241,7 @@ sub AllDayEventWindow {
 	$ReturnHash{ExceptEntry} = $ExceptEntry;
 	$ReturnHash{StopAt_Entry} = $StopAt_Entry;
 	$ReturnHash{DateEntry} = $DateEntry;
-	
+
 	return(\%ReturnHash);
 }
 
@@ -3753,10 +4252,11 @@ sub AllDayEventWindow {
 #
 # IS_BIRTHDAY can be either true or false. If the entry being changed/added is a birthday
 # then it should be true.
-sub AllDayEvent_OK {
+sub AllDayEvent_OK
+{
 	my ($MyWindow, $WidgetHash,$TimeHash, $EventUID,$IsBirthday) = @_;
 	my $Error = 0;
-	
+
 	# Get the contents of the summary
 	my $Summary = $WidgetHash->{SummaryEntry}->get_text;
 
@@ -3766,29 +4266,35 @@ sub AllDayEvent_OK {
 	my $OldEventDay = ${$TimeHash}{OldEventDay};
 	# From the widget hash
 	my($EventYear,$EventMonth,$EventDay) = GetDateFromEntry($WidgetHash->{DateEntry});
-	
+
 	# TODO: Add tests for an event that is *identical* (wouldn't this be a job for DP::iCalendar ?)
-	if (not $Summary) {
+	if (not $Summary)
+	{
 		DPError($i18n->get('There is no description of this event. Please enter a description.'));
 		$Error = 1;
 	}
-	if(not $EventYear and not $Error) {
+	if (not $EventYear and not $Error)
+	{
 		DPError($i18n->get('The date you have entered is invalid.'));
 		$Error = 1;
 	}
 	# We don't do this if an error occurred
-	unless ($Error) {
+	if (not $Error)
+	{
 		my %EntryHash;
 		# Add them to the hash
 		$EntryHash{DTSTART} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay);
 		$EntryHash{DTEND} = iCal_GenDateTime($EventYear, $EventMonth, $EventDay);
-		if($IsBirthday) {
+		if ($IsBirthday)
+		{
 			$EntryHash{'X-DP-BIRTHDAY'} = 'TRUE';
 			$EntryHash{'X-DP-BIRTHDAYNAME'} = $Summary;
 			$EntryHash{'X-DP-BORNATDTSTART'} = 'TRUE';
 			$EntryHash{RRULE} = 'FREQ=YEARLY';
 			$EntryHash{SUMMARY} = $i18n->get_advanced("%(name)'s birthday", { name => $Summary });
-		} else {
+		}
+		else
+		{
 			$EntryHash{SUMMARY} = $Summary;
 			$EntryHash{RRULE} = GetRRULEFromCombo($WidgetHash);
 			# Get and add content to the fulltext
@@ -3796,19 +4302,24 @@ sub AllDayEvent_OK {
 			my $Fulltext = $FulltextBuff->get_text($FulltextBuff->get_bounds,1);
 			$EntryHash{DESCRIPTION} = $Fulltext;
 			# Get exceptions
-			foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})}) {
-				if(not $EntryHash{EXDATE}) {
+			foreach my $EXDATE (@{GetExceptionsFromEntry($WidgetHash->{ExceptEntry})})
+			{
+				if (not $EntryHash{EXDATE})
+				{
 					$EntryHash{EXDATE} = [];
 				}
 				push(@{$EntryHash{EXDATE}}, $EXDATE);
 			}
 		}
-		if($EventUID) {
+		if ($EventUID)
+		{
 			$iCalendar->change($EventUID,%EntryHash);
-		} else {
+		}
+		else
+		{
 			$iCalendar->add(%EntryHash);
 		}
-		
+
 		# Call UpdatedData to tell Day Planner to save the data and redraw widgets
 		UpdatedData();
 		# Destroy our window, it will get the signal and do anything it needs to
@@ -3823,27 +4334,28 @@ sub AllDayEvent_OK {
 # UID is the event UID of the event being edited or undef
 # VBOX_WIDGET is the widget you want to pack our widgets into
 # MAIN_WINDOW_WIDGET is the main window it will live inside
-sub BirthdayEventWindow {
+sub BirthdayEventWindow
+{
 	# ==================================================================
 	# INITIALIZE
 	# ==================================================================
 	my ($UID, $ParentVBox, $MyWindow) = @_;
 	Assert(scalar(@_) == 3);
 	my ($EventYear, $EventMonth, $EventDay) = $CalendarWidget->get_date();$EventMonth++;
-	
+
 	# Create our main vbox
 	my $MainVBox = Gtk2::VBox->new();
 	$ParentVBox->pack_start($MainVBox,0,0,0);
-	
+
 	# Create the tooltips widget
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-	
+
 	# Create the table inside the frame
 	my $ContentTable = Gtk2::Table->new(2,2);
 	$ContentTable->show();
 	$MainVBox->pack_start($ContentTable,1,1,0);
-	
+
 	# ==================================================================
 	# ADD THE DATE/SUMMARY BOXES
 	# ==================================================================
@@ -3855,7 +4367,7 @@ sub BirthdayEventWindow {
 	my ($DateTable, $DateEntry) = DateSelection($UID);
 	# Attach them to our main widget
 	$ContentTable->attach_defaults($DateTable, 1,2,0,1);
-	
+
 	# Create the summary label
 	# TRANSLATORS: Followed by a field where you enter the name of the person whose birthday it is
 	my $SummaryLabel = Gtk2::Label->new($i18n->get('Name:'));
@@ -3864,7 +4376,8 @@ sub BirthdayEventWindow {
 
 	# Create the summary entry box
 	my $SummaryEntry = Gtk2::Entry->new();
-	if (defined($UID) and length($UID)) {
+	if (defined($UID) and length($UID))
+	{
 		my $Info = $iCalendar->get_info($UID);
 		$SummaryEntry->set_text($Info->{'X-DP-BIRTHDAYNAME'});
 	}
@@ -3872,7 +4385,7 @@ sub BirthdayEventWindow {
 	$SummaryEntry->show();
 	$ContentTable->attach_defaults($SummaryEntry, 1,2,1,2);
 	$Tooltips->set_tip($SummaryEntry, $i18n->get('Enter the name of the person whose birthday it is here'));
-	
+
 	# Create a hash containing the widgets that the caller might need
 	# and return it.
 	my %ReturnHash;
@@ -3890,16 +4403,17 @@ sub BirthdayEventWindow {
 
 # Purpose: Display the about dialog
 # Usage: AboutBox();
-sub AboutBox {
+sub AboutBox
+{
 	$MainWindow->set_sensitive(0);
 	my $AboutDialog = Gtk2::AboutDialog->new;
 	$AboutDialog->set_transient_for($MainWindow);
 	$AboutDialog->set_position('center-on-parent');
 	$AboutDialog->set_authors('Eskild Hustvedt <eskild at zerodogg dot org>');
 	$AboutDialog->set_artists('Jason Holland (original icon and logo)' . "\n" .
-					'Andreas Nilsson (small calendar icon)' . "\n" .
-					'Kalle Persson (the Day Planner icon)'
-				);
+		'Andreas Nilsson (small calendar icon)' . "\n" .
+		'Kalle Persson (the Day Planner icon)'
+	);
 	$AboutDialog->set_copyright('Copyright (C) Eskild Hustvedt 2006, 2007, 2008, 2009');
 	$AboutDialog->set_url_hook(\&LaunchWebBrowser);
 	$AboutDialog->set_website('http://www.day-planner.org/');
@@ -3907,7 +4421,8 @@ sub AboutBox {
 	#		For instance "Dagsplanleggar" for Norwegian.
 	my $AppName = $i18n->get('Day Planner');
 	# Use set_program_name instead of set_name in Gtk2 2.14+
-	if(Gtk2->CHECK_VERSION(2,14,0) or $Gtk2::VERSION >= 1.183) {
+	if (Gtk2->CHECK_VERSION(2,14,0) or $Gtk2::VERSION >= 1.183)
+	{
 		$AboutDialog->set_program_name($AppName);
 	}
 	else
@@ -3924,7 +4439,8 @@ sub AboutBox {
 	$AboutDialog->set_license("Day Planner is free software: you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation, either version 3\nof the License, or (at your option) any later version.\n\nDay Planner is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty\nof MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\nGNU General Public License for more details.\n\nYou should have recieved a copy of the GNU General Public License\nalong with this program. If not, see <http://www.gnu.org/licenses/>.");
 	# Logo
 	my $LogoImage = DetectImage('dayplanner-about.png','dayplanner-48x48.png','dayplanner-32x32.png','dayplanner-24x24.png', 'dayplanner-16x16.png', 'dayplanner.png','dayplanner_HC48.png','dayplanner_HC24.png', 'dayplanner_HC16.png', );
-	if ($LogoImage) {
+	if ($LogoImage)
+	{
 		my $PixBuf = Gtk2::Gdk::Pixbuf->new_from_file($LogoImage);
 		$AboutDialog->set_logo($PixBuf);
 	}
@@ -3944,7 +4460,8 @@ sub AboutBox {
 # Purpose: Draw the preferences window and allow the user to set different
 #  configuration options
 # Usage: PreferencesWindow(NAME);
-sub PreferencesWindow {
+sub PreferencesWindow
+{
 	$_[0] =~ s/_//;
 	my $Name = $_[0];
 	$MainWindow->set_sensitive(0);
@@ -3960,18 +4477,18 @@ sub PreferencesWindow {
 	$PreferencesWindow->set_type_hint('dialog');
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-	
+
 	# Create the main VBox
 	my $MainVBox = Gtk2::VBox->new();
 	$MainVBox->show();
 	$PreferencesWindow->add($MainVBox);
-	
+
 	# ==================================================================
 	# ==================================================================
 	# REMINDERS TAB
 	# ==================================================================
 	# ==================================================================
-	
+
 	# A simple hash we use to parse back and forth between the PreNotification
 	# combo box and the config option itself
 	my %PreNotificationParser = (
@@ -3983,7 +4500,7 @@ sub PreferencesWindow {
 		5 => '2hrs',
 		6 => '4hrs',
 		7 => '6hrs',
-		
+
 		'10min' => 0,
 		'20min' => 1,
 		'30min' => 2,
@@ -4000,22 +4517,27 @@ sub PreferencesWindow {
 		'default' => 3,
 		'readable_default' => '45mins',
 	);
-	
+
 	# If the reminder (daemon) should autostart on login or not
 	my $AutostartReminder_Checkbox = Gtk2::CheckButton->new_with_label($i18n->get('Start the Day Planner reminder automatically when logging in'));
 	$AutostartReminder_Checkbox->show();
 	$MainVBox->pack_start($AutostartReminder_Checkbox,0,0,0);
 	$AutostartReminder_Checkbox->set_active(1) if $InternalConfig{AddedAutostart};
-	$AutostartReminder_Checkbox->signal_connect('toggled' => sub {
-			if($AutostartReminder_Checkbox->get_active) {
+	$AutostartReminder_Checkbox->signal_connect('toggled' => sub
+		{
+			if ($AutostartReminder_Checkbox->get_active)
+			{
 				DP_AddAutostart();
-			} else {
-				unless(DP_RemoveAutostart()) {
+			}
+			else
+			{
+				if (not DP_RemoveAutostart())
+				{
 					$AutostartReminder_Checkbox->set_active(1);
 				}
 			}
 		});
-	
+
 
 	# The label that explains about notifications
 	my $NotificationLabel = Gtk2::Label->new($i18n->get('When an event is coming up, remind me:'));
@@ -4023,18 +4545,20 @@ sub PreferencesWindow {
 	$NotificationLabel->set_justify('left');
 	$NotificationLabel->set_alignment(0,0);
 	$MainVBox->pack_start($NotificationLabel,0,0,0);
-	
+
 	# If the user wants to be notified in advance
 	my $NotifyAdvance_CheckBox = Gtk2::CheckButton->new_with_label($i18n->get('One day in advance'));
 	$NotifyAdvance_CheckBox->show();
 	$MainVBox->pack_start($NotifyAdvance_CheckBox,0,0,0);
-	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub {
+	$NotifyAdvance_CheckBox->signal_connect('toggled' => sub
+		{
 			$UserConfig{Events_DayNotify} = $NotifyAdvance_CheckBox->get_active();
 		});
-	if($UserConfig{Events_DayNotify}) {
+	if ($UserConfig{Events_DayNotify})
+	{
 		$NotifyAdvance_CheckBox->set_active(1);
 	}
-	
+
 	# The widgets that selects when the user wants to be notified
 	# The HBox
 	my $TimeSel_HBox = Gtk2::HBox->new();
@@ -4056,54 +4580,68 @@ sub PreferencesWindow {
 	$TimeSel_Combo->insert_text(6, sprintf($i18n->get('%s hours'),'4'));
 	$TimeSel_Combo->insert_text(7, sprintf($i18n->get('%s hours'),'6'));
 	# Set the value
-	if($UserConfig{Events_NotifyPre} eq '0') {
+	if ($UserConfig{Events_NotifyPre} eq '0')
+	{
 		$TimeSel_Combo->set_active(3);
-	} elsif (defined($PreNotificationParser{$UserConfig{Events_NotifyPre}})) {
+	}
+	elsif (defined($PreNotificationParser{$UserConfig{Events_NotifyPre}}))
+	{
 		$TimeSel_Combo->set_active($PreNotificationParser{$UserConfig{Events_NotifyPre}});
-	} else {
+	}
+	else
+	{
 		$TimeSel_Combo->set_active($PreNotificationParser{'default'});
 	}
 	$TimeSel_Combo->show();
 	$TimeSel_HBox->pack_start($TimeSel_Combo,0,0,0);
 	# Register the changed signal
-	$TimeSel_Combo->signal_connect('changed' => sub {
-				$UserConfig{Events_NotifyPre} = $PreNotificationParser{$TimeSel_Combo->get_active};
-			});
+	$TimeSel_Combo->signal_connect('changed' => sub
+		{
+			$UserConfig{Events_NotifyPre} = $PreNotificationParser{$TimeSel_Combo->get_active};
+		});
 	# TRANSLATORS: See the preferences window, this is preceeded by X minutes or X hour(s).
 	my $TimeSel_Label = Gtk2::Label->new(' ' . $i18n->get('before the event time'));
 	$TimeSel_Label->show();
 	$TimeSel_HBox->pack_start($TimeSel_Label,0,0,0);
-	
+
 	# Set up the checkbutton signals and defaults
-	$EnableDisablePreNotCB->signal_connect('toggled' => sub {
-			if($EnableDisablePreNotCB->get_active()) {
+	$EnableDisablePreNotCB->signal_connect('toggled' => sub
+		{
+			if ($EnableDisablePreNotCB->get_active())
+			{
 				$TimeSel_Combo->set_sensitive(1);
 				$TimeSel_Combo->signal_emit('changed');
-			} else {
+			}
+			else
+			{
 				$UserConfig{Events_NotifyPre} = 0;
 				$TimeSel_Combo->set_sensitive(0);
 			}});
 
-	if($UserConfig{Events_NotifyPre}) {
+	if ($UserConfig{Events_NotifyPre})
+	{
 		$EnableDisablePreNotCB->set_active(1);
 		$EnableDisablePreNotCB->signal_emit('toggled');
-	} else {
+	}
+	else
+	{
 		$EnableDisablePreNotCB->set_active(0);
 		$EnableDisablePreNotCB->signal_emit('toggled');
 	}
-	
+
 	# ==================================================================
 	# FINALIZE WINDOW
 	# ==================================================================
-	my $ClosePerform = sub {
-			WriteConfig();
-			$PreferencesWindow->hide();
-			$PreferencesWindow->destroy();
-			$MainWindow->set_sensitive(1);
-		};
+	my $ClosePerform = sub
+	{
+		WriteConfig();
+		$PreferencesWindow->hide();
+		$PreferencesWindow->destroy();
+		$MainWindow->set_sensitive(1);
+	};
 	# Handle closing
 	$PreferencesWindow->signal_connect('delete-event' => $ClosePerform);
-	
+
 	# Add the buttons
 	my $ButtonHBox = Gtk2::HBox->new();
 	$ButtonHBox->show();
@@ -4122,10 +4660,11 @@ sub PreferencesWindow {
 
 # Purpose: Populate the event list for the currently selected date in the calendar
 # Usage: PopulateEventList();
-sub PopulateEventList {
+sub PopulateEventList
+{
 	Assert(scalar(@_) == 0);
 	@{$EventlistWidget->{data}} = ();
-	if(shift)
+	if (shift)
 	{
 		DPIntWarn('PopulateEventList() called directly - this is deprecated. Call DrawEventlist() instead to ensure it is redrawn properly. Calling it for you now.');
 		return DrawEventlist();
@@ -4133,20 +4672,24 @@ sub PopulateEventList {
 	my $Year = $CalendarWidget->year;
 	my $Month = $CalendarWidget->month;$Month++;
 	my $Day = $CalendarWidget->selected_day;
-	
+
 	# New eventlist so make the toolbar edit button and edit/delete menu entries insensitive
 	$ToolbarEditButton->set_sensitive(0);
 	$ToolbarDeleteButton->set_sensitive(0);
 	$MenuEditEntry->set_sensitive(0);
 	$MenuDeleteEntry->set_sensitive(0);
-	
+
 	# Main calendar contents
-	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day)) {
-		foreach my $Time (sort @{$TimeArray}) {
-			foreach my $UID (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)}) {
+	if (my $TimeArray = $iCalendar->get_dateinfo($Year,$Month,$Day))
+	{
+		foreach my $Time (sort @{$TimeArray})
+		{
+			foreach my $UID (@{$iCalendar->get_timeinfo($Year,$Month,$Day,$Time)})
+			{
 				my $EventSummary = GetSummaryString($UID);
 				# Don't add Time = DAY.
-				if($Time eq 'DAY') {
+				if ($Time eq 'DAY')
+				{
 					$Time = '';
 				}
 				push (@{$EventlistWidget->{data}}, [$UID,$i18n->AMPM_From24($Time), $EventSummary]);
@@ -4159,7 +4702,8 @@ sub PopulateEventList {
 
 # Purpose: Draw the eventlist on the currently selected date in the calendar
 # Usage: DrawEventlist();
-sub DrawEventlist {
+sub DrawEventlist
+{
 	Assert(scalar(@_) == 0);
 	# Greate the pop-up on right-click
 	my $PopupWidget = Gtk2::Menu->new();
@@ -4172,7 +4716,7 @@ sub DrawEventlist {
 	$PopupWidget->append($edit);
 	$PopupWidget->append($delete);
 	$PopupWidget->show();
-	
+
 	# Destroy the widget if it already exists
 	if ($EventlistWidget)
 	{
@@ -4192,19 +4736,23 @@ sub DrawEventlist {
 	# Handle making the toolbar edit button sensitive
 	$EventlistWidget->signal_connect('focus-in-event' => \&EventListToggle);
 	$EventlistWidget->signal_connect('focus-out-event' => \&EventListToggle);
-	$EventlistWidget->signal_connect('button-release-event' => sub {
+	$EventlistWidget->signal_connect('button-release-event' => sub
+		{
 			my($widget,$event) = @_;
 			my $button = $event->button;
-			if($button == 3) {
+			if ($button == 3)
+			{
 				my($self, $event) = @_;
 				my ($path, $column, $cell_x, $cell_y) = $EventlistWidget->get_path_at_pos ($event->x, $event->y);
-				if(scalar($widget->get_selected_indices) > 0) {
-					if(defined($path)) {
+				if (scalar($widget->get_selected_indices) > 0)
+				{
+					if (defined($path))
+					{
 						$PopupWidget->popup(undef, undef, undef, undef, 0, 0);
 					}
 				}
 			}
-		EventListToggle();
+			EventListToggle();
 		}
 	);
 	PopulateEventList();
@@ -4212,7 +4760,8 @@ sub DrawEventlist {
 
 # Purpose: Draw the main window
 # Usage: DrawMainWindow();
-sub DrawMainWindow {
+sub DrawMainWindow
+{
 	Assert(scalar(@_) == 0);
 	# ==================================================================
 	# BUILD THE MAIN WINDOW
@@ -4222,7 +4771,8 @@ sub DrawMainWindow {
 	$MainWindow->set_title($i18n->get('Day Planner'));
 	$MainWindow->set_default_size ($InternalConfig{MainWin_Width},$InternalConfig{MainWin_Height});
 	$MainWindow->maximize if ($InternalConfig{MainWin_Maximized});
-	if($InternalConfig{MainWin_X} and $InternalConfig{MainWin_Y}) {
+	if ($InternalConfig{MainWin_X} and $InternalConfig{MainWin_Y})
+	{
 		$MainWindow->move($InternalConfig{MainWin_X}, $InternalConfig{MainWin_Y});
 	}
 
@@ -4238,11 +4788,12 @@ sub DrawMainWindow {
 	$MainWindow->signal_connect('delete-event' => \&QuitSub);
 
 	# Handle saving maximized state
-	$MainWindow->signal_connect(window_state_event => sub {
-		my ($widget, $event) = @_;
-		$InternalConfig{MainWin_Maximized} = ($event->new_window_state & 'maximized');
-	});
-		
+	$MainWindow->signal_connect(window_state_event => sub
+		{
+			my ($widget, $event) = @_;
+			$InternalConfig{MainWin_Maximized} = ($event->new_window_state & 'maximized');
+		});
+
 
 	# Create the primary VBox for use inside it
 	my $PrimaryWindowVBox = Gtk2::VBox->new();
@@ -4252,7 +4803,7 @@ sub DrawMainWindow {
 	# ==================================================================
 	# MENUBAR
 	# ==================================================================
-	
+
 	# Get stock values
 	my $EditStock = Gtk2::Stock->lookup('gtk-edit')->{label};
 	my $QuitStock = Gtk2::Stock->lookup('gtk-quit')->{label};
@@ -4268,14 +4819,14 @@ sub DrawMainWindow {
 		# Calendar menu
 		[ '/' . $i18n->get('_Calendar'),						undef,			undef,			0,	'<Branch>'],
 		[ '/' . $i18n->get('_Calendar') . '/' . 
-			# TRANSLATORS: Menu selection in the Calendar menu
-			$i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
+		# TRANSLATORS: Menu selection in the Calendar menu
+		$i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
 		[ '/' . $i18n->get('_Calendar') . '/' . 
-			# TRANSLATORS: Menu selection in the Calendar menu
-			$i18n->get('Import from _program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
+		# TRANSLATORS: Menu selection in the Calendar menu
+		$i18n->get('Import from _program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
 		[ '/' . $i18n->get('_Calendar') . '/' . 
-			# TRANSLATORS: Menu selection in the Calendar menu. Exports calendar data.
-			$i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
+		# TRANSLATORS: Menu selection in the Calendar menu. Exports calendar data.
+		$i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
 		[ "/" . $i18n->get("_Calendar") . '/sep',					undef,			undef,			2,	'<Separator>'],
 		# Edit menu
 		[ "/$EditStock", undef,			undef,			0,	'<Branch>'],
@@ -4315,7 +4866,7 @@ sub DrawMainWindow {
 	# Show it
 	$Menu_ItemFactory->get_widget('<main>')->show();
 
-	
+
 	# Create two widget objects for the edit/delete menu entries
 	my $Get = "/$EditStock/" . $i18n->get('_Edit This Event...');
 	$Get =~ s/_//g;
@@ -4333,11 +4884,11 @@ sub DrawMainWindow {
 	$WorkingAreaHBox->show();
 	# Add it to the primary VBox
 	$PrimaryWindowVBox->pack_start($WorkingAreaHBox,1,1,0);
-	
+
 	# ==================================================================
 	# THE RIGHT HAND AREA
 	# ==================================================================
-	
+
 	# Create the vbox for use in it
 	my $RightHandVBox = Gtk2::VBox->new();
 	$WorkingAreaHBox->pack_end($RightHandVBox,0,0,0);
@@ -4355,7 +4906,7 @@ sub DrawMainWindow {
 	# Work around a possible Gtk2::Calendar bug by explicitly setting the month/year combo
 	$CalendarWidget->select_month($currmonth, $curryear);
 	$RightHandVBox->pack_start($CalendarWidget,0,0,0);
-	
+
 	my $LastDay = Get_DateInfo($CalendarWidget);
 
 	$CalendarWidget->signal_connect('prev-month' => \&CalendarChange);
@@ -4363,7 +4914,8 @@ sub DrawMainWindow {
 	$CalendarWidget->signal_connect('prev-year' => \&CalendarChange);
 	$CalendarWidget->signal_connect('next-year' => \&CalendarChange);
 	$CalendarWidget->signal_connect('day-selected' => sub {
-			if(Get_DateInfo($CalendarWidget) eq $LastDay) {
+			if (Get_DateInfo($CalendarWidget) eq $LastDay)
+			{
 				return;
 			}
 			$LastDay = Get_DateInfo($CalendarWidget);
@@ -4393,16 +4945,16 @@ sub DrawMainWindow {
 	$UpcomingEventsWindow->add($UpcomingEventsWidget);
 	# Pack it onto the main window
 	$RightHandVBox->pack_end($UpcomingEventsWindow,1,1,0);
-	
+
 	# ==================================================================
 	# LEFT HAND AREA
 	# ==================================================================
-	
+
 	# Create the vbox for use in it
 	my $LeftHandVBox = Gtk2::VBox->new();
 	$WorkingAreaHBox->pack_start($LeftHandVBox,1,1,0);
 	$LeftHandVBox->show();
-	
+
 	# Add a window for use for it
 	$EventlistWin = Gtk2::ScrolledWindow->new;
 	$EventlistWin->set_policy('automatic', 'automatic');
@@ -4412,17 +4964,17 @@ sub DrawMainWindow {
 	# ==================================================================
 	# TOOLBAR
 	# ==================================================================
-	
+
 	# Tooltips
 	my $Tooltips = Gtk2::Tooltips->new();
 	$Tooltips->enable();
-	
+
 	# Toolbar
 	$Toolbar = Gtk2::Toolbar->new();
 	$Toolbar->set_style('icons');
 	$LeftHandVBox->pack_end($Toolbar,0,0,0);
 	$Toolbar->show();
-	
+
 	# Delete button
 	$ToolbarDeleteButton = Gtk2::ToolButton->new_from_stock('gtk-delete');
 	$ToolbarDeleteButton->set_tooltip($Tooltips,$i18n->get('Delete the selected event'),'');
@@ -4444,7 +4996,7 @@ sub DrawMainWindow {
 	$plugin->set_tempvar('Tooltips',$Tooltips);
 	$plugin->signal_emit('BUILD_TOOLBAR');
 
-	
+
 	# Add button
 	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
 	$AddButton->signal_connect('clicked' => \&AddEvent);
@@ -4456,7 +5008,7 @@ sub DrawMainWindow {
 	$Toolbar->get_nth_item(0)->set_is_important(1);
 	$Toolbar->get_nth_item(1)->set_is_important(1);
 	$Toolbar->set_tooltips(1);
-	
+
 	# Draw the initial eventlist
 	DrawEventlist();
 }
@@ -4467,25 +5019,29 @@ sub DrawMainWindow {
 
 # Purpose: Call the main data initialization functions
 # Usage: MainInit(NoGui?);
-sub MainInit {
+sub MainInit
+{
 	Assert(scalar(@_) < 2);
 	my $NoGui = shift;
 	my $FirstStartup;
 	# Set SaveToDir if it isn't already set
-	if(not defined($SaveToDir)) {
+	if (not defined($SaveToDir))
+	{
 		$SaveToDir = DetectConfDir();
 	}
 	# Set HolidayFile
 	$HolidayFile = "$SaveToDir/holidays";					# The file to load holiday definitions from
 
-	unless(-d $SaveToDir) {
+	if (not -d $SaveToDir)
+	{
 		$FirstStartup =	FirstStartup($NoGui);
 	}
 
 	# If we're not in GUI mode, load the configuration file.
 	# We load it later if in GUI mode in order to give the illusion of the
 	# app starting faster
-	if($NoGui) {
+	if ($NoGui)
+	{
 		LoadConfig();
 	}
 	# Load the internal state file
@@ -4499,36 +5055,40 @@ sub MainInit {
 
 # Purpose: Initialize the core program
 # Usage: Gtk2->init_add(\&InitDPCore);
-sub InitDPCore {
+sub InitDPCore
+{
 	DP_InitI18n();
-	if(not defined($ENV{DP_DISABLE_EXCEPTIONSHANDLER}) or $ENV{DP_DISABLE_EXCEPTIONSHANDLER}) {
-		my $Exception =  Glib->install_exception_handler(sub {
-			my $Exception = shift;
-			my $Chomped = $Exception;
-			$Chomped =~ s/\n/ || /;
-			# This is the DP perl exception handler
-			DPIntWarn("An exception occurred: $Chomped");
-			# Display an error
-			if ($i18n)
+	if (not defined($ENV{DP_DISABLE_EXCEPTIONSHANDLER}) or $ENV{DP_DISABLE_EXCEPTIONSHANDLER})
+	{
+		my $Exception =  Glib->install_exception_handler(sub
 			{
-				# TRANSLATORS: An exception here is always a bug in Day Planner. This message is displayed when an exception
-				# 	occurs and the i18n subsystem was successfully initialized beforehand (which it should be in all cases unless
-				# 	the bug resides in the i18n subsystem). %(exception) is the exception text, which is not localized.
-				DPError($i18n->get_advanced("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: %(exception)", { exception => $Exception }));
-			}
-			else
-			{
-				DPError("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: $Exception");
-			}
-			# Make the main window sensitive - this so that the program is at least
-			# partially usable after the exception occurred.
-			$MainWindow->set_sensitive(1);
-			1;
-		});
+				my $Exception = shift;
+				my $Chomped = $Exception;
+				$Chomped =~ s/\n/ || /;
+				# This is the DP perl exception handler
+				DPIntWarn("An exception occurred: $Chomped");
+				# Display an error
+				if ($i18n)
+				{
+					# TRANSLATORS: An exception here is always a bug in Day Planner. This message is displayed when an exception
+					# 	occurs and the i18n subsystem was successfully initialized beforehand (which it should be in all cases unless
+					# 	the bug resides in the i18n subsystem). %(exception) is the exception text, which is not localized.
+					DPError($i18n->get_advanced("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: %(exception)", { exception => $Exception }));
+				}
+				else
+				{
+					DPError("An exception has occurred. This reflects a bug in Day Planner. Day Planner may not work properly after this until it is restarted.\n\nPlease make sure you are running the latest version of Day Planner. If you are, save the following exception text and report the problem to the Day Planner developers by selecting 'Help' -> 'Report a Bug' in the main Day Planner window.\n\nException: $Exception");
+				}
+				# Make the main window sensitive - this so that the program is at least
+				# partially usable after the exception occurred.
+				$MainWindow->set_sensitive(1);
+				1;
+			});
 	}
-	
+
 	# Flush filehandles faster if requested
-	if(defined($ENV{DP_FH_FORCEFLUSH}) and $ENV{DP_FH_FORCEFLUSH}) {
+	if (defined($ENV{DP_FH_FORCEFLUSH}) and $ENV{DP_FH_FORCEFLUSH})
+	{
 		$| = 1;
 	}
 
@@ -4537,8 +5097,10 @@ sub InitDPCore {
 	my $FirstStartup = MainInit();
 	# Create the socket
 	$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
-	if(not $IPC_Socket) {
-		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub { 
+	if (not $IPC_Socket)
+	{
+		my $Client = DP::GeneralHelpers::IPC->new_client("$SaveToDir/ipcsocket",sub
+			{ 
 				my $m = shift;
 				chomp($m);
 				if ($m =~ /^ALIVE_ONDISPLAY/)
@@ -4548,8 +5110,10 @@ sub InitDPCore {
 				return });
 		# Send an alive request
 		$Client->client_send('ALIVE '.$ENV{DISPLAY});
-		if(@ARGV) {
-			foreach(@ARGV) {
+		if (@ARGV)
+		{
+			foreach(@ARGV)
+			{
 				$Client->client_send("IMPORT_DATA $_");
 			}
 			exit(0);
@@ -4566,8 +5130,10 @@ sub InitDPCore {
 	# Load the config
 	LoadConfig();
 	# Import data as told on the commandline
-	if(@ARGV) {
-		foreach(@ARGV) {
+	if (@ARGV)
+	{
+		foreach(@ARGV)
+		{
 			IPC_Handler("IMPORT_DATA $_");
 		}
 	}
@@ -4579,7 +5145,8 @@ sub InitDPCore {
 	# Finally, initialize HTTP subscriptions if needed
 	LoadHTTPSubscriptions();
 	# Add autostart if needed
-	unless(defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1") {
+	if (not defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1")
+	{
 		DP_AddAutostart();
 		$InternalConfig{AddedAutostart} = 1;
 	}
@@ -4633,7 +5200,7 @@ GetOptions (
 		{
 			die("The parameter for --test needs to be a string with no spaces and no /\n");
 		}
-		elsif(not defined $prefix)
+		elsif (not defined $prefix)
 		{
 			$prefix = '';
 		}
@@ -4649,10 +5216,10 @@ GetOptions (
 	},
 	'confdir=s' => sub {
 		if (-e $_[1]) {
-			unless (-d $_[1]) {
+			if (not -d $_[1]) {
 				die "$_[1] is not a directory\n";
 			}
-			unless (-w $_[1]) {
+			if (not -w $_[1]) {
 				die "$_[1] is not writeable\n";
 			}
 		}
