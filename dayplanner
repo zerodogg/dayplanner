@@ -1600,7 +1600,7 @@ sub PlanConvert_PurgeBuffer
 	my $ErrorMessage;
 	if (defined($PlanConvertHash->{Day}))
 	{
-		Assert($$PlanConvertHash->{Type} =~ /^(normal|bday)$/);
+		Assert($PlanConvertHash->{Type} =~ /^(normal|bday)$/);
 		if ($PlanConvertHash->{Type} eq 'normal')
 		{
 			my %TargetEvent;
