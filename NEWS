@@ -10,6 +10,7 @@ Version 0.10.1 (Unreleased)
 	displaying the "another Day Planner instance is running" window
 	when possible.
 - Some i18n fixes for the plugin manager
+- Fixed importing data from plan
 
 * Notifier (dayplanner-notifier)
 
