@@ -74,26 +74,18 @@ sub GetXDGDir
 }
 
 # Purpose: Detect the user config  directory
-# Usage: DetectConfDir(MAEMO?);
-sub DetectConfDir {
-	my $Mobile = shift;
+# Usage: DetectConfDir();
+sub DetectConfDir
+{
+	# Compatibility mode, using the old conf dir
+	if(-d $ENV{HOME}.'/.dayplanner')
+	{
+		return($ENV{HOME}.'/.dayplanner');
+	}
 
 	my $XDG_CONFIG_HOME = GetXDGDir();
-	if(not $Mobile)
-	{
-		# Compatibility mode, using the old conf dir
-		if(-d "$ENV{HOME}/.dayplanner") {
-			return("$ENV{HOME}/.dayplanner");
-		}
-	}
-	if ($Mobile)
-	{
-		return("$XDG_CONFIG_HOME/dayplanner.mobile");
-	}
-	else
-	{
-		return("$XDG_CONFIG_HOME/dayplanner");
-	}
+
+	return($XDG_CONFIG_HOME.'/dayplanner');
 }
 
 # Purpose: Parse a date string and return various date fields

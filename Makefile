@@ -224,14 +224,10 @@ distribdesktop: gendistribdesktop
 gendistribdesktop:
 	./devel-tools/GenDesktop .
 # --- DISTRIB TARGETS ---
-distrib: prepdistrib tarball $(PKG) installer mobiledistrib
-simpledistrib: prepdistrib tarball installer mobiledistrib
+distrib: prepdistrib tarball $(PKG) installer 
+simpledistrib: prepdistrib tarball installer 
 prepdistrib: gendistribdesktop test clean pluginprep
 	mkdir -p packages
-mobiledistrib:
-	make -C mobile distrib
-	mv mobile/packages/* packages/
-	make -C mobile clean
 tarball: prepdistrib
 	mkdir -p dayplanner-$(VERSION)
 	$(CP) -r ./`ls|grep -v dayplanner-$(VERSION)` ./.git ./dayplanner-$(VERSION)
@@ -298,7 +294,6 @@ sanity:
 	@perl $(LOCALMODULES) -c ./dayplanner
 	@perl $(LOCALMODULES) -c ./dayplanner-daemon
 	@perl $(LOCALMODULES) -c ./dayplanner-notifier
-	@perl $(LOCALMODULES) -c ./mobile/dayplanner-data-servant
 	@perl $(LOCALMODULES) -c ./plugins/HelloWorld.pm
 	@perl $(LOCALMODULES) -c ./plugins/PluginManager.pm
 	@perl $(LOCALMODULES) -c ./plugins/ServicesSync.pm
