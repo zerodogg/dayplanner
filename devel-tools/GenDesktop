@@ -27,8 +27,9 @@ use Fatal qw/open close chdir/;
 use constant { true => 1, false => 0 };
 # We use LoadConfigFile to load the config info from the po dir
 use FindBin;			# So that we can detect module dirs during runtime
-use lib "$FindBin::RealBin/../modules/";
-use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/../modules/dayplanner/";
+use lib "$FindBin::RealBin/../modules/external/";
 use DP::GeneralHelpers qw(LoadConfigFile);
 
 # Purpose: Get "Day Planner" translated to one language

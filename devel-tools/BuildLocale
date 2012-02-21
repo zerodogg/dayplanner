@@ -22,8 +22,9 @@ use Cwd;
 use File::Basename;
 # We use LoadConfigFile to load the config info from the po dir
 use FindBin;			# So that we can detect module dirs during runtime
-use lib "$FindBin::RealBin/../modules/";
-use lib "$FindBin::RealBin/../modules/DP-GeneralHelpers/lib/";
+use lib "$FindBin::RealBin/../modules/DP-iCalendar/lib/";
+use lib "$FindBin::RealBin/../modules/dayplanner/";
+use lib "$FindBin::RealBin/../modules/external/";
 use DP::GeneralHelpers qw(LoadConfigFile);
 
 $| = 1;
