@@ -1,17 +1,7 @@
-TODO file for Day Planner.
-An up to date version of this file can always be found in the Day Planner
-git repository. The version information are only approximates and
-may be subject to change.
-===========================================================================
+Day Planner TODO list, in no particular order.
 
-* Version 0.11
-- - - - - - -
-- Investigate moving to intltool
 - Move GUI add/edit events to OO-code
 - Add a GUI for calendar subscriptions
-
-* Version 0.12
-- - - - - - -
 - Use Conduit for synchronization of Calendars (except when using
 	DPServices). Offer:
 	- Sync with online server
@@ -22,28 +12,7 @@ may be subject to change.
 - Support for viewing read-only calendars
 - Add a prompt when started with a iCalendar file on the commandline
 	that asks if you want to view it (ro-mode) or import it.
-
-* Version 0.13
-- - - - - - -
 - Add support for choosing how long an event lasts
-
-* Version 0.14
-- - - - - - -
-- Add a dayplanner-daemon that works with evolution-data-server as an
-	alternative to the main dayplanner-daemon
-
-= = =
-
-1.0 Milestone
-	When the following items are met, Day Planner will be labeled 1.0.
-	Entries will be removed from this list as they are implemented.
-- - - - - - -
-- Support for calendar subscriptions (with GUI)
-- e-d-s support
-- Synchronization with more online services (Conduit support)
-- No known usability issues
-- Support for PHP-exporting
-- Support for viewing read-only calendars
 - Visual indicators that an event has details
 - A better way than having to use "edit" to view details (Gtk2::Expander
   in the list?)
