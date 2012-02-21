@@ -4971,7 +4971,7 @@ sub InitDPCore
 	# Finally, initialize HTTP subscriptions if needed
 	LoadHTTPSubscriptions();
 	# Add autostart if needed
-	if (not defined($InternalConfig{AddedAutostart}) and $InternalConfig{AddedAutostart} eq "1")
+	if (not defined($InternalConfig{AddedAutostart}) or $InternalConfig{AddedAutostart} ne '1')
 	{
 		DP_AddAutostart();
 		$InternalConfig{AddedAutostart} = 1;
