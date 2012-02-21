@@ -90,9 +90,14 @@ sub get_monthinfo {
 	return if _nf_assert(defined $Month, 'Month missing');
 	$this->_GenerateCalendar($Year);
 	my @DAYS;
-	if(defined($this->{OrderedCalendar}{$Year}{$Month})) {
-		foreach(keys(%{$this->{OrderedCalendar}{$Year}{$Month}})) {
+	if(defined($this->{OrderedCalendar}{$Year}{$Month}))
+	{
+		foreach(keys(%{$this->{OrderedCalendar}{$Year}{$Month}}))
+		{
+			if(keys %{$this->{OrderedCalendar}{$Year}{$Month}{$_}})
+			{
 				push(@DAYS, $_);
+			}
 		}
 	}
 	return(\@DAYS);
@@ -110,7 +115,8 @@ sub get_dateinfo {
 	$this->_GenerateCalendar($Year);
 	
 	my @TIME;
-	if(defined($this->{OrderedCalendar}{$Year}{$Month}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day})) {
+	if(_deepValues($this->{OrderedCalendar}, $Year, $Month))
+	{
 		foreach(keys(%{$this->{OrderedCalendar}{$Year}{$Month}{$Day}})) {
 				push(@TIME, $_);
 		}
@@ -131,7 +137,8 @@ sub get_timeinfo {
 
 	$this->_GenerateCalendar($Year);
 	my @UIDs;
-	if(defined($this->{OrderedCalendar}{$Year}{$Month}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day}) and defined($this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time})) {
+	if( _deepValues($this->{OrderedCalendar},$Year,$Month,$Day,$Time))
+	{
 		foreach(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}) {
 				push(@UIDs, $_);
 		}
@@ -1103,6 +1110,42 @@ sub _GetAllUIDS
 	return $this->{dataManager}->listvalues();
 }
 
+sub _deepFetch
+{
+	my $hay = shift;
+	foreach my $needle (@_)
+	{
+		if(defined $hay->{$needle})
+		{
+			$hay = $hay->{$needle};
+		}
+		else
+		{
+			return;
+		}
+	}
+	return $hay;
+}
+
+sub _deepValues
+{
+	my $val = _deepFetch(@_);
+	if(defined $val)
+	{
+		if(ref($val))
+		{
+			if(ref($val) eq 'ARRAY' && @{$val})
+			{
+				return 1;
+			}
+			elsif(ref($val) eq 'HASH' && keys %{$val})
+			{
+				return 1;
+			}
+		}
+	}
+}
+
 # --- Internal RRULE calculation functions ---
 
 # Purpose: Parse an RRULE
@@ -1357,6 +1400,16 @@ sub _RRULE_DAILY {
 	my $LoopYear = $YEAR;
 	while($LoopYear eq $YEAR) {
 		my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
+
+		# Handle UNTIL.
+		if($UNTIL)
+		{
+			if($TimeString > $UNTIL)
+			{
+				last;
+			}
+		}
+
 		$Dates{$iCalTime} = 1;
 		
 		# One day is 86400
@@ -1364,13 +1417,6 @@ sub _RRULE_DAILY {
 		my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
 		my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 		$LoopYear = $evYear;
-		# Handle UNTIL.
-		if($UNTIL) {
-			if($TimeString > $UNTIL) {
-				last;
-			}
-		}
-	
 	}
 	# The loop has enedd and we've done all required calculations for BYDAY.
 	return(\%Dates);
@@ -1504,6 +1550,16 @@ sub _RRULE_WEEKLY {
 	my $LoopYear = $YEAR;
 	while($LoopYear eq $YEAR) {
 		my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
+
+		# Handle UNTIL.
+		if($UNTIL)
+		{
+			if($TimeString > $UNTIL)
+			{
+				last;
+			}
+		}
+
 		$Dates{$iCalTime} = 1;
 		
 		# One day is 86400, thus one week is 86400 * 7 = 604800.
@@ -1511,12 +1567,6 @@ sub _RRULE_WEEKLY {
 		my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
 		my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 		$LoopYear = $evYear;
-			# Handle UNTIL.
-		if($UNTIL) {
-			if($TimeString > $UNTIL) {
-				last;
-			}
-		}
 	
 	}
 	# The loop has ended and we've done all required calculations
@@ -1588,20 +1638,22 @@ sub _RRULE_MONTHLY {
 	my $LoopYear = $YEAR;
 	while(1) {
 		my $iCalTime = iCal_GenDateTime($YEAR, $StartDate{Month}, $StartDate{Day});
+
+		# Handle UNTIL.
+		if($UNTIL)
+		{
+			if(iCal_ConvertToUnixTime($iCalTime) > $UNTIL)
+			{
+				last;
+			}
+		}
+
 		$Dates{$iCalTime} = 1;
 		
 		# Bump month
 		$StartDate{Month}++;
 		if($StartDate{Month} > 12) {
 			last;
-		}
-		# Handle UNTIL.
-		if($UNTIL) {
-			my $NextiCalTime = iCal_GenDateTime($YEAR, $StartDate{Month}, $StartDate{Day});
-			$NextiCalTime = iCal_ConvertToUnixTime($NextiCalTime);
-			if($NextiCalTime > $UNTIL) {
-				last;
-			}
 		}
 	
 	}
