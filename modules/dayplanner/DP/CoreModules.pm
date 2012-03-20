@@ -90,17 +90,32 @@ sub DetectConfDir
 
 # Purpose: Parse a date string and return various date fields
 # Usage: my ($Year, $Month, $Day) = ParseDateString(STRING);
-sub ParseDateString {
+#
+# This function is currently rather stupid, and only supports two formats,
+# and it's rather strict on those formats as well.
+sub ParseDateString 
+{
 	my $String = shift;
-	# This function is currently stupid, so it doesn't really support more than
-	# one format. It is also very strict about that format.
-	# This can easily be improved though.
+    # Remove all whitespace
+    $String =~ s/\s//g;
+
 	my $Year = $String;
 	my $Month = $String;
 	my $Day = $String;
-	$Year =~ s/^\d+\.\d+\.(\d\d\d\d)$/$1/;
-	$Month =~ s/^\d+\.(\d+)\.\d\d\d\d$/$1/;
-	$Day =~ s/^(\d+).*$/$1/;
+    if ($String =~ /^\d\d\d\d[-\.]\d+[-\.]\d+$/)
+    {
+        # International date format
+        $Year=~ s/^(\d+)\S.*$/$1/;
+        $Month =~ s/^\d+\S(\d+)\S\d+$/$1/;
+        $Day =~ s/^\d+\S\d+\S(\d+)$/$1/;
+    }
+    elsif($String =~ /^\d+\.\d+\.(\d\d\d\d)$/)
+    {
+        # Old DP style
+        $Year =~ s/^\d+\.\d+\.(\d\d\d\d)$/$1/;
+        $Month =~ s/^\d+\.(\d+)\.\d\d\d\d$/$1/;
+        $Day =~ s/^(\d+)\S.*$/$1/;
+    }
 
 	# Drop leading zeros from returning
 	$Month =~ s/^0//;
@@ -109,25 +124,24 @@ sub ParseDateString {
 }
 
 # Purpose: Parse the contents of a text entry field containing various dates
-# 		and return an arrayref of dates in the format DD.MM.YYYY
+# 		and return an arrayref of dates in the format YYYY-MM-DD
 # Usage: my $Ref = ParseEntryField(TEXT ENTRY OBJECT);
-sub ParseEntryField {
+sub ParseEntryField
+{
 	my $Field = shift;
 	# First get the text
 	my $FieldText = $Field->get_text();
 	# If it is empty then return an empty array
-	if(not $FieldText =~ /\S/) {
+	if(not $FieldText =~ /\S/)
+    {
 		return([]);
 	}
 	my @ReturnArray;
 	# Parse the entry field
-	foreach my $Text (split(/[,|\s]+/, $FieldText)) {
-		$Text =~ s/\s+//g;
-		if($Text =~ /^\d+\.\d+.\d\d\d\d$/) {
-			push(@ReturnArray, $Text);
-		} else {
-			DPIntWarn("Unrecognized date string (should be DD.MM.YYYY): $Text");
-		}
+	foreach my $Text (split(/[,|\s]+/, $FieldText))
+    {
+        my($Year,$Month,$Day) = ParseDateString($Text);
+        push(@ReturnArray, $Year.'-'.$Month.'-'.$Day);
 	}
 	return(\@ReturnArray);
 }
@@ -451,8 +465,8 @@ sub GetUpcomingEventsString
 			$h->{text} .= $DayNames{$getwday};
 			$h->{dayname} = $DayNames{$getwday};
 		}
-		$h->{date} = "$getmday.$getmonth.$HumanYear";
-		$h->{text} .= " ($getmday.$getmonth.$HumanYear) :";
+		$h->{date} = "$HumanYear.$getmonth.$getmday";
+		$h->{text} .= " ($HumanYear.$getmonth.$getmday) :";
 		my $HasEvents;
 		if(my $DateHash = $iCalendar->get_dateinfo($Year+1900, $getmonth, $getmday)) {
 			# FIXME: This sort should be so that alphabetical chars come first, then numbers
