@@ -78,7 +78,7 @@ $0 = 'dayplanner-daemon';
 # The name of the notifier
 my $NotifierName = 'dayplanner-notifier';
 # Our version number
-my $Version = '0.11';
+my $Version = '0.12';
 # The version name. Used for GIT detection
 my $VersionName = 'GIT';
 # The iCalendar object
