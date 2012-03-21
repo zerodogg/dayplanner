@@ -57,16 +57,16 @@ die("Failed to load plugin \"$name\": $fatal") if $fatal;
 die("Plugin loading appears to have failed for $name") if not defined $plugin;
 die("Plugin loading appears to have failed for \"$name\": it returned $plugin which is not a reference\n") if not ref $plugin;
 
-die("Plugin \"$base\" doesn't have any meta entries. Please see the documentation for how to add them. Refusing to create empty meta file.\n") if not defined $plugin->{meta};
+die("Plugin \"$base\" doesn't have any meta entries. Please see the documentation for how to add them. Refusing to create empty meta file.\n") if not defined $plugin->metainfo;
 foreach my $required (qw(name title version apiversion license author))
 {
-	if(not defined $plugin->{meta}->{$required} and length $plugin->{meta}->{$required})
+	if(not defined $plugin->metainfo->{$required} and length $plugin->metainfo->{$required})
 	{
 		die("Plugin is missing required meta field: $required. Refusing to create meta file.\n");
 	}
 }
 
-WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->{meta}, {
+WriteConfigFile(dirname($name).'/'.$base.'.dpi', $plugin->metainfo, {
 		HEADER => 'Day Planner plugin metadata file',
 		name => 'The short system name of the plugin',
 		title => 'The proper name/title of the plugin',

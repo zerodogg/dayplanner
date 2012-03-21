@@ -44,8 +44,6 @@ sub new_instance
 	$plugin->signal_connect('SHOW_PLUGINMANAGER',$this,'ShowManager');
 
 	$this->{i18n} = $plugin->get_var('i18n');
-	# NOTE: Although this is a plugin, it does not have any ->{meta} info, because
-	# 	it isn't suppose to be displayed in itself.
 	return $this;
 }
 
@@ -305,7 +303,11 @@ sub InstallPlugin
 				}
 				else
 				{
-					if ($meta->{apiversion} != 1)
+					if ($meta->{apiversion} == 1)
+					{
+						DPInfo($i18n->get('This plugin is written for an older version of Day Planner and is incompatible with your version.'));
+					}
+					if ($meta->{apiversion} > 2)
 					{
 						DPInfo($i18n->get('This plugin is written for a later version of Day Planner. You need to upgrade Day Planner before you can use it'));
 					}
@@ -350,6 +352,10 @@ sub PopulateList
 			$plugins{$e} = 1;
 			my $info = $this->LoadPluginMetadataFromFile($p);
 			next if not $info;
+            if ($info && $info->{apiversion} != 2)
+            {
+                next;
+            }
 			$this->{metadata}{$info->{name}} = $info;
 			# TODO: Some way to do i18n
 			my $active = $this->{plugin}->plugin_loaded($info->{name}) ? true : false;
@@ -402,6 +408,17 @@ sub generateInfoString
 	}
 	$string =~ s/\n$//;
 	return $string;
+}
+
+# Plugin metadata
+sub metainfo
+{
+	# NOTE: Although this is a plugin, it does not have any ->{meta} info, because
+	# 	it isn't suppose to be displayed in itself.
+    return
+    {
+		apiversion => 2,
+    };
 }
 
 1;

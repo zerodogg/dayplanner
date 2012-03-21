@@ -190,6 +190,12 @@ sub load_plugin
 		return;
 	}
 	my $plugin;
+    my $meta = eval('return DP::Plugin::'.$pluginName.'->metainfo;');
+    if ( !$meta || !ref($meta) || ($meta->{apiversion} != 2) )
+    {
+        $this->_warn('The plugin '.$pluginName.' is not compatible with this version of the Day Planner plugin API');
+        return;
+    }
 	eval('$plugin = DP::Plugin::'.$pluginName.'->new_instance($this);');
 	$e = $@;
 	if ($e)

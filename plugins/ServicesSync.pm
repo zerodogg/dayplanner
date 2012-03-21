@@ -54,18 +54,6 @@ sub new_instance
 
 	$this->{i18n} = $plugin->get_var('i18n');
 
-	# Metadata
-	$this->{meta} =
-	{
-		name => 'ServicesSync',
-		title => 'Calendar synchronization through Day Planner services',
-		description => 'Synchronizes your Day Planner calendar with a Day Planner services synchronization server',
-		version => 0.1,
-		apiversion => 1,
-		author => 'Eskild Hustvedt',
-		license => 'GNU General Public License version 3 or later',
-		needs_modules => 'IO::Socket::SSL',
-	};
 	return $this;
 }
 
@@ -689,5 +677,21 @@ sub IO_Socket_INET_Errors {
 		DPIntWarn("Unknown IO::Socket::SSL error: $Error");
 		return($Error);
 	}
+}
+
+# Plugin metadata
+sub metainfo
+{
+    return
+	{
+		name => 'ServicesSync',
+		title => 'Calendar synchronization through Day Planner services',
+		description => 'Synchronizes your Day Planner calendar with a Day Planner services synchronization server',
+		version => 0.1,
+		apiversion => 2,
+		author => 'Eskild Hustvedt',
+		license => 'GNU General Public License version 3 or later',
+		needs_modules => 'IO::Socket::SSL',
+	};
 }
 1;

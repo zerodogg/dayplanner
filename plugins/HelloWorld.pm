@@ -50,27 +50,6 @@ sub new_instance
 	# And, when DP is shutting down, clean up after us.
 	$this->{plugin}->signal_connect('SHUTDOWN',$this,'cleanWorld');
 
-	# This is the metadata for this plugin. It is used when installing, resolving dependencies
-	# (if any), letting DP know which API version this plugin is using as well as other
-	# random metadata used by the plugin system. Not all are represented here, see other
-	# plugins for some more advanced metadata
-	$this->{meta} =
-	{
-		# The short name of the plugin, as used in the namespace and filename.
-		name => 'HelloWorld',
-		# The real name of the plugin, this can be longer
-		title => '"Hello World" plugin example',
-		# The full description of the plugin
-		description => 'This is an example plugin, it is meant as a short example on how to write an extremely simple plugin for Day Planner. When active it will display a Hello World message each time Day Planner is started, and add a temporary "hello world" event on the current date.',
-		# The version of the plugin
-		version => 0.1,
-		# The Day Planner plugin API version we're using
-		apiversion => 1,
-		# The author of the plugin
-		author => 'Eskild Hustvedt',
-		# And finally, the license of the plugin
-		license => 'GNU General Public License version 3 or later',
-	};
 	# Now, return ourself
 	return $this;
 }
@@ -146,6 +125,32 @@ sub cleanWorld
 		# It existed, so delete it.
 		$ical->delete('DP-HelloWorldPluginString');
 	}
+}
+
+# Plugin metadata
+sub metainfo
+{
+	# This is the metadata for this plugin. It is used when installing, resolving dependencies
+	# (if any), letting DP know which API version this plugin is using as well as other
+	# random metadata used by the plugin system. Not all are represented here, see other
+	# plugins for some more advanced metadata
+    return
+	{
+		# The short name of the plugin, as used in the namespace and filename.
+		name => 'HelloWorld',
+		# The real name of the plugin, this can be longer
+		title => '"Hello World" plugin example',
+		# The full description of the plugin
+		description => 'This is an example plugin, it is meant as a short example on how to write an extremely simple plugin for Day Planner. When active it will display a Hello World message each time Day Planner is started, and add a temporary "hello world" event on the current date.',
+		# The version of the plugin
+		version => 0.1,
+		# The Day Planner plugin API version we're using
+		apiversion => 2,
+		# The author of the plugin
+		author => 'Eskild Hustvedt',
+		# And finally, the license of the plugin
+		license => 'GNU General Public License version 3 or later',
+	};
 }
 
 # We should return true like a good module

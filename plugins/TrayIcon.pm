@@ -35,18 +35,6 @@ sub new_instance
 	$this->{plugin}->signal_connect('IPC_IN',$this,'handleIPC');
 	$this->{mainwin_x} = undef;
 	$this->{mainwin_y} = undef;
-	$this->{meta} =
-	{
-		name => 'TrayIcon',
-		title => 'System tray icon',
-		description => 'This is a simple icon that sits in your system tray. When clicked, it will toggle the visibility of the Day Planner window.',
-		version => '0.1.1',
-		# TODO: bump apiversion when it has been done in dayplanner
-		apiversion => 1,
-		needs_modules => 'Gtk2::TrayIcon',
-		author => 'Eskild Hustvedt',
-		license => 'GNU General Public License version 3 or later',
-	};
 	return $this;
 }
 
@@ -145,6 +133,23 @@ sub rightClickMenu
 	$PopupWidget->append($quit);
 	$PopupWidget->show();
 	$PopupWidget->popup(undef, undef, undef, undef, 0, $event->time);
+}
+
+# Plugin metadata
+sub metainfo
+{
+    return
+	{
+		name => 'TrayIcon',
+		title => 'System tray icon',
+		description => 'This is a simple icon that sits in your system tray. When clicked, it will toggle the visibility of the Day Planner window.',
+		version => '0.1.1',
+		# TODO: bump apiversion when it has been done in dayplanner
+		apiversion => 2,
+		needs_modules => 'Gtk2::TrayIcon',
+		author => 'Eskild Hustvedt',
+		license => 'GNU General Public License version 3 or later',
+	};
 }
 
 1;
