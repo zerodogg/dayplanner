@@ -76,6 +76,7 @@ my (
 	$EventlistWin,		$MainWindow,		$Toolbar,
 	$ToolbarEditButton,	$MenuEditEntry,		$MenuDeleteEntry,
 	$UpcomingEventsBuffer,	$UpcomingEventsWidget,	$ToolbarDeleteButton,
+    $ToolbarCalendarMenu,
 );	# Gtk objects
 
 my $HolidayParser;	# The Date::HolidayParser object
@@ -2280,6 +2281,31 @@ sub PromptOverwrite
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI helper functions
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Purpose: Calculate the offset for a menu relative to a supplied widget
+# Usage: my($x,$y) = calculateMenuOffset($widget);
+sub calculateMenuOffset
+{
+    my $widget = shift;
+    my($x,$y) = (0,$widget->allocation->height);
+    while($widget)
+    {
+        $x += $widget->allocation->x;
+        $y += $widget->allocation->y;
+        $widget = $widget->parent;
+    }
+    my ($wX,$wY) = $MainWindow->get_position;
+    $x += $wX;
+    $y += $wY;
+
+    # Calculate and add the window manager decoration height
+    my $gdkWindow = $MainWindow->window;
+    my $extents = $gdkWindow->get_frame_extents;
+    my $decorHeight = $extents->height - $MainWindow->allocation->height;
+    $y += $decorHeight;
+
+    return($x,$y);
+}
 
 # Purpose: Display debugging info in a window
 # Usage: DisplayDebugWindow();
@@ -4631,76 +4657,157 @@ sub DrawMainWindow
 	# ==================================================================
 
 	# Get stock values
-	my $EditStock = Gtk2::Stock->lookup('gtk-edit')->{label};
 	my $QuitStock = Gtk2::Stock->lookup('gtk-quit')->{label};
 	my $PrefsStock = Gtk2::Stock->lookup('gtk-preferences')->{label};
 	my $AboutStock = Gtk2::Stock->lookup('gtk-about')->{label};
-	my $HelpStock = Gtk2::Stock->lookup('gtk-help')->{label};
 
 	my $DeleteStock = Gtk2::Stock->lookup('gtk-delete')->{label};
 
-	# The menu items
-	# NOTE: Some items where their location is important aren't added until later, after the signal
-	my @MenuItems = (
+	# Import/export menu items
+    my @importExport = (
 		# Calendar menu
-		[ '/' . $i18n->get('_Calendar'),						undef,			undef,			0,	'<Branch>'],
-		[ '/' . $i18n->get('_Calendar') . '/' . 
 		# TRANSLATORS: Menu selection in the Calendar menu
-		$i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
-		[ '/' . $i18n->get('_Calendar') . '/' . 
+		[ '/'.$i18n->get('_Import file...'),		'',		\&ImportDataFromFile,		1,	'<StockItem>',	'gtk-open'],
 		# TRANSLATORS: Menu selection in the Calendar menu
-		$i18n->get('Import from _program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
-		[ '/' . $i18n->get('_Calendar') . '/' . 
+		[ '/'.$i18n->get('Import from _program...'),		'',		\&ImportDataFromProgram,		1,	'<StockItem>',	'gtk-revert-to-saved'],
 		# TRANSLATORS: Menu selection in the Calendar menu. Exports calendar data.
-		$i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
-		[ "/" . $i18n->get("_Calendar") . '/sep',					undef,			undef,			2,	'<Separator>'],
-		# Edit menu
-		[ "/$EditStock", undef,			undef,			0,	'<Branch>'],
-		[ "/$EditStock/" . $i18n->get('_Add an Event...'),		'<control>A',		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
-		[ "/$EditStock/" . $i18n->get('_Edit This Event...'),	'<control>E',		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
-		[ "/$EditStock/" . $i18n->get('_Delete this event...'),	'<control>D',		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
-		[ "/$EditStock/sep",					undef,			undef,			4,	'<Separator>'],
-		# Help menu
-		[ "/$HelpStock",						undef,			undef,			0,	'<Branch>' ],
-		[ "/$HelpStock/" . $i18n->get('_Report a bug'), undef, \&ReportBug, 0, '<StockItem>', 'gtk-dialog-warning'],
+		[ '/'.$i18n->get('_Export...'),		undef,		\&ExportData,		1,	'<StockItem>',	'gtk-save-as'],
+    );
+    # Add/remove menu items
+    my @addRemove = (
+		[ '/'.$i18n->get('_Add an Event...'),		'<control>A',		\&AddEvent,		1,	'<StockItem>',	'gtk-add' ],
+		[ '/'.$i18n->get('_Edit This Event...'),	'<control>E',		\&EditEvent,		2,	'<StockItem>',	'gtk-edit' ],
+		[ '/'.$i18n->get('_Delete this event...'),	'<control>D',		\&DeleteEvent,		3,	'<StockItem>',	'gtk-delete' ],
 	);
+    # Preferences menu items
+	my @preferences = (
+		[ "/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
+	);
+    # "About" menu items
+    my @about = (
+		[ '/'.$i18n->get('_Report a bug'), undef, \&ReportBug, 0, '<StockItem>', 'gtk-dialog-warning'],
+		[ "/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
+    );
 	# The accelgroup to use for the menuitems
 	my $Menu_AccelGroup = Gtk2::AccelGroup->new;
 	$MainWindow->add_accel_group($Menu_AccelGroup);
 	# The item factory (menubar) itself
-	my $Menu_ItemFactory = Gtk2::ItemFactory->new('Gtk2::MenuBar', '<main>', $Menu_AccelGroup);
+	my $Menu_ItemFactory = Gtk2::ItemFactory->new('Gtk2::Menu', '<main>', $Menu_AccelGroup);
 
 	# Let plugins edit it
-	$plugin->set_tempvar('MenuItems', \@MenuItems);
-	$plugin->set_tempvar('HelpName', $HelpStock);
-	$plugin->set_tempvar('EditName', $EditStock);
+	$plugin->set_tempvar('menu_importExport',\@importExport);
+	$plugin->set_tempvar('menu_addRemove',\@addRemove);
+	$plugin->set_tempvar('menu_preferences',\@preferences);
 	$plugin->signal_emit('CREATE_MENUITEMS');
 
-	# The items that should be the last ones in the menu
-	my @AdditionalItems = (
-		[ "/" . $i18n->get("_Calendar") . "/$QuitStock",		'<control>Q',		\&QuitSub,		3,	'<StockItem>',	'gtk-quit'],
-		[ "/$EditStock/$PrefsStock" , undef,			sub { PreferencesWindow($PrefsStock) },		1,	'<StockItem>', 'gtk-preferences' ],
-		[ "/$HelpStock/$AboutStock" ,undef,			\&AboutBox,		0,	'<StockItem>',	'gtk-about'],
-	);
-
-	push(@MenuItems,@AdditionalItems);
+    my @MenuItems;
+    push(@MenuItems,
+        @importExport,
+        [ "/impexpsep",    undef,          undef,          4,  '<Separator>'],
+        @addRemove,
+        [ "/prefssep",    undef,          undef,          4,  '<Separator>'],
+        @preferences,
+        @about,
+        [ "/quitsep",    undef,          undef,          4,  '<Separator>'],
+		[ "/$QuitStock",		'<control>Q',		\&QuitSub,		3,	'<StockItem>',	'gtk-quit'],
+    );
 
 	# Tell the item factory to use the items defined in @MenuItems
 	$Menu_ItemFactory->create_items (undef, @MenuItems);
 	# Pack it onto the vbox
-	$PrimaryWindowVBox->pack_start($Menu_ItemFactory->get_widget('<main>'), 0, 0, 0);
+#	$PrimaryWindowVBox->pack_end($Menu_ItemFactory->get_widget('<main>'), 0, 0, 0);
+#    $ToolbarCalendarMenu->set_menu( $Menu_ItemFactory->get_widget('<main>') );
 	# Show it
-	$Menu_ItemFactory->get_widget('<main>')->show();
+	my $widget = $Menu_ItemFactory->get_widget('<main>');
+    $widget->show();
 
 
 	# Create two widget objects for the edit/delete menu entries
-	my $Get = "/$EditStock/" . $i18n->get('_Edit This Event...');
+	my $Get = "/" . $i18n->get('_Edit This Event...');
 	$Get =~ s/_//g;
 	$MenuEditEntry = $Menu_ItemFactory->get_widget($Get);
 
-	$Get = "/$EditStock/" . $i18n->get('_Delete this event...');
+	$Get = "/" . $i18n->get('_Delete this event...');
 	$Get =~ s/_//g;
 	$MenuDeleteEntry = $Menu_ItemFactory->get_widget($Get);
+
+	# ==================================================================
+	# TOOLBAR
+	# ==================================================================
+
+	# Tooltips
+	my $Tooltips = Gtk2::Tooltips->new();
+	$Tooltips->enable();
+
+	# Toolbar
+	$Toolbar = Gtk2::Toolbar->new();
+#	$Toolbar->set_style('icons');
+	$PrimaryWindowVBox->pack_start($Toolbar, 0, 1, 0);
+	$Toolbar->show();
+
+    my $separator = Gtk2::SeparatorToolItem->new;
+    $separator->set_expand(1);
+    $separator->set_draw(0);
+    $Toolbar->insert($separator,0);
+    $separator->show();
+
+    # Calendar menu
+    my $image = DetectImage('dayplanner-24x24.png','dayplanner-32x32.png','dayplanner-16x16.png','x-office-calendar.png');
+    if ($image)
+    {
+        $image = Gtk2::Image->new_from_file($image);
+        $image->show();
+    }
+    else
+    {
+        $image = undef;
+    }
+    $ToolbarCalendarMenu = Gtk2::ToolButton->new_from_stock('gtk-go-down');
+    $ToolbarCalendarMenu->set_is_important(0);
+    $Toolbar->insert($ToolbarCalendarMenu,1);
+    $ToolbarCalendarMenu->show();
+    $ToolbarCalendarMenu->signal_connect( 'clicked' => sub {
+            $widget->popup(undef,undef,sub {
+                    my($x,$y) = calculateMenuOffset($ToolbarCalendarMenu);
+                    return($x,$y,0);
+                },undef,0,0);
+            $widget->reposition;
+        });
+
+	# Delete button
+	$ToolbarDeleteButton = Gtk2::ToolButton->new_from_stock('gtk-delete');
+	$ToolbarDeleteButton->set_tooltip($Tooltips,$i18n->get('Delete the selected event'),'');
+	$Tooltips->set_tip($ToolbarDeleteButton,$i18n->get('Delete the selected event'));
+	$ToolbarDeleteButton->signal_connect('clicked' => \&DeleteEvent);
+	$Toolbar->insert($ToolbarDeleteButton,0);
+	$ToolbarDeleteButton->show();
+
+	# Edit button
+	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
+	$ToolbarEditButton->set_tooltip($Tooltips,$i18n->get('Edit the selected event'),'');
+	$Tooltips->set_tip($ToolbarEditButton,$i18n->get('Edit the selected event'));
+	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
+	$Toolbar->insert($ToolbarEditButton,0);
+	$ToolbarEditButton->show();
+
+	# Let plugins add buttons
+	$plugin->set_tempvar('Toolbar',$Toolbar);
+	$plugin->set_tempvar('Tooltips',$Tooltips);
+	$plugin->signal_emit('BUILD_TOOLBAR');
+
+
+	# Add button
+	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
+	$AddButton->signal_connect('clicked' => \&AddEvent);
+	$Toolbar->insert($AddButton,0);
+	$AddButton->show();
+	$AddButton->set_tooltip($Tooltips,$i18n->get('Add a new event'),'');
+	$Tooltips->set_tip($AddButton,$i18n->get('Add a new event'));
+
+	$Toolbar->get_nth_item(0)->set_is_important(1);
+	$Toolbar->get_nth_item(1)->set_is_important(1);
+	$Toolbar->get_nth_item(2)->set_is_important(1);
+	$Toolbar->set_tooltips(1);
 
 	# ==================================================================
 	# WORKING AREA
@@ -4787,56 +4894,11 @@ sub DrawMainWindow
 	$LeftHandVBox->pack_start($EventlistWin,1,1,0);
 	$EventlistWin->show();
 
-	# ==================================================================
-	# TOOLBAR
-	# ==================================================================
-
-	# Tooltips
-	my $Tooltips = Gtk2::Tooltips->new();
-	$Tooltips->enable();
-
-	# Toolbar
-	$Toolbar = Gtk2::Toolbar->new();
-	$Toolbar->set_style('icons');
-	$LeftHandVBox->pack_end($Toolbar,0,0,0);
-	$Toolbar->show();
-
-	# Delete button
-	$ToolbarDeleteButton = Gtk2::ToolButton->new_from_stock('gtk-delete');
-	$ToolbarDeleteButton->set_tooltip($Tooltips,$i18n->get('Delete the selected event'),'');
-	$Tooltips->set_tip($ToolbarDeleteButton,$i18n->get('Delete the selected event'));
-	$ToolbarDeleteButton->signal_connect('clicked' => \&DeleteEvent);
-	$Toolbar->insert($ToolbarDeleteButton,0);
-	$ToolbarDeleteButton->show();
-
-	# Edit button
-	$ToolbarEditButton = Gtk2::ToolButton->new_from_stock('gtk-edit');
-	$ToolbarEditButton->set_tooltip($Tooltips,$i18n->get('Edit the selected event'),'');
-	$Tooltips->set_tip($ToolbarEditButton,$i18n->get('Edit the selected event'));
-	$ToolbarEditButton->signal_connect('clicked' => \&EditEvent);
-	$Toolbar->insert($ToolbarEditButton,0);
-	$ToolbarEditButton->show();
-
-	# Let plugins add buttons
-	$plugin->set_tempvar('Toolbar',$Toolbar);
-	$plugin->set_tempvar('Tooltips',$Tooltips);
-	$plugin->signal_emit('BUILD_TOOLBAR');
-
-
-	# Add button
-	my $AddButton = Gtk2::ToolButton->new_from_stock('gtk-add');
-	$AddButton->signal_connect('clicked' => \&AddEvent);
-	$Toolbar->insert($AddButton,0);
-	$AddButton->show();
-	$AddButton->set_tooltip($Tooltips,$i18n->get('Add a new event'),'');
-	$Tooltips->set_tip($AddButton,$i18n->get('Add a new event'));
-
-	$Toolbar->get_nth_item(0)->set_is_important(1);
-	$Toolbar->get_nth_item(1)->set_is_important(1);
-	$Toolbar->set_tooltips(1);
-
 	# Draw the initial eventlist
 	DrawEventlist();
+
+    # Focus the event list (to ensure the toolbar doesn't get focus)
+    $EventlistWin->grab_focus;
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
