@@ -136,7 +136,7 @@ sub ParseEntryField {
 # Usage: ReportBug();
 sub ReportBug
 {
-	my $BugUrl = 'http://www.day-planner.org/index.php/development/bugs/?b_version='.$Version;
+	my $BugUrl = 'http://www.day-planner.org/development/bugs/?b_version='.$Version;
 	if ($VersionName eq 'GIT')
 	{
 		$BugUrl .= '&b_isgit=1';
