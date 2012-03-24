@@ -21,6 +21,7 @@ use warnings;
 # Useful constants for prettier code
 use constant { true => 1, false => 0 };
 use FindBin;
+use DP::GeneralHelpers qw(PrefixZero);
 
 our $Version = '0.12';
 my $VersionName = 'GIT';
@@ -465,8 +466,8 @@ sub GetUpcomingEventsString
 			$h->{text} .= $DayNames{$getwday};
 			$h->{dayname} = $DayNames{$getwday};
 		}
-		$h->{date} = "$HumanYear-$getmonth-$getmday";
-		$h->{text} .= " ($HumanYear-$getmonth-$getmday) :";
+		$h->{date} = $HumanYear.'-'.PrefixZero($getmonth).'-'.PrefixZero($getmday);
+		$h->{text} .= ' ('.$HumanYear.'-'.PrefixZero($getmonth).'-'.PrefixZero($getmday).') :';
 		my $HasEvents;
 		if(my $DateHash = $iCalendar->get_dateinfo($Year+1900, $getmonth, $getmday)) {
 			# FIXME: This sort should be so that alphabetical chars come first, then numbers
