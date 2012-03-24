@@ -2811,7 +2811,7 @@ sub AddToField
 	{
 		$FieldText .= ", ";
 	}
-    $FieldText .= $Year.'.'.$Month.'.'.$Day;
+    $FieldText .= $Year.'-'.$Month.'-'.$Day;
 	$Entry->set_text($FieldText);
 }
 

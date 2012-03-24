@@ -465,8 +465,8 @@ sub GetUpcomingEventsString
 			$h->{text} .= $DayNames{$getwday};
 			$h->{dayname} = $DayNames{$getwday};
 		}
-		$h->{date} = "$HumanYear.$getmonth.$getmday";
-		$h->{text} .= " ($HumanYear.$getmonth.$getmday) :";
+		$h->{date} = "$HumanYear-$getmonth-$getmday";
+		$h->{text} .= " ($HumanYear-$getmonth-$getmday) :";
 		my $HasEvents;
 		if(my $DateHash = $iCalendar->get_dateinfo($Year+1900, $getmonth, $getmday)) {
 			# FIXME: This sort should be so that alphabetical chars come first, then numbers
@@ -560,7 +560,7 @@ sub GetUpcomingEventsString
 			# Delete the $LastDay key
 			delete($InformationHash{$LastDay});
 			# Finalize the string
-			$InformationHash{$key}{text} .= " ($InformationHash{$key}{date}-$LastDate): " . i18nwrapper('(nothing)');
+			$InformationHash{$key}{text} .= " ($InformationHash{$key}{date} - $LastDate): " . i18nwrapper('(nothing)');
 		}
 		# Build our $NewUpcoming
 		foreach my $key(sort(keys(%InformationHash))) {
