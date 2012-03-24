@@ -235,7 +235,7 @@ sub GtkNotifier {
 		}
 		
 		my $Tooltips = Gtk2::Tooltips->new();
-		my $PostponeButton = Gtk2::Button->new_with_label($i18n->get('Remind me later'));
+		my $PostponeButton = Gtk2::Button->new_with_label($i18n->get('Postpone 10 minutes'));
 		$PostponeButton->can_default(1);
 		my $PostponeImage = Gtk2::Image->new_from_stock('gtk-go-forward','button');
 		$PostponeButton->set_image($PostponeImage);
