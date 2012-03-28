@@ -96,7 +96,8 @@ clean:
 	rm -f dayplanner.spec $$HOME/rpm/SOURCES/dayplanner-$(VERSION).tar.bz2
 	[ ! -e ./modules/DP-iCalendar/Makefile ] || make -C ./modules/DP-iCalendar/ distclean
 distclean: clean
-	perl -MFile::Find -e 'use File::Path qw/rmtree/;find(sub { return if $$File::Find::name =~ /\.git/; my $$i = `git stat $$_ 2>&1`; if ($$i =~ /^error.*did.*not.*match/) { if (-d $$_) { print "rmtree: $$File::Find::name\n"; rmtree($$_); } else {  print "unlink: $$File::Find::name\n"; unlink($$_); }}},"./");'
+	rm -rf ./external
+	git clean -fd
 	rm -f ./dayplanner-daemon.1 ./dayplanner-notifier.1 ./dayplanner.1
 	rm -f doc/dayplanner.desktop
 
@@ -113,35 +114,9 @@ maninstall:
 
 # --- Dependency fetching ---
 
-MOUSE_VER=0.58
-ANYMOOSE_VER=0.12
-HOLIDAYPARSER_VER=0.4
-
-DOWNLOAD_DEPS=$(shell perl -e 'if(not eval("use Mouse;1")) { print "deps_mouse "}; if(not eval("use Date::HolidayParser::iCalendar $(HOLIDAYPARSER_VER);1")) { print "deps_holidayparser"}; if(not eval("use Any::Moose;1;")) { print "deps_anymoose "}')
-
-deps: $(DOWNLOAD_DEPS)
-deps_force: deps_holidayparser deps_mouse deps_anymoose
-deps_prep:
+deps:
 	rm -rf ./modules/external
-	mkdir -p ./modules/external
-deps_holidayparser: deps_prep
-	@echo "Fetching dependency: Date::HolidayParser"
-	wget http://search.cpan.org/CPAN/authors/id/Z/ZE/ZERODOGG/Date-HolidayParser-$(HOLIDAYPARSER_VER).tar.gz
-	tar -zxvf Date-HolidayParser-$(HOLIDAYPARSER_VER).tar.gz
-	mv ./Date-HolidayParser-$(HOLIDAYPARSER_VER)/lib/* ./modules/external/
-	rm -fr ./Date-HolidayParser-$(HOLIDAYPARSER_VER) Date-HolidayParser-$(HOLIDAYPARSER_VER).tar.gz
-deps_mouse: deps_prep
-	@echo "Fetching dependency: Mouse"
-	wget http://search.cpan.org/CPAN/authors/id/G/GF/GFUJI/Mouse-$(MOUSE_VER).tar.gz
-	tar -zxf Mouse-$(MOUSE_VER).tar.gz
-	mv ./Mouse-$(MOUSE_VER)/lib/* ./modules/external/
-	rm -rf ./Mouse-$(MOUSE_VER) ./Mouse-$(MOUSE_VER).tar.gz
-deps_anymoose: deps_prep
-	@echo "Fetching dependency: Any::Moose"
-	wget http://search.cpan.org/CPAN/authors/id/S/SA/SARTAK/Any-Moose-$(ANYMOOSE_VER).tar.gz
-	tar -zxf Any-Moose-$(ANYMOOSE_VER).tar.gz
-	mv ./Any-Moose-$(ANYMOOSE_VER)/lib/* ./modules/external/
-	rm -rf ./Any-Moose-$(ANYMOOSE_VER) ./Any-Moose-$(ANYMOOSE_VER).tar.gz
+	cpanm --reinstall -l ./modules/external Mouse Any::Moose Date::HolidayParser
 
 # --- INTERNAL RULES ---
 
@@ -265,7 +240,7 @@ installer: prepdistrib tarball
 	tar -jxf ./packages/dayplanner-$(VERSION).tar.bz2
 	mkdir -p installer
 	mv dayplanner-$(VERSION) installer/dayplanner-data
-	make -C installer/dayplanner-data deps_force
+	make -C installer/dayplanner-data deps
 	$(CP) ./devel-tools/installer/* ./installer
 	rm -f installer/InstallLocal
 	$(BESILENT) ./installer/dayplanner-data/devel-tools/GenDesktop DAYPLANNER_INST_DIR DAYPLANNER_INST_DIR/art
