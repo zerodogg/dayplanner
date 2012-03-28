@@ -23,7 +23,7 @@ use constant { true => 1, false => 0 };
 use FindBin;
 
 our $Version = '0.11';
-my $VersionName = 'GIT';
+my $VersionName = '2012';
 my %RuntimeModules;		# Keeps track of modules loaded during runtime
 
 # NOTE:

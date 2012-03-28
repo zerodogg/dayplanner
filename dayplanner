@@ -46,7 +46,7 @@ use DP::GeneralHelpers::I18N;
 
 # Scalars
 our $Version = '0.11';
-my $VersionName = 'GIT';
+my $VersionName = '2012';
 my $SaveToDir;						# The configuration and eventlist directory (set later)
 my $HolidayFile;					# The file to load holiday definitions from (set later)
 my $ConfigFile = 'dayplanner.conf';	# The filename to save the configuration to

@@ -80,7 +80,7 @@ my $NotifierName = 'dayplanner-notifier';
 # Our version number
 my $Version = '0.11';
 # The version name. Used for GIT detection
-my $VersionName = 'GIT';
+my $VersionName = '2012';
 # The iCalendar object
 my $iCalendar;
 # The Day Planner directory
