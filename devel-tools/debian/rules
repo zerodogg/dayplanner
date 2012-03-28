@@ -26,11 +26,11 @@ install:
 	dh_clean -k 
 	dh_installdirs
 
-	$(MAKE) mo
+	$(MAKE) mo deps_dhp
 	rm -f locale/README
 
 	# Add here commands to install the package into debian/dayplanner.
-	$(MAKE) prefix='/usr' DESTDIR=$(CURDIR)/debian/dayplanner install DHPinstall
+	$(MAKE) prefix='/usr' DESTDIR=$(CURDIR)/debian/dayplanner install
 
 # Build architecture-independent files here.
 binary-indep: install
