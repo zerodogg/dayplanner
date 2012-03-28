@@ -163,10 +163,10 @@ sub DPError {
 
 $| = 1;
 
-print "Perl installer part...\n";
+print "Main installer...\n";
 print "Using install dir: $InstallDirectory\n";
 
-die("Fatal internal error: Perl installer part got no data directory supplied\n") unless(defined($ARGV[0]));
+die("Fatal internal error: Main installer got no data directory supplied\n") unless(defined($ARGV[0]));
 die("Fatal internal error: The data directory supplied ($ARGV[0]) does not exist.\nThis probably means that this package is corrupt, try re-downloading it.\n") unless -e $ARGV[0];
 
 my $InstallerData = $ARGV[0];
@@ -334,7 +334,7 @@ print '.';
 print "done\n";
 unless(defined($ARGV[1]) and $ARGV[1] eq 'auto') {
 	$ProgressWin->{Window}->destroy();
-	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start Day Planner by clicking on the icon on your desktop.\n\n(If it doesn't work, you can run $InstallDirectory/dayplanner directly)\n\nIf you at some point want to uninstall Day Planner run $InstallDirectory/uninstall.sh");
+	my $Finished = Gtk2::MessageDialog->new(undef, "modal", 'info', 'ok', "You can start Day Planner by clicking on the icon on your desktop.\n\nIf you at some point want to uninstall Day Planner run $InstallDirectory/uninstall.sh");
 	$Finished->set_skip_pager_hint(0);
 	$Finished->set_skip_taskbar_hint(0);
 	$Finished->set_title("Day Planner Installer - Complete");
