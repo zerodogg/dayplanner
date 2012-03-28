@@ -298,7 +298,7 @@ print '.';
 
 # Write the XDG-style menu item
 if(-e "$InstallDirectory/doc/dayplanner.desktop") {
-	SystemChild('perl','-pi','-e','s#DAYPLANNER_INST_DIR#\Q'.$InstallDirectory.'\E#g',$InstallDirectory.'/doc/dayplanner.desktop');
+	SystemChild('perl','-pi','-e','s#DAYPLANNER_INST_DIR#'.$InstallDirectory.'#g',$InstallDirectory.'/doc/dayplanner.desktop');
 	$Performed++;
 	ProgressMade($TotalSteps, $Performed, $ProgressWin,undef,1);
 	print '.';
