@@ -21,7 +21,7 @@ ifdef prefix
 INSTALLRULES=maininstall maninstall moduleinstall plugininstall artinstall i18ninstall distribdesktop
 else
 # If not then use some user-friendly install rules
-INSTALLRULES=deps maininstall maninstall moduleinstall plugininstall artinstall DHPinstall nice_i18ninstall desktop essentialdocs
+INSTALLRULES=deps maininstall maninstall moduleinstall plugininstall artinstall nice_i18ninstall desktop essentialdocs
 # This little trick ensures that make install will succeed both for a local
 # user and for root. It will also succeed for distro installs as long as
 # prefix is set by the builder.
@@ -114,9 +114,18 @@ maninstall:
 
 # --- Dependency fetching ---
 
+CPANM=cpanm --notest --quiet --force --reinstall -l ./modules/external
+DEPS=Mouse Any::Moose Date::HolidayParser
+PERL_ARCH=$(shell perl -V|grep archname=|head -n1|perl -pi -e 's/.*archname=//';)
 deps:
 	rm -rf ./modules/external
-	cpanm --reinstall -l ./modules/external Mouse Any::Moose Date::HolidayParser
+	$(CPANM) $(DEPS)
+	-mv modules/external/lib/perl5/$(PERL_ARCH)/* modules/external/
+	-mv modules/external/lib/perl5/* modules/external/
+	rm -rf modules/external/lib modules/external/man modules/external/auto modules/external/Test modules/external/$(PERL_ARCH)
+	find modules/external -iname '*.pod' -print0 |xargs -0 rm -f
+deps_dhp: DEPS=Date::HolidayParser
+deps_dhp: deps
 
 # --- INTERNAL RULES ---
 
@@ -157,14 +166,8 @@ artinstall:
 
 # Module installation
 moduleinstall:
-	mkdir -p $(DP_MAINTARGET)/modules/DP
-	mkdir -p $(DP_MAINTARGET)/modules/DP/iCalendar
-	mkdir -p $(DP_MAINTARGET)/modules/DP/GeneralHelpers
-	mkdir -p $(DP_MAINTARGET)/modules/DP/CoreModules
-	install -m644 $(shell ls ./modules/*/DP/*pm ./modules/*/lib/DP/*pm) $(DP_MAINTARGET)/modules/DP
-	install -m644 $(shell ls ./modules/*/DP/GeneralHelpers/*pm) $(DP_MAINTARGET)/modules/DP/GeneralHelpers/
-	install -m644 $(shell ls ./modules/*/lib/DP/iCalendar/*pm) $(DP_MAINTARGET)/modules/DP/iCalendar/
-	install -m644 $(shell ls ./modules/*/DP/CoreModules/*pm) $(DP_MAINTARGET)/modules/DP/CoreModules/
+	mkdir -p "$(DP_MAINTARGET)/modules/"
+	cp -r ./modules/* "$(DP_MAINTARGET)/modules/"
 
 # Plugin prep
 pluginprep:
