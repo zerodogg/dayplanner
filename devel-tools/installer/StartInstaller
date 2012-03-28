@@ -124,7 +124,7 @@ if [ "`which perl`" != "/usr/bin/perl" ]; then
 	echo "done"
 fi
 
-echo "Okay, handing control over to the perl installer part"
+echo "Okay, handing control over to the main installer"
 if ! perl ./MainInstallerPart "$DATADIR" "$@"; then
 	SI_Error "An unkown error occurred with the main installer. Unable to proceed. This is a bug, please report it to the Day Planner developers."
 fi
