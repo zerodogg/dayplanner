@@ -1135,6 +1135,8 @@ Force forking. Overrides --nofork.
 Be verbose. Supply multiple times to increase verbosity.
 This goes to the daemon log if I<--nofork> was not supplied.
 
+=back
+
 =head1 HELP/SUPPORT
 
 See L<http://www.day-planner.org/index.php/help>
