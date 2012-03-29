@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: dayplanner
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk2-perl, perl
+Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk2-perl, libany-moose-perl, perl
 Description: An easy and clean Day Planner
  Day Planner is a simple time management program.
  .
