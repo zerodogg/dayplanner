@@ -115,11 +115,12 @@ maninstall:
 # --- Dependency fetching ---
 
 CPANM=cpanm --notest --quiet --force --reinstall -l ./modules/external
-DEPS=Mouse Any::Moose Date::HolidayParser
+DEPS=Date::HolidayParser Moo
 PERL_ARCH=$(shell perl -V|grep archname=|head -n1|perl -pi -e 's/.*archname=//';)
 deps:
 	rm -rf ./modules/external
 	$(CPANM) $(DEPS)
+	rm -rf modules/external/lib/perl5/Test
 	-mv modules/external/lib/perl5/$(PERL_ARCH)/* modules/external/
 	-mv modules/external/lib/perl5/* modules/external/
 	rm -rf modules/external/lib modules/external/man modules/external/auto modules/external/Test modules/external/$(PERL_ARCH)
