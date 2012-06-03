@@ -947,14 +947,14 @@ sub _ChangeEntry
 # Usage: _WarnOut(MESSAGE)
 sub _WarnOut
 {
-	warn("DP::iCalendar: WARNING: $_[0]\n");
+	warn("DP::iCalendar $VERSION: WARNING: $_[0]\n");
 }
 
 # Purpose: Output error
 # Usage: _ErrOut(MESSAGE)
 sub _ErrOut
 {
-	warn("DP::iCalendar: ERROR: $_[0]\n");
+	warn("DP::iCalendar $VERSION: ERROR: $_[0]\n");
 }
 
 # Purpose: Load or load+merge iCalendar data from a file
