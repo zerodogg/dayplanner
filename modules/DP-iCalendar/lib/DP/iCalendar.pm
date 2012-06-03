@@ -1292,40 +1292,23 @@ sub _RRULE_Parser
 		# iCalendar datetime string
 		UNTIL => 1,
 	);
-	# Check if it has multiple settings
-	if(/;/)
+    # It does, process individually
+    foreach my $Setting (split(/;/))
     {
-		# It does, process individually
-		foreach my $Setting (split(/;/))
+        my $Opt = $Setting;
+        my $Val = $Setting;
+        $Opt =~ s/^(\w+)=.*$/$1/;
+        $Val =~ s/^\w+=(.*)$/$1/;
+        if(not $Settings{$Opt})
         {
-			my $Opt = $Setting;
-			my $Val = $Setting;
-			$Opt =~ s/^(\w+)=.*$/$1/;
-			$Val =~ s/^\w+=(.*)$/$1/;
-			if(not $Settings{$Opt})
-            {
-				_WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
-			}
-			if($ReturnHash{$Opt})
-            {
-				_WarnOut("RRULE Parser: $Opt occurs multiple times in RRULE:. Can only handle one. Expect trouble.");
-			}
-			$ReturnHash{$Opt} = $Val;
-		}
-	}
-    else
-    {
-		# It doesn't. Process the single line
-			my $Opt = $_;
-			my $Val = $_;
-			$Opt =~ s/^(\w+)=.*$/$1/;
-			$Val =~ s/^\w+=(.*)$/$1/;
-			if(not $Settings{$Opt})
-            {
-				_WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
-			}
-			$ReturnHash{$Opt} = $Val;
-	}
+            _WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
+        }
+        if($ReturnHash{$Opt})
+        {
+            _WarnOut("RRULE Parser: $Opt occurs multiple times in RRULE:. Can only handle one. Expect trouble.");
+        }
+        $ReturnHash{$Opt} = $Val;
+    }
 	return(\%ReturnHash);
 }
 
@@ -1585,12 +1568,6 @@ sub _RRULE_WEEKLY
 			}
 		}
 	}
-	# Verify INTERVAL
-	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1)
-    {
-			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-			return(false);
-	}
 	
 	# We will add and eliminate dates as we go. This is inefficient, but functional.
 	# Right now we just know about one date+time, so let's add that.
@@ -1625,7 +1602,18 @@ sub _RRULE_WEEKLY
 
 	# What do we know so far?
 	# - It is an event that occurs more than once
-	# - It is an event that occurs on a weekly basis
+	# - It is an event that occurs on a N weekly basis
+
+    # Figure out and set our INTERVAL in seconds
+    my $INTERVAL;
+    $RRULE->{INTERVAL} = defined($RRULE->{INTERVAL}) ? $RRULE->{INTERVAL} : 1;
+    if ($RRULE->{INTERVAL} =~ /\D/ || $RRULE->{INTERVAL} < 1)
+    {
+        _ErrOut('INTERVAL='.$RRULE->{INTERVAL}.' in RRULE for '.$UID.' is invalid, ignoring RRULE');
+        return;
+    }
+    # One day is 86400, thus one week is 86400 * 7 = 604800.
+    $INTERVAL = $RRULE->{INTERVAL} * 604800;
 	
 	# Fetch UNTIL first if it is set
 	if($RRULE->{UNTIL})
@@ -1659,33 +1647,57 @@ sub _RRULE_WEEKLY
     else
     {
 		# Okay, now we need to figure out which day we're suppose to start on
-		# This is a lot slower
+		# This is *a lot* slower
 
 		# The original unix time (start time)
 		my $UnixOrigStart = iCal_ConvertToUnixTime($StartsAt);
-		# Human-readable-ish versions of the above
-		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($UnixOrigStart);
-		# The wday we want it to occur on
-		my $trueWday = $wday;
-		# The unix year
-		my $nixYear = $YEAR - 1900;
-		# The date to begin processing on (1/1/year)
-		my $mktYearFirst = mktime(5,0,12,1,0,$nixYear);
-		# Start looping
-		while(true)
-		{
-			# Get the time
-			my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mktYearFirst);
-			# If wday is trueWday then this is the one
-			if ($wday == $trueWday)
-			{
-				$StartDate{Month} = 0;
-				$StartDate{Day} = $mday;
-				last;
-			}
-			# If not, + one day
-			$mktYearFirst += 86400;
-		}
+
+
+        my $currentTime = $UnixOrigStart;
+
+        my $intervalSteps = $INTERVAL * 4;
+
+        # First, we get to the current year. This is somewhat ineffeicient as it will
+        # loop through every fourth occurrance of the event up to today
+        while(true)
+        {
+            # Human-readable-ish versions of the above
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($currentTime);
+            $year += 1900;
+
+            if ($year >= $YEAR)
+            {
+                last;
+            }
+
+            $currentTime += $intervalSteps;
+        }
+
+        # Now $currentTime is at our current year (or, for unreasonable
+        # INTERVALs, beyond our current year), now we process it until we get
+        # to $YEAR -1
+        while(true)
+        {
+            # Human-readable-ish versions of the above
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($currentTime);
+            $year += 1900;
+
+            if ($year < $YEAR)
+            {
+                last;
+            }
+            $currentTime -= $INTERVAL;
+        }
+
+        # Now $currentTime is the last occurrence in $YEAR-1, so make it the first occurrence
+        # in $YEAR instead
+        $currentTime += $INTERVAL;
+        # We need the mday
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($currentTime);
+
+        # And we're done
+        $StartDate{Month} = 0;
+        $StartDate{Day} = $mday;
 	}
 	my $UnixYear = $YEAR - 1900;
 	# Good, let's process.
@@ -1709,8 +1721,7 @@ sub _RRULE_WEEKLY
 
 		$Dates{$iCalTime} = 1;
 		
-		# One day is 86400, thus one week is 86400 * 7 = 604800.
-		$TimeString += 604800;
+		$TimeString += $INTERVAL;
 		my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
 		my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 		$LoopYear = $evYear;
