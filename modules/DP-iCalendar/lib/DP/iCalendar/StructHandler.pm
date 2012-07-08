@@ -37,6 +37,9 @@ has data => (
     is => 'rw',
     default => sub { {} },
 );
+has keySkipper => (
+    is => 'rw',
+);
 has _loadFileMode => (
     is => 'rw',
     default => sub { 0 },
@@ -137,6 +140,13 @@ sub writeFile
 {
 	my $this = shift;
 	my $file = shift;
+
+    if ($this->keySkipper)
+    {
+        warn("DP::iCalendar::StructHandler: FATAL: Attempt to writeFile() on a StructHandler with keySkipper set\n");
+        return(false);
+    }
+
 	# Checking SHOULD be done by parent
 	open($this->_FH,'>',$file)
 		or do {
@@ -211,11 +221,14 @@ sub _loadFH
 
 		if (s/^\s//)
 		{
-			# Append to PrevValue
-			my $prevLen = scalar(@{$s->{PrevValue}});
-			$prevLen--;
-			$_ = _UnSafe($_);
-			$s->{PrevValue}->[$prevLen] .= $_;
+			# Append to PrevValue if PrevValue wasn't skipped
+            if (!$s->{PrevSkipped})
+            {
+                my $prevLen = scalar(@{$s->{PrevValue}});
+                $prevLen--;
+                $_ = _UnSafe($_);
+                $s->{PrevValue}->[$prevLen] .= $_;
+            }
 		}
 		elsif ($key eq 'BEGIN')
 		{
@@ -283,6 +296,11 @@ sub _loadFH
 		}
 		elsif (defined($key) and defined($value))
 		{
+            if ($this->keySkipper && $this->keySkipper->($key))
+            {
+                $s->{PrevSkipped} = 1;
+                next;
+            }
 			if($this->_loadFileMode)
 			{
 				# Disallow multiple keys in the first level in loadFileMode.
