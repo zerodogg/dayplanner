@@ -5,6 +5,10 @@ Version 0.12 (Unreleased)
 -------------------------
 
 - Switched to using the international date format (YYYY-MM-DD)
+- Added support for reading advanced weekly iCalendar RRULEs
+- UI: Removed the menubar
+- UI: Moved toolbar to the top
+- UI: Moved all menu items into a menu button
 
 Version 0.11 (Released on the 28th of March 2012)
 -------------------------
