@@ -20,34 +20,48 @@
 
 # TODO: FIXME: Add a iCalendar mode, which lets us toggle the iCalendar quirks stuff off and on
 
-use strict;
-use warnings;
 package DP::iCalendar::StructHandler;
+use Moo;
 use constant { true => 1, false => 0 };
 use Carp;
 
+has ignoreAssertions => (
+    is => 'rw',
+    default => sub { 0 },
+);
+has assertNeverFatal => (
+    is => 'rw',
+    default => sub { 0 },
+);
+has data => (
+    is => 'rw',
+    default => sub { {} },
+);
+has _loadFileMode => (
+    is => 'rw',
+    default => sub { 0 },
+);
+has _skipToLine => (
+    is => 'rw'
+);
+has _lastFileLineRead => (
+    is => 'rw',
+    default => sub { 0 },
+);
+has _lastStruct => (
+    is => 'rw',
+);
+
+has _FH => (
+    is => 'rw',
+);
+
+has _rawOutContents => (
+    is => 'rw',
+);
+
 our $VERSION;
 $VERSION = 0.1;
-
-# Purpose: Initialize a new object
-# Usage: object = DP::iCalendar::StructHandler->new();
-sub new
-{
-	my $class = shift;
-	my $this = {};
-	bless($this,$class);
-	# The data structure will be saved here
-	$this->{data} = {};
-	$this->{loadFileMode} = false;
-	$this->{lastFileLineRead} = 0;
-	$this->{lastStruct} = undef;
-	$this->{skipToLine} = undef;
-
-	# WARNING: NEVER SET THIS TO true UNLESS YOU KNOW FOR CERTAIN YOUR PROGRAM WON'T GENERATE INVALID ARRAYS/HASHES
-	$this->{ignoreAssertions} = false;
-	$this->{assertNeverFatal} = false;
-	return $this;
-}
 
 # Purpose: Load a new file
 # Usage: $object->loadFile(path_to_file);
@@ -68,7 +82,7 @@ sub loadFile
 	# die()s not related to utf-8 are propagated out.
 	eval
 	{
-		$this->{loadFileMode} = true;
+		$this->_loadFileMode( true );
 		open(my $infile, '<',$file);
 		if(not $not_utf8)
 		{
@@ -77,17 +91,17 @@ sub loadFile
 		}
 		else
 		{
-			$this->_loadFH($infile,$this->{lastStruct});
+			$this->_loadFH($infile,$this->_lastStruct);
 		}
 		close($infile);
 	};
 	my $e = $@;
-	if ($e && not $not_utf8 && $e =~ /utf\S*8/i)
+	if ($e && !$not_utf8 && $e =~ /utf\S*8/i)
 	{
 		warn('WARNING: The iCalendar file was not valid UTF-8, falling back to autodetection of encoding'."\n");
-		$this->{skipToLine} = $this->{lastFileLineRead};
+		$this->_skipToLine( $this->_lastFileLineRead );
 		my $ret = $this->loadFile($file,1);
-		$this->{skipToLine} = undef;
+		$this->_skipToLine( undef );
 		return $ret;
 	}
 	elsif ($e)
@@ -124,15 +138,15 @@ sub writeFile
 	my $this = shift;
 	my $file = shift;
 	# Checking SHOULD be done by parent
-	open($this->{FH},'>',$file)
+	open($this->_FH,'>',$file)
 		or do {
 		warn("DP::iCalendar::StructHandler: FATAL: Failed to open $file in _writeFile: $! - returning false\n");
 		return(false);
 	};
-	binmode($this->{FH}, ':utf8');
-	$this->_HandleWriteHash($this->{data},undef,undef,false,true);
-	close($this->{FH});
-	$this->{FH} = undef;
+	binmode($this->_FH, ':utf8');
+	$this->_HandleWriteHash($this->data,undef,undef,false,true);
+	close($this->_FH);
+	$this->_FH( undef );
 }
 
 # Purpose: Get the raw source
@@ -140,10 +154,10 @@ sub writeFile
 sub getRaw
 {
 	my $this = shift;
-	$this->{rawOutContents} = '';
-	$this->_HandleWriteHash($this->{data},undef,0);
-	my $rawOut = $this->{rawOutContents};
-	delete($this->{rawOutContents});
+	$this->_rawOutContents( '' );
+	$this->_HandleWriteHash($this->data,undef,0);
+	my $rawOut = $this->_rawOutContents;
+    $this->_rawOutContents(undef);
 	return($rawOut);
 }
 
@@ -156,7 +170,7 @@ sub _loadFH
 	my $s = {
 		Struct => {},
 		Nest => [],
-		CurrRef => $this->{data},
+		CurrRef => $this->data,
 		PrevValue => undef,
 		# True if vcalendar has just ended
 		VCalendarRef => undef,
@@ -167,8 +181,8 @@ sub _loadFH
 	{
 		$s = shift;
 	}
-	$this->{lastStruct} = $s;
-	my $CurrRef = $this->{data};
+	$this->_lastStruct( $s );
+	my $CurrRef = $this->data;
 	push(@{$s->{Nest}},$s->{CurrRef});
 	my $lineNo;
 	$this->_assertMustBeRef('HASH',$s->{CurrRef},'CurrRef',true,'start _loadFH');
@@ -176,8 +190,8 @@ sub _loadFH
 	while($_ = <$infile>)
 	{
 		$lineNo++;
-		$this->{lastFileLineRead} = $lineNo;
-		if ($this->{skipToLine} && $lineNo < $this->{skipToLine})
+		$this->_lastFileLineRead( $lineNo );
+		if ($this->_skipToLine && $lineNo < $this->_skipToLine)
 		{
 			next;
 		}
@@ -228,7 +242,7 @@ sub _loadFH
 				{
 					$s->{CurrRef} = $s->{CurrRef}->{$value}[0];
 				}
-				if(not $this->{loadFileMode})
+				if(not $this->_loadFileMode)
 				{
 					_parseWarn("Line $lineNo: Multiple BEGIN:VCALENDAR detected (on line $lineNo)! The file is broken, ignoring request to restart BEGIN:VCALENDAR, basing new block on the old one to attempt to fix this mess");
 				}
@@ -269,7 +283,7 @@ sub _loadFH
 		}
 		elsif (defined($key) and defined($value))
 		{
-			if($this->{loadFileMode})
+			if($this->_loadFileMode)
 			{
 				# Disallow multiple keys in the first level in loadFileMode.
 				if (scalar(@{$s->{Nest}}) == 2)
@@ -292,7 +306,7 @@ sub _loadFH
 			_parseWarn("Line $lineNo unparseable: $_");
 		}
 	}
-	$this->{lastStruct} = undef;
+	$this->_lastStruct( undef );
 }
 
 # Purpose: Handle a new hash in writeFile();
@@ -402,13 +416,13 @@ sub _realWrite
 {
 	my $this = shift;
 	my $line = shift;
-	if ($this->{FH})
+	if ($this->_FH)
 	{
-		print {$this->{FH}} $line;
+		print {$this->_FH} $line;
 	}
 	else
 	{
-		$this->{rawOutContents} .= $line;
+		$this->_rawOutContents( $this->_rawOutContents . $line );
 	}
 }
 
@@ -502,7 +516,7 @@ sub _assertMustBeRef
 {
 	my $this = shift;
 	# Allow this to be disabled
-	if ($this->{ignoreAssertions})
+	if ($this->ignoreAssertions)
 	{
 		return true;
 	}
@@ -538,7 +552,7 @@ sub _assertMustBeRef
 		}
 		my ($caller_package, $caller_filename, $caller_line) = caller;
 		$errMsg .= " on line $caller_line in $caller_filename";
-		if($fatal && $this->{assertNeverFatal})
+		if($fatal && $this->assertNeverFatal)
 		{
 			$errMsg .= " - SHOULD HAVE BEEN FATAL";
 			$fatal = false;

@@ -29,22 +29,28 @@ $VERSION = '0.3.2';
 
 # Purpose: Create a new object and load the file
 # Usage: my $object = DP::iCalendar->new(/FILE/);
-sub new {
+sub new
+{
 	my $File = $_[1];
 	my $this;
-	if(ref($File)) {	# If we got a reference
+	if(ref($File))
+    {	# If we got a reference
 		if(not ref($File) eq 'SCALAR')
 		{
 			croak "DP::iCalendar->new(): Does not support a reference of type ".ref($File);
 		}
 		$this = _NewObj();
-	} else {		# If we don't have a reference, treat it as a scalar
+	}
+    else
+    {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
-		unless(defined($File)) {
+		unless(defined($File))
+        {
 			carp('Needs an option: path to the iCalendar file');
 			return(false);
 		}
-		unless(-e $File) {
+		unless(-e $File)
+        {
 			carp("\"$File\": does not exist");
 			return(false);
 		}
@@ -58,11 +64,13 @@ sub new {
 # Usage: my $object = DP::iCalendar->newfile(/FILE/);
 sub newfile {
 	my $File = $_[1];
-	if(not defined($File)) {
+	if(not defined($File))
+    {
 		carp('Needs an option: path to the iCalendar file');
 		return(false);
 	}
-	if(ref($File)) {
+	if(ref($File))
+    {
 		carp('Doesn\'t take a reference');
 		return(false);
 	}
@@ -83,7 +91,8 @@ sub newfile {
 
 # Purpose: Get information for the supplied month (list of days there are events)
 # Usage: my $TimeRef = $object->get_monthinfo(YEAR,MONTH);
-sub get_monthinfo {
+sub get_monthinfo
+{
 	my($this, $Year, $Month) = @_;
 	return if _nf_assert($this,'invalid method call');
 	return if _nf_assert(defined $Year,'Year missing');
@@ -105,7 +114,8 @@ sub get_monthinfo {
 
 # Purpose: Get information for the supplied date (list of times in the day there are events)
 # Usage: my $TimeRef = $object->get_dateinfo(YEAR,MONTH,DAY);
-sub get_dateinfo {
+sub get_dateinfo
+{
 	my($this, $Year, $Month, $Day) = @_;
 	return if _nf_assert($this,'invalid method call');
 	return if _nf_assert(defined $Year,'Year missing');
@@ -126,7 +136,8 @@ sub get_dateinfo {
 
 # Purpose: Get the list of UIDs for the supplied time
 # Usage: my $UIDRef = $object->get_timeinfo(YEAR,MONTH,DAY,TIME);
-sub get_timeinfo {
+sub get_timeinfo
+{
 	my($this, $Year, $Month, $Day, $Time) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
@@ -139,7 +150,8 @@ sub get_timeinfo {
 	my @UIDs;
 	if( _deepValues($this->{OrderedCalendar},$Year,$Month,$Day,$Time))
 	{
-		foreach(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}) {
+		foreach(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}})
+        {
 				push(@UIDs, $_);
 		}
 	}
@@ -148,7 +160,8 @@ sub get_timeinfo {
 
 # Purpose: Get a list of years which have events (those with *only* recurring not counted)
 # Usage: my $ArrayRef = $object->get_years();
-sub get_years {
+sub get_years
+{
 	my $this = shift;
 	return if _nf_assert($this,          'invalid method call');
 	my @Years = sort keys(%{$this->{OrderedCalendar}});
@@ -166,7 +179,8 @@ sub get_years {
 
 # Purpose: Get a list of months which have events (those with *only* recurring not counted)
 # Usage: my $ArrayRef = $object->get_months();
-sub get_months {
+sub get_months
+{
 	my ($this, $Year) = @_;
 	return if _nf_assert($this,          'invalid method call');
 	return if _nf_assert(defined $Year,  'Year missing');
@@ -177,7 +191,8 @@ sub get_months {
 
 # Purpose: Get information for a supplied UID
 # Usage: my $Info = $object->get_info(UID);
-sub get_info {
+sub get_info
+{
 	my($this,$UID) = @_;
 	return if _nf_assert($this,          'invalid method call');
 	return if _nf_assert(defined $UID,   'UID missing');
@@ -191,7 +206,8 @@ sub get_info {
 
 # Purpose: Get a parsed RRULE for the supplied UID
 # Usage: my $Info = $object->get_RRULE(UID);
-sub get_RRULE {
+sub get_RRULE
+{
 	my ($this, $UID) = @_;
 	return if _nf_assert($this,          'invalid method call');
 	return if _nf_assert(defined $UID,   'UID missing');
@@ -201,10 +217,14 @@ sub get_RRULE {
 		if(defined($contents->{RRULE}))
 		{
 			return(_RRULE_Parser($contents->{RRULE}));
-		} else {
+		}
+        else
+        {
 			return(false);
 		}
-	} else {
+	}
+    else
+    {
 		carp('get_RRULE got invalid UID');
 		return(false);
 	}
@@ -253,7 +273,8 @@ sub UID_exists_at
 
 # Purpose: Get a list of dates which are excepted from recurrance for the supplied UID
 # Usage: my $List = $object->get_exceptions(UID);
-sub get_exceptions {
+sub get_exceptions
+{
 	my ($this, $UID) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
@@ -273,10 +294,14 @@ sub get_exceptions {
 			{
 				return($contents->{EXDATE});
 			}
-		} else {
+		}
+        else
+        {
 			return([]);
 		}
-	} else {
+	}
+    else
+    {
 		carp('get_exceptions got an invalid UID');
 		return([]);
 	}
@@ -284,7 +309,8 @@ sub get_exceptions {
 
 # Purpose: Set the EXDATEs for the supplied UID
 # Usage: $object->set_exceptions(UID, EXCEPTIONS_ARRAY);
-sub set_exceptions {
+sub set_exceptions
+{
 	my $this = shift;
 	my $UID = shift;
 	my $Exceptions = shift;
@@ -301,7 +327,8 @@ sub set_exceptions {
 		{
 			# Create the array
 			$contents->{EXDATE} = [];
-			foreach(@{$Exceptions}) {
+			foreach(@{$Exceptions})
+            {
 				# This doesn't do any syntax checking. We (stupidly) assume the caller
 				# did the proper thing(tm)
 				push(@{$contents->{EXDATE}},$_);
@@ -319,24 +346,27 @@ sub set_exceptions {
 
 # Purpose: Write the data to a file.
 # Usage: $object->write(FILE?);
-sub write {
+sub write
+{
 	my ($this, $file) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
 
-	if(not defined($file)) {
-		if($this->{FILETYPE} eq 'ref') {
+	if(not defined($file))
+    {
+		if($this->{FILETYPE} eq 'ref')
+        {
 			carp('write called on object created from array ref');
 			return(false);
 		}
 		$file = $this->{FILE};
 	}
-	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{PRODID} = [];
-	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{PRODID}[0] = $this->{PRODID};
-	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{CALSCALE} = [];
-	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{CALSCALE}[0] = 'GREGORIAN';
-	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VERSION} = [];
-	$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VERSION}[0] = '2.0';
+	$this->{dataSource}->data->{VCALENDAR}->[0]->{PRODID} = [];
+	$this->{dataSource}->data->{VCALENDAR}->[0]->{PRODID}[0] = $this->{PRODID};
+	$this->{dataSource}->data->{VCALENDAR}->[0]->{CALSCALE} = [];
+	$this->{dataSource}->data->{VCALENDAR}->[0]->{CALSCALE}[0] = 'GREGORIAN';
+	$this->{dataSource}->data->{VCALENDAR}->[0]->{VERSION} = [];
+	$this->{dataSource}->data->{VCALENDAR}->[0]->{VERSION}[0] = '2.0';
 	$this->{dataSource}->writeFile($file);
 	chmod($this->{FILEPERMS},$file);
 	return(true);
@@ -344,7 +374,8 @@ sub write {
 
 # Purpose: Get raw iCalendar data
 # Usage: my $Data = $object->get_rawdata();
-sub get_rawdata {
+sub get_rawdata
+{
 	my ($this) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
@@ -353,7 +384,8 @@ sub get_rawdata {
 
 # Purpose: Delete an iCalendar entry
 # Usage: $object->delete(UID);
-sub delete {
+sub delete
+{
 	my ($this, $UID) = @_;
 	# Verify parameters
 	return if _nf_assert($this,          'invalid method call');
@@ -366,20 +398,26 @@ sub delete {
 
 # Purpose: Add an iCalendar entry
 # Usage: $object->add(%EntryHash);
-sub add {
+sub add
+{
 	my ($this, %Hash) = @_;
 	return if _nf_assert($this,          'invalid method call');
-	unless(defined($Hash{DTSTART})) {
+	unless(defined($Hash{DTSTART}))
+    {
 		carp('Refusing to add a iCalendar entry without a DTSTART.');
 		return(false);
 	}
 	my $UID;
-	if(not ($Hash{UID}) or not length($Hash{UID})) {
+	if(not ($Hash{UID}) or not length($Hash{UID}))
+    {
 		$UID = $this->_UID($Hash{DTSTART});
-	} else {
+	}
+    else
+    {
 		$UID = $Hash{UID};
 	}
-	if(not $Hash{CREATED}) {
+	if(not $Hash{CREATED})
+    {
 		$Hash{CREATED} = _iCal_GenDateTimeFromLocaltime(gmtime(time));
 	}
 	$this->_ClearCalculated();
@@ -389,13 +427,16 @@ sub add {
 
 # Purpose: Change an iCalendar entry
 # Usage: $object->change(UID,%EntryHash);
-sub change {
+sub change
+{
 	my ($this, $UID, %Hash) = @_;
-	unless(defined($UID)) {
+	unless(defined($UID))
+    {
 		carp('Refusing to change a iCalendar entry without a UID to change.');
 		return(false);
 	}
-	unless(defined($Hash{DTSTART})) {
+	unless(defined($Hash{DTSTART}))
+    {
 		carp('Refusing to change a iCalendar entry without a DTSTART.');
 		return(false);
 	}
@@ -405,7 +446,8 @@ sub change {
 
 # Purpose: Check if an UID exists
 # Usage: $object->exists($UID);
-sub exists {
+sub exists
+{
 	my($this,$UID) = @_;
 	if(not defined($UID) or not length($UID) or ref($UID))
 	{
@@ -417,20 +459,26 @@ sub exists {
 
 # Purpose: Add another file
 # Usage: $object->addfile(FILE);
-sub addfile {
+sub addfile
+{
 	my ($this,$File) = @_;
-	if(ref($File)) {	# If we got a reference
+	if(ref($File))
+    {	# If we got a reference
 		if(not ref($File) eq 'SCALAR')
 		{
 			croak "DP::iCalendar->addfile(): Does not support a reference of type ".ref($File);
 		}
-	} else {		# If we don't have a reference, treat it as a scalar
+	}
+    else
+    {		# If we don't have a reference, treat it as a scalar
 				# filepath argument
-		unless(defined($File)) {
+		unless(defined($File))
+        {
 			carp('Needs an option: path to the iCalendar file');
 			return(false);
 		}
-		unless(-e $File) {
+		unless(-e $File)
+        {
 			carp("\"$File\": does not exist");
 			return(false);
 		}
@@ -440,7 +488,8 @@ sub addfile {
 
 # Purpose: Remove all loaded data
 # Usage: $object->clean()
-sub clean {
+sub clean
+{
 	my $this = shift;
 	$this->{dataSource} = DP::iCalendar::StructHandler->new();
 	$this->_ClearCalculated();
@@ -449,9 +498,11 @@ sub clean {
 
 # Purpose: Enable a feature
 # Usage: $object->enable(FEATURE);
-sub enable {
+sub enable
+{
 	my($this, $feature) = @_;
-	foreach(qw(SMART_MERGE)) {
+	foreach(qw(SMART_MERGE))
+    {
 		next unless($feature eq $_);
 		$this->{FEATURE}{$_} = 1;
 		if ($_ eq 'SMART_MERGE' && defined $this->{dataManger})
@@ -466,9 +517,11 @@ sub enable {
 
 # Purpose: Disable a feature
 # Usage: $object->disable(FEATURE);
-sub disable {
+sub disable
+{
 	my($this, $feature) = @_;
-	foreach(qw(SMART_MERGE)) {
+	foreach(qw(SMART_MERGE))
+    {
 		next unless($feature eq $_);
 		$this->{FEATURE}{$_} = 0;
 		if ($_ eq 'SMART_MERGE' && defined $this->{dataManger})
@@ -483,9 +536,11 @@ sub disable {
 
 # Purpose: Reload the data
 # Usage: $object->reload();
-sub reload {
+sub reload
+{
 	my $this = shift;
-	if($this->{FILETYPE} eq 'ref') {
+	if($this->{FILETYPE} eq 'ref')
+    {
 		carp('reload called on object created from array ref');
 		return(false);
 	}
@@ -654,13 +709,16 @@ sub locateDupes
 
 # Purpose: Set the prodid
 # Usage: $object->set_prodid(PRODID);
-sub set_prodid {
+sub set_prodid
+{
 	my($this, $ProdId) = @_;
-	if(not defined($ProdId) or not length($ProdId)) {
+	if(not defined($ProdId) or not length($ProdId))
+    {
 		croak('Emtpy/undef ProdId used in ->set_prodid');
 	}
 	# Warn about excessively long prodids
-	if(length($ProdId) > 100) {
+	if(length($ProdId) > 100)
+    {
 		carp('ProdId is over 100 characters long (in ->set_prodid). Consider slimming it down.');
 	}
 	# Verify that it is nicely formatted
@@ -701,26 +759,31 @@ sub get_manager_capabilities
 
 # Purpose: Generate an iCalendar date-time from multiple values
 # Usage: my $iCalDateTime = iCal_GenDateTime(YEAR, MONTH, DAY, TIME);
-sub iCal_GenDateTime {
+sub iCal_GenDateTime
+{
 	my ($Year, $Month, $Day, $Time) = @_;
 	# Fix the month and day
 	my $iCalMonth = _PrependZero($Month);
 	my $iCalDay = _PrependZero($Day);
-	if($Time) {
+	if($Time)
+    {
 		# Get the time
 		my $Hour = $Time;
 		my $Minute = $Time;
 		$Hour =~ s/^(\d+):\d+$/$1/;
 		$Minute =~ s/^\d+:(\d+)$/$1/;
 		return("$Year$iCalMonth${iCalDay}T$Hour${Minute}00");
-	} else {
+	}
+    else
+    {
 		return("$Year$iCalMonth$iCalDay");
 	}
 }
 
 # Purpose: Generate an iCalendar date-time string from a UNIX time string
 # Usage: my $iCalDateTime = iCal_ConvertFromUnixTime(UNIX TIME);
-sub iCal_ConvertFromUnixTime {
+sub iCal_ConvertFromUnixTime
+{
 	my $UnixTime = shift;
 	my ($realsec,$realmin,$realhour,$realmday,$realmonth,$realyear,$realwday,$realyday,$realisdst) = localtime($UnixTime);
 	$realyear += 1900;	# Fix the year
@@ -731,14 +794,16 @@ sub iCal_ConvertFromUnixTime {
 
 # Purpose: Generate a UNIX time string from an iCalendar date-time string
 # Usage: my $UnixTime = iCal_ConvertToUnixTime(DATE-TIME_ENTRY);
-sub iCal_ConvertToUnixTime {
+sub iCal_ConvertToUnixTime
+{
 	my $Value = shift;
 	my($Year,$Month,$Day,$Time) = iCal_ParseDateTime($Value);
 
 	$Year -= 1900;
 	$Month--;
 	my ($Hour,$Minute) = (0,0);
-	if($Time) {
+	if($Time)
+    {
 		($Hour,$Minute) = split(/:/,$Time,2);
 	}
 	
@@ -747,12 +812,14 @@ sub iCal_ConvertToUnixTime {
 
 # Purpose: Parse an iCalendar date-time
 # Usage: my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime(DATE-TIME_ENTRY);
-sub iCal_ParseDateTime {
+sub iCal_ParseDateTime
+{
 	my $Value = shift;
 	return if _nf_assert(defined $Value,'Undef parameter to iCal_ParseDateTime()');
 
 	# Handling of VALUE=DATE:YYYYMMDD
-	if($Value =~ /^VALUE/) {
+	if($Value =~ /^VALUE/)
+    {
 		# Alternate value definition. Processing here can
 		# probably be improved.
 		if(not $Value =~ s/^VALUE=DATE://) {
@@ -775,7 +842,8 @@ sub iCal_ParseDateTime {
 	my $Day = substr($Value, 6, 2);
 
 	# Test if the time is set, if it is then process it.
-	if($Value =~ s/^.+T//) {
+	if($Value =~ s/^.+T//)
+    {
 		$Hour = substr($Value,0,2);
 		$Minutes = substr($Value,2,2);
 		$Time = _PrependZero($Hour) . ':' . _PrependZero($Minutes);
@@ -815,7 +883,8 @@ sub _nf_assert
 # Purpose: Create a new object.
 # Usage: my $object = _NewObj(FILE?);
 #  FILE is the path to a file or undef. undef if working in ref mode.
-sub _NewObj {
+sub _NewObj
+{
 	my $File = shift;
 	my $this = {};
 	bless($this);
@@ -827,10 +896,13 @@ sub _NewObj {
 	# Default file permissions set during ->write();
 	# Can be overridden by ->set_file_perms();
 	$this->{FILEPERMS} = oct(600);
-	if($File) {
+	if($File)
+    {
 		$this->{FILETYPE} = 'file';
 		$this->{FILE} = $File;
-	} else {
+	}
+    else
+    {
 		$this->{FILETYPE} = 'ref';
 	}
 	return($this);
@@ -873,14 +945,16 @@ sub _ChangeEntry
 
 # Purpose: Output warning
 # Usage: _WarnOut(MESSAGE)
-sub _WarnOut {
-	warn("DP::iCalendar: WARNING: $_[0]\n");
+sub _WarnOut
+{
+	warn("DP::iCalendar $VERSION: WARNING: $_[0]\n");
 }
 
 # Purpose: Output error
 # Usage: _ErrOut(MESSAGE)
-sub _ErrOut {
-	warn("DP::iCalendar: ERROR: $_[0]\n");
+sub _ErrOut
+{
+	warn("DP::iCalendar $VERSION: ERROR: $_[0]\n");
 }
 
 # Purpose: Load or load+merge iCalendar data from a file
@@ -908,22 +982,22 @@ sub _LoadICSFile
 sub _ArrayHashSetup
 {
 	my $this = shift;
-	if(not defined($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}))
+	if(not defined($this->{dataSource}->data->{VCALENDAR}->[0]->{VEVENT}))
 	{
-		if(not ref($this->{dataSource}->{data}->{VCALENDAR}))
+		if(not ref($this->{dataSource}->data->{VCALENDAR}))
 		{
-			$this->{dataSource}->{data}->{VCALENDAR} = [];
+			$this->{dataSource}->data->{VCALENDAR} = [];
 		}
-		if (not ref($this->{dataSource}->{data}->{VCALENDAR}->[0]))
+		if (not ref($this->{dataSource}->data->{VCALENDAR}->[0]))
 		{
-			$this->{dataSource}->{data}->{VCALENDAR}->[0] = {};
+			$this->{dataSource}->data->{VCALENDAR}->[0] = {};
 		}
-		if (not ref($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT}))
+		if (not ref($this->{dataSource}->data->{VCALENDAR}->[0]->{VEVENT}))
 		{
-			$this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT} = [];
+			$this->{dataSource}->data->{VCALENDAR}->[0]->{VEVENT} = [];
 		}
 	}
-	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new($this->{dataSource}->{data}->{VCALENDAR}->[0]->{VEVENT},'UID');
+	$this->{dataManager} = DP::iCalendar::ArrayHashManager->new($this->{dataSource}->data->{VCALENDAR}->[0]->{VEVENT},'UID');
 	if ($this->{FEATURE}{SMART_MERGE})
 	{
 		$this->{dataManager}->{settings}->{SMART_MERGE} = 1;
@@ -932,7 +1006,8 @@ sub _ArrayHashSetup
 
 # Purpose: Loads iCalendar data
 # Usage: $this->_LoadFile(FILE OR ARRAYREF);
-sub _LoadFile {
+sub _LoadFile
+{
 	print "_LoadFile: gone, caller should be fixed.\n";
 	return false;
 }
@@ -954,16 +1029,21 @@ sub _iCal_GenDateTimeFromLocaltime
 # 	the UID. It should usually be something like $Year$Month$Day$Hour$Minute
 # 	or similar. NONRANDOM *can* be omitted, if it is then it will be replaced
 # 	by a random numerical string.
-sub _UID {
+sub _UID
+{
 	my $this = shift;
 	my $NonRandom = shift;
 	chomp($NonRandom);
-	if($NonRandom) {
+	if($NonRandom)
+    {
 		$NonRandom =~ s/\D//g;
-	} else {
+	}
+    else
+    {
 		$NonRandom = int(rand(10000));
 	}
-	while(1) {
+	while(1)
+    {
 		my $UID = 'dp-' . time() . $NonRandom . int(rand(10000)) . '-' . scalar(getpwuid($<)) . '@' . $this->_GetHostname();
 		if(not $this->{dataManager}->exists($UID))
 		{
@@ -1002,7 +1082,8 @@ sub _GetHostname
 
 # Purpose: Prepend a "0" to a number if it is only one digit.
 # Usage: my $NewNumber = PrependZero(NUMBER);
-sub _PrependZero {
+sub _PrependZero
+{
 	if ($_[0] =~ /^\d$/) {
 		return("0$_[0]");
 	}
@@ -1013,12 +1094,14 @@ sub _PrependZero {
 # Usage: $this->_GenerateCalendar(YEAR);
 #  Note: This will generate the calendar including recurring stuff for YEAR.
 #  It will create the normal calendar for all events.
-sub _GenerateCalendar {
+sub _GenerateCalendar
+{
 	my $this = shift;
 	my $EventYear = shift;
 	return if defined($this->{AlreadyCalculated}{$EventYear});
 	$this->{OrderedCalendar}{$EventYear} = {};
-	foreach my $UID ($this->_GetAllUIDS()) {
+	foreach my $UID ($this->_GetAllUIDS())
+    {
 		my $Current = $this->_GetUIDEntry($UID);
 		if(not defined $Current->{'DTSTART'})
 		{
@@ -1038,11 +1121,15 @@ sub _GenerateCalendar {
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
 		# Recurring?
-		if($Current->{RRULE}) {
+		if($Current->{RRULE})
+        {
 			$this->_RRULE_Handler($UID,$EventYear);
-		} else {
+		}
+        else
+        {
 			# Not recurring
-			if(not $Time) {
+			if(not $Time)
+            {
 				$Time = 'DAY';
 			}
 			push(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$Time}}, $UID);
@@ -1054,7 +1141,8 @@ sub _GenerateCalendar {
 
 # Purpose: Clear any calculated event data
 # Usage: $this->_ClearCalculated();
-sub _ClearCalculated {
+sub _ClearCalculated
+{
 	# TODO: At one point we might want to do additional processing depending on the UID supplied (if any)
 	
 	my $this = shift;
@@ -1154,11 +1242,13 @@ sub _deepValues
 # Caller is expected to check EXRULE and EXDATE themselves.
 # 	(ie. we don't support that yet)
 # See _RRULE_Handler.
-sub _RRULE_Parser {
+sub _RRULE_Parser
+{
 	my $PureLine = shift;
 	$_ = $PureLine;
 	my %ReturnHash;
-	if(not /FREQ=/) {
+	if(not /FREQ=/)
+    {
 		_WarnOut("RRULE Parser: Unable to handle line (no FREQ): $PureLine");
 		return(\%ReturnHash);
 	}
@@ -1202,44 +1292,37 @@ sub _RRULE_Parser {
 		# iCalendar datetime string
 		UNTIL => 1,
 	);
-	# Check if it has multiple settings
-	if(/;/) {
-		# It does, process individually
-		foreach my $Setting (split(/;/)) {
-			my $Opt = $Setting;
-			my $Val = $Setting;
-			$Opt =~ s/^(\w+)=.*$/$1/;
-			$Val =~ s/^\w+=(.*)$/$1/;
-			if(not $Settings{$Opt}) {
-				_WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
-			}
-			if($ReturnHash{$Opt}) {
-				_WarnOut("RRULE Parser: $Opt occurs multiple times in RRULE:. Can only handle one. Expect trouble.");
-			}
-			$ReturnHash{$Opt} = $Val;
-		}
-	} else {
-		# It doesn't. Process the single line
-			my $Opt = $_;
-			my $Val = $_;
-			$Opt =~ s/^(\w+)=.*$/$1/;
-			$Val =~ s/^\w+=(.*)$/$1/;
-			if(not $Settings{$Opt}) {
-				_WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
-			}
-			$ReturnHash{$Opt} = $Val;
-	}
+    # It does, process individually
+    foreach my $Setting (split(/;/))
+    {
+        my $Opt = $Setting;
+        my $Val = $Setting;
+        $Opt =~ s/^(\w+)=.*$/$1/;
+        $Val =~ s/^\w+=(.*)$/$1/;
+        if(not $Settings{$Opt})
+        {
+            _WarnOut("RRULE Parser: $Opt is an unkown/unhandled setting in RRULE:. Expect trouble.");
+        }
+        if($ReturnHash{$Opt})
+        {
+            _WarnOut("RRULE Parser: $Opt occurs multiple times in RRULE:. Can only handle one. Expect trouble.");
+        }
+        $ReturnHash{$Opt} = $Val;
+    }
 	return(\%ReturnHash);
 }
 
 # Purpose: Parse an RRULE and add to the hash
 # Usage: _RRULE_Handler(UID,YEAR);
-sub _RRULE_Handler {
+sub _RRULE_Handler
+{
 	my $this = shift;
 	my $UID = shift;
 	my $YEAR = shift;
-	if($YEAR > 2037 or $YEAR < 1970) {
-		if(not $this->{Settings}{UnixTimeLimitWarned}) {
+	if($YEAR > 2037 or $YEAR < 1970)
+    {
+		if(not $this->{Settings}{UnixTimeLimitWarned})
+        {
 			$this->{Settings}{UnixTimeLimitWarned} = 1;
 			_WarnOut('Can\'t handle RRULEs for years below 1970 or above 2037');
 		}
@@ -1252,30 +1335,42 @@ sub _RRULE_Handler {
 
 	my $RRULE = _RRULE_Parser($contents->{RRULE});
 	my $AddDates;
-	if	($RRULE->{FREQ} eq 'DAILY') {
+	if	($RRULE->{FREQ} eq 'DAILY')
+    {
 		$AddDates = $this->_RRULE_DAILY($RRULE,$UID,$YEAR);
-	} elsif ($RRULE->{FREQ} eq 'WEEKLY') {
+	}
+    elsif ($RRULE->{FREQ} eq 'WEEKLY')
+    {
 		$AddDates = $this->_RRULE_WEEKLY($RRULE,$UID,$YEAR);
-	} elsif ($RRULE->{FREQ} eq 'MONTHLY') {
+	}
+    elsif ($RRULE->{FREQ} eq 'MONTHLY')
+    {
 		$AddDates = $this->_RRULE_MONTHLY($RRULE,$UID,$YEAR);
-	} elsif ($RRULE->{FREQ} eq 'YEARLY') {
+	}
+    elsif ($RRULE->{FREQ} eq 'YEARLY')
+    {
 		$AddDates = $this->_RRULE_YEARLY($RRULE,$UID,$YEAR);
-	} else {
+	}
+    else
+    {
 		_WarnOut("Unknown RRULE type: ".$contents->{RRULE}." for UID $UID. This might be a bug, report it to the developers");
 	}
-	if($AddDates) {
+	if($AddDates)
+    {
 		$this->_RRULE_AddDates($AddDates,$UID,$YEAR,$RRULE);
 	}
 }
 
 # Purpose: Get a parsed list of EXDATES
 # Usage: $this->_Get_EXDATES_Parsed(UID);
-sub _Get_EXDATES_Parsed {
+sub _Get_EXDATES_Parsed
+{
 	my $this = shift;
 	my $UID = shift;
 
 	my %ExDates;
-	foreach my $ExDate (@{$this->get_exceptions($UID)}) {
+	foreach my $ExDate (@{$this->get_exceptions($UID)})
+    {
 		# We merely discard Time
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($ExDate);
 		$Year =~ s/^0*//;
@@ -1293,7 +1388,8 @@ sub _Get_EXDATES_Parsed {
 # 	This function also takes care of killing off entries matched by EXDATE entries,
 # 	and entries not matched by BYDAY
 # Usage: $this->_RRULE_AddDates(HASHREF, $UID, YEAR, PARSED_RRULE);
-sub _RRULE_AddDates {
+sub _RRULE_AddDates
+{
 	my $this = shift;
 	my $AddDates = shift;
 	my $UID = shift;
@@ -1304,32 +1400,40 @@ sub _RRULE_AddDates {
 
 	my $contents = $this->_GetUIDEntry($UID);
 	my ($UID_Year,$UID_Month,$UID_Day,$UID_Time) = iCal_ParseDateTime($contents->{DTSTART});
-	if (not defined($UID_Time) or not length($UID_Time)) {
+	if (not defined($UID_Time) or not length($UID_Time))
+    {
 		$UID_Time = 'DAY';
-	} elsif($UID_Time eq '00:00') {
+	}
+    elsif($UID_Time eq '00:00')
+    {
 		# NOTE: This is for the deprecated and old X-DP-BIRTHDAY syntax
 		# in some iCalendar files. It should probably be removed soon and replaced by some
 		# upgrade function.
-		if(defined($contents->{'X-DP-BIRTHDAY'})) {
+		if(defined($contents->{'X-DP-BIRTHDAY'}))
+        {
 			$UID_Time = 'DAY';
 		}
 	}
 
-	foreach my $DateTimeString (keys(%{$AddDates})) {
+	foreach my $DateTimeString (keys(%{$AddDates}))
+    {
 		my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($DateTimeString);
-		if($Year ne $GenYear) {
+		if($Year ne $GenYear)
+        {
 			_ErrOut("Wanted to add $Day.$Month.$Year, but we're generating $GenYear! This is a bug!");
 			next;
 		}
 		# Test for BYDAY
-		if($BYDAY and not $this->_BYDAY_Test($RRULE,$BYDAY,$UID,$DateTimeString)) {
+		if($BYDAY and not $this->_BYDAY_Test($RRULE,$BYDAY,$UID,$DateTimeString))
+        {
 			next;
 		}
 
 		$Year =~ s/^0*//;
 		$Month =~ s/^0*//;
 		$Day =~ s/^0*//;
-		if(not $Exceptions->{$Year}{$Month}{$Day}) {
+		if(not $Exceptions->{$Year}{$Month}{$Day})
+        {
 			push(@{$this->{OrderedCalendar}{$Year}{$Month}{$Day}{$UID_Time}},$UID);
 		}
 	}
@@ -1337,7 +1441,8 @@ sub _RRULE_AddDates {
 
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
-sub _RRULE_DAILY {
+sub _RRULE_DAILY
+{
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1348,24 +1453,31 @@ sub _RRULE_DAILY {
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
-	foreach(keys(%{$RRULE})) {
-		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
-			if(/^X-/) {
+	foreach(keys(%{$RRULE}))
+    {
+		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/)
+        {
+			if(/^X-/)
+            {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
-			} else {
+			}
+            else
+            {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
-	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1)
+    {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(false);
 	}
 	
 	# Fetch UNTIL first if it is set
-	if($RRULE->{UNTIL}) {
+	if($RRULE->{UNTIL})
+    {
 		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
 	}
 
@@ -1377,17 +1489,21 @@ sub _RRULE_DAILY {
 	# First, start by finding out which day we're starting.
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
 	# If YEAR is less than year then stop processing
-	if($Year > $YEAR) {
+	if($Year > $YEAR)
+    {
 		return({});
 	}
 	# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
 	# If it does then we need to start at the date specified. If not, we start
 	# at the 1st of january.
-	if($Year eq $YEAR) {
+	if($Year eq $YEAR)
+    {
 		$StartDate{Month} = $Month;
 		$StartDate{Day} = $Day;
 		$StartDate{Month}--;
-	} else {
+	}
+    else
+    {
 		$StartDate{Month} = 0;
 		$StartDate{Day} = 1;
 	}
@@ -1398,7 +1514,8 @@ sub _RRULE_DAILY {
 	my $TimeString = mktime(0,0,12, $StartDate{Day},$StartDate{Month},$UnixYear);
 	# Okay, now loop through /all/ possible dates
 	my $LoopYear = $YEAR;
-	while($LoopYear eq $YEAR) {
+	while($LoopYear eq $YEAR)
+    {
 		my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
 
 		# Handle UNTIL.
@@ -1424,7 +1541,8 @@ sub _RRULE_DAILY {
 
 # Purpose: Evalute an WEEKLY RRULE
 # Usage: _RRULE_WEEKLY(RRULE,UID,YEAR);
-sub _RRULE_WEEKLY {
+sub _RRULE_WEEKLY
+{
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1435,20 +1553,20 @@ sub _RRULE_WEEKLY {
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
-	foreach(keys(%{$RRULE})) {
-		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/) {
-			if(/^X-/) {
+	foreach(keys(%{$RRULE}))
+    {
+		if(not /^(UNTIL|BYDAY|FREQ|WKST|INTERVAL)/)
+        {
+			if(/^X-/)
+            {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
-			} else {
+			}
+            else
+            {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(false);
 			}
 		}
-	}
-	# Verify INTERVAL
-	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
-			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
-			return(false);
 	}
 	
 	# We will add and eliminate dates as we go. This is inefficient, but functional.
@@ -1484,10 +1602,22 @@ sub _RRULE_WEEKLY {
 
 	# What do we know so far?
 	# - It is an event that occurs more than once
-	# - It is an event that occurs on a weekly basis
+	# - It is an event that occurs on a N weekly basis
+
+    # Figure out and set our INTERVAL in seconds
+    my $INTERVAL;
+    $RRULE->{INTERVAL} = defined($RRULE->{INTERVAL}) ? $RRULE->{INTERVAL} : 1;
+    if ($RRULE->{INTERVAL} =~ /\D/ || $RRULE->{INTERVAL} < 1)
+    {
+        _ErrOut('INTERVAL='.$RRULE->{INTERVAL}.' in RRULE for '.$UID.' is invalid, ignoring RRULE');
+        return;
+    }
+    # One day is 86400, thus one week is 86400 * 7 = 604800.
+    $INTERVAL = $RRULE->{INTERVAL} * 604800;
 	
 	# Fetch UNTIL first if it is set
-	if($RRULE->{UNTIL}) {
+	if($RRULE->{UNTIL})
+    {
 		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
 	}
 
@@ -1501,45 +1631,73 @@ sub _RRULE_WEEKLY {
 	# First, start by finding out which day we're starting.
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
 	# If YEAR is less than year then stop processing
-	if($Year > $YEAR) {
+	if($Year > $YEAR)
+    {
 		return({});
 	}
 	# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
 	# If it does then we need to start at the date specified. If not, we start
 	# at the 1st of january.
-	if($Year eq $YEAR) {
+	if($Year eq $YEAR)
+    {
 		$StartDate{Month} = $Month;
 		$StartDate{Day} = $Day;
 		$StartDate{Month}--;
-	} else {
+	}
+    else
+    {
 		# Okay, now we need to figure out which day we're suppose to start on
-		# This is a lot slower
+		# This is *a lot* slower
 
 		# The original unix time (start time)
 		my $UnixOrigStart = iCal_ConvertToUnixTime($StartsAt);
-		# Human-readable-ish versions of the above
-		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($UnixOrigStart);
-		# The wday we want it to occur on
-		my $trueWday = $wday;
-		# The unix year
-		my $nixYear = $YEAR - 1900;
-		# The date to begin processing on (1/1/year)
-		my $mktYearFirst = mktime(5,0,12,1,0,$nixYear);
-		# Start looping
-		while(true)
-		{
-			# Get the time
-			my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mktYearFirst);
-			# If wday is trueWday then this is the one
-			if ($wday == $trueWday)
-			{
-				$StartDate{Month} = 0;
-				$StartDate{Day} = $mday;
-				last;
-			}
-			# If not, + one day
-			$mktYearFirst += 86400;
-		}
+
+
+        my $currentTime = $UnixOrigStart;
+
+        my $intervalSteps = $INTERVAL * 4;
+
+        # First, we get to the current year. This is somewhat ineffeicient as it will
+        # loop through every fourth occurrance of the event up to today
+        while(true)
+        {
+            # Human-readable-ish versions of the above
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($currentTime);
+            $year += 1900;
+
+            if ($year >= $YEAR)
+            {
+                last;
+            }
+
+            $currentTime += $intervalSteps;
+        }
+
+        # Now $currentTime is at our current year (or, for unreasonable
+        # INTERVALs, beyond our current year), now we process it until we get
+        # to $YEAR -1
+        while(true)
+        {
+            # Human-readable-ish versions of the above
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($currentTime);
+            $year += 1900;
+
+            if ($year < $YEAR)
+            {
+                last;
+            }
+            $currentTime -= $INTERVAL;
+        }
+
+        # Now $currentTime is the last occurrence in $YEAR-1, so make it the first occurrence
+        # in $YEAR instead
+        $currentTime += $INTERVAL;
+        # We need the mday
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($currentTime);
+
+        # And we're done
+        $StartDate{Month} = 0;
+        $StartDate{Day} = $mday;
 	}
 	my $UnixYear = $YEAR - 1900;
 	# Good, let's process.
@@ -1548,7 +1706,8 @@ sub _RRULE_WEEKLY {
 	my $TimeString = mktime(0,0,12, $StartDate{Day},$StartDate{Month},$UnixYear);
 	# Okay, now loop through /all/ possible dates
 	my $LoopYear = $YEAR;
-	while($LoopYear eq $YEAR) {
+	while($LoopYear eq $YEAR)
+    {
 		my $iCalTime = iCal_ConvertFromUnixTime($TimeString);
 
 		# Handle UNTIL.
@@ -1562,8 +1721,7 @@ sub _RRULE_WEEKLY {
 
 		$Dates{$iCalTime} = 1;
 		
-		# One day is 86400, thus one week is 86400 * 7 = 604800.
-		$TimeString += 604800;
+		$TimeString += $INTERVAL;
 		my $NextiCalTime = iCal_ConvertFromUnixTime($TimeString);
 		my ($evYear, $evMonth, $evDay, $evTime) = iCal_ParseDateTime($NextiCalTime);
 		$LoopYear = $evYear;
@@ -1575,7 +1733,8 @@ sub _RRULE_WEEKLY {
 
 # Purpose: Evalute an MONTHLY RRULE
 # Usage: _RRULE_MONTHLY(RRULE,UID,YEAR);
-sub _RRULE_MONTHLY {
+sub _RRULE_MONTHLY
+{
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1586,24 +1745,31 @@ sub _RRULE_MONTHLY {
 	my %Dates;
 	
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
-	foreach(keys(%{$RRULE})) {
-		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/) {
-			if(/^X-/) {
+	foreach(keys(%{$RRULE}))
+    {
+		if(not /^(FREQ|WKST|BYDAY|UNTIL|INTERVAL)/)
+        {
+			if(/^X-/)
+            {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
-			} else {
+			}
+            else
+            {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
-	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1)
+    {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(false);
 	}
 	
 	# Fetch UNTIL first if it is set
-	if($RRULE->{UNTIL}) {
+	if($RRULE->{UNTIL})
+    {
 		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
 	}
 
@@ -1616,15 +1782,19 @@ sub _RRULE_MONTHLY {
 	# First, start by finding out which day we're starting.
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($StartsAt);
 	# If YEAR is less than year then stop processing
-	if($Year > $YEAR) {
+	if($Year > $YEAR)
+    {
 		return({});
 	}
 	# Okay, we, sadly, need to process. So, first check if Year equals YEAR.
 	# If it does then we need to start at the date specified. If not, we start
 	# at the 1st of january.
-	if($Year eq $YEAR) {
+	if($Year eq $YEAR)
+    {
 		$StartDate{Month} = $Month;
-	} else {
+	}
+    else
+    {
 		$StartDate{Month} = 1;
 	}
 	$StartDate{Day} = $Day;
@@ -1636,7 +1806,8 @@ sub _RRULE_MONTHLY {
 	my $TimeString = mktime(0,0,12, $StartDate{Day},$StartDate{Month},$UnixYear);
 	# Okay, now loop through /all/ possible dates
 	my $LoopYear = $YEAR;
-	while(1) {
+	while(1)
+    {
 		my $iCalTime = iCal_GenDateTime($YEAR, $StartDate{Month}, $StartDate{Day});
 
 		# Handle UNTIL.
@@ -1652,7 +1823,8 @@ sub _RRULE_MONTHLY {
 		
 		# Bump month
 		$StartDate{Month}++;
-		if($StartDate{Month} > 12) {
+		if($StartDate{Month} > 12)
+        {
 			last;
 		}
 	
@@ -1663,7 +1835,8 @@ sub _RRULE_MONTHLY {
 
 # Purpose: Evaluate an YEARLY RRULE
 # Usage: RRULE_YEARLY(RRULE,UID,YEAR);
-sub _RRULE_YEARLY {
+sub _RRULE_YEARLY
+{
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1674,29 +1847,37 @@ sub _RRULE_YEARLY {
 	my $UNTIL;
 	my %Dates;
 	# Check all values in RRULE, if it has values we don't know about then don't calculate.
-	foreach(keys(%{$RRULE})) {
-		if(not /^(FREQ|WKST|INTERVAL|BYDAY|UNTIL)/) {
-			if(/^X-/) {
+	foreach(keys(%{$RRULE}))
+    {
+		if(not /^(FREQ|WKST|INTERVAL|BYDAY|UNTIL)/)
+        {
+			if(/^X-/)
+            {
 				_WarnOut("Unknown X- setting in RRULE ($_): $contents->{RRULE}. Found in event $UID.");
-			} else {
+			}
+            else
+            {
 				_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 				return(false);
 			}
 		}
 	}
 	# Verify INTERVAL
-	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1) {
+	if(defined($RRULE->{INTERVAL}) and $RRULE->{INTERVAL} != 1)
+    {
 			_ErrOut("RRULE too advanced for current parser: $contents->{RRULE}. Found in event $UID. Report this to the developers.");
 			return(false);
 	}
 	# Fetch UNTIL first if it is set
-	if($RRULE->{UNTIL}) {
+	if($RRULE->{UNTIL})
+    {
 		$UNTIL = iCal_ConvertToUnixTime($RRULE->{UNTIL});
 	}
 
 	my ($Year, $Month, $Day, $Time) = iCal_ParseDateTime($Date);
 	my $NewDate = iCal_GenDateTime($YEAR,$Month,$Day,$Time);
-	if(not $UNTIL or not iCal_ConvertToUnixTime($NewDate) > $UNTIL) {
+	if(not $UNTIL or not iCal_ConvertToUnixTime($NewDate) > $UNTIL)
+    {
 		$Dates{$NewDate} = 1;
 	}
 	return(\%Dates);
@@ -1708,7 +1889,8 @@ sub _RRULE_YEARLY {
 # 	It returns a hashref. The hashref has one key per wday as of localtime().
 # 	Those matching the rule is true, those not, false.
 # 	If a BYDAY rule is not present then it returns false.
-sub _Get_BYDAY_Parsed {
+sub _Get_BYDAY_Parsed
+{
 	my $this = shift;
 	my $RRULE = shift;
 	my $UID = shift;
@@ -1717,7 +1899,8 @@ sub _Get_BYDAY_Parsed {
 	my %ReturnMap;
 
 	# If there is no BYDAY rule, return undef
-	if(not $RRULE->{BYDAY}) {
+	if(not $RRULE->{BYDAY})
+    {
 		return(false);
 	}
 
@@ -1732,10 +1915,14 @@ sub _Get_BYDAY_Parsed {
 		SA => 6
 	);
 
-	foreach my $WD (split(/,/, $RRULE->{BYDAY})) {
-		if(defined($BydayMap{$WD})) {
+	foreach my $WD (split(/,/, $RRULE->{BYDAY}))
+    {
+		if(defined($BydayMap{$WD}))
+        {
 			$ReturnMap{$BydayMap{$WD}} = true;
-		} else {
+		}
+        else
+        {
 			_WarnOut("RRULE for UID $UID has an invalid day specified in BYDAY: $WD");
 		}
 	}
@@ -1745,7 +1932,8 @@ sub _Get_BYDAY_Parsed {
 
 # Purpose: Test if a date matches a preparsed BYDAY rule
 # Usage: $this->_BYDAY_Test(RRULE, BYDAY, UID, DATETIME);
-sub _BYDAY_Test {
+sub _BYDAY_Test
+{
 	my $this = shift;
 	my $RRULE = shift;
 	my $BYDAY = shift;
@@ -1755,16 +1943,20 @@ sub _BYDAY_Test {
 	# Create the UNIX time for said day
 	my $UnixTime = iCal_ConvertToUnixTime($DateTime);
 	my ($testsec,$testmin,$testhour,$testmday,$testmonth,$testyear,$testwday,$testyday,$testisdst) = localtime($UnixTime);
-	if($BYDAY->{$testwday}) {
+	if($BYDAY->{$testwday})
+    {
 		return(true);
-	} else {
+	}
+    else
+    {
 		return(false);
 	}
 }
 
 # Purpose: Strip the time part of a DateTime string
 # Usage: _DT_StripTime
-sub _DT_StripTime {
+sub _DT_StripTime
+{
 	my $DT = shift;
 	$DT =~ s/Z.+$//i;
 	return($DT);
