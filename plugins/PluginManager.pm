@@ -51,11 +51,10 @@ sub mkmenu
 {
 	my $this = shift;
 	my $plugin = shift;
-	my $MenuItems = $plugin->get_var('MenuItems');
-	my $EditName = $plugin->get_var('EditName');
+	my $MenuItems = $plugin->get_var('menu_preferences');
 	my $i18n = $plugin->get_var('i18n');
 	# This is our menu item
-	my $menu =  [ '/'.$EditName.'/'.$i18n->get('_Plugins') ,undef, sub { $plugin->signal_emit('SHOW_PLUGINMANAGER'); },     0,  '<StockItem>',  'gtk-properties'];
+	my $menu =  [ '/'.$i18n->get('_Plugins') ,undef, sub { $plugin->signal_emit('SHOW_PLUGINMANAGER'); },     0,  '<StockItem>',  'gtk-properties'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;
