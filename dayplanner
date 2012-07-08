@@ -5057,7 +5057,7 @@ GetOptions (
 		PrintHelp('-t','--test','Use a seperate debug/ configuration directory');
 		PrintHelp('', '--confdir', 'Use the directory supplied as configuration directory');
 		PrintHelp('-s', '--shutdaemon', 'Shutdown the daemon when Day Planner is closed');
-		PrintHelp('','--nodaemon','Run without the Day Planner daemon. Useful on embedded systems.');
+		PrintHelp('','--nodaemon','Run without the Day Planner daemon. Useful on embedded systems, potentionally dangerous on desktops.');
 		PrintHelp('', '--exportical', 'Export the Day Planner data in the iCalendar format to the filename supplied.');
 		PrintHelp('', '--exporthtml', 'Export the Day Planner data in the HTML format to the directory supplied.');
 		PrintHelp('', '--importical', 'Import data from the iCalendar file specified');
