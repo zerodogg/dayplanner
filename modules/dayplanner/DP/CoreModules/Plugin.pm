@@ -35,7 +35,6 @@ sub new
 	$this->{config} = shift;
 	$this->{stash} = {};
 	$this->{signals} = {};
-	$this->{currPlugin} = undef;
 	$this->{loadedPlugins} = {};
 	$this->{tempVars} = [];
 	$this->{runningSignals} = [];
@@ -93,44 +92,47 @@ sub get_var
 sub set_confval
 {
 	my $this = shift;
+    my $plugin = shift;
 	my $name = shift;
 	my $value = shift;
-	$name = $this->_get_currName().'_'.$name;
+	$name = $this->_get_plugName($plugin).'_'.$name;
 	return $this->{config}{$name} = $value;
 }
 
 sub get_confval
 {
 	my $this = shift;
+    my $plugin = shift;
 	my $name = shift;
-	$name = $this->_get_currName().'_'.$name;
+	$name = $this->_get_plugName($plugin).'_'.$name;
 	return $this->{config}->{$name};
 }
 
 sub signal_connect
 {
 	my $this = shift;
-	my $signal = shift;
 	my $handlerModule = shift;
-	my $handlerMethod = shift;
+	my $signal = shift;
+    my $codeRef = shift;
 	if(not $this->{signals}{$signal})
 	{
 		$this->_warn('Plugin '.ref($handlerModule).' connected to unregistered signal: '.$signal);
 		$this->{signals}{$signal} = [];
 	}
-	push(@{$this->{signals}{$signal}}, { module => $handlerModule, method => $handlerMethod });
+	push(@{$this->{signals}{$signal}}, { module => $handlerModule, codeRef => $codeRef});
 	return true;
 }
 
 sub signal_connect_ifavailable
 {
 	my $this = shift;
+	my $handlerModule = shift;
 	my $signal = shift;
 	if(not $this->{signals}{$signal})
 	{
 		return false;
 	}
-	return $this->signal_connect($signal,@_);
+	return $this->signal_connect($handlerModule,$signal,@_);
 }
 
 sub set_searchpath
@@ -196,12 +198,27 @@ sub load_plugin
         $this->_warn('The plugin '.$pluginName.' is not compatible with this version of the Day Planner plugin API');
         return;
     }
-	eval('$plugin = DP::Plugin::'.$pluginName.'->new_instance($this);');
+	eval('$plugin = DP::Plugin::'.$pluginName.'->new(__plugin => $this);');
 	$e = $@;
 	if ($e)
 	{
 		$e =~ s/\n$//;
-		$this->_warn('Init of plugin "'.$pluginName.'" failed: '.$e);
+		$this->_warn('Construction of plugin "'.$pluginName.'" failed: '.$e);
+		return;
+	}
+    eval
+    {
+        if ($plugin->can('earlyInit'))
+        {
+            $plugin->earlyInit();
+        }
+        1;
+    };
+	$e = $@;
+	if ($e)
+	{
+		$e =~ s/\n$//;
+		$this->_warn('earlyInit of plugin "'.$pluginName.'" failed: '.$e);
 		return;
 	}
 	$this->{loadedPlugins}->{$pluginName} = 1;
@@ -262,9 +279,10 @@ sub signal_emit
 		my $repairIt = false;
 		foreach my $i (@{$this->{signals}{$signal}})
 		{
-			$this->{currPlugin} = $i->{module};
-			eval('$i->{module}->'.$i->{method}.'($this);');
-			$this->{currPlugin} = undef;
+            eval
+            {
+                $i->{codeRef}->();
+            };
 			my $e = $@;
 			if ($e)
 			{
@@ -384,19 +402,12 @@ sub _warn
 	warn('*** Day Planner Plugins: '.shift(@_)."\n");
 }
 
-sub _get_currName
+sub _get_plugName
 {
 	my $this = shift;
-	my $base;
-	if(ref($this->{currPlugin}))
-	{
-		$base = ref($this->{currPlugin});
-	}
-	elsif ($this->{currPlugin})
-	{
-		$base = $this->{currPlugin};
-	}
-	else
+    my $plugin = shift;
+	my $base = ref($plugin);
+    if (!$base)
 	{
 		my ($name_package, $name_filename, $name_line, $name_subroutine, $name_hasargs,
 			$name_wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
@@ -469,270 +480,7 @@ sub _extractPluginPackage
 }
 1;
 __END__
-=head1 INTRODUCTION
 
-Day Planner offers a plugin system that lets you hook into most parts of the
-program. The basic syntax is inspired from Gtk2's signals.
+=head1 DAY PLANNER PLUGINS
 
-All plugins are perl objects. These objects communicate with Day Planner
-via a special plugin object that it gets supplied. This plugin object gives
-access to internal data, and handles signal passing.
-
-Day Planner comes with various plugins by default, ranging from the
-basic hello world to synchronization. Take a look at the source code
-of these plugins to get a feel for it.
-
-=head1 THE BASIC PLUGIN LAYOUT
-
-A plugin should have a new_instance method. This method gets the
-plugin handler object supplied as its sole parameter.
-
-It should create the plugin's object and return it (like a normal module).  It
-should only do signal connecting and the initialization that is required for it
-to be operational until the INIT signal is issued and it can finalize its
-initialization. See the builtin signals section for more information about the
-INIT signal.
-
-=head1 THE PLUGIN HANDLER OBJECT
-
-The plugin handler object is the main controller that handles all I/O
-between the main application and the plugin. It allows you to request
-data, set configuration parameters and hook into signals.
-
-It has the following methods:
-
-=over
-
-=item register_signals(B<ARRAY>)
-
-This method takes an array of zero or more elements as its parameter.
-It is used to register a signal (not a handler) for use. You should
-call this if your plugin will emit signals. The plugin handler ignores
-all emitted signals that has not been previously registered.
-
-=item signal_emit(B<STRING> signal)
-
-Emits the signal supplied, calling all listeners in turn.
-
-=item signal_connect(B<STRING> signal, B<OBJECT> plugin, B<STRING> method)
-
-Connects the method on the plugin object supplied to the signal supplied.
-The method will then be called whenever the signal is emitted.
-
-Plugins are called inside of an eval, so any die()s or crashes will be
-caught by the plugin handler.
-
-=item signal_connect_ifavailable(B<STRING> signal, B<OBJECT> plugin, B<STRING> method)
-
-The same as signal_connect, but this will not attach to (or warn about)
-unregistered signals, instead it will silently ignore the request.
-
-Its primary use is connecting to signals that belong to another plugin,
-and it should not be used within the constructor, but within the INIT
-signal (see the I<BUILTIN SIGNALS> section).
-
-=item set_var(B<STRING> variable name, B<VARIABLE> content)
-
-This is used for sharing data. Sets the variable supplied to the content
-supplied.
-
-=item get_var(B<STRING> variable name)
-
-Gets the contents of the shared variable supplied. Various signals
-can offer temporary access to various data structures. These are outlined
-in the documentation for the signal in question.
-
-=item delete_var(B<STRING> variable name)
-
-Deletes the variable supplied. You should never use this to delete
-content that is shared by anything other than your plugin.
-
-=item set_tempvar(B<STRING> variable name, B<VARIABLE> content)
-
-This is the same as set_var() except that this version delete_var()s the
-variable after the next signal has been emitted, sharing the data only
-througout a single signal.
-
-=item set_confval(B<STRING> name, B<STRING> value)
-
-Sets the configuration value name to value for THIS plugin. The plugin object
-automatically handles making it unique for your plugin, so you do not need to
-ensure that the name is unique for the entire program, only for your plugin.
-The configuration values are automatically saved and loaded by Day Planner.
-
-=item get_confval(B<STRING> name)
-
-Gets the configuration value supplied. This retrieves settings set using
-set_confval()
-
-=item abort()
-
-Tells the plugin handler that the action that triggered the signal should stop
-processing after the signal has finished. Use with care. Note that not all signals
-will honor an abort() call (ie. you can't abort for instance SHUTDOWN and SAVEDATA).
-
-=back
-
-=head1 USEFUL DAY PLANNER FUNCTIONS
-
-Day Planner has many useful functions that you can import from various sources.
-The most common ones are found in L<DP::CoreModules::PluginFunctions>, and allow
-access to such things as telling Day Planner that data has been updated, and
-displaying simple dialog boxes, as well as an Assert() function. See the
-documentation for that module for more information.
-
-The calendar interface is provided by L<DP::iCalendar>, and you can find
-various generic helpers in L<DP::GeneralHelpers>.
-
-=head1 GLOBALLY SHARED VARIABLES
-
-These variables are available with get_var() throughout the lifetime of the
-application. Some of these variables are however not available before after the
-INIT signal has been emitted.
-
-=over
-
-=item MainWindow
-
-This is the main L<Gtk2::Window> for Day Planner. Not available
-before the INIT signal.
-
-=item CalendarWidget
-
-This is the main L<Gtk2::Calendar> widget displayed in the main
-Day Planner window. Not available before the INIT signal.
-
-NOTE: If you switch the date, you have to remember to call:
-I<$object->signal_emit('day-selected')> after you have switched it.
-Day Planner will not redraw the list of events until you do.
-
-=item calendar
-
-The L<DP::iCalendar::Manager> object.
-
-=item state
-
-A hashref to the state.conf configuration hash. You should not modify
-this, but use set/get_confval() instead.
-
-=item config
-
-A hashref to the dayplanner.conf configuration hash. This can not hold
-any configuration values other than those predefined. If you make changes
-make sure that they are valid.
-
-=item Gtk2Init
-
-Boolean, true if gtk2 has been initialized.
-
-=item i18n
-
-The L<DP::GeneralHelpers::i18n> object.
-
-=item version
-
-The Day Planner version number.
-
-=item confdir
-
-The path to the Day Planner configuration directory.
-
-=back
-
-=head1 BUILTIN SIGNALS
-
-=over
-
-=item CREATE_MENUITEMS
-
-NOTE: This signal is emitted BEFORE the INIT signal.
-
-This lets you modify the Day Planner menus. It shares the following
-temporary variables:
-
-=over
-
-=item MenuItems
-
-An arrayref to an array containing elements for a L<Gtk2::ItemFactory>.
-You can push additional items that you wish added to the menu onto this
-variable.
-
-=item HelpName
-
-The localized name of the help menu.
-
-=item EditName
-
-The localized name of the edit menu.
-
-=back
-
-=item BUILD_TOOLBAR
-
-NOTE: This signal is emitted BEFORE the INIT signal.
-
-This lets you add buttons to the Day Planner toolbar at the bottom of
-the main window. It shares the following temporary variables
-
-=over 
-
-=item Toolbar
-
-The L<Gtk2::Toolbar> object that represents the Day Planner toolbar widget.
-
-=item Tooltips
-
-The L<Gtk2::Tooltips> object used for the toolbar. Use this to add tooltips
-to any button you add, like this:
-
-	$myButton->set_tooltip($TooltipsObj,'My tooltip','');
-	$TooltipsObj->set_tip($myButton,'My tooltip');
-
-=back
-
-=item INIT
-
-This is the initialization signal. If your module needs to perform some initial tasks,
-this is where it should be done.
-
-For instance, a synchronization plugin will want to do its initial synchronization
-in this signal.
-
-=item SAVEDATA
-
-Emitted right before Day Planner writes iCalendar data to disk. Cannot
-be aborted.
-
-=item SHUTDOWN
-
-Emitted right before Day Planner is about to exit (before the gtk2 main loop
-is exited, and before writing state and iCalendar files).
-
-=back
-
-=head1 SEE ALSO
-
-For program documentation: 
-L<dayplanner> L<dayplanner-daemon(1)> L<dayplanner-notifier(1)>
-
-For API documentation see:
-L<DP::iCalendar> L<DP::iCalendar::Manager> L<Date::HolidayParser>
-L<DP::GeneralHelpers> L<DP::CoreModules::PluginFunctions>
-
-=head1 LICENSE AND COPYRIGHT
-
-Copyright (C) Eskild Hustvedt 2006, 2007, 2008, 2009
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see L<http://www.gnu.org/licenses/>.
+See L<DP::Plugin> for the Day Planner plugin documentation
