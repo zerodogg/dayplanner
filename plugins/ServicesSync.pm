@@ -39,15 +39,15 @@ sub earlyInit
 	}
 
 	# Register our signals
-	$this->register_signals(qw(DPS_ENTERPREFS DPS_PRE_SYNCHRONIZE DPS_POST_SYNCHRONIZE));
+	$this->p_register_signals(qw(DPS_ENTERPREFS DPS_PRE_SYNCHRONIZE DPS_POST_SYNCHRONIZE));
 	# Connect to signals
-	#$this->signal_connect('SAVEDATA',$this,'synchronize');
-	$this->signal_connect('INIT' => sub { $this->synchronize });
-	$this->signal_connect('SHUTDOWN' => sub { $this->synchronize });
-	$this->signal_connect('CREATE_MENUITEMS' => sub { $this->mkmenu });
-	$this->signal_connect('DPS_ENTERPREFS' => sub { $this->PreferencesWindow });
+	#$this->p_signal_connect('SAVEDATA',$this,'synchronize');
+	$this->p_signal_connect('INIT' => sub { $this->synchronize });
+	$this->p_signal_connect('SHUTDOWN' => sub { $this->synchronize });
+	$this->p_signal_connect('CREATE_MENUITEMS' => sub { $this->mkmenu });
+	$this->p_signal_connect('DPS_ENTERPREFS' => sub { $this->PreferencesWindow });
 
-	$this->{i18n} = $this->get_plugin_var('i18n');
+	$this->{i18n} = $this->p_get_var('i18n');
 
 	return $this;
 }
@@ -55,10 +55,10 @@ sub earlyInit
 sub mkmenu
 {
 	my $this = shift;
-	my $MenuItems = $this->get_plugin_var('menu_preferences');
-	my $i18n = $this->get_plugin_var('i18n');
+	my $MenuItems = $this->p_get_var('menu_preferences');
+	my $i18n = $this->p_get_var('i18n');
 	# This is our menu item
-	my $menu =  [ '/'.$i18n->get('_Synchronization') ,undef, sub { $this->signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
+	my $menu =  [ '/'.$i18n->get('_Synchronization') ,undef, sub { $this->p_signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;
@@ -68,20 +68,20 @@ sub synchronize
 {
 	my $this = shift;
 	# Make sure that DPS is enabled in the config
-	if(not (defined($this->get_confval('DPS_enable')) and $this->get_confval('DPS_enable') eq "1"))
+	if(not (defined($this->p_get_confval('DPS_enable')) and $this->p_get_confval('DPS_enable') eq "1"))
 	{
 		return;
 	}
-	$this->signal_emit('DPS_PRE_SYNCHRONIZE');
+	$this->p_signal_emit('DPS_PRE_SYNCHRONIZE');
 	$this->DPS_Perform('SYNC');
-	$this->signal_emit('DPS_POST_SYNCHRONIZE');
+	$this->p_signal_emit('DPS_POST_SYNCHRONIZE');
 }
 
 sub PreferencesWindow
 {
 	my $this = shift;
-	my $i18n = $this->get_plugin_var('i18n');
-	my $MainWindow = $this->get_plugin_var('MainWindow');
+	my $i18n = $this->p_get_var('i18n');
+	my $MainWindow = $this->p_get_var('MainWindow');
 	$MainWindow->set_sensitive(0);
 	my $PreferencesWindow = Gtk2::Window->new();
 	$PreferencesWindow->set_modal(1);
@@ -103,12 +103,12 @@ sub PreferencesWindow
 	# ==================================================================
 	
 	# Get and set the values we're going to use
-	my $Host = $this->get_confval('DPS_host') ? $this->get_confval('DPS_host') : '';
-	my $Port = $this->get_confval('DPS_port') ? $this->get_confval('DPS_port') : 4435;
-	my $Username = $this->get_confval('DPS_user') ? $this->get_confval('DPS_user') : '';
-	my $Password = $this->get_confval('DPS_pass') ? $this->get_confval('DPS_pass') : '';
+	my $Host = $this->p_get_confval('DPS_host') ? $this->p_get_confval('DPS_host') : '';
+	my $Port = $this->p_get_confval('DPS_port') ? $this->p_get_confval('DPS_port') : 4435;
+	my $Username = $this->p_get_confval('DPS_user') ? $this->p_get_confval('DPS_user') : '';
+	my $Password = $this->p_get_confval('DPS_pass') ? $this->p_get_confval('DPS_pass') : '';
 	$Password = decode_base64(decode_base64($Password));
-	my $DPSWasStatus = $this->get_confval('DPS_enable');
+	my $DPSWasStatus = $this->p_get_confval('DPS_enable');
 
 	# Create the vbox
 	my $Sync_VBox = Gtk2::VBox->new();
@@ -162,13 +162,13 @@ sub PreferencesWindow
 	$Sync_VBox->pack_start($EnableDisableCButton,0,0,0);
 	$EnableDisableCButton->signal_connect('toggled' => sub {
 			if($EnableDisableCButton->get_active) {
-					$this->set_confval('DPS_enable',1);
+					$this->p_set_confval('DPS_enable',1);
 					$Config_Table->set_sensitive(1);
 			} else {
-				$this->set_confval('DPS_enable',0);
+				$this->p_set_confval('DPS_enable',0);
 				$Config_Table->set_sensitive(0);
 			}});
-	if($this->get_confval('DPS_enable')) {
+	if($this->p_get_confval('DPS_enable')) {
 		$EnableDisableCButton->set_active(1);
 		$EnableDisableCButton->signal_emit('toggled');
 	} else {
@@ -244,15 +244,15 @@ sub PreferencesWindow
 	# FINALIZE WINDOW
 	# ==================================================================
 	my $ClosePerform = sub {
-			$this->set_confval('DPS_user',$UserEntry->get_text());
-			$this->set_confval('DPS_pass',encode_base64(encode_base64($PasswordEntry->get_text())));
-			$this->set_confval('DPS_host',$HostEntry->get_text());
-			$this->set_confval('DPS_port',$PortSpinner->get_value());
+			$this->p_set_confval('DPS_user',$UserEntry->get_text());
+			$this->p_set_confval('DPS_pass',encode_base64(encode_base64($PasswordEntry->get_text())));
+			$this->p_set_confval('DPS_host',$HostEntry->get_text());
+			$this->p_set_confval('DPS_port',$PortSpinner->get_value());
 			# Make sure that the proper DPS settings are in place
-			if($this->get_confval('DPS_enable')) {
-				if(not $this->get_confval('DPS_user') or not $this->get_confval('DPS_pass') or not $this->get_confval('DPS_host') or not $this->get_confval('DPS_port')) {
+			if($this->p_get_confval('DPS_enable')) {
+				if(not $this->p_get_confval('DPS_user') or not $this->p_get_confval('DPS_pass') or not $this->p_get_confval('DPS_host') or not $this->p_get_confval('DPS_port')) {
 					DPError($i18n->get('You have not entered the information required for synchronization to be enabled, it has been disabled.'));
-					$this->set_confval('DPS_enable',0);
+					$this->p_set_confval('DPS_enable',0);
 				}
 			}
 			$PreferencesWindow->hide();
@@ -302,7 +302,7 @@ sub DPS_Error {
 sub DPS_Status {
 	my $this = shift;
 	my ($Text, $Completed) = @_;
-	return unless($this->get_plugin_var('Gtk2Init'));
+	return unless($this->p_get_var('Gtk2Init'));
 	if(defined($this->{ProgressWin})) {
 		$this->{ProgressWin}->{ProgressBar}->set_fraction($Completed);
 		$this->{ProgressWin}->{ProgressBar}->set_text($Text);
@@ -314,8 +314,8 @@ sub DPS_Status {
 # Usage: DPS_Upload();
 sub DPS_Upload {
 	my $this = shift;
-	my $iCalendar = $this->get_plugin_var('calendar');
-	my $LastMD5 = $this->get_confval('DPS_LastMD5') ? $this->get_confval('DPS_LastMD5') : 'undef';
+	my $iCalendar = $this->p_get_var('calendar');
+	my $LastMD5 = $this->p_get_confval('DPS_LastMD5') ? $this->p_get_confval('DPS_LastMD5') : 'undef';
 	my $SendData = encode_base64($iCalendar->get_rawdata(),'');
 	chomp($SendData);
 	my $MD5 = md5_base64($SendData);
@@ -333,7 +333,7 @@ sub DPS_Upload {
 		return(undef);
 	}
 	# We successfully uploaded the data. So set DPS_LastMD5 and return true
-	$this->set_confval('DPS_LastMD5',$MD5);
+	$this->p_set_confval('DPS_LastMD5',$MD5);
 	return(1);
 }
 
@@ -375,7 +375,7 @@ sub DPS_Download {
 			$MainData =~ s/\r//g;
 			push(@DataArray, $_) foreach(split(/\n/,$MainData));
 			$MainData = undef;
-			my $iCalendar = $this->get_plugin_var('calendar');
+			my $iCalendar = $this->p_get_var('calendar');
 			# If we're in merge mode then enable SMART MERGE and then add
 			# the file, if not then clean and add the file
 			my $iCalendarMain = $iCalendar->get_primary();
@@ -391,7 +391,7 @@ sub DPS_Download {
 				$iCalendarMain->addfile(\@DataArray);
 			}
 			# Download succesful. Set DPS_LastMD5
-			$this->set_confval('DPS_LastMD5',$MD5);
+			$this->p_set_confval('DPS_LastMD5',$MD5);
 			UpdatedData();
 			return(1);
 		}
@@ -407,14 +407,14 @@ sub DPS_Download {
 sub DPS_DataSync {
 	my $this = shift;
 	$this->DPS_Status($this->{i18n}->get('Synchronizing'),0.2);
-	my $iCalendar = $this->get_plugin_var('calendar');
+	my $iCalendar = $this->p_get_var('calendar');
 	# Get information we need
 	#	The server's data MD5 sum
 	my $ServerMD5 = $this->DPS_DataSegment('GET_MD5');
 	#	The MD5 sum of our current local data
 	my $LocalMD5 = md5_base64(encode_base64($iCalendar->get_rawdata(),""));
 	#	The MD5 sum of the data we last uploaded
-	my $LastUpMD5 = $this->get_confval('DPS_LastMD5') ? $this->get_confval('DPS_LastMD5') : 'undef';
+	my $LastUpMD5 = $this->p_get_confval('DPS_LastMD5') ? $this->p_get_confval('DPS_LastMD5') : 'undef';
 
 	# Okay, the required information is available.
 	# First check if our current local MD5 sum matches the one on the server.
@@ -487,14 +487,14 @@ sub DPS_Log {
 #	...
 sub DPS_Perform {
 	my $this = shift;
-	my $MainWindow = $this->get_plugin_var('MainWindow');
+	my $MainWindow = $this->p_get_var('MainWindow');
 	# The function we are going to perform
 	my $Function = shift;
 	Assert($Function =~ /^(SYNC)$/);
 	# A coderef to the code which we need to run to close the GUI
 	# dialogues used.
 	my $GuiEnded = sub {
-		return unless($this->get_plugin_var('Gtk2Init'));
+		return unless($this->p_get_var('Gtk2Init'));
 		DP_DestroyProgressWin($this->{ProgressWin});
 		if(defined($this->{Error})) {
 			DPError($this->{i18n}->get_advanced("An error occurred with the Day Planner services:\n\n%(error)",{ error => $this->{Error}}));
@@ -506,23 +506,23 @@ sub DPS_Perform {
 
 	# Verify that all required options are set in the config
 	foreach my $Option (qw(host port user pass)) {
-		unless(defined($this->get_confval("DPS_$Option")))
+		unless(defined($this->p_get_confval("DPS_$Option")))
 		{
 			DPIntWarn("DPS enabled but the setting DPS_$Option is missing. Disabling.");
-			$this->set_confval("DPS_$Option",0);
+			$this->p_set_confval("DPS_$Option",0);
 			return(undef);
 		} else {
-			$this->{$Option} = $this->get_confval("DPS_$Option");
+			$this->{$Option} = $this->p_get_confval("DPS_$Option");
 		}
 	}
 	# Create the progress window
-	if($this->get_plugin_var('Gtk2Init')) {
+	if($this->p_get_var('Gtk2Init')) {
 		$MainWindow->set_sensitive(0);
 		$this->{ProgressWin} = DPCreateProgressWin($this->{i18n}->get('Services'), $this->{i18n}->get('Initializing'));
 	}
 	# Open up the logfile if it isn't open. This should be left open for the
 	# entirety of the DPS session.
-	my $SaveToDir = $this->get_plugin_var('confdir');
+	my $SaveToDir = $this->p_get_var('confdir');
 	if(not defined($this->{Log_FH})) {
 		open($this->{Log_FH}, '>', "$SaveToDir/services.log");
 		chmod(oct(600),"$SaveToDir/services.log");
@@ -597,7 +597,7 @@ sub DPS_Connect {
 	# Authentication
 	# First verify the API level
 	my $APIREPLY = $this->DPS_DataSegment("APILEVEL $DPS_APILevel");
-	return(undef) if $this->DPS_ErrorIfNeeded('OK', $APIREPLY, sub { $this->DPS_Disconnect();  $this->DPS_Error($this->{i18n}->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version => $this->get_plugin_var('version')}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
+	return(undef) if $this->DPS_ErrorIfNeeded('OK', $APIREPLY, sub { $this->DPS_Disconnect();  $this->DPS_Error($this->{i18n}->get_advanced("The Day Planner services server you are connecting to does not support this version of Day Planner (%(version)).", { version => $this->p_get_var('version')}), "API error received from the server (my APILEVEL is $DPS_APILevel).");});
 	# Send AUTH
 	my $AUTHREPLY = $this->DPS_DataSegment("AUTH $User $Password");
 	# If AUTH did not return OK then it failed and we just return undef.

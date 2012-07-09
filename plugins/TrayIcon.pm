@@ -26,9 +26,9 @@ use DP::CoreModules::PluginFunctions qw(DPError DetectImage QuitSub);
 sub earlyInit
 {
     my $this = shift;
-	$this->register_signals(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
-	$this->signal_connect('INIT' => sub { $this->initTrayIcon });
-	$this->signal_connect('IPC_IN' => sub { $this->handleIPC });
+	$this->p_register_signals(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
+	$this->p_signal_connect('INIT' => sub { $this->initTrayIcon });
+	$this->p_signal_connect('IPC_IN' => sub { $this->handleIPC });
 	$this->{mainwin_x} = undef;
 	$this->{mainwin_y} = undef;
 	return $this;
@@ -37,20 +37,20 @@ sub earlyInit
 sub handleIPC
 {
 	my $this = shift;
-	my $request = $this->get_plugin_var('IPC_REQUEST');
+	my $request = $this->p_get_var('IPC_REQUEST');
 	return if not $request =~ s/^ALIVE\s+//;
 	$request =~ s/\s+//g;
 	if (not $request eq $ENV{DISPLAY})
 	{
 		return;
 	}
-	my $mainWin = $this->get_plugin_var('MainWindow');
+	my $mainWin = $this->p_get_var('MainWindow');
 	if ($mainWin->visible)
 	{
 		return;
 	}
 	# Ok, we're going to assume handling of this signal, so abort the rest
-	$this->set_plugin_var('IPC_REPLY','ALIVE_ONDISPLAY');
+	$this->p_set_var('IPC_REPLY','ALIVE_ONDISPLAY');
 	$this->toggleMainWinVisibility();
 	$this->abort();
 }
@@ -58,16 +58,16 @@ sub handleIPC
 sub toggleMainWinVisibility
 {
 	my $this = shift;
-	my $mainWin = $this->get_plugin_var('MainWindow');
+	my $mainWin = $this->p_get_var('MainWindow');
 	if ($mainWin->visible)
 	{
-		$this->signal_emit('MINIMIZE_TO_TRAY');
+		$this->p_signal_emit('MINIMIZE_TO_TRAY');
 		($this->{mainwin_x}, $this->{mainwin_y}) = $mainWin->get_position();
 		$mainWin->hide;
 	}
 	else
 	{
-		$this->signal_emit('SHOW_FROM_TRAY');
+		$this->p_signal_emit('SHOW_FROM_TRAY');
 		$mainWin->show;
 		if(defined $this->{mainwin_x} and defined $this->{mainwin_y})
 		{
@@ -90,7 +90,7 @@ sub initTrayIcon
 	my $eventbox = Gtk2::EventBox->new;
 	$eventbox->add( $image );
 	$icon->add($eventbox);
-	my $mainWin = $this->get_plugin_var('MainWindow');
+	my $mainWin = $this->p_get_var('MainWindow');
 	$eventbox->signal_connect('button_press_event' => sub { 
 			if ( $_[ 1 ]->button == 3 ) {
 				$this->rightClickMenu($_[1])
@@ -115,7 +115,7 @@ sub initTrayIcon
 sub rightClickMenu
 {
 	my($self,$event) = @_;
-	my $i18n = $self->get_plugin_var('i18n');
+	my $i18n = $self->p_get_var('i18n');
 	my $PopupWidget = Gtk2::Menu->new();
 	my $quit = Gtk2::ImageMenuItem->new_from_stock('gtk-quit');
 	$quit->show();

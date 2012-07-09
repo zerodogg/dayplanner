@@ -1,3 +1,19 @@
+# Day Planner plugin system
+# Copyright (C) Eskild Hustvedt 2012
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package DP::Plugin;
 use Carp qw(croak);
 use Moo;
@@ -9,79 +25,79 @@ has '__plugin' => (
     required => 1,
 );
 
-sub register_signals
+sub p_register_signals
 {
     my $this = shift;
     return $this->__plugin->register_signals(@_);
 }
 
-sub set_plugin_var
+sub p_set_var
 {
     my $this = shift;
     return $this->__plugin->set_var(@_);
 }
 
-sub set_plugin_tempvar
+sub p_set_tempvar
 {
     my $this = shift;
     return $this->__plugin->set_tempvar(@_);
 }
 
-sub get_plugin_var
+sub p_get_var
 {
     my $this = shift;
     return $this->__plugin->get_var(@_);
 }
 
-sub delete_plugin_var
+sub p_delete_var
 {
     my $this = shift;
     return $this->__plugin->delete_plugin_var(@_);
 }
 
-sub get_confval
+sub p_get_confval
 {
     my $this = shift;
     return $this->__plugin->get_confval($this,@_);
 }
 
-sub set_confval
+sub p_set_confval
 {
     my $this = shift;
     return $this->__plugin->set_confval($this,@_);
 }
 
-sub signal_connect
+sub p_signal_connect
 {
     my $this = shift;
     my $signal = shift;
     my $codeRef = shift;
     if (!ref($codeRef) || ref($codeRef) ne 'CODE')
     {
-        $this->__croak('Invalid usage of signal_connect(): Second parameter is not a coderef');
+        $this->__croak('Invalid usage of p_signal_connect(): Second parameter is not a coderef');
     }
     return $this->__plugin->signal_connect($this,$signal,$codeRef,@_);
 }
 
-sub signal_connect_ifavailable
+sub p_signal_connect_ifavailable
 {
     my $this = shift;
     my $signal = shift;
     my $codeRef = shift;
     if (!ref($codeRef) || ref($codeRef) ne 'CODE')
     {
-        $this->__croak('Invalid usage of signal_connect_ifavailable(): Second parameter is not a coderef');
+        $this->__croak('Invalid usage of p_signal_connect_ifavailable(): Second parameter is not a coderef');
     }
     return $this->__plugin->signal_connect_ifavailable($this,$signal,$codeRef,@_);
 }
 
-sub signal_emit
+sub p_signal_emit
 {
     my $this = shift;
     return $this->__plugin->signal_emit(@_);
 }
 
-sub get_plugin_object
+sub p_get_plugin_object
 {
     my $this = shift;
     return $this->__plugin;
@@ -127,22 +143,26 @@ section for more information about the INIT signal.
 Extending DP::Plugin grants you a number of methods that allows you to interact
 with Day Planner. All of these methods are available on your object (ie. from $self).
 
+Note that all methods are prefixed by either p_ (for public plugin methods) or
+__ (for private data), so you may name your methods any way you want as long as
+they don't crash with these two namespaces.
+
 The following methods are made available:
 
 =over
 
-=item register_signals(B<ARRAY>)
+=item p_register_signals(B<ARRAY>)
 
 This method takes an array of zero or more elements as its parameter.
 It is used to register a signal (not a handler) for use. You should
 call this if your plugin will emit signals. The plugin handler ignores
 all emitted signals that has not been previously registered.
 
-=item signal_emit(B<STRING> signal)
+=item p_signal_emit(B<STRING> signal)
 
 Emits the signal supplied, calling all listeners in turn.
 
-=item signal_connect(B<STRING> signal, B<CODEREF> callback)
+=item p_signal_connect(B<STRING> signal, B<CODEREF> callback)
 
 Connects to the supplied signal. Whenever that signal is emitted, the
 supplied coderef will be done.
@@ -150,21 +170,21 @@ supplied coderef will be done.
 Callbacks are called inside of an eval, so any die()s or crashes will be
 caught by the plugin handler.
 
-=item signal_connect_ifavailable(B<STRING> signal, B<CODEREF> callback)
+=item p_signal_connect_ifavailable(B<STRING> signal, B<CODEREF> callback)
 
-The same as signal_connect, but this will not attach to (or warn about)
+The same as p_signal_connect, but this will not attach to (or warn about)
 unregistered signals, instead it will silently ignore the request.
 
 Its primary use is connecting to signals that belong to another plugin,
 and it should not be used within the constructor, but within the INIT
 signal (see the I<BUILTIN SIGNALS> section).
 
-=item set_plugin_var(B<STRING> variable name, B<VARIABLE> content)
+=item p_set_var(B<STRING> variable name, B<VARIABLE> content)
 
 This is used for sharing data. Sets the variable supplied to the content
 supplied.
 
-=item get_plugin_var(B<STRING> variable name)
+=item p_get_var(B<STRING> variable name)
 
 Gets the contents of the shared variable supplied. Various signals
 can offer temporary access to various data structures. These are outlined
@@ -175,23 +195,23 @@ in the documentation for the signal in question.
 Deletes the variable supplied. You should never use this to delete
 content that is shared by anything other than your plugin.
 
-=item set_plugin_tempvar(B<STRING> variable name, B<VARIABLE> content)
+=item p_set_tempvar(B<STRING> variable name, B<VARIABLE> content)
 
 This is the same as set_var() except that this version delete_var()s the
 variable after the next signal has been emitted, sharing the data only
 througout a single signal.
 
-=item set_confval(B<STRING> name, B<STRING> value)
+=item p_set_confval(B<STRING> name, B<STRING> value)
 
 Sets the configuration value name to value for THIS plugin. The plugin object
 automatically handles making it unique for your plugin, so you do not need to
 ensure that the name is unique for the entire program, only for your plugin.
 The configuration values are automatically saved and loaded by Day Planner.
 
-=item get_confval(B<STRING> name)
+=item p_get_confval(B<STRING> name)
 
 Gets the configuration value supplied. This retrieves settings set using
-set_confval()
+p_set_confval()
 
 =item abort()
 
@@ -214,7 +234,7 @@ various generic helpers in L<DP::GeneralHelpers>.
 
 =head1 GLOBALLY SHARED VARIABLES
 
-These variables are available with get_plugin_var() throughout the lifetime of the
+These variables are available with p_get_var() throughout the lifetime of the
 application. Some of these variables are however not available before after the
 INIT signal has been emitted.
 
@@ -231,7 +251,7 @@ This is the main L<Gtk2::Calendar> widget displayed in the main
 Day Planner window. Not available before the INIT signal.
 
 NOTE: If you switch the date, you have to remember to call:
-I<$object->signal_emit('day-selected')> after you have switched it.
+I<$object->p_signal_emit('day-selected')> after you have switched it.
 Day Planner will not redraw the list of events until you do.
 
 =item calendar
@@ -241,7 +261,7 @@ The L<DP::iCalendar::Manager> object.
 =item state
 
 A hashref to the state.conf configuration hash. You should not modify
-this, but use set/get_confval() instead.
+this, but use set/p_get_confval() instead.
 
 =item config
 
