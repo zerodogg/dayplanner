@@ -35,13 +35,13 @@ sub earlyInit
     my $this = shift;
 	# Connect to the init sinal, this one will display a "Hello World" dialog box,
 	# as well as adding a temporary "Hello World" event.
-	$this->p_signal_connect('INIT' => sub { $this->helloWorld } );
+	$this->p_subscribe('INIT' => sub { $this->helloWorld } );
 	# Note that you can connect to a signal as many times as you'd like. This time
 	# we're connecting using init_plugin_handlers. This method initializes signals
 	# that are expored by other plugins.
-	$this->p_signal_connect('INIT' => sub { $this->init_plugin_handlers });
+	$this->p_subscribe('INIT' => sub { $this->init_plugin_handlers });
 	# And, when DP is shutting down, clean up after us.
-	$this->p_signal_connect('SHUTDOWN' => sub { $this->cleanWorld });
+	$this->p_subscribe('SHUTDOWN' => sub { $this->cleanWorld });
 }
 
 # This is the method that we're using to initialize some additional signal handlers
@@ -59,9 +59,9 @@ sub init_plugin_handlers
 	#
 	# We do this so that the user does not get our hello world event synchronized upstream,
 	# we remove the event before the sync is performed.
-	$this->p_signal_connect_ifavailable('DPS_PRE_SYNCHRONIZE' => sub { $this->cleanWorld });
+	$this->p_subscribe_ifavailable('DPS_PRE_SYNCHRONIZE' => sub { $this->cleanWorld });
 	# And after the sync has finished, we re-add it.
-	$this->p_signal_connect_ifavailable('DPS_POST_SYNCHRONIZE' => sub { $this->helloWorldMkEvent});
+	$this->p_subscribe_ifavailable('DPS_POST_SYNCHRONIZE' => sub { $this->helloWorldMkEvent});
 }
 
 # this is our hello world handler, it runs helloWorldMkEvent and displays a simple

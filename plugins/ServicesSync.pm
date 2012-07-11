@@ -39,13 +39,13 @@ sub earlyInit
 	}
 
 	# Register our signals
-	$this->p_register_signals(qw(DPS_ENTERPREFS DPS_PRE_SYNCHRONIZE DPS_POST_SYNCHRONIZE));
+	$this->p_register_events(qw(DPS_ENTERPREFS DPS_PRE_SYNCHRONIZE DPS_POST_SYNCHRONIZE));
 	# Connect to signals
-	#$this->p_signal_connect('SAVEDATA',$this,'synchronize');
-	$this->p_signal_connect('INIT' => sub { $this->synchronize });
-	$this->p_signal_connect('SHUTDOWN' => sub { $this->synchronize });
-	$this->p_signal_connect('CREATE_MENUITEMS' => sub { $this->mkmenu });
-	$this->p_signal_connect('DPS_ENTERPREFS' => sub { $this->PreferencesWindow });
+	#$this->p_subscribe('SAVEDATA',$this,'synchronize');
+	$this->p_subscribe('INIT' => sub { $this->synchronize });
+	$this->p_subscribe('SHUTDOWN' => sub { $this->synchronize });
+	$this->p_subscribe('CREATE_MENUITEMS' => sub { $this->mkmenu });
+	$this->p_subscribe('DPS_ENTERPREFS' => sub { $this->PreferencesWindow });
 
 	$this->{i18n} = $this->p_get_var('i18n');
 
@@ -58,7 +58,7 @@ sub mkmenu
 	my $MenuItems = $this->p_get_var('menu_preferences');
 	my $i18n = $this->p_get_var('i18n');
 	# This is our menu item
-	my $menu =  [ '/'.$i18n->get('_Synchronization') ,undef, sub { $this->p_signal_emit('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
+	my $menu =  [ '/'.$i18n->get('_Synchronization') ,undef, sub { $this->p_publish('DPS_ENTERPREFS'); },     0,  '<StockItem>',  'gtk-network'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;
@@ -72,9 +72,9 @@ sub synchronize
 	{
 		return;
 	}
-	$this->p_signal_emit('DPS_PRE_SYNCHRONIZE');
+	$this->p_publish('DPS_PRE_SYNCHRONIZE');
 	$this->DPS_Perform('SYNC');
-	$this->p_signal_emit('DPS_POST_SYNCHRONIZE');
+	$this->p_publish('DPS_POST_SYNCHRONIZE');
 }
 
 sub PreferencesWindow

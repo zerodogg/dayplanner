@@ -26,9 +26,9 @@ use DP::CoreModules::PluginFunctions qw(DPError DetectImage QuitSub);
 sub earlyInit
 {
     my $this = shift;
-	$this->p_register_signals(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
-	$this->p_signal_connect('INIT' => sub { $this->initTrayIcon });
-	$this->p_signal_connect('IPC_IN' => sub { $this->handleIPC });
+	$this->p_register_events(qw(MINIMIZE_TO_TRAY SHOW_FROM_TRAY));
+	$this->p_subscribe('INIT' => sub { $this->initTrayIcon(@_) });
+	$this->p_subscribe('IPC_IN' => sub { $this->handleIPC(@_) });
 	$this->{mainwin_x} = undef;
 	$this->{mainwin_y} = undef;
 	return $this;
@@ -37,7 +37,8 @@ sub earlyInit
 sub handleIPC
 {
 	my $this = shift;
-	my $request = $this->p_get_var('IPC_REQUEST');
+    my $data = shift;
+	my $request = $data->{message};
 	return if not $request =~ s/^ALIVE\s+//;
 	$request =~ s/\s+//g;
 	if (not $request eq $ENV{DISPLAY})
@@ -49,10 +50,10 @@ sub handleIPC
 	{
 		return;
 	}
-	# Ok, we're going to assume handling of this signal, so abort the rest
-	$this->p_set_var('IPC_REPLY','ALIVE_ONDISPLAY');
 	$this->toggleMainWinVisibility();
-	$this->abort();
+	# Ok, we're going to assume handling of this signal, so abort the rest
+    $data->{aborted} = 1;
+    $data->{reply} = 'ALIVE_ONDISPLAY';
 }
 
 sub toggleMainWinVisibility
@@ -61,13 +62,13 @@ sub toggleMainWinVisibility
 	my $mainWin = $this->p_get_var('MainWindow');
 	if ($mainWin->visible)
 	{
-		$this->p_signal_emit('MINIMIZE_TO_TRAY');
+		$this->p_publish('MINIMIZE_TO_TRAY');
 		($this->{mainwin_x}, $this->{mainwin_y}) = $mainWin->get_position();
 		$mainWin->hide;
 	}
 	else
 	{
-		$this->p_signal_emit('SHOW_FROM_TRAY');
+		$this->p_publish('SHOW_FROM_TRAY');
 		$mainWin->show;
 		if(defined $this->{mainwin_x} and defined $this->{mainwin_y})
 		{

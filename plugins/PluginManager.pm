@@ -34,10 +34,10 @@ sub earlyInit
 	$this->{pluginInfo} = {};
 
 	# Register the one signal we have
-	$this->p_register_signals(qw(SHOW_PLUGINMANAGER));
+	$this->p_register_events(qw(SHOW_PLUGINMANAGER));
 	# Connect to signals
-	$this->p_signal_connect('CREATE_MENUITEMS' => sub { $this->mkmenu });
-	$this->p_signal_connect('SHOW_PLUGINMANAGER' => sub { $this->ShowManager });
+	$this->p_subscribe('CREATE_MENUITEMS' => sub { $this->mkmenu(@_) });
+	$this->p_subscribe('SHOW_PLUGINMANAGER' => sub { $this->ShowManager(@_) });
 
 	$this->{i18n} = $this->p_get_var('i18n');
 	return $this;
@@ -46,10 +46,11 @@ sub earlyInit
 sub mkmenu
 {
 	my $this = shift;
-	my $MenuItems = $this->p_get_var('menu_preferences');
+    my $data = shift;
+	my $MenuItems = $data->{'preferences'};
 	my $i18n = $this->p_get_var('i18n');
 	# This is our menu item
-	my $menu =  [ '/'.$i18n->get('_Plugins') ,undef, sub { $this->p_signal_emit('SHOW_PLUGINMANAGER'); },     0,  '<StockItem>',  'gtk-properties'];
+	my $menu =  [ '/'.$i18n->get('_Plugins') ,undef, sub { $this->p_publish('SHOW_PLUGINMANAGER'); },     0,  '<StockItem>',  'gtk-properties'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;

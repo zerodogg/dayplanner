@@ -23,42 +23,28 @@ use File::Temp qw(tempdir);
 use File::Copy qw(copy);
 use Cwd qw(getcwd realpath);
 use DP::GeneralHelpers qw(LoadConfigFile);
+use Carp qw(carp);
 
 # Purpose: Create a new plugin instance
-# Usage: my $object = DP::iCalendar->new(\%ConfRef);
+# Usage: my $object = DP::iCalendar->new(\%ConfRef, $pubSub);
 sub new
 {
 	my $name = shift;
 	my $this = {};
 	bless($this,$name);
 	$this->{config} = shift;
+    $this->{pubSub} = shift;
 	$this->{stash} = {};
-	$this->{signals} = {};
 	$this->{loadedPlugins} = {};
-	$this->{tempVars} = [];
 	$this->{runningSignals} = [];
-	$this->{signalRunning} = {};
 	return $this;
 }
 
-sub register_signals
+sub register_events
 {
 	my $this = shift;
-	my @Signals = @_;
-	foreach(@Signals)
-	{
-		$this->{signals}{$_} = [];
-	}
+    $this->{pubSub}->register(@_);
 	return true;
-}
-
-sub set_tempvar
-{
-	my $this = shift;
-	my $name = shift;
-	my $content = shift;
-	push(@{$this->{tempVars}},$name);
-	return $this->set_var($name,$content);
 }
 
 sub set_var
@@ -107,31 +93,26 @@ sub get_confval
 	return $this->{config}->{$name};
 }
 
-sub signal_connect
+sub subscribe
 {
 	my $this = shift;
 	my $handlerModule = shift;
-	my $signal = shift;
+	my $event = shift;
     my $codeRef = shift;
-	if(not $this->{signals}{$signal})
-	{
-		$this->_warn('Plugin '.ref($handlerModule).' connected to unregistered signal: '.$signal);
-		$this->{signals}{$signal} = [];
-	}
-	push(@{$this->{signals}{$signal}}, { module => $handlerModule, codeRef => $codeRef});
+    $this->{pubSub}->subscribe($event,$codeRef);
 	return true;
 }
 
-sub signal_connect_ifavailable
+sub subscribe_ifavailable
 {
 	my $this = shift;
 	my $handlerModule = shift;
-	my $signal = shift;
-	if(not $this->{signals}{$signal})
-	{
-		return false;
-	}
-	return $this->signal_connect($handlerModule,$signal,@_);
+	my $event = shift;
+    if ($this->{pubSub}->registered($event))
+    {
+        return $this->subscribe($handlerModule,$event,@_);
+    }
+    return false;
 }
 
 sub set_searchpath
@@ -252,87 +233,10 @@ sub plugin_loaded
 	return false;
 }
 
-sub signal_emit
+sub publish
 {
 	my $this = shift;
-	my $signal = shift;
-	my $multi = false;
-
-	if ($this->{signalRunning}->{$signal})
-	{
-		$multi = true;
-		$this->_warn("Signal \"$signal\" emitted before another instance of the same signal has finished, tempvar and aborts will not work properly at all");
-	}
-
-	$this->{signalRunning}->{$signal} = {
-		tempVars => $this->{tempVars} ? $this->{tempVars} : [],
-		abort => 0
-	};
-	$this->{tempVars} = [];
-
-	push(@{$this->{runningSignals}},$signal);
-	my $info = $this->{signalRunning}->{$signal};
-
-	if ($this->{signals}{$signal})
-	{
-		my $repairIt = false;
-		foreach my $i (@{$this->{signals}{$signal}})
-		{
-            eval
-            {
-                $i->{codeRef}->();
-            };
-			my $e = $@;
-			if ($e)
-			{
-				chomp($e);
-				$this->_warn("Failure when emitting signal $signal: $e: ignoring and attempting to repair main app state");
-				$repairIt = true;
-			}
-		}
-
-		# Try to make sure the app itself is in a usable state
-		if ($repairIt)
-		{
-			my $w = $this->get_var('MainWindow');
-			if ($w)
-			{
-				$w->set_modal(false);
-				$w->set_sensitive(true);
-			}
-		}
-	}
-	else
-	{
-		$this->_warn('Attempted to emit unregistered signal (request refused): '.$signal);
-	}
-
-	# Delete temporary variables
-	foreach my $var(@{$info->{tempVars}})
-	{
-		$this->delete_var($var);
-	}
-
-	my $return = false;
-
-	if ($info->{abort})
-	{
-		$return = true;
-	}
-	if(not $multi)
-	{
-		delete($this->{signalRunning}->{$signal});
-	}
-	shift(@{$this->{runningSignals}});
-	return $return;
-}
-
-sub abort
-{
-	my $this = shift;
-	my $sig = $this->get_current_signal();
-	$this->{signalRunning}->{$sig}->{abort} = 1;
-	return true;
+    $this->{pubSub}->publish(@_);
 }
 
 sub install_plugin
@@ -383,16 +287,6 @@ sub STUB
     my ($stub_package, $stub_filename, $stub_line, $stub_subroutine, $stub_hasargs,
         $stub_wantarray, $evaltext, $is_require, $hints, $bitmask) = caller(1);
     warn "STUB: $stub_subroutine\n";
-}
-
-sub get_current_signal
-{
-	my $this = shift;
-	if (@{$this->{runningSignals}})
-	{
-		return $this->{runningSignals}->[-1];
-	}
-	return undef;
 }
 
 sub _warn

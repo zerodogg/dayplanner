@@ -25,22 +25,16 @@ has '__plugin' => (
     required => 1,
 );
 
-sub p_register_signals
+sub p_register_events
 {
     my $this = shift;
-    return $this->__plugin->register_signals(@_);
+    return $this->__plugin->register_events(@_);
 }
 
 sub p_set_var
 {
     my $this = shift;
     return $this->__plugin->set_var(@_);
-}
-
-sub p_set_tempvar
-{
-    my $this = shift;
-    return $this->__plugin->set_tempvar(@_);
 }
 
 sub p_get_var
@@ -67,34 +61,34 @@ sub p_set_confval
     return $this->__plugin->set_confval($this,@_);
 }
 
-sub p_signal_connect
+sub p_subscribe
 {
     my $this = shift;
-    my $signal = shift;
+    my $event = shift;
     my $codeRef = shift;
     if (!ref($codeRef) || ref($codeRef) ne 'CODE')
     {
-        $this->__croak('Invalid usage of p_signal_connect(): Second parameter is not a coderef');
+        $this->__croak('Invalid usage of p_subscribe(): Second parameter is not a coderef');
     }
-    return $this->__plugin->signal_connect($this,$signal,$codeRef,@_);
+    return $this->__plugin->subscribe($this,$event,$codeRef,@_);
 }
 
-sub p_signal_connect_ifavailable
+sub p_subscribe_ifavailable
 {
     my $this = shift;
-    my $signal = shift;
+    my $event = shift;
     my $codeRef = shift;
     if (!ref($codeRef) || ref($codeRef) ne 'CODE')
     {
-        $this->__croak('Invalid usage of p_signal_connect_ifavailable(): Second parameter is not a coderef');
+        $this->__croak('Invalid usage of p_subscribe_ifavailable(): Second parameter is not a coderef');
     }
-    return $this->__plugin->signal_connect_ifavailable($this,$signal,$codeRef,@_);
+    return $this->__plugin->subscribe_ifavailable($this,$event,$codeRef,@_);
 }
 
-sub p_signal_emit
+sub p_publish
 {
     my $this = shift;
-    return $this->__plugin->signal_emit(@_);
+    return $this->__plugin->publish(@_);
 }
 
 sub p_get_plugin_object
@@ -118,11 +112,11 @@ __END__
 =head1 INTRODUCTION
 
 Day Planner offers a plugin system that lets you hook into most parts of the
-program. The basic syntax is inspired from Gtk2's signals.
+program.
 
 All plugins are perl objects. These objects communicate with Day Planner
 via a special plugin object that it gets supplied. This plugin object gives
-access to internal data, and handles signal passing.
+access to internal data, and handles event passing.
 
 Day Planner comes with various plugins by default, ranging from the
 basic hello world to synchronization. Take a look at the source code
@@ -134,9 +128,9 @@ Day Planner plugins are L<Moo>-objects that extend DP::Plugin.
 
 A plugin can have an earlyInit method. This is run immediately after
 construction. In this method you should only do initialization that
-is required for your plugin to be operation before the INIT signal is
-emitted and it can finalize its initialization.  See the builtin signals
-section for more information about the INIT signal.
+is required for your plugin to be operation before the INIT event is
+emitted and it can finalize its initialization.  See the builtin events
+section for more information about the INIT event.
 
 =head1 THE PLUGIN METHODS
 
@@ -151,33 +145,37 @@ The following methods are made available:
 
 =over
 
-=item p_register_signals(B<ARRAY>)
+=item p_register(B<ARRAY>)
 
 This method takes an array of zero or more elements as its parameter.
-It is used to register a signal (not a handler) for use. You should
-call this if your plugin will emit signals. The plugin handler ignores
-all emitted signals that has not been previously registered.
+It is used to register a event (not a handler) for use. You should
+call this if your plugin will emit events. The plugin handler ignores
+all emitted events that has not been previously registered.
 
-=item p_signal_emit(B<STRING> signal)
+=item p_event_emit(B<STRING> event)
 
-Emits the signal supplied, calling all listeners in turn.
+Emits the event supplied, calling all listeners in turn.
 
-=item p_signal_connect(B<STRING> signal, B<CODEREF> callback)
+=item p_subscribe(B<STRING> event, B<CODEREF> callback)
 
-Connects to the supplied signal. Whenever that signal is emitted, the
+Subscribes to the supplied event. Whenever that event is emitted, the
 supplied coderef will be done.
 
 Callbacks are called inside of an eval, so any die()s or crashes will be
 caught by the plugin handler.
 
-=item p_signal_connect_ifavailable(B<STRING> signal, B<CODEREF> callback)
+=item p_subscribe_ifavailable(B<STRING> event, B<CODEREF> callback)
 
-The same as p_signal_connect, but this will not attach to (or warn about)
-unregistered signals, instead it will silently ignore the request.
+The same as p_subscribe, but this will not attach to (or warn about)
+unregistered events, instead it will silently ignore the request.
 
-Its primary use is connecting to signals that belong to another plugin,
+Its primary use is connecting to events that belong to another plugin,
 and it should not be used within the constructor, but within the INIT
-signal (see the I<BUILTIN SIGNALS> section).
+event (see the I<BUILTIN EVENTS> section).
+
+If there's any data that is provided by the emitter, it is provided
+to callback as a hashref. See the BUILTIN EVENTS section for information
+about what data each event gives you.
 
 =item p_set_var(B<STRING> variable name, B<VARIABLE> content)
 
@@ -186,20 +184,12 @@ supplied.
 
 =item p_get_var(B<STRING> variable name)
 
-Gets the contents of the shared variable supplied. Various signals
-can offer temporary access to various data structures. These are outlined
-in the documentation for the signal in question.
+Gets the contents of the shared variable supplied.
 
 =item delete_plugin_var(B<STRING> variable name)
 
 Deletes the variable supplied. You should never use this to delete
 content that is shared by anything other than your plugin.
-
-=item p_set_tempvar(B<STRING> variable name, B<VARIABLE> content)
-
-This is the same as set_var() except that this version delete_var()s the
-variable after the next signal has been emitted, sharing the data only
-througout a single signal.
 
 =item p_set_confval(B<STRING> name, B<STRING> value)
 
@@ -212,12 +202,6 @@ The configuration values are automatically saved and loaded by Day Planner.
 
 Gets the configuration value supplied. This retrieves settings set using
 p_set_confval()
-
-=item abort()
-
-Tells the plugin handler that the action that triggered the signal should stop
-processing after the signal has finished. Use with care. Note that not all signals
-will honor an abort() call (ie. you can't abort for instance SHUTDOWN and SAVEDATA).
 
 =back
 
@@ -236,22 +220,22 @@ various generic helpers in L<DP::GeneralHelpers>.
 
 These variables are available with p_get_var() throughout the lifetime of the
 application. Some of these variables are however not available before after the
-INIT signal has been emitted.
+INIT event has been emitted.
 
 =over
 
 =item MainWindow
 
 This is the main L<Gtk2::Window> for Day Planner. Not available
-before the INIT signal.
+before the INIT event.
 
 =item CalendarWidget
 
 This is the main L<Gtk2::Calendar> widget displayed in the main
-Day Planner window. Not available before the INIT signal.
+Day Planner window. Not available before the INIT event.
 
 NOTE: If you switch the date, you have to remember to call:
-I<$object->p_signal_emit('day-selected')> after you have switched it.
+I<$object->p_event_emit('day-selected')> after you have switched it.
 Day Planner will not redraw the list of events until you do.
 
 =item calendar
@@ -287,16 +271,16 @@ The path to the Day Planner configuration directory.
 
 =back
 
-=head1 BUILTIN SIGNALS
+=head1 BUILTIN EVENTS
 
 =over
 
 =item CREATE_MENUITEMS
 
-NOTE: This signal is emitted BEFORE the INIT signal.
+NOTE: This event is emitted BEFORE the INIT event.
 
-This lets you modify the Day Planner menus. It shares the following
-temporary variables:
+This lets you modify the Day Planner menus.
+It gives a hashref with the following keys to the callbacks:
 
 =over
 
@@ -311,18 +295,19 @@ at the top, addRemove in the middle, and preferences at the bottom).
 
 =item BUILD_TOOLBAR
 
-NOTE: This signal is emitted BEFORE the INIT signal.
+NOTE: This event is emitted BEFORE the INIT event.
 
 This lets you add buttons to the Day Planner toolbar at the top of
-the main window. It shares the following temporary variables
+the main window. It gives a hashref with the following keys to the
+callbacks:
 
 =over 
 
-=item Toolbar
+=item toolbar
 
 The L<Gtk2::Toolbar> object that represents the Day Planner toolbar widget.
 
-=item Tooltips
+=item tooltips
 
 The L<Gtk2::Tooltips> object used for the toolbar. Use this to add tooltips
 to any button you add, like this:
@@ -334,16 +319,40 @@ to any button you add, like this:
 
 =item INIT
 
-This is the initialization signal. If your module needs to perform some initial tasks,
+This is the initialization event. If your module needs to perform some initial tasks,
 this is where it should be done.
 
 For instance, a synchronization plugin will want to do its initial synchronization
-in this signal.
+in this event.
+
+=item IPC_IN
+
+Emitted when an IPC call is received, before it is processed. It gives a hashref
+with the following keys to the callbacks:
+
+=over
+
+=item message
+
+The IPC message received
+
+=item aborted
+
+Always 0 by default. You can set this key to 1 to abort Day Planner's handling
+of the IPC request (ie. to indicate that it was mean for you, and you have
+handled it).
+
+=item reply
+
+If you set aborted to 1, then you will also need to set reply to the reply
+you want Day Planner to send. If you don't set reply, then Day Planner's
+internal handling will not be aborted.
+
+=back
 
 =item SAVEDATA
 
-Emitted right before Day Planner writes iCalendar data to disk. Cannot
-be aborted.
+Emitted right before Day Planner writes iCalendar data to disk.
 
 =item SHUTDOWN
 

@@ -43,6 +43,7 @@ use DP::iCalendar::Manager;		# Support for multiple iCalendars using a single ob
 use DP::GeneralHelpers qw(DPIntWarn DPIntInfo WriteConfigFile LoadConfigFile PrefixZero);
 use DP::GeneralHelpers::IPC;
 use DP::GeneralHelpers::I18N;
+use PubSub::Tiny;
 
 # Scalars
 our $Version = '0.12';
@@ -58,6 +59,7 @@ my $i18n;
 my $iCalendar;						# The DP::iCalendar::Manager object.
 my $IPC_Socket;
 my $plugin;
+my $pubSub;
 
 # Arrays
 # FIXME: Unused
@@ -238,8 +240,8 @@ sub Daemon_SendData
 sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
-	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig);
-	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
+	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig, $pubSub);
+#	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -377,7 +379,7 @@ sub FirstStartup
 # Usage: SaveMainData();
 sub SaveMainData
 {
-	$plugin->signal_emit('SAVEDATA');
+	$pubSub->publish('SAVEDATA');
 	$iCalendar->write();	# TODO: Check return value
 	# This to avoid unneccesary overhead in the daemon reloading files needlessly
 	Daemon_SendData('RELOAD_DATA');
@@ -891,19 +893,17 @@ sub IPC_Handler
 	my $Message = shift;
 	chomp($Message);
 
-	$plugin->delete_var('IPC_REPLY');
-	$plugin->set_tempvar('IPC_REQUEST',$Message);
-	my $aborted = $plugin->signal_emit('IPC_IN');
-	if ($aborted)
+    my $data = { message => $Message, aborted => 0, reply => undef };
+	$pubSub->publish('IPC_IN',$data);
+	if ($data->{aborted})
 	{
-		if (my $ret = $plugin->get_var('IPC_REPLY'))
+		if (my $ret = $data->{reply})
 		{
-			$plugin->delete_var('IPC_REPLY');
 			return $ret;
 		}
 		else
 		{
-			DPIntWarn('A plugin aborted the IPC_Handler but did not ->set_var("IPC_REPLY",...), don\'t know what to reply, so ignoring the abort request');
+			DPIntWarn('Something aborted the IPC_Handler but did not set reply, don\'t know what to reply, so ignoring the abort request');
 		}
 	}
 
@@ -2677,7 +2677,7 @@ sub QuitSub
 {
 	my $type = shift;
 	$MainWindow->set_sensitive(0);
-	$plugin->signal_emit('SHUTDOWN');
+	$pubSub->publish('SHUTDOWN');
 	my $SaveData = SaveMainData();
 	if ($SaveData eq 'SAVE_FAILED')
 	{
@@ -4695,10 +4695,7 @@ sub DrawMainWindow
 	my $Menu_ItemFactory = Gtk2::ItemFactory->new('Gtk2::Menu', '<main>', $Menu_AccelGroup);
 
 	# Let plugins edit it
-	$plugin->set_tempvar('menu_importExport',\@importExport);
-	$plugin->set_tempvar('menu_addRemove',\@addRemove);
-	$plugin->set_tempvar('menu_preferences',\@preferences);
-	$plugin->signal_emit('CREATE_MENUITEMS');
+	$pubSub->publish('CREATE_MENUITEMS', { importExport => \@importExport, addRemove => \@addRemove, preferences => \@preferences });
 
     my @MenuItems;
     push(@MenuItems,
@@ -4791,9 +4788,7 @@ sub DrawMainWindow
 	$ToolbarEditButton->show();
 
 	# Let plugins add buttons
-	$plugin->set_tempvar('Toolbar',$Toolbar);
-	$plugin->set_tempvar('Tooltips',$Tooltips);
-	$plugin->signal_emit('BUILD_TOOLBAR');
+	$pubSub->publish('BUILD_TOOLBAR', { toolbar => $Toolbar, tooltips => $Tooltips });
 
 
 	# Add button
@@ -5009,6 +5004,9 @@ sub InitDPCore
 		AlreadyRunningDP($Client);
 		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	}
+    # Init pubsub
+    $pubSub = PubSub::Tiny->new(strict => 1);
+	$pubSub->register(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
 	# Init plugins
 	init_plugins();
 	# Draw the main window
@@ -5044,7 +5042,7 @@ sub InitDPCore
 
 	$plugin->set_var('MainWindow',$MainWindow);
 	$plugin->set_var('CalendarWidget',$CalendarWidget);
-	$plugin->signal_emit('INIT');
+	$pubSub->publish('INIT');
 	return true;
 }
 
