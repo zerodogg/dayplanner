@@ -439,7 +439,7 @@ sub _extractPluginPackage
 	my $ret;
 	{
 		open(my $stdout, '>&',\*STDOUT);
-		open(my $stderr, '>&',\*STDOUT);
+		open(my $stderr, '>&',\*STDERR);
 		open(STDOUT,'>','/dev/null');
 		open(STDERR,'>','/dev/null');
 		$ret = system('tar','-jxf',$file);
