@@ -18,8 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package DP::Plugin::PluginManager;
-use strict;
-use warnings;
+use Moo;
+extends 'DP::Plugin';
 use Gtk2;
 use Gtk2::SimpleList;
 use DP::CoreModules::PluginFunctions qw(DPIntWarn GTK_Flush DP_DestroyProgressWin DPError DPQuestion DPInfo DPCreateProgressWin Assert Gtk2_Button_SetImage QuitSub);
@@ -27,34 +27,29 @@ use DP::GeneralHelpers qw(LoadConfigFile);
 use File::Basename qw(basename);
 use constant { true => 1, false => 0 };
 
-sub new_instance
+sub earlyInit
 {
 	my $this = shift;
-	$this = {};
-	bless($this);
-	my $plugin = shift;
-	$this->{plugin} = $plugin;
 	$this->{metadata} = {};
 	$this->{pluginInfo} = {};
 
 	# Register the one signal we have
-	$plugin->register_signals(qw(SHOW_PLUGINMANAGER));
+	$this->p_register_signals(qw(SHOW_PLUGINMANAGER));
 	# Connect to signals
-	$plugin->signal_connect('CREATE_MENUITEMS',$this,'mkmenu');
-	$plugin->signal_connect('SHOW_PLUGINMANAGER',$this,'ShowManager');
+	$this->p_signal_connect('CREATE_MENUITEMS' => sub { $this->mkmenu });
+	$this->p_signal_connect('SHOW_PLUGINMANAGER' => sub { $this->ShowManager });
 
-	$this->{i18n} = $plugin->get_var('i18n');
+	$this->{i18n} = $this->p_get_var('i18n');
 	return $this;
 }
 
 sub mkmenu
 {
 	my $this = shift;
-	my $plugin = shift;
-	my $MenuItems = $plugin->get_var('menu_preferences');
-	my $i18n = $plugin->get_var('i18n');
+	my $MenuItems = $this->p_get_var('menu_preferences');
+	my $i18n = $this->p_get_var('i18n');
 	# This is our menu item
-	my $menu =  [ '/'.$i18n->get('_Plugins') ,undef, sub { $plugin->signal_emit('SHOW_PLUGINMANAGER'); },     0,  '<StockItem>',  'gtk-properties'];
+	my $menu =  [ '/'.$i18n->get('_Plugins') ,undef, sub { $this->p_signal_emit('SHOW_PLUGINMANAGER'); },     0,  '<StockItem>',  'gtk-properties'];
 	# Add the menu
 	push(@{$MenuItems},$menu);
 	return;
@@ -63,10 +58,9 @@ sub mkmenu
 sub ShowManager
 {
 	my $this = shift;
-	my $plugin = shift;
 
-	my $i18n = $plugin->get_var('i18n');
-	my $MainWindow = $plugin->get_var('MainWindow');
+	my $i18n = $this->p_get_var('i18n');
+	my $MainWindow = $this->p_get_var('MainWindow');
 	my $window = Gtk2::Window->new();
 	$window->set_title($i18n->get('Day Planner plugins'));
 	$window->set_modal(true);
@@ -139,21 +133,21 @@ sub ShowManager
 			if ($i->[1])
 			{
 				$plugins{$i->[0]} = 1;
-				if(not $this->{plugin}->plugin_loaded($i->[0]))
+				if(not $this->p_get_plugin_object->plugin_loaded($i->[0]))
 				{
 					$needsReload = 1;
 				}
 			}
 			else
 			{
-				if($this->{plugin}->plugin_loaded($i->[0]))
+				if($this->p_get_plugin_object->plugin_loaded($i->[0]))
 				{
 					$needsReload = 2 if not $needsReload;
 				}
 			}
 		}
 		my $newPlugins = join(' ',keys %plugins);
-		my $InternalConfig = $this->{plugin}->get_var('state');
+		my $InternalConfig = $this->p_get_var('state');
 		$InternalConfig->{plugins_enabled} = $newPlugins;
 		if ($needsReload)
 		{
@@ -172,7 +166,7 @@ sub ShowManager
 			if (not $r)
 			{
 				$window->destroy();
-				$this->ShowManager($this->{plugin});
+				$this->ShowManager();
 			}
 		});
 	$RemoveButton->signal_connect('clicked' => sub {
@@ -182,7 +176,7 @@ sub ShowManager
 				my $selectedPlugin = $pluginList->{data}[$Selected][0];
 				if(DPQuestion($i18n->get_advanced('Are you sure you want to uninstall the plugin "%(PLUGIN)"?', { PLUGIN => $selectedPlugin })))
 				{
-					my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
+					my $ppath = $this->p_get_var('confdir').'/plugins/';
 					if(not -e $ppath.$selectedPlugin.'.pm')
 					{
 						DPIntWarn('Failed to locate plugin at '.$ppath.$selectedPlugin.'.pm: '.$!);
@@ -194,7 +188,7 @@ sub ShowManager
 						unlink($ppath.$selectedPlugin.'.dpi');
 					}
 					$window->destroy();
-					$this->ShowManager($this->{plugin});
+					$this->ShowManager();
 				}
 			}
 		});
@@ -218,7 +212,7 @@ sub ShowManager
 					$this->{pluginInfo}->{$selectedPlugin} = $string;
 				}
 				$infoText->set_text($string);
-				if (-e $this->{plugin}->get_var('confdir').'/plugins/'.$selectedPlugin.'.pm')
+				if (-e $this->p_get_var('confdir').'/plugins/'.$selectedPlugin.'.pm')
 				{
 					$RemoveButton->set_sensitive(true);
 				}
@@ -273,7 +267,7 @@ sub ShowManager
 sub InstallPlugin
 {
 	my $this = shift;
-	my $i18n = $this->{plugin}->get_var('i18n');
+	my $i18n = $this->p_get_var('i18n');
 	my $InstallWindow = Gtk2::FileChooserDialog->new($i18n->get('Install Day Planner plugin package'), undef, 'open',
 		'gtk-cancel' => 'reject',
 		'gtk-open' => 'accept',);
@@ -288,14 +282,14 @@ sub InstallPlugin
 	if($Response eq 'accept') {
 		my $Filename = $InstallWindow->get_filename();
 		if($Filename =~ /\.(dpp)$/i) {
-			my $meta = $this->{plugin}->get_info_from_package($Filename);
+			my $meta = $this->p_get_plugin_object->get_info_from_package($Filename);
 			if(not $meta)
 			{
 				DPError($i18n->get('This file does not appear to be a Day Planner plugin package'));
 			}
 			else
 			{
-				my $ppath = $this->{plugin}->get_var('confdir').'/plugins/';
+				my $ppath = $this->p_get_var('confdir').'/plugins/';
 				if (-e $ppath.'/'.$meta->{shortPluginName}.'.pm')
 				{
 					DPInfo($i18n->get('This plugin is already installed, if you want to re-install or upgrade it you will need to uninstall the one that is already installed first'));
@@ -315,7 +309,7 @@ sub InstallPlugin
 						my $string = $this->generateInfoString($meta);
 						if(DPQuestion($i18n->get('Are you sure you wish to install this package? You should only install plugins from sources you trust, unsafe plugins can damage your system and files.')."\n\nPlugin information:\n".$string))
 						{
-							if(not $this->{plugin}->install_plugin($Filename))
+							if(not $this->p_get_plugin_object->install_plugin($Filename))
 							{
 								DPError($i18n->get('Installation failed, this file does not appear to be a Day Planner plugin package'));
 							}
@@ -339,7 +333,7 @@ sub PopulateList
 {
 	my $this = shift;
 	my $listData = shift;
-	my $pluginPath = $this->{plugin}->get_var('pluginPaths');
+	my $pluginPath = $this->p_get_var('pluginPaths');
 	my %plugins;
 	foreach my $d (@{$pluginPath})
 	{
@@ -357,7 +351,7 @@ sub PopulateList
             }
 			$this->{metadata}{$info->{name}} = $info;
 			# TODO: Some way to do i18n
-			my $active = $this->{plugin}->plugin_loaded($info->{name}) ? true : false;
+			my $active = $this->p_get_plugin_object->plugin_loaded($info->{name}) ? true : false;
 			push(@{$listData},[$info->{name},$active,$info->{title}]);
 		}
 	}
@@ -384,7 +378,7 @@ sub generateInfoString
 	my $this = shift;
 	my $meta = shift;
 	my $string = '';
-	my $i18n = $this->{plugin}->get_var('i18n');
+	my $i18n = $this->p_get_var('i18n');
 	if ($meta->{author})
 	{
 		$string = $i18n->get('Author:').' '.$meta->{author}."\n";

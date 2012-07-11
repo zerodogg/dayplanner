@@ -17,8 +17,8 @@
 
 # First, the namespace must be DP::Plugin::YourPluginName
 package DP::Plugin::HelloWorld;
-use strict;
-use warnings;
+use Moo;
+extends 'DP::Plugin';
 
 # DP::CoreModules::PluginFunctions exports several useful functions form
 # the core of DP
@@ -28,30 +28,20 @@ use DP::CoreModules::PluginFunctions qw(DPInfo UpdatedData);
 # load it, but it does have some useful functions.
 use DP::iCalendar qw(iCal_ConvertFromUnixTime iCal_ParseDateTime iCal_GenDateTime);
 
-# This is the constructor for the plugin, if it is not present, your plugin will not
-# load. Its parameter is the internal plugin object, that you can
-# hook into as a signal handler, and you can register new signals.
-sub new_instance
+# This is the initializer for the plugin. Here you can do the first
+# initialization such as registering signals, and adding signal handlers.
+sub earlyInit
 {
-	# Bless ourselves
-	my $this = shift;
-	$this = {};
-	bless($this);
-	# Get the plugin object, and stash it in ourself so that we can use it later
-	my $plugin = shift;
-	$this->{plugin} = $plugin;
+    my $this = shift;
 	# Connect to the init sinal, this one will display a "Hello World" dialog box,
 	# as well as adding a temporary "Hello World" event.
-	$this->{plugin}->signal_connect('INIT',$this,'helloWorld');
+	$this->p_signal_connect('INIT' => sub { $this->helloWorld } );
 	# Note that you can connect to a signal as many times as you'd like. This time
 	# we're connecting using init_plugin_handlers. This method initializes signals
 	# that are expored by other plugins.
-	$this->{plugin}->signal_connect('INIT',$this,'init_plugin_handlers');
+	$this->p_signal_connect('INIT' => sub { $this->init_plugin_handlers });
 	# And, when DP is shutting down, clean up after us.
-	$this->{plugin}->signal_connect('SHUTDOWN',$this,'cleanWorld');
-
-	# Now, return ourself
-	return $this;
+	$this->p_signal_connect('SHUTDOWN' => sub { $this->cleanWorld });
 }
 
 # This is the method that we're using to initialize some additional signal handlers
@@ -69,9 +59,9 @@ sub init_plugin_handlers
 	#
 	# We do this so that the user does not get our hello world event synchronized upstream,
 	# we remove the event before the sync is performed.
-	$this->{plugin}->signal_connect_ifavailable('DPS_PRE_SYNCHRONIZE',$this,'cleanWorld');
+	$this->p_signal_connect_ifavailable('DPS_PRE_SYNCHRONIZE' => sub { $this->cleanWorld });
 	# And after the sync has finished, we re-add it.
-	$this->{plugin}->signal_connect_ifavailable('DPS_POST_SYNCHRONIZE',$this,'helloWorldMkEvent');
+	$this->p_signal_connect_ifavailable('DPS_POST_SYNCHRONIZE' => sub { $this->helloWorldMkEvent});
 }
 
 # this is our hello world handler, it runs helloWorldMkEvent and displays a simple
@@ -88,7 +78,7 @@ sub helloWorldMkEvent
 {
 	my $this = shift;
 	# Get the DP::iCalendar object
-	my $ical = $this->{plugin}->get_var('calendar');
+	my $ical = $this->p_get_var('calendar');
 	# Ensure that tehre isn't an event like this already
 	$this->cleanWorld;
 	# Get the current year, month, day and time. This would be just as well
@@ -118,7 +108,7 @@ sub cleanWorld
 {
 	my $this = shift;
 	# Get the iCalendar object
-	my $ical = $this->{plugin}->get_var('calendar');
+	my $ical = $this->p_get_var('calendar');
 	# Check if our event exists
 	if ($ical->exists('DP-HelloWorldPluginString'))
 	{
