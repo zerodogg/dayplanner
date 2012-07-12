@@ -28,11 +28,12 @@ use lib "$FindBin::RealBin/../modules/external/";
 
 use DP::GeneralHelpers qw(WriteConfigFile);
 use DP::CoreModules::Plugin;
+use PubSub::Tiny;
 
 my $name = shift or die("Needs a single param: path to the file to create info file from\n");
 my $plugin;
 
-my $pobj = DP::CoreModules::Plugin->new({});
+my $pobj = DP::CoreModules::Plugin->new({},PubSub::Tiny->new);
 my $base = basename($name);
 $base =~ s/\.pm$//g;
 my $fatal = 0;
