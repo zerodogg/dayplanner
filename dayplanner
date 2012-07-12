@@ -241,7 +241,6 @@ sub init_plugins
 {
 	my $paths = [ $SaveToDir.'/plugins/',$FindBin::RealBin.'/plugins/'];
 	$plugin = DP::CoreModules::Plugin->new(\%InternalConfig, $pubSub);
-#	$plugin->register_signals(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
 	$plugin->set_var('calendar',$iCalendar);
 	$plugin->set_var('state',\%InternalConfig);
 	$plugin->set_var('config',\%UserConfig);
@@ -412,6 +411,8 @@ sub UpdatedData
 		# Save the data
 		SaveMainData();
 	}
+
+    $pubSub->publish('UPDATED_DATA', { saved => !$DontSave });
 }
 
 # Purpose: Load HTTP subscriptions
@@ -1475,6 +1476,7 @@ sub Day_Changed_Event
 
 	# Now reset the timer
 	Set_DayChangeTimer();
+
 	# Return false to make Glib remove the old timer
 	return(0);
 }
@@ -2733,6 +2735,7 @@ sub CalendarChange
 	my $Month = $CalendarWidget->month;
 	$Month++;
 	SetActiveCalItems($CalendarWidget->year, $Month);
+    $pubSub->publish('DATE_CHANGED');
 }
 
 # Purpose: Get the day, month and year in a single string from a calendar
@@ -2788,6 +2791,7 @@ sub EventListToggle
 		$ToolbarDeleteButton->set_sensitive(1);
 		$MenuEditEntry->set_sensitive(1);
 		$MenuDeleteEntry->set_sensitive(1);
+        $pubSub->publish('EVENT_SELECTED');
 	}
 	else
 	{
@@ -2795,6 +2799,7 @@ sub EventListToggle
 		$ToolbarDeleteButton->set_sensitive(0);
 		$MenuEditEntry->set_sensitive(0);
 		$MenuDeleteEntry->set_sensitive(0);
+        $pubSub->publish('EVENT_UNSELECTED');
 	}
 }
 
@@ -4771,6 +4776,8 @@ sub DrawMainWindow
             $widget->reposition;
         });
 
+    $pubSub->publish('MENU_BUILT', { widget => $widget, button => $ToolbarCalendarMenu });
+
 	# Delete button
 	$ToolbarDeleteButton = Gtk2::ToolButton->new_from_stock('gtk-delete');
 	$ToolbarDeleteButton->set_tooltip($Tooltips,$i18n->get('Delete the selected event'),'');
@@ -4848,6 +4855,7 @@ sub DrawMainWindow
 			}
 			$LastDay = Get_DateInfo($CalendarWidget);
 			DrawEventlist();
+            $pubSub->publish('DATE_CHANGED');
 		});
 
 	# UPCOMING EVENTS
@@ -4894,6 +4902,11 @@ sub DrawMainWindow
 
     # Focus the event list (to ensure the toolbar doesn't get focus)
     $EventlistWin->grab_focus;
+
+    $pubSub->publish('AREA_READY', {
+            left => $LeftHandVBox,
+            right => $RightHandVBox,
+        });
 }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -5004,9 +5017,9 @@ sub InitDPCore
 		AlreadyRunningDP($Client);
 		$IPC_Socket = DP::GeneralHelpers::IPC->new_server("$SaveToDir/ipcsocket",\&IPC_Handler);
 	}
-    # Init pubsub
+    # Init pubSub
     $pubSub = PubSub::Tiny->new(strict => 1);
-	$pubSub->register(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN));
+	$pubSub->register(qw(SHUTDOWN INIT SAVEDATA CREATE_MENUITEMS BUILD_TOOLBAR IPC_IN EVENT_SELECTED EVENT_UNSELECTED UPDATED_DATA DATE_CHANGED LOADED_PLUGIN MENU_BUILT AREA_READY));
 	# Init plugins
 	init_plugins();
 	# Draw the main window
