@@ -346,7 +346,7 @@ sub PopulateList
 			$plugins{$e} = 1;
 			my $info = $this->LoadPluginMetadataFromFile($p);
 			next if not $info;
-            if ($info && $info->{apiversion} != 2)
+            if ($info && $info->{apiversion} != 2 || !$info->{name})
             {
                 next;
             }
