@@ -885,6 +885,9 @@ sub MainLoop
 			if($NextEventIs eq 'DAYCHANGE')
 			{
 				DaemonLog(DLOG_CALLTRACE,'Day change event');
+                # Clear HasNotified
+                %HasNotified = ();
+                delete($DaemonState{HasNotified});
 				CalculateNotifications();
 			}
 			else
